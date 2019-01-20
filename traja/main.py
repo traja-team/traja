@@ -15,7 +15,90 @@ import seaborn as sns
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 
-class MouseData(object):
+def totrajectory(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        return Trajectory(result)
+    return wrapper
+
+class Trajectory():
+    """Surrogate class for pandas DataFrame with trajectory-specific numerical and analytical functions."""
+    def __init__(self, path, **kwargs):
+        self.trajectory = self.read_csv(path, **kwargs)
+        return self.trajectory
+
+    @property
+    def _constructor(self):
+        return Trajectory
+
+    def __repr__(self):
+        return repr(self.contained)
+
+    def __getitem__(self, item):
+        result = self.contained[item]
+        if isinstance(result, type(self.contained)):
+            result = Trajectory(result)
+        return result
+
+    def __getattr__(self, item):
+        result = getattr(self.contained, item)
+        if callable(result):
+            result = totrajectory(result)
+        return result
+
+    def _strip(self, text):
+        try:
+            return text.strip()
+        except AttributeError:
+            return pd.to_numeric(text, errors='coerce')
+
+    def night(self):
+        return self.trajectory.between_time('19:00','7:00')
+
+    def read_csv(self, path, **kwargs):
+        index_col = kwargs.pop('index_col', None)
+
+        date_parser = lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')
+
+        df_test = pd.read_csv(path, nrows=100)
+        if index_col not in df_test:
+            logging.info(f'{index_col} not in {df_test.columns}')
+
+        whitespace_cols = [c for c in df_test if ' ' in df_test[c].name]
+        stripped_cols = {c: self._strip for c in whitespace_cols}
+        # TODO: Add converters for processed 'datetime', 'x', etc. features
+        converters = stripped_cols
+
+        float_cols = [c for c in df_test if df_test[c].dtype == 'float64']
+        float16_cols = {c: np.float16 for c in float_cols}
+
+        string_cols = [c for c in df_test if df_test[c].dtype == str]
+        category_cols = {c: 'category' for c in string_cols}
+        dtype = {**float16_cols, **category_cols}
+
+        df = pd.read_csv(path,
+                         infer_datetime_format=True,
+                         date_parser=date_parser,
+                         converters=converters,
+                         dtype=dtype,
+                         index_col=index_col,
+                         )
+        self.trajectory = df
+
+    def from_csv(self, csvpath, **kwargs):
+        df_test = pd.read_csv(csvpath, **kwargs, nrows=100)
+        columns = [x.lower() for x in df_test.columns]
+        assert set(columns).issuperset(set['x','y']), "Header does not contain 'x' and 'y'"
+        df = pd.read_csv(csvpath, infer_datetime=True, **kwargs)
+        self.trajectory = df
+
+    def from_df(self, df):
+        self.trajectory = df
+
+    def plot(self, **kwargs):
+        plt.plot(self.trajectory, **kwargs)
+
+class DVCExperiment(object):
     def __init__(self, experiment_name, centroids_dir,
                  meta_filepath='/Users/justinshenk/neurodata/data/Stroke_olive_oil/DVC cageids HT Maximilian Wiesmann updated.xlsx',
                  cage_xmax = 0.058*2, cage_ymax= 0.125*2):
@@ -184,6 +267,7 @@ class MouseData(object):
             plt.title('Normalized Activity')
             plt.show()
 
+    @staticmethod
     def load_meta(self, meta_filepath):
         # TODO: Generalize
         mouse_data = pd.read_excel(meta_filepath)[
@@ -194,60 +278,36 @@ class MouseData(object):
         mouse_data['position'] = mouse_data['position'].apply(lambda x: x[1] + x[0].zfill(2))
         return mouse_data.set_index('position').to_dict('index')
 
+    @staticmethod
     def get_diet(self, cage):
         return self.mouse_lookup[cage]['Diet']
 
+    @staticmethod
     def get_group(self, cage):
         return self.mouse_lookup[cage]['Sham_or_Stroke']
 
+    @staticmethod
     def get_stroke(self, cage):
         return self.mouse_lookup[cage]['Stroke']
 
+    @staticmethod
     def get_group_and_diet(self, cage):
         diet = self.get_diet(cage)
         surgery = self.get_group(cage)
         return f"{'Sham' if surgery is 1 else 'Stroke'} - {'Control' if diet is 1 else 'HT'}"
 
+    @staticmethod
     def get_cohort(self, cage):
         # TODO: Generalize
         return self.mouse_lookup[cage]['Stroke'].month
 
+    @staticmethod
     def get_cages(self, centroid_dir):
         # FIXME: Complete implementation
         return ['A04']
 
     def read_csv(self, path, index_col='time_stamp'):
-        def strip(text):
-            try:
-                return text.strip()
-            except AttributeError:
-                return pd.to_numeric(text, errors='coerce')
-
-        date_parser = lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')
-
-        df_test = pd.read_csv(path, nrows=100)
-        if index_col not in df_test:
-            logging.info(f'{index_col} not in {df_test.columns}')
-
-        whitespace_cols = [c for c in df_test if ' ' in df_test[c].name]
-        stripped_cols = {c: strip for c in whitespace_cols}
-        # TODO: Add converters for processed 'datetime', 'x', etc. features
-        converters = stripped_cols
-
-        float_cols = [c for c in df_test if df_test[c].dtype == 'float64']
-        float16_cols = {c: np.float16 for c in float_cols}
-
-        string_cols = [c for c in df_test if df_test[c].dtype == 'string']
-        category_cols = {c: 'category' for c in string_cols}
-        dtype = {**float16_cols, **category_cols}
-
-        df = pd.read_csv(path,
-                         infer_datetime_format=True,
-                         date_parser=date_parser,
-                         converters=converters,
-                         dtype=dtype,
-                         )
-        return df
+        pass
 
     def get_cages(self):
         return [x for x in self.mouse_lookup.keys()]
@@ -257,7 +317,7 @@ class MouseData(object):
         cage = file.split('/')[-1].split('_')[0]
         # Get x,y coordinates from centroids
         date_parser = lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')
-        df = self.read_csv(file, index_col='time_stamps_vec')[['x', 'y']]
+        df = Trajectory(file, index_col='time_stamps_vec')[['x', 'y']]
         df.x = df.x.round(7)
         df.y = df.y.round(7)
         # Calculate euclidean distance (m) travelled
@@ -492,7 +552,7 @@ class MouseData(object):
 
 
 def main(args):
-    experiment = MouseData(experiment_name='Stroke_olive_oil',
+    experiment = DVCExperiment(experiment_name='Stroke_olive_oil',
                            centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
     experiment.aggregate_files()
     activity_files = experiment.get_activity_files()
