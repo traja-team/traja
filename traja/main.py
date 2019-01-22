@@ -6,8 +6,12 @@ import multiprocessing as mp
 import os
 import psutil
 import sys
+import traja
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.path import Path
+import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -15,36 +19,14 @@ import seaborn as sns
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 
-def totrajectory(func):
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        return Trajectory(result)
-    return wrapper
+@pd.api.extensions.register_dataframe_accessor("traja")
+class TrajaAccessor(object):
+    """Accessor for pandas DataFrame with trajectory-specific numerical and analytical functions."""
 
-class Trajectory():
-    """Surrogate class for pandas DataFrame with trajectory-specific numerical and analytical functions."""
-    def __init__(self, path, **kwargs):
-        self.trajectory = self.read_csv(path, **kwargs)
-        return self.trajectory
-
-    @property
-    def _constructor(self):
-        return Trajectory
-
-    def __repr__(self):
-        return repr(self.contained)
-
-    def __getitem__(self, item):
-        result = self.contained[item]
-        if isinstance(result, type(self.contained)):
-            result = Trajectory(result)
-        return result
-
-    def __getattr__(self, item):
-        result = getattr(self.contained, item)
-        if callable(result):
-            result = totrajectory(result)
-        return result
+    def __init__(self, pandas_obj):
+        # self.trajectory = self.read_csv(path, **kwargs)
+        # return self.trajectory
+        self._trj = pandas_obj
 
     def _strip(self, text):
         try:
@@ -52,8 +34,13 @@ class Trajectory():
         except AttributeError:
             return pd.to_numeric(text, errors='coerce')
 
-    def night(self):
-        return self.trajectory.between_time('19:00','7:00')
+    @property
+    def night(self, begin='19:00', end='7:00'):
+        return self._trj.between_time(begin, end)
+
+    @property
+    def day(self, begin='7:00', end='19:00'):
+        return self._trj.between_time(begin, end)
 
     def read_csv(self, path, **kwargs):
         index_col = kwargs.pop('index_col', None)
@@ -61,17 +48,21 @@ class Trajectory():
         date_parser = lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')
 
         df_test = pd.read_csv(path, nrows=100)
+
         if index_col not in df_test:
             logging.info(f'{index_col} not in {df_test.columns}')
 
+        # Strip whitespace
         whitespace_cols = [c for c in df_test if ' ' in df_test[c].name]
         stripped_cols = {c: self._strip for c in whitespace_cols}
         # TODO: Add converters for processed 'datetime', 'x', etc. features
         converters = stripped_cols
 
-        float_cols = [c for c in df_test if df_test[c].dtype == 'float64']
+        # Downcast to float16
+        float_cols = [c for c in df_test if 'float' in df_test[c].dtype]
         float16_cols = {c: np.float16 for c in float_cols}
 
+        # Convert string columns to categories
         string_cols = [c for c in df_test if df_test[c].dtype == str]
         category_cols = {c: 'category' for c in string_cols}
         dtype = {**float16_cols, **category_cols}
@@ -83,25 +74,215 @@ class Trajectory():
                          dtype=dtype,
                          index_col=index_col,
                          )
-        self.trajectory = df
+        return df
 
-    def from_csv(self, csvpath, **kwargs):
-        df_test = pd.read_csv(csvpath, **kwargs, nrows=100)
-        columns = [x.lower() for x in df_test.columns]
-        assert set(columns).issuperset(set['x','y']), "Header does not contain 'x' and 'y'"
-        df = pd.read_csv(csvpath, infer_datetime=True, **kwargs)
-        self.trajectory = df
+    @property
+    def xlim(self):
+        return self._xlim
 
-    def from_df(self, df):
-        self.trajectory = df
+    @xlim.setter
+    def xlim(self, xlim: tuple):
+        self._xlim = xlim
 
-    def plot(self, **kwargs):
-        plt.plot(self.trajectory, **kwargs)
+    @property
+    def ylim(self):
+        return self._ylim
+
+    @ylim.setter
+    def ylim(self, ylim):
+        self._ylim = ylim
+
+    @property
+    def xlabel(self):
+        return self._xlabel
+
+    @property
+    def ylabel(self):
+        return self._ylabel
+
+    @xlabel.setter
+    def xlabel(self, xlabel):
+        self._xlabel = xlabel
+
+    @ylabel.setter
+    def ylabel(self, ylabel):
+        self._ylabel = ylabel
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, title):
+        self._title = title
+
+    def set(self, **kwargs):
+        for key, value in kwargs.items():
+            try:
+                self.__setattr__(key, value)
+            except Exception as e:
+                logging.ERROR(f"Cannot set {key} to {value}")
+
+    def plot(self, n_steps: int = 1000, days: tuple = None, **kwargs):
+        """Plot trajectory for single animal over period.
+            n_steps: int
+            days: tuple of strings ('2018-01-01', '2019-02-01') or tuple of event-related ints (-1, 7)
+            """
+        start, end = None, None
+        cbar_ticklabels = None
+        __trj = self._trj[['x', 'y']]
+        if days is not None:
+            start, end = days
+            if isinstance(start, str) and isinstance(end, str):
+                # Datetime format
+                mask = __trj.between(start, end, inclusive=True)
+                verts = __trj.loc[mask].values
+                cbar_ticklabels = (start, end)
+            elif isinstance(start, int) and isinstance(end, int):
+                # Range of days w.r.t. event, eg, for surgery, (-1, 7)
+                # TODO: Implement this with reference to day of event (eg, `Days_from_surgery` column)
+                raise NotImplementedError("Reference day will be column in `self._trj` or somewhere else")
+        else:
+            # Plot first `n_steps`
+            start, end = 0, n_steps
+            verts = __trj.iloc[:n_steps].values
+            # cbar_ticklabels = (str(__trj.index[0]), str(__trj.index[n_steps]))
+        codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 1)
+        path = Path(verts, codes)
+
+        fig, ax = plt.subplots()
+
+        patch = patches.PathPatch(path, edgecolor='black', facecolor='none', lw=1)
+
+        xs, ys = zip(*verts)
+
+        n_steps = len(verts)
+        colors = plt.cm.Greens_r(np.linspace(0, 1, n_steps))
+        for i in range(len(xs)):
+            ax.plot(xs[i], ys[i], 'x-', lw=1, color=colors[i], ms=2)
+
+        ax.set_xlim(self._xlim)
+        ax.set_ylim(self._ylim)
+        ax.set_xlabel(self._xlabel)
+        ax.set_ylabel(self._ylabel)
+        ax.set_title(self._title)
+        ax.set_aspect('equal')
+
+        # import ipdb;ipdb.set_trace()
+        N = 21
+        cmap = plt.get_cmap('Greens_r', N)
+        norm = mpl.colors.Normalize(vmin=0, vmax=N)
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        sm._A = []
+        cbar = plt.colorbar(sm)
+        cbar_yticklabels = cbar.ax.get_yticklabels()
+        if days is not None:
+            cbar_yticklabels = [[start] + [''] * (len(cbar_yticklabels) - 2) + [end]]
+        cbar_yticklabels = [__trj.index[i] for i in range(len(cbar_yticklabels))]
+        cbar.ax.set_yticklabels(cbar_yticklabels)
+        # cbar = plt.colorbar(ax=ax, ticks=[start, end])
+        plt.tight_layout()
+        plt.show()
+        return ax
+
+    def calc_distance(self):
+        self._trj['distance'] = np.sqrt(np.power(self._trj.x.shift() - self._trj.x, 2) +
+                                        np.power(self._trj.y.shift() - self._trj.y, 2))
+        self._trj['dx'] = self._trj['x'].diff()
+        self._trj['dy'] = self._trj['y'].diff()
+
+    def calc_angle(self):
+        if not {self._trj.columns}.issuperset({'dx', 'distance'}):
+            self.calc_distance()
+        self._trj['angle'] = np.rad2deg(np.arccos(np.abs(self._trj['dx']) / self._trj['distance']))
+
+    def calc_heading(self):
+        if not set(self._trj.columns).issuperset({'dx', 'dy'}):
+            self.calc_distance()
+        # Get heading from angle
+        mask = (self._trj['dx'] > 0) & (self._trj['dy'] >= 0)
+        self._trj.loc[mask, 'heading'] = self._trj['angle'][mask]
+        mask = (self._trj['dx'] >= 0) & (self._trj['dy'] < 0)
+        self._trj.loc[mask, 'heading'] = -self._trj['angle'][mask]
+        mask = (self._trj['dx'] < 0) & (self._trj['dy'] <= 0)
+        self._trj.loc[mask, 'heading'] = -(180 - self._trj['angle'][mask])
+        mask = (self._trj['dx'] <= 0) & (self._trj['dy'] > 0)
+        self._trj.loc[mask, 'heading'] = (180 - self._trj['angle'])[mask]
+
+    def calc_turn_angle(self):
+        if 'heading' not in self._trj:
+            self.calc_heading()
+        self._trj['turn_angle'] = self._trj['heading'].diff()
+        # Correction for 360-degree angle range
+        self._trj.loc[self._trj.turn_angle >= 180, 'turn_angle'] -= 360
+        self._trj.loc[self._trj.turn_angle < -180, 'turn_angle'] += 360
+
+
+def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units='m', time_units='s'):
+    trj = track
+
+    def rename(col, name):
+        global trj
+        if isinstance(col, int):
+            trj.rename(columns={col: name})
+        else:
+            if col not in trj:
+                raise Exception(f"Missing column {col}")
+            trj.rename(columns={col: name})
+
+    # Ensure column names are as expected
+    rename(x_col, 'x')
+    rename(y_col, 'y')
+    if time_col is not None:
+        rename(time_col, 'time')
+
+    # Allocate times if they aren't already known
+    if 'time' not in trj:
+        if fps is None:
+            raise Exception(("Cannot create a trajectory without times: either fps or a time column must be specified"))
+        # Assign times to each frame, starting at 0
+        trj['time'] = pd.Series(np.arange(0, len(trj) - 1) / fps)
+
+    # Get displacement time for each coordinate, with the first point at time 0
+    trj['displacementTime'] = trj.time - trj.time.iloc[0]
+
+    ...
+
+
+def traj(filepath, xlim=None, ylim=None, **kwargs):
+    df_test = pd.read_csv(filepath, nrows=100)
+    # Select first col with 'time_stamp' in name as index
+    time_stamp_cols = [x for x in df_test.columns if 'time_stamp' in x]
+    index_col = kwargs.pop('index_col', time_stamp_cols[0])
+
+    df = pd.read_csv(filepath,
+                     date_parser=kwargs.pop('data_parser',
+                                            lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')),
+                     infer_datetime_format=kwargs.pop('infer_datetime_format', True),
+                     parse_dates=kwargs.pop('parse_dates', True),
+                     index_col=index_col,
+                     **kwargs)
+    if xlim is not None and isinstance(xlim, tuple):
+        df.traja.xlim = xlim
+    if ylim is not None and isinstance(ylim, tuple):
+        df.traja.ylim = ylim
+    return df
+
+
+def from_file(filepath, **kwargs):
+    trj = pd.read_csv(filepath,
+                       date_parser=kwargs.pop('data_parser',
+                                              lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')),
+                       infer_datetime_format=kwargs.pop('infer_datetime_format', True),
+                       parse_dates=kwargs.pop('parse_dates', True),
+                       **kwargs)
+    return trj
+
 
 class DVCExperiment(object):
     def __init__(self, experiment_name, centroids_dir,
                  meta_filepath='/Users/justinshenk/neurodata/data/Stroke_olive_oil/DVC cageids HT Maximilian Wiesmann updated.xlsx',
-                 cage_xmax = 0.058*2, cage_ymax= 0.125*2):
+                 cage_xmax=0.058 * 2, cage_ymax=0.125 * 2):
         # TODO: Fix in prod version
         self._init()
         self.basedir = '/Users/justinshenk/neurodata/'
@@ -271,9 +452,6 @@ class DVCExperiment(object):
     def load_meta(self, meta_filepath):
         # TODO: Generalize
         mouse_data = pd.read_excel(meta_filepath)[
-            ['position', 'Diet', 'Sham_or_Stroke', 'Stroke']
-        ]
-        mouse_data = pd.read_excel(meta_filepath)[
             ['position', 'Diet', 'Sham_or_Stroke', 'Stroke']]
         mouse_data['position'] = mouse_data['position'].apply(lambda x: x[1] + x[0].zfill(2))
         return mouse_data.set_index('position').to_dict('index')
@@ -306,44 +484,26 @@ class DVCExperiment(object):
         # FIXME: Complete implementation
         return ['A04']
 
-    def read_csv(self, path, index_col='time_stamp'):
-        pass
+    # def read_csv(self, path, index_col='time_stamp'):
+    #     pass
 
     def get_cages(self):
         return [x for x in self.mouse_lookup.keys()]
 
-    def get_ratios(self, file, angle_thresh, distance_thresh):
+    def get_turn_ratios(self, file, angle_thresh, distance_thresh):
         ratios = []
         cage = file.split('/')[-1].split('_')[0]
         # Get x,y coordinates from centroids
         date_parser = lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')
-        df = Trajectory(file, index_col='time_stamps_vec')[['x', 'y']]
-        df.x = df.x.round(7)
-        df.y = df.y.round(7)
-        # Calculate euclidean distance (m) travelled
-        df['distance'] = np.sqrt(np.power(df['x'].shift() - df['x'], 2) +
-                                 np.power(df['y'].shift() - df['y'], 2))
-        df['dx'] = df['x'].diff()
-        df['dy'] = df['y'].diff()
+        df = traja.from_file(file, index_col='time_stamps_vec')[['x', 'y']]
+        # df.x = df.x.round(7)
+        # df.y = df.y.round(7)
+        df.traja.calc_distance()  # adds 'distance' column
         # TODO: Replace with generic intervention method name and lookup logic
         surgery_date = self.get_stroke(cage)
         df['Days_from_surgery'] = (df.index - surgery_date).days
 
-        # Calculate angle w.r.t. x axis
-        df['angle'] = np.rad2deg(np.arccos(np.abs(df['dx']) / df['distance']))
-        # Get heading from angle
-        mask = (df['dx'] > 0) & (df['dy'] >= 0)
-        df.loc[mask, 'heading'] = df['angle'][mask]
-        mask = (df['dx'] >= 0) & (df['dy'] < 0)
-        df.loc[mask, 'heading'] = -df['angle'][mask]
-        mask = (df['dx'] < 0) & (df['dy'] <= 0)
-        df.loc[mask, 'heading'] = -(180 - df['angle'][mask])
-        mask = (df['dx'] <= 0) & (df['dy'] > 0)
-        df.loc[mask, 'heading'] = (180 - df['angle'])[mask]
-        df['turn_angle'] = df['heading'].diff()
-        # Correction for 360-degree angle range
-        df.loc[df.turn_angle >= 180, 'turn_angle'] -= 360
-        df.loc[df.turn_angle < -180, 'turn_angle'] += 360
+        df.traja.calc_turn_angle()  # adds 'turn_angle' column
         #     df['turn_angle'].where((df['distance']>1e-3) & ((df.turn_angle > -15) & (df.turn_angle < 15))).hist(bins=30)
         #     df['turn_bias'] = df['turn_angle'] / .25 # 0.25s
         # Only look at distances over .01 meters, resample to minute intervals
@@ -362,7 +522,7 @@ class DVCExperiment(object):
         ratios.append((df.Days_from_surgery[0], right_turns_night, left_turns_night, True))
 
         ratios = [(day, right, left, period) for day, right, left, period in ratios if
-                  (left + right) > 0]  # fix div by 0 errror
+                  (left + right) > 0]  # fix div by 0 error
         return ratios
         #     days = [day for day, _, _, nighttime in ratios if nighttime]
 
@@ -397,48 +557,36 @@ class DVCExperiment(object):
         logging.info(f'Saved to {turn_ratio_csv}')
         return ratio_dict
 
-    def get_centroid(self, cage):
+    def get_coords(self, cage):
         path = os.path.join(self.outdir, 'centroids', cage)
-        df = self.read_csv(path)
+        df = traja.from_file(path)
         return df
 
-    def plot_position_heatmap(self, cage):
+    def plot_position_heatmap(self, cage, bins=20):
         from numpy import unravel_index
         # TODO: Generate from y in +-0.12, x in +-0.058
-        x_edges = np.array([-0.1201506, -0.11524541, -0.11034022, -0.10543504, -0.10052985,
-                            -0.09562466, -0.09071947, -0.08581429, -0.0809091, -0.07600391,
-                            -0.07109872, -0.06619353, -0.06128835, -0.05638316, -0.05147797,
-                            -0.04657278, -0.0416676, -0.03676241, -0.03185722, -0.02695203,
-                            -0.02204684, -0.01714166, -0.01223647, -0.00733128, -0.00242609,
-                            0.00247909, 0.00738428, 0.01228947, 0.01719466, 0.02209984,
-                            0.02700503, 0.03191022, 0.03681541, 0.0417206, 0.04662578,
-                            0.05153097, 0.05643616, 0.06134135, 0.06624653, 0.07115172,
-                            0.07605691, 0.0809621, 0.08586729, 0.09077247, 0.09567766,
-                            0.10058285, 0.10548804, 0.11039322, 0.11529841, 0.1202036])
+        try:
+            x0, x1 = self._trj.traja.xlim
+            y0, y1 = self._trj.traja.ylim
+        except:
+            raise NotImplementedError("Not yet implemented automated heatmap binning")
+        x_edges = np.linspace(x0, x1, num=bins)
+        y_edges = np.linspace(y0, y1, num=bins)
 
-        y_edges = np.array([-0.05804244, -0.05567644, -0.05331044, -0.05094444, -0.04857844,
-                            -0.04621243, -0.04384643, -0.04148043, -0.03911443, -0.03674843,
-                            -0.03438243, -0.03201643, -0.02965043, -0.02728443, -0.02491843,
-                            -0.02255242, -0.02018642, -0.01782042, -0.01545442, -0.01308842,
-                            -0.01072242, -0.00835642, -0.00599042, -0.00362442, -0.00125842,
-                            0.00110759, 0.00347359, 0.00583959, 0.00820559, 0.01057159,
-                            0.01293759, 0.01530359, 0.01766959, 0.02003559, 0.02240159,
-                            0.0247676, 0.0271336, 0.0294996, 0.0318656, 0.0342316,
-                            0.0365976, 0.0389636, 0.0413296, 0.0436956, 0.0460616,
-                            0.04842761, 0.05079361, 0.05315961, 0.05552561, 0.05789161])
-
-        df = self.get_centroid(cage)
-        x, y = zip(*df[['x', 'y']].values)
+        trj = self.get_coords(cage)
+        x, y = zip(*trj[['x', 'y']].values)
         # TODO: Remove redundant histogram calculation
         H, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges))
         cmax = H.flatten().argsort()[-2]  # Peak point is too hot, bug?
 
         fig, ax = plt.subplots()
         hist, x_edges, y_edges, image = ax.hist2d(np.array(y), np.array(x),
-                                                  bins=[np.linspace(df.y.min(), df.y.max(), 50),
-                                                        np.linspace(df.x.min(), df.x.max(), 50)],
+                                                  bins=[np.linspace(trj.y.min(), trj.y.max(), 50),
+                                                        np.linspace(trj.x.min(), trj.x.max(), 50)],
                                                   cmax=cmax)
         ax.colorbar()
+        ax.set_aspect('equal')
+        plt.show()
         # peak_index = unravel_index(hist.argmax(),hist.shape)
 
     def get_activity_files(self):
@@ -449,7 +597,7 @@ class DVCExperiment(object):
 
     def aggregate_files(self):
         """Aggregate cage files into csvs"""
-        os.makedirs(os.path.join(self.outdir,'centroids'), exist_ok=True)
+        os.makedirs(os.path.join(self.outdir, 'centroids'), exist_ok=True)
         for cage in self.centroid_files:
             logging.info(f'Processing {cage}')
             # Check for aggregated cage file (eg, 'A04.csv')
@@ -505,7 +653,7 @@ class DVCExperiment(object):
         plt.show()
 
     def get_daily_activity(self):
-        activity_csv = os.path.join(self.outdir,'daily_activity.csv')
+        activity_csv = os.path.join(self.outdir, 'daily_activity.csv')
         if not os.path.exists(activity_csv):
             print(f"Path {activity_csv} does not exist, creating dataframe")
             activity_list = []
@@ -551,9 +699,23 @@ class DVCExperiment(object):
         return activity
 
 
+class Debug():
+    def __init__(self, n_steps=1000):
+        import glob
+        from traja.main import TrajaAccessor, traj
+        files = glob.glob('/Users/justinshenk/neurodata/data/raw_centroids_rev2/*')
+        self.df = traj(files[10])
+        self.df.traja.set(xlim=(-0.06, 0.06),
+                          ylim=(-0.13, 0.13),
+                          xlabel=("x (m)"),
+                          ylabel=("y (m)"),
+                          title="Cage trajectory")
+        self.df.traja.plot(n_steps=n_steps)
+
+
 def main(args):
     experiment = DVCExperiment(experiment_name='Stroke_olive_oil',
-                           centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
+                               centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
     experiment.aggregate_files()
     activity_files = experiment.get_activity_files()
 
