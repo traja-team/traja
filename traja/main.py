@@ -58,14 +58,14 @@ class TrajaAccessor(object):
         # TODO: Add converters for processed 'datetime', 'x', etc. features
         converters = stripped_cols
 
-        # Downcast to float16
+        # Downcast to float32
         float_cols = [c for c in df_test if 'float' in df_test[c].dtype]
-        float16_cols = {c: np.float16 for c in float_cols}
+        float32_cols = {c: np.float32 for c in float_cols}
 
         # Convert string columns to categories
         string_cols = [c for c in df_test if df_test[c].dtype == str]
         category_cols = {c: 'category' for c in string_cols}
-        dtype = {**float16_cols, **category_cols}
+        dtype = {**float32_cols, **category_cols}
 
         df = pd.read_csv(path,
                          infer_datetime_format=True,
@@ -168,8 +168,7 @@ class TrajaAccessor(object):
         ax.set_title(self._title)
         ax.set_aspect('equal')
 
-        # import ipdb;ipdb.set_trace()
-        N = 21
+        N = 21 # bins
         cmap = plt.get_cmap('Greens_r', N)
         norm = mpl.colors.Normalize(vmin=0, vmax=N)
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -188,16 +187,77 @@ class TrajaAccessor(object):
     def calc_distance(self):
         self._trj['distance'] = np.sqrt(np.power(self._trj.x.shift() - self._trj.x, 2) +
                                         np.power(self._trj.y.shift() - self._trj.y, 2))
-        self._trj['dx'] = self._trj['x'].diff()
-        self._trj['dy'] = self._trj['y'].diff()
+        self._trj['dx'] = self._trj.x.diff()
+        self._trj['dy'] = self._trj.y.diff()
 
     def calc_angle(self):
-        if not {self._trj.columns}.issuperset({'dx', 'distance'}):
+        if not set(self._trj.columns.tolist()).issuperset({'dx', 'distance'}):
             self.calc_distance()
         self._trj['angle'] = np.rad2deg(np.arccos(np.abs(self._trj['dx']) / self._trj['distance']))
 
+    def rediscretize_points(self, R): # WIP #
+        """Resample a trajectory to a constant step length. R is rediscretized step length.
+        Returns result, series of step coordinates.
+
+        Based on the appendix in Bovet and Benhamou, (1988) and @JimMcL's trajr implementation.
+        """
+        # TODO: Test this method
+        points = self._trj[['x','y']].dropna().values.astype('float64')
+        n_points = len(points)
+        # TODO: Implement with complex numbers
+        result = np.empty((128,2))
+        p0 = points[0]
+        result[0] = p0
+        I = 0
+        j = 1
+
+        while j <= n_points:
+            # Find the first point k for which |p[k] - p_0| >= R
+            k = np.NaN
+            for i in range(j, n_points):
+                d = np.linalg.norm(points[i] - result[I])
+                if d >= R:
+                    k = i
+                    break
+            if np.isnan(k):
+                # End of path
+                break
+
+            j = k
+
+            # The next point lies on the segment p[k-1], p[k]
+            XI = result[I][0]
+            xk_1 = points[k-1,0]
+            YI = result[I][1]
+            yk_1 = points[k-1,1]
+
+            a = 0 if XI - xk_1 > 0 else 1
+            lambda_ = np.arctan((points[k,1]-yk_1) / (points[k,0]-xk_1)) + a * np.pi # angle
+            cos_l = np.cos(lambda_)
+            sin_l = np.sin(lambda_)
+            U = (XI - xk_1) * cos_l + (YI - yk_1) * sin_l
+            V = (YI - yk_1) * cos_l + (XI - xk_1) * sin_l
+
+            # Compute distance H between (X_{i+1}, Y_{i+1}) and (x_{k-1}, y_{k-1})
+            H = U + np.sqrt(abs(R ** 2 - V ** 2))
+            XIp1 = H * cos_l + xk_1
+            YIp1 = H * sin_l + yk_1
+
+            # Increase array size progressively to make the code run (significantly) faster
+            if len(result) <= I + 1:
+                result = np.concatenate((result, np.empty_like(result)))
+
+            # Save the point
+            result[I+1] = np.array([XIp1, YIp1])
+            I += 1
+
+        # Truncate result
+        result = result[:I+2]
+        return result
+
+
     def calc_heading(self):
-        if not set(self._trj.columns).issuperset({'dx', 'dy'}):
+        if not set(self._trj.columns.tolist()).issuperset({'dx', 'dy'}):
             self.calc_distance()
         # Get heading from angle
         mask = (self._trj['dx'] > 0) & (self._trj['dy'] >= 0)
@@ -244,9 +304,10 @@ def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_unit
         trj['time'] = pd.Series(np.arange(0, len(trj) - 1) / fps)
 
     # Get displacement time for each coordinate, with the first point at time 0
-    trj['displacementTime'] = trj.time - trj.time.iloc[0]
+    trj['dt'] = trj.time - trj.time.iloc[0]
 
     ...
+    return trj
 
 
 def traj(filepath, xlim=None, ylim=None, **kwargs):
@@ -279,24 +340,26 @@ def from_file(filepath, **kwargs):
     return trj
 
 
-
-
 class Debug():
+    """Debug only.
+    """
     def __init__(self, n_steps=1000):
         import glob
         from traja.main import TrajaAccessor, traj
         files = glob.glob('/Users/justinshenk/neurodata/data/raw_centroids_rev2/*')
-        self.df = traj(files[10])
-        self.df.traja.set(xlim=(-0.06, 0.06),
-                          ylim=(-0.13, 0.13),
-                          xlabel=("x (m)"),
-                          ylabel=("y (m)"),
-                          title="Cage trajectory")
-        self.df.traja.plot(n_steps=n_steps)
+        df = traj(files[10])
+        df.traja.set(xlim=(-0.06, 0.06),
+                     ylim=(-0.13, 0.13),
+                     xlabel=("x (m)"),
+                     ylabel=("y (m)"),
+                     title="Cage trajectory")
+        # df.traja.plot(n_steps=n_steps)
+        result = df.traja.rediscretize_points(R=0.0002)
+        import ipdb;ipdb.set_trace()
 
 
 def main(args):
-    experiment = DVCExperiment(experiment_name='Stroke_olive_oil',
+    experiment = traja.contrib.DVCExperiment(experiment_name='Stroke_olive_oil',
                                centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
     experiment.aggregate_files()
     activity_files = experiment.get_activity_files()
@@ -304,7 +367,7 @@ def main(args):
 
 def parse_arguments(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='Load and analyze activity data')
-    # TODO: Add cage dimensions argument
+    # TODO: Add x and y boundaries argument
     args = parser.parse_args(argv)
     return args
 
