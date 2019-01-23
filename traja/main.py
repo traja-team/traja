@@ -195,6 +195,7 @@ class TrajaAccessor(object):
             self.calc_distance()
         self._trj['angle'] = np.rad2deg(np.arccos(np.abs(self._trj['dx']) / self._trj['distance']))
 
+
     def rediscretize_points(self, R): # WIP #
         """Resample a trajectory to a constant step length. R is rediscretized step length.
         Returns result, series of step coordinates.

@@ -436,3 +436,116 @@ class DVCExperiment(object):
                                    parse_dates=['Surgery', 'time_stamp_start'],
                                    infer_datetime_format=True)
         return activity
+
+    def animate(self, trajectory, timesteps=None):
+        import matplotlib.animation as animation
+        import matplotlib as mpl
+        import matplotlib.patches as patches
+        if timesteps is not None:
+            df = trajectory.iloc[:timesteps]
+        else:
+            df = trajectory
+        ratios = {'left': 0, 'right': 0}
+        thresh = 30
+
+        # Scale to centimeters (optional)
+        df.x *= 100
+        df.y *= 100
+        if not 'distance' in trajectory:
+            self.calc_distance()
+        df.distance *= 100
+
+        df.traja.calc_turn_angle()
+        #     df['turn_angle'].where((df['distance']>1e-3) & ((df.turn_angle > -15) & (df.turn_angle < 15))).hist(bins=30)
+        df['turn_bias'] = df['turn_angle'] / .25  # 0.25s
+        # Only look at distances over .01 meters, resample to minute intervals
+        distance_mask = df['distance'] > 1e-2
+        angle_mask = (df.turn_bias > thresh) | (df.turn_bias < -thresh)
+
+        # coords
+        cage_y = 25.71
+        cage_x = 13.7
+
+        fig, axes = plt.subplots(2, 1, figsize=(8, 6), gridspec_kw={'height_ratios': [9, 1]})
+
+        def colfunc(val, minval, maxval, startcolor, stopcolor):
+            """ Convert value in the range minval...maxval to a color in the range
+                startcolor to stopcolor. The colors passed and the one returned are
+                composed of a sequence of N component values (e.g. RGB).
+            """
+            f = float(val - minval) / (maxval - minval)
+            return tuple(f * (b - a) + a for (a, b) in zip(startcolor, stopcolor))
+
+        RED, YELLOW, GREEN = (1, 0, 0), (1, 1, 0), (0, 1, 0)
+        CYAN, BLUE, MAGENTA = (0, 1, 1), (0, 0, 1), (1, 0, 1)
+        steps = 10
+        minval, maxval = 0.0, 1.0
+        incr = (maxval - minval) / steps
+
+        ax = axes[0]
+
+        for i in df.index:
+            ax.cla()
+            ax.set_aspect('equal')
+            ax.set_ylim(-cage_y / 2, cage_y / 2)
+            ax.set_xlim(-cage_x / 2, cage_x / 2)
+
+            x, y = df.loc[i, ['x', 'y']].values
+            turn_bias = df.loc[i, 'turn_bias']
+
+            # Scale to 0-1
+            laterality = turn_bias + 360
+            laterality /= (360 * 2)
+            if laterality > 1:
+                laterality = 1
+            elif laterality < 0:
+                laterality = 0
+
+            color = colfunc(laterality, minval, maxval, BLUE, RED)
+            ax.plot(x, y, color=color, marker='o')
+            ax.invert_yaxis()
+
+            try:
+                # Filter for 1 cm/s
+                # distance = df.distance.loc[i-2:i+2].sum()
+                distance = df.distance.loc[i]
+            except:
+                print(f"Skipping {i}")
+                continue
+
+            count_turn = (distance >= 0.25) & ((turn_bias > 20) | (turn_bias < -20))
+            if count_turn:
+                if turn_bias > 0:
+                    ratios['right'] += 1
+                elif turn_bias < 0:
+                    ratios['left'] += 1
+
+            distance_str = rf"$\bf{distance:.2f}$" if distance >= 0.25 else f"{distance:.2f}"
+
+            total_turns = ratios['right'] + ratios['left']
+            if total_turns == 0:
+                overall_laterality = 0.5
+            else:
+                overall_laterality = ratios['right'] / total_turns
+
+            ax.set_title(f"frame {i} - distance (cm/0.25s): {distance_str}\n \
+                x: {x:.2f}, y: {y:.2f}\n \
+                Heading: {df.loc[i,'heading']:5.0f} degrees\n \
+                Turn Angle: {df.loc[i,'turn_angle']:4.0f}\n \
+                Turn Bias: {turn_bias:4.0f}\n \
+                Current Laterality: {laterality:.2f}\n \
+                Left: {ratios['left']:>3}, Right: {ratios['right']:>3}\n \
+                Overall Laterality: {overall_laterality:.2f} \
+                ")
+
+            axes[1].cla()
+            if turn_bias > 0:
+                rect = patches.Rectangle((0, 0), laterality, 1, linewidth=1, edgecolor='k', facecolor='r')
+            elif turn_bias < 0:
+                rect = patches.Rectangle((0, 0), laterality, 1, linewidth=1, edgecolor='k', facecolor='b')
+            else:
+                rect = patches.Rectangle((0, 0), laterality, 1, linewidth=1, edgecolor='k', facecolor='gray')
+            # Add the patch to the Axes
+            axes[1].add_patch(rect)
+            fig.tight_layout()
+            plt.pause(0.01)
