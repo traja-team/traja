@@ -19,7 +19,7 @@ def shift_xtick_labels(xtick_labels, first_index=None):
     return xtick_labels
 
 def fill_in_traj(trj):
-
+    pass
 
 def smooth_sg(trj, w = None, p = 3):
     """Savitzky-Golay filtering."""
@@ -51,6 +51,7 @@ def angles(trj, lag = 1, compass_direction = None):
 
 
 def expected_sq_displacement(trj, n = None, eqn1= True, compass_direction = None):
+    # TODO: Fix and test implementation
     sl = step_lengths(trj)
     ta = angles(trj, compass_direction = compass_direction)
     l = np.mean(sl)
