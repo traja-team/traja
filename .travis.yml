@@ -1,0 +1,33 @@
+sudo: true
+dist: xenial
+language: python
+python:
+- '3.6'
+- '3.7'
+git:
+  depth: false
+env:
+- MPLBACKEND=Agg
+cache: pip
+install:
+- wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  -O miniconda.sh
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- hash -r
+- conda config --set always_yes yes --set changeps1 no
+- conda update -q conda
+- conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION 
+- source activate test-environment
+- pip install -r requirements.txt
+- pip install --upgrade pytest flake8
+- pip install .
+deploy:
+  provider: pypi
+  user: jshenk
+  skip_cleanup: true
+  on:
+    tags: true
+    branch: master
+  password: 
+    secure: Fmc7BLmn+M4jGu3s6w+gMfEDcHx348ZIPLS94Jt7UBWhPVy5qCu+tr2/a/Oak3wvzJfixmx9it9o4ti0UKFXRQNeMVFQVj72OjDzU7YX6gnfNLYhaT8Ip+LyrCdvTUPvHbaNy0R4Y7O3HJrgBekz2A0bPji9Xk6Aqhti2JevjxLWKuwmgubLwHW4rCutfxJoO6wi+t5mU1EhjIqW6/8MA9I8F2DxIs1bHGGgyHRfo74zBkkaWacMsfmlppHg+nsI2RQUWe/Yud4DDoFgbE+y0xW0ftsInGp6gyz0bczA0MxxU46mVmG/ZoE2/b95oKdbBa9p5d3Y4IOhmxaych5Nwq6gufZFNPfhtna6iPiuq5HdN4sslQn4wDglXXpA6Q6IwnBOPpy0STmDP6QJub7JUkRlykNqRPElm7AxgKEYkMnksuaywSSF6ATJTZllKmsZxWTUhuWmLTkk67gExOhOWH3sAHceNG7wTAwk9rLWE4feR1QdnJMG3xyWxqhl2FoAq03WyM72KRu04M0y0AI/9A30mD0BaEii6cWcq56yrtHB5HN5sTy0b2jqcexiOsa0hBzczIWM3uiz2BHR8jJ5O5sw0u1MuMeVqefPXbe1xch/oyocjU5Z90VMsK1p9rk9QcyP3wY+bRN/dlZAFNQvSSzf/vOCy4J4oJ1/nKZKVWI=
