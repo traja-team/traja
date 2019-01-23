@@ -1,9 +1,15 @@
 # traja
 Trajectory Analysis in Python
 
-## Getting started
+## Installation and setup
 
-Install with `pip install traja` # TODO: Add as PyPI package
+Install traja onto your system with `pip install traja` # TODO: Add as PyPI package
+
+Import traja into your Python script or via the Python command-line with `import traja`.
+
+## Trajectories with traja
+
+...
 
 ## Demo
 
