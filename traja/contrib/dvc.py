@@ -18,7 +18,14 @@ import seaborn as sns
 
 
 class DVCExperiment(object):
-    """Mouse tracking data analysis for Digital Ventilated Cages from Tecniplast."""
+    """Mouse tracking data analysis for Digital Ventilated Cages from Tecniplast.
+    experiment_name
+    centriods_dir
+    meta_filepath
+    cage_xmax
+    cage_ymax
+
+    """
     def __init__(self, experiment_name, centroids_dir,
                  meta_filepath='/Users/justinshenk/neurodata/data/Stroke_olive_oil/DVC cageids HT Maximilian Wiesmann updated.xlsx',
                  cage_xmax=0.058 * 2, cage_ymax=0.125 * 2):
@@ -222,9 +229,6 @@ class DVCExperiment(object):
     def get_cages(self, centroid_dir):
         # FIXME: Complete implementation
         return ['A04']
-
-    # def read_csv(self, path, index_col='time_stamp'):
-    #     pass
 
     def get_cages(self):
         return [x for x in self.mouse_lookup.keys()]

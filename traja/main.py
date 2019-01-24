@@ -89,6 +89,13 @@ class TrajaAccessor(object):
         except AttributeError:
             return pd.to_numeric(text, errors='coerce')
 
+    def set(self, **kwargs):
+        for key, value in kwargs:
+            try:
+                self._trj.__dict__[key] = value
+            except Exception as e:
+                raise Exception(f"Exception {e} assigning df.{key} to {value}")
+
     @property
     def night(self, begin='19:00', end='7:00'):
         return self._trj.between_time(begin, end)
@@ -143,6 +150,7 @@ class TrajaAccessor(object):
             n_coords: int
             days: tuple of strings ('2018-01-01', '2019-02-01') or tuple of event-related ints (-1, 7)
             """
+        GRAY = '#999999'
         if n_coords is not None and days is not None:
             raise NotImplementedError("Days and n_coords cannot both be specified.")
 
@@ -159,25 +167,28 @@ class TrajaAccessor(object):
                 # Range of days w.r.t. event, eg, for surgery, (-1, 7)
                 # TODO: Implement this with reference to day of event (eg, `Days_from_surgery` column)
                 raise NotImplementedError("Reference day will be column in `self._trj` or somewhere else")
-        else:
+        elif n_coords is not None:
             # Plot first `n_coords`
             start, end = 0, n_coords
             verts = coords.iloc[:n_coords].values
+        else:
+            start, end = 0, len(coords)
+            verts = coords.iloc[:end].values
 
         n_coords = len(verts)
         codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 1)
         path = Path(verts, codes)
 
         fig, ax = plt.subplots()
-
-        patch = patches.PathPatch(path, edgecolor='lightgray', facecolor='none', lw=1)
+        import ipdb;ipdb.set_trace()
+        patch = patches.PathPatch(path, edgecolor=GRAY, facecolor='none', lw=3, alpha=0.3)
         ax.add_patch(patch)
 
         xs, ys = zip(*verts)
 
-        colors = plt.cm.Greens_r(np.linspace(0, 1, n_coords))
-        for i in range(len(xs)):
-            ax.plot(xs[i], ys[i], 'o-', lw=1, color=colors[i], ms=2)
+        colors = plt.cm.viridis(np.linspace(0, 1, n_coords))
+        # for i in range(len(xs)):
+        ax.scatter(xs, ys, c=colors, s=8, zorder=2, alpha=0.3)
 
         if coords.xlim is not None:
             ax.set_xlim(coords.xlim)
@@ -187,13 +198,16 @@ class TrajaAccessor(object):
             ax.set_ylim(coords.ylim)
         else:
             ax.set_ylim((coords.y.min(), coords.y.max()))
+
+        if kwargs.pop('invert_yaxis', None):
+            plt.gca().invert_yaxis()
         ax.set_xlabel(coords.xlabel)
         ax.set_ylabel(coords.ylabel)
         ax.set_title(coords.title)
         ax.set_aspect('equal')
 
         N = 21  # bins
-        cmap = plt.get_cmap('Greens_r', N)
+        cmap = plt.get_cmap('viridis', N)
         norm = mpl.colors.Normalize(vmin=0, vmax=N)
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm._A = []
@@ -234,7 +248,7 @@ class TrajaAccessor(object):
 
     def to_shapely(self):
         """Return shapely object for area, bounds, etc. functions."""
-        df = self.__trj[['x', 'y']].dropna()
+        df = self._trj[['x', 'y']].dropna()
         coords = df.values
         tracks_data = {'type': 'LineString',
                        'coordinates': coords}
@@ -397,12 +411,20 @@ def read_file(filepath, **kwargs):
     xlabel = kwargs.pop('xlabel', f"x ({spatial_units})")
     ylabel = kwargs.pop('ylabel', f"y ({spatial_units})")
     fps = kwargs.pop('fps', None)
+    index_col = kwargs.pop('index_col', None)
+    if index_col is None:
+        # Set index to first column containing 'time'
+        df_test = pd.read_csv(filepath, nrows=10)
+        time_cols = [col for col in df_test.columns if 'time' in col.lower()]
+        if time_cols:
+            index_col = time_cols[0] # Get first column
     if 'csv' in filepath:
         trj = pd.read_csv(filepath,
                           date_parser=kwargs.pop('date_parser',
                                                  lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')),
                           infer_datetime_format=kwargs.pop('infer_datetime_format', True),
                           parse_dates=kwargs.pop('parse_dates', True),
+                          index_col=index_col,
                           **kwargs)
     else:
         # TODO: Implement for HDF5 and .npy files.
