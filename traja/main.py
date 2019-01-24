@@ -27,7 +27,7 @@ class TrajaDataFrame(pd.DataFrame):
 
     """
 
-    _metadata = ['xlim', 'ylim', 'spatial_units', 'xlabel', 'ylabel', 'title']
+    _metadata = ['xlim', 'ylim', 'spatial_units', 'xlabel', 'ylabel', 'title', 'fps', 'time_units']
 
     def __init__(self, *args, **kwargs):
         super(TrajaDataFrame, self).__init__(*args, **kwargs)
@@ -131,54 +131,6 @@ class TrajaAccessor(object):
                          )
         return df
 
-    @property
-    def spatial_units(self):
-        return self._spatial_units
-
-    @spatial_units.setter
-    def spatial_units(self, spatial_units: str):
-        self._spatial_units = spatial_units
-
-    @property
-    def xlim(self):
-        return self._xlim
-
-    @xlim.setter
-    def xlim(self, xlim: tuple):
-        self._xlim = xlim
-
-    @property
-    def ylim(self):
-        return self._ylim
-
-    @ylim.setter
-    def ylim(self, ylim):
-        self._ylim = ylim
-
-    @property
-    def xlabel(self):
-        return self._xlabel
-
-    @xlabel.setter
-    def xlabel(self, xlabel):
-        self._xlabel = xlabel
-
-    @property
-    def ylabel(self):
-        return self._ylabel
-
-    @ylabel.setter
-    def ylabel(self, ylabel):
-        self._ylabel = ylabel
-
-    @property
-    def title(self):
-        return self._title
-
-    @title.setter
-    def title(self, title):
-        self._title = title
-
     def set(self, **kwargs):
         for key, value in kwargs.items():
             try:
@@ -195,7 +147,6 @@ class TrajaAccessor(object):
             raise NotImplementedError("Days and n_coords cannot both be specified.")
 
         start, end = None, None
-        cbar_ticklabels = None
         coords = self._trj[['x', 'y']]
 
         if days is not None:
@@ -204,7 +155,6 @@ class TrajaAccessor(object):
                 # Datetime format
                 mask = coords.between(start, end, inclusive=True)
                 verts = coords.loc[mask].values
-                cbar_ticklabels = (start, end)
             elif isinstance(start, int) and isinstance(end, int):
                 # Range of days w.r.t. event, eg, for surgery, (-1, 7)
                 # TODO: Implement this with reference to day of event (eg, `Days_from_surgery` column)
@@ -446,6 +396,7 @@ def read_file(filepath, **kwargs):
     spatial_units = kwargs.pop('spatial_units', 'm')
     xlabel = kwargs.pop('xlabel', f"x ({spatial_units})")
     ylabel = kwargs.pop('ylabel', f"y ({spatial_units})")
+    fps = kwargs.pop('fps', None)
     if 'csv' in filepath:
         trj = pd.read_csv(filepath,
                           date_parser=kwargs.pop('date_parser',
@@ -465,6 +416,7 @@ def read_file(filepath, **kwargs):
     trj.title = title
     trj.xlabel = xlabel
     trj.ylabel = ylabel
+    trj.fps = fps
     return trj
 
 
