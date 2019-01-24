@@ -19,6 +19,58 @@ import seaborn as sns
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 
+class TrajaDataFrame(pd.DataFrame):
+    """A TrajaDataFrame object is a subclass of Pandas DataFrame.
+
+    """
+
+    _metadata = ['xlim', 'ylim', 'spatial_units', 'xlabel', 'ylabel', 'title']
+
+    def __init__(self, *args, **kwargs):
+        super(TrajaDataFrame, self).__init__(*args, **kwargs)
+        if len(args) == 1 and isinstance(args[0], TrajaDataFrame):
+            args[0]._copy_attrs(self)
+
+    @property
+    def _constructor(self):
+        return TrajaDataFrame
+
+    def _copy_attrs(self, df):
+        for attr in self._metadata:
+            df.__dict__[attr] = getattr(self, attr, None)
+
+    def __finalize__(self, other, method=None, **kwargs):
+        """propagate metadata from other to self """
+        # merge operation: using metadata of the left object
+        if method == 'merge':
+            for name in self._metadata:
+                object.__setattr__(self, name, getattr(other.left, name, None))
+        # concat operation: using metadata of the first object
+        elif method == 'concat':
+            for name in self._metadata:
+                object.__setattr__(self, name, getattr(other.objs[0], name, None))
+        else:
+            for name in self._metadata:
+                object.__setattr__(self, name, getattr(other, name, None))
+        return self
+
+    def copy(self, deep=True):
+        """
+        Make a copy of this TrajaDataFrame object
+        Parameters
+        ----------
+        deep : boolean, default True
+            Make a deep copy, i.e. also copy data
+        Returns
+        -------
+        copy : TrajaDataFrame
+        """
+        data = self._data
+        if deep:
+            data = data.copy()
+        return TrajaDataFrame(data).__finalize__(self)
+
+
 @pd.api.extensions.register_dataframe_accessor("traja")
 class TrajaAccessor(object):
     """Accessor for pandas DataFrame with trajectory-specific numerical and analytical functions."""
@@ -77,6 +129,14 @@ class TrajaAccessor(object):
         return df
 
     @property
+    def spatial_units(self):
+        return self._spatial_units
+
+    @spatial_units.setter
+    def spatial_units(self, spatial_units: str):
+        self._spatial_units = spatial_units
+
+    @property
     def xlim(self):
         return self._xlim
 
@@ -96,13 +156,13 @@ class TrajaAccessor(object):
     def xlabel(self):
         return self._xlabel
 
-    @property
-    def ylabel(self):
-        return self._ylabel
-
     @xlabel.setter
     def xlabel(self, xlabel):
         self._xlabel = xlabel
+
+    @property
+    def ylabel(self):
+        return self._ylabel
 
     @ylabel.setter
     def ylabel(self, ylabel):
@@ -123,63 +183,72 @@ class TrajaAccessor(object):
             except Exception as e:
                 logging.ERROR(f"Cannot set {key} to {value}")
 
-    def plot(self, n_steps: int = 1000, days: tuple = None, **kwargs):
+    def plot(self, n_coords: int = None, days: tuple = None, **kwargs):
         """Plot trajectory for single animal over period.
-            n_steps: int
+            n_coords: int
             days: tuple of strings ('2018-01-01', '2019-02-01') or tuple of event-related ints (-1, 7)
             """
+        if n_coords is not None and days is not None:
+            raise NotImplementedError("Days and n_coords cannot both be specified.")
+
         start, end = None, None
         cbar_ticklabels = None
-        __trj = self._trj[['x', 'y']]
+        coords = self._trj[['x', 'y']]
+
         if days is not None:
             start, end = days
             if isinstance(start, str) and isinstance(end, str):
                 # Datetime format
-                mask = __trj.between(start, end, inclusive=True)
-                verts = __trj.loc[mask].values
+                mask = coords.between(start, end, inclusive=True)
+                verts = coords.loc[mask].values
                 cbar_ticklabels = (start, end)
             elif isinstance(start, int) and isinstance(end, int):
                 # Range of days w.r.t. event, eg, for surgery, (-1, 7)
                 # TODO: Implement this with reference to day of event (eg, `Days_from_surgery` column)
                 raise NotImplementedError("Reference day will be column in `self._trj` or somewhere else")
         else:
-            # Plot first `n_steps`
-            start, end = 0, n_steps
-            verts = __trj.iloc[:n_steps].values
-            # cbar_ticklabels = (str(__trj.index[0]), str(__trj.index[n_steps]))
+            # Plot first `n_coords`
+            start, end = 0, n_coords
+            verts = coords.iloc[:n_coords].values
+
+        n_coords = len(verts)
         codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 1)
         path = Path(verts, codes)
 
         fig, ax = plt.subplots()
 
-        patch = patches.PathPatch(path, edgecolor='black', facecolor='none', lw=1)
+        patch = patches.PathPatch(path, edgecolor='lightgray', facecolor='none', lw=1)
+        ax.add_patch(patch)
 
         xs, ys = zip(*verts)
 
-        n_steps = len(verts)
-        colors = plt.cm.Greens_r(np.linspace(0, 1, n_steps))
+        colors = plt.cm.Greens_r(np.linspace(0, 1, n_coords))
         for i in range(len(xs)):
-            ax.plot(xs[i], ys[i], 'x-', lw=1, color=colors[i], ms=2)
-
-        ax.set_xlim(self._xlim)
-        ax.set_ylim(self._ylim)
-        ax.set_xlabel(self._xlabel)
-        ax.set_ylabel(self._ylabel)
-        ax.set_title(self._title)
+            ax.plot(xs[i], ys[i], 'o-', lw=1, color=colors[i], ms=2)
+        import ipdb;ipdb.set_trace()
+        if coords.xlim is not None:
+            ax.set_xlim(coords.xlim)
+        else:
+            ax.set_xlim((coords.x.min(), coords.x.max()))
+        if coords.ylim is not None:
+            ax.set_ylim(coords.ylim)
+        else:
+            ax.set_ylim((coords.y.min(), coords.y.max()))
+        ax.set_xlabel(coords.xlabel)
+        ax.set_ylabel(coords.ylabel)
+        ax.set_title(coords.title)
         ax.set_aspect('equal')
 
-        N = 21 # bins
+        N = 21  # bins
         cmap = plt.get_cmap('Greens_r', N)
         norm = mpl.colors.Normalize(vmin=0, vmax=N)
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         sm._A = []
         cbar = plt.colorbar(sm)
         cbar_yticklabels = cbar.ax.get_yticklabels()
-        if days is not None:
-            cbar_yticklabels = [[start] + [''] * (len(cbar_yticklabels) - 2) + [end]]
-        cbar_yticklabels = [__trj.index[i] for i in range(len(cbar_yticklabels))]
+        interval = n_coords // len(cbar_yticklabels)
+        cbar_yticklabels = [coords.index[interval*i] for i in range(len(cbar_yticklabels))]
         cbar.ax.set_yticklabels(cbar_yticklabels)
-        # cbar = plt.colorbar(ax=ax, ticks=[start, end])
         plt.tight_layout()
         plt.show()
         return ax
@@ -195,18 +264,17 @@ class TrajaAccessor(object):
             self.calc_distance()
         self._trj['angle'] = np.rad2deg(np.arccos(np.abs(self._trj['dx']) / self._trj['distance']))
 
-
-    def rediscretize_points(self, R): # WIP #
+    def rediscretize_points(self, R):  # WIP #
         """Resample a trajectory to a constant step length. R is rediscretized step length.
         Returns result, series of step coordinates.
 
         Based on the appendix in Bovet and Benhamou, (1988) and @JimMcL's trajr implementation.
         """
         # TODO: Test this method
-        points = self._trj[['x','y']].dropna().values.astype('float64')
+        points = self._trj[['x', 'y']].dropna().values.astype('float64')
         n_points = len(points)
         # TODO: Implement with complex numbers
-        result = np.empty((128,2))
+        result = np.empty((128, 2))
         p0 = points[0]
         result[0] = p0
         I = 0
@@ -228,12 +296,12 @@ class TrajaAccessor(object):
 
             # The next point lies on the segment p[k-1], p[k]
             XI = result[I][0]
-            xk_1 = points[k-1,0]
+            xk_1 = points[k - 1, 0]
             YI = result[I][1]
-            yk_1 = points[k-1,1]
+            yk_1 = points[k - 1, 1]
 
             a = 0 if XI - xk_1 > 0 else 1
-            lambda_ = np.arctan((points[k,1]-yk_1) / (points[k,0]-xk_1)) + a * np.pi # angle
+            lambda_ = np.arctan((points[k, 1] - yk_1) / (points[k, 0] - xk_1)) + a * np.pi  # angle
             cos_l = np.cos(lambda_)
             sin_l = np.sin(lambda_)
             U = (XI - xk_1) * cos_l + (YI - yk_1) * sin_l
@@ -249,13 +317,12 @@ class TrajaAccessor(object):
                 result = np.concatenate((result, np.empty_like(result)))
 
             # Save the point
-            result[I+1] = np.array([XIp1, YIp1])
+            result[I + 1] = np.array([XIp1, YIp1])
             I += 1
 
         # Truncate result
-        result = result[:I+2]
+        result = result[:I + 2]
         return result
-
 
     def calc_heading(self):
         if not set(self._trj.columns.tolist()).issuperset({'dx', 'dy'}):
@@ -280,7 +347,10 @@ class TrajaAccessor(object):
 
 
 def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units='m', time_units='s'):
+    # TODO: Convert to DataFrame if not already
     trj = track
+    trj.traja.spatial_units = spatial_units
+    trj.traja.time_units = time_units
 
     def rename(col, name):
         global trj
@@ -318,7 +388,7 @@ def traj(filepath, xlim=None, ylim=None, **kwargs):
     index_col = kwargs.pop('index_col', time_stamp_cols[0])
 
     df = pd.read_csv(filepath,
-                     date_parser=kwargs.pop('data_parser',
+                     date_parser=kwargs.pop('date_parser',
                                             lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')),
                      infer_datetime_format=kwargs.pop('infer_datetime_format', True),
                      parse_dates=kwargs.pop('parse_dates', True),
@@ -331,24 +401,44 @@ def traj(filepath, xlim=None, ylim=None, **kwargs):
     return df
 
 
-def from_file(filepath, **kwargs):
-    trj = pd.read_csv(filepath,
-                       date_parser=kwargs.pop('data_parser',
-                                              lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')),
-                       infer_datetime_format=kwargs.pop('infer_datetime_format', True),
-                       parse_dates=kwargs.pop('parse_dates', True),
-                       **kwargs)
+def read_file(filepath, **kwargs):
+    xlim = kwargs.pop('xlim', None)
+    ylim = kwargs.pop('ylim', None)
+    title = kwargs.pop('title', "Trajectory")
+    spatial_units = kwargs.pop('spatial_units', 'm')
+    xlabel = kwargs.pop('xlabel', f"x ({spatial_units})")
+    ylabel = kwargs.pop('ylabel', f"y ({spatial_units})")
+    if 'csv' in filepath:
+        trj = pd.read_csv(filepath,
+                          date_parser=kwargs.pop('date_parser',
+                                                 lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')),
+                          infer_datetime_format=kwargs.pop('infer_datetime_format', True),
+                          parse_dates=kwargs.pop('parse_dates', True),
+                          **kwargs)
+    else:
+        # TODO: Implement for HDF5 and .npy files.
+        raise NotImplementedError("Non-csv's not yet implemented")
+
+    trj = TrajaDataFrame(trj)
+    # Set meta properties of TrajaDataFrame
+    trj.xlim = xlim
+    trj.ylim = ylim
+    trj.spatial_units = spatial_units
+    trj.title = title
+    trj.xlabel = xlabel
+    trj.ylabel = ylabel
     return trj
 
 
 class Debug():
     """Debug only.
     """
+
     def __init__(self, n_steps=1000):
         import glob
         from traja.main import TrajaAccessor, traj
         files = glob.glob('/Users/justinshenk/neurodata/data/raw_centroids_rev2/*')
-        df = traj(files[10])
+        df = traja.read_file(files[10])
         df.traja.set(xlim=(-0.06, 0.06),
                      ylim=(-0.13, 0.13),
                      xlabel=("x (m)"),
@@ -356,12 +446,13 @@ class Debug():
                      title="Cage trajectory")
         # df.traja.plot(n_steps=n_steps)
         result = df.traja.rediscretize_points(R=0.0002)
-        import ipdb;ipdb.set_trace()
+        import ipdb;
+        ipdb.set_trace()
 
 
 def main(args):
     experiment = traja.contrib.DVCExperiment(experiment_name='Stroke_olive_oil',
-                               centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
+                                             centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
     experiment.aggregate_files()
     activity_files = experiment.get_activity_files()
 
