@@ -1,9 +1,11 @@
 # traja
 Trajectory Analysis in Python
 
+traja is composed of a subclass for pandas DataFrame, along with an accessor for additional operations.
+
 ## Installation and setup
 
-Install traja onto your system with `pip install traja` # TODO: Add as PyPI package
+Install traja onto your system with `pip install traja`
 
 Import traja into your Python script or via the Python command-line with `import traja`.
 
