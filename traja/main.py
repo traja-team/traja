@@ -250,7 +250,7 @@ class TrajaAccessor(object):
         cbar = plt.colorbar(sm)
         cbar_yticklabels = cbar.ax.get_yticklabels()
         interval = n_coords // len(cbar_yticklabels)
-        cbar_yticklabels = [coords.index[interval*i] for i in range(len(cbar_yticklabels))]
+        cbar_yticklabels = [coords.index[interval * i] for i in range(len(cbar_yticklabels))]
         cbar.ax.set_yticklabels(cbar_yticklabels)
         plt.tight_layout()
         plt.show()
@@ -258,45 +258,39 @@ class TrajaAccessor(object):
 
     def trip_grid(self, bins=16, log=False):
         """Generate a grid of time spent by point-to-cell gridding."""
-        df = self._trj[['x','y']].dropna()
+        # TODO: Add kde-based method for line-to-cell gridding
+        df = self._trj[['x', 'y']].dropna()
         x0, x1 = df.xlim or (df.x.min(), df.x.max())
         y0, y1 = df.ylim or (df.y.min(), df.y.max())
-        aspect = (y1-y0)/(x1-x0)
+        aspect = (y1 - y0) / (x1 - x0)
         x_edges = np.linspace(x0, x1, num=bins)
-        y_edges = np.linspace(y0, y1, num=int(bins/aspect))
+        y_edges = np.linspace(y0, y1, num=int(bins / aspect))
 
         x, y = zip(*df.values)
         # # TODO: Remove redundant histogram calculation
-        H, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges))
-        # cmax = H.flatten().argsort()[-1]  # Peak point is too hot, bug?
-        #
-        import ipdb;ipdb.set_trace()
+        hist, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges))
         fig, ax = plt.subplots()
-        # cmap = plt.get_cmap('Greens_r', 21)
-        # norm = mpl.colors.Normalize(vmin=0, vmax=H.max())
-        # sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
         if log:
-            H = np.log(H)
-            H[H == -np.inf] = 0
-        image = plt.imshow(H, interpolation='bilinear')
+            hist = np.log(hist)
+            hist[hist == -np.inf] = 0
+        image = plt.imshow(hist, interpolation='bilinear')
         # TODO: Set xticks and yticks to original data coordinates
-        # ax.set_aspect(aspect)
         # TODO: Adjust colorbar ytick_labels to correspond with time
         cbar = plt.colorbar(image, ax=ax)
         plt.title("Time spent{}".format(' (Logarithmic)' if log else ''))
         plt.tight_layout()
         plt.show()
+        # TODO: Add most common locations in grid
         # peak_index = unravel_index(hist.argmax(), hist.shape)
 
-
     def to_shapely(self):
-        df = self.__trj[['x','y']].dropna()
+        """Return shapely object for area, bounds, etc. functions."""
+        df = self.__trj[['x', 'y']].dropna()
         coords = df.values
         tracks_data = {'type': 'LineString',
                        'coordinates': coords}
         tracks_shape = shape(tracks_data)
         return tracks_shape
-
 
     def calc_distance(self):
         self._trj['distance'] = np.sqrt(np.power(self._trj.x.shift() - self._trj.x, 2) +
