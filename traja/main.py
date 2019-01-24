@@ -271,8 +271,7 @@ class TrajaAccessor(object):
         hist, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges))
         fig, ax = plt.subplots()
         if log:
-            hist = np.log(hist)
-            hist[hist == -np.inf] = 0
+            hist = np.log(hist+np.e)
         image = plt.imshow(hist, interpolation='bilinear')
         # TODO: Set xticks and yticks to original data coordinates
         # TODO: Adjust colorbar ytick_labels to correspond with time
@@ -495,8 +494,8 @@ def main(args):
 
 
 def parse_arguments(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='Load and analyze activity data')
-    # TODO: Add x and y boundaries argument
+    parser = argparse.ArgumentParser(description='Load and analyze trajectory data')
+    # TODO: Add command line options
     args = parser.parse_args(argv)
     return args
 
