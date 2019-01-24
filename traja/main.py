@@ -12,9 +12,12 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
+import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from numpy import unravel_index
+from shapely.geometry import shape
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
@@ -225,7 +228,7 @@ class TrajaAccessor(object):
         colors = plt.cm.Greens_r(np.linspace(0, 1, n_coords))
         for i in range(len(xs)):
             ax.plot(xs[i], ys[i], 'o-', lw=1, color=colors[i], ms=2)
-        import ipdb;ipdb.set_trace()
+
         if coords.xlim is not None:
             ax.set_xlim(coords.xlim)
         else:
@@ -252,6 +255,48 @@ class TrajaAccessor(object):
         plt.tight_layout()
         plt.show()
         return ax
+
+    def trip_grid(self, bins=16, log=False):
+        """Generate a grid of time spent by point-to-cell gridding."""
+        df = self._trj[['x','y']].dropna()
+        x0, x1 = df.xlim or (df.x.min(), df.x.max())
+        y0, y1 = df.ylim or (df.y.min(), df.y.max())
+        aspect = (y1-y0)/(x1-x0)
+        x_edges = np.linspace(x0, x1, num=bins)
+        y_edges = np.linspace(y0, y1, num=int(bins/aspect))
+
+        x, y = zip(*df.values)
+        # # TODO: Remove redundant histogram calculation
+        H, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges))
+        # cmax = H.flatten().argsort()[-1]  # Peak point is too hot, bug?
+        #
+        import ipdb;ipdb.set_trace()
+        fig, ax = plt.subplots()
+        # cmap = plt.get_cmap('Greens_r', 21)
+        # norm = mpl.colors.Normalize(vmin=0, vmax=H.max())
+        # sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        if log:
+            H = np.log(H)
+            H[H == -np.inf] = 0
+        image = plt.imshow(H, interpolation='bilinear')
+        # TODO: Set xticks and yticks to original data coordinates
+        # ax.set_aspect(aspect)
+        # TODO: Adjust colorbar ytick_labels to correspond with time
+        cbar = plt.colorbar(image, ax=ax)
+        plt.title("Time spent{}".format(' (Logarithmic)' if log else ''))
+        plt.tight_layout()
+        plt.show()
+        # peak_index = unravel_index(hist.argmax(), hist.shape)
+
+
+    def to_shapely(self):
+        df = self.__trj[['x','y']].dropna()
+        coords = df.values
+        tracks_data = {'type': 'LineString',
+                       'coordinates': coords}
+        tracks_shape = shape(tracks_data)
+        return tracks_shape
+
 
     def calc_distance(self):
         self._trj['distance'] = np.sqrt(np.power(self._trj.x.shift() - self._trj.x, 2) +
@@ -434,7 +479,7 @@ class Debug():
     """Debug only.
     """
 
-    def __init__(self, n_steps=1000):
+    def __init__(self, n_coords=1000):
         import glob
         from traja.main import TrajaAccessor, traj
         files = glob.glob('/Users/justinshenk/neurodata/data/raw_centroids_rev2/*')
@@ -444,10 +489,8 @@ class Debug():
                      xlabel=("x (m)"),
                      ylabel=("y (m)"),
                      title="Cage trajectory")
-        # df.traja.plot(n_steps=n_steps)
+        # df.traja.plot(n_coords=n_coords)
         result = df.traja.rediscretize_points(R=0.0002)
-        import ipdb;
-        ipdb.set_trace()
 
 
 def main(args):

@@ -234,7 +234,7 @@ class DVCExperiment(object):
         cage = file.split('/')[-1].split('_')[0]
         # Get x,y coordinates from centroids
         date_parser = lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')
-        df = traja.from_file(file, index_col='time_stamps_vec')[['x', 'y']]
+        df = traja.read_file(file, index_col='time_stamps_vec')[['x', 'y']]
         # df.x = df.x.round(7)
         # df.y = df.y.round(7)
         df.traja.calc_distance()  # adds 'distance' column
@@ -298,15 +298,15 @@ class DVCExperiment(object):
 
     def get_coords(self, cage):
         path = os.path.join(self.outdir, 'centroids', cage)
-        df = traja.from_file(path)
+        df = traja.read_file(path)
         return df
 
     def plot_position_heatmap(self, cage, bins=20):
         from numpy import unravel_index
         # TODO: Generate from y in +-0.12, x in +-0.058
         try:
-            x0, x1 = self._trj.traja.xlim
-            y0, y1 = self._trj.traja.ylim
+            x0, x1 = self._trj.xlim
+            y0, y1 = self._trj.ylim
         except:
             raise NotImplementedError("Not yet implemented automated heatmap binning")
         x_edges = np.linspace(x0, x1, num=bins)

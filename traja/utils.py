@@ -19,7 +19,8 @@ def shift_xtick_labels(xtick_labels, first_index=None):
     return xtick_labels
 
 def fill_in_traj(trj):
-    pass
+    # FIXME: Implement
+    return trj
 
 def smooth_sg(trj, w = None, p = 3):
     """Savitzky-Golay filtering."""
