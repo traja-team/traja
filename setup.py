@@ -16,7 +16,7 @@ with open(os.path.join(this_dir, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='delve',
+    name='traja',
     version=__version__,
     description='Traja is a trajectory analysis and visualization tool',
     url='https://github.com/justinshenk/traja',
