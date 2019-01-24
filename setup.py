@@ -9,7 +9,7 @@ from os import path
 # Get package version
 exec(open('traja/version.py', 'r').read())
 
-requirements = ['matplotlib','pandas','numpy','seaborn']
+requirements = ['matplotlib','pandas','numpy','seaborn', 'shapely']
 
 this_dir = path.abspath(path.dirname(__file__))
 with open(os.path.join(this_dir, 'README.md'), encoding='utf-8') as f:
