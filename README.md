@@ -30,16 +30,28 @@ Load trajectory with x,y and time coordinates:
 ```python
 import traja
 
-traj = traja.read_file('coords.csv')
+df = traja.read_file('coords.csv')
 ```
 
 Once a DataFrame is loaded, use the `.traja` accessor to access the visualization and analysis methods:
 
 ```python
-traj.traja.plot(title='Cage trajectory')
+df.traja.plot(title='Cage trajectory')
 ```
 
 ![dvc_screenshot](dvc_screenshot.png)
+
+### Random walk
+
+Generate random walks with
+
+```python
+df = traja.generate(n=1000, step_length=2)
+df.traja.plot()
+
+```
+
+![walk_screenshot.png](walk_screenshot.png)
 
 ## Demo
 
