@@ -15,7 +15,7 @@ If you use traja in your publications, please cite [add citation].
 
 To install traja onto your system, run
 
-`````pip install traja```
+```pip install traja```
 
 or download the zip file and run the graphical user interface [coming soon].
 
