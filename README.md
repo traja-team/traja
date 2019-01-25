@@ -13,7 +13,11 @@ If you use traja in your publications, please cite [add citation].
 
 ## Installation and setup
 
-Install traja onto your system with `pip install traja` or download the zip file and run the graphical user interface [coming soon].
+To install traja onto your system, run
+
+`````pip install traja```
+
+or download the zip file and run the graphical user interface [coming soon].
 
 Import traja into your Python script or via the Python command-line with `import traja`.
 
@@ -21,7 +25,7 @@ Import traja into your Python script or via the Python command-line with `import
 
 traja stores trajectories in pandas DataFrames, allowing any pandas functions to be used.
 
-Load trajectory:
+Load trajectory with x,y and time coordinates:
 
 ```python
 import traja
@@ -40,3 +44,7 @@ traj.traja.plot(title='Cage trajectory')
 ## Demo
 
 Coming soon.
+
+## Acknowledgements
+
+traja code implementation and analytical methods (particularly `rediscretize_points`) are heavily inspired by Jim McLean's R package [trajr](https://github.com/JimMcL/trajr). Many thanks to Jim for his feedback. 
