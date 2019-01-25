@@ -145,12 +145,28 @@ class TrajaAccessor(object):
             except Exception as e:
                 logging.ERROR(f"Cannot set {key} to {value}")
 
+    def _get_plot_args(self, **kwargs):
+        for var in self._trj._metadata:
+            # Update global meta variables
+            # TODO: Replace with elegant solution
+            if var not in kwargs:
+                kwargs[var] = None
+        return kwargs
+
     def plot(self, n_coords: int = None, days: tuple = None, **kwargs):
         """Plot trajectory for single animal over period.
             n_coords: int
             days: tuple of strings ('2018-01-01', '2019-02-01') or tuple of event-related ints (-1, 7)
             """
         GRAY = '#999999'
+
+        kwargs = self._get_plot_args(**kwargs)
+        xlim = kwargs.pop('xlim', None)
+        ylim = kwargs.pop('ylim', None)
+        xlabel = kwargs.pop('xlabel', f'x ({self._trj.spatial_units})')
+        ylabel = kwargs.pop('ylabel', f'y ({self._trj.spatial_units})')
+        title = kwargs.pop('title', None)
+
         if n_coords is not None and days is not None:
             raise NotImplementedError("Days and n_coords cannot both be specified.")
 
@@ -189,20 +205,21 @@ class TrajaAccessor(object):
         # for i in range(len(xs)):
         ax.scatter(xs, ys, c=colors, s=8, zorder=2, alpha=0.3)
 
-        if coords.xlim is not None:
-            ax.set_xlim(coords.xlim)
+        if xlim is not None:
+            ax.set_xlim(xlim)
         else:
             ax.set_xlim((coords.x.min(), coords.x.max()))
-        if coords.ylim is not None:
-            ax.set_ylim(coords.ylim)
+        if ylim is not None:
+            ax.set_ylim(ylim)
         else:
             ax.set_ylim((coords.y.min(), coords.y.max()))
 
         if kwargs.pop('invert_yaxis', None):
             plt.gca().invert_yaxis()
-        ax.set_xlabel(coords.xlabel)
-        ax.set_ylabel(coords.ylabel)
-        ax.set_title(coords.title)
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
         ax.set_aspect('equal')
 
         N = 21  # bins
@@ -248,8 +265,7 @@ class TrajaAccessor(object):
     @property
     def xy(self):
         """Return numpy array of x,y coordinates."""
-        return self._trj[['x','y']].values()
-
+        return self._trj[['x', 'y']].values()
 
     def to_shapely(self):
         """Return shapely object for area, bounds, etc. functions."""
@@ -267,9 +283,15 @@ class TrajaAccessor(object):
         self._trj['dy'] = self._trj.y.diff()
 
     def calc_angle(self):
+        """Calculate angle between steps as a funciton of distance w.r.t x axis."""
         if not set(self._trj.columns.tolist()).issuperset({'dx', 'distance'}):
             self.calc_distance()
         self._trj['angle'] = np.rad2deg(np.arccos(np.abs(self._trj['dx']) / self._trj['distance']))
+
+    def scale(self, scale, spatial_units="m"):
+        """Scale trajectory when converting, eg, from pixels to meters."""
+        self._trj[['x', 'y']] * scale
+        self._trj['spatial_units'] = spatial_units
 
     def rediscretize_points(self, R):  # WIP #
         """Resample a trajectory to a constant step length. R is rediscretized step length.
@@ -421,8 +443,71 @@ def distance(A, B, method='dtw'):
             raise ImportError("""            
             fastdtw is not installed. Install it with: 
             pip install fastdtw.""")
-        distance, path = fastdtw(A,B,dist=euclidean)
+        distance, path = fastdtw(A, B, dist=euclidean)
         return distance
+
+
+def generate(n=1000, random=True, step_length=2,
+             angular_error_sd=0.5,
+             angular_error_dist=None,
+             linear_error_sd=0.2,
+             linear_error_dist=None,
+             fps=50,
+             spatial_units='m',
+             **kwargs):
+    """Generates a trajectory. If \code{random} is \code{TRUE}, the trajectory will
+    be a correllated random walk/idiothetic directed walk (Kareiva & Shigesada,
+    1983), corresponding to an animal navigating without a compass (Cheung,
+    Zhang, Stricker, & Srinivasan, 2008). If \code{random} is \code{FALSE}, it
+    will be a directed walk/allothetic directed walk/oriented path, corresponding
+    to an animal navigating with a compass (Cheung, Zhang, Stricker, &
+    Srinivasan, 2007, 2008).
+
+    By default, for both random and directed walks, errors are normally
+    distributed, unbiased, and independent of each other, so are \emph{simple
+    directed walks} in the terminology of Cheung, Zhang, Stricker, & Srinivasan,
+    (2008). This behaviour may be modified by specifying alternative values for
+    the \code{angularErrorDist} and/or \code{linearErrorDist} parameters.
+
+    The initial angle (for a random walk) or the intended direction (for a
+    directed walk) is \code{0} radians. The starting position is \code{(0, 0)}.
+
+    Author: Jim McLean (trajr), ported to Python by Justin Shenk
+    """
+
+    polar2z = lambda r, theta: r * np.exp(1j * theta)
+
+    if angular_error_dist is None:
+        angular_error_dist = np.random.normal(loc=0., scale=angular_error_sd, size=n)
+    if linear_error_dist is None:
+        linear_error_dist = np.random.normal(loc=0., scale=linear_error_sd, size=n)
+    angular_errors = angular_error_dist
+    linear_errors = linear_error_dist
+    step_lengths = step_length + linear_errors
+    # Don't allow negative lengths
+    step_lengths[step_lengths < 0] = 0
+    steps = polar2z(step_lengths, angular_errors)
+
+    if random:
+        # Accumulate angular errors
+        coords = np.zeros(n + 1, dtype=np.complex)
+        angle = 0
+        for i in range(n):
+            angle += angular_errors[i]
+            length = step_length + linear_errors[i]
+            coords[i + 1] = coords[i] + polar2z(r=length, theta=angle)
+    else:
+        coords = np.array([complex(0), np.cumsum(steps)], dtype=np.complex)
+
+    x = coords.real
+    y = coords.imag
+
+    df = pd.DataFrame(data={'x': x, 'y': y})
+    df.fps = fps
+    df.spatial_units = spatial_units
+    for key, value in kwargs:
+        df.__dict__[key] = value
+    return df
 
 
 def read_file(filepath, **kwargs):
