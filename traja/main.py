@@ -15,6 +15,9 @@ import matplotlib.patches as patches
 import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
+
+
 from scipy.spatial.distance import directed_hausdorff, euclidean
 from numpy import unravel_index
 from shapely.geometry import shape
@@ -79,8 +82,6 @@ class TrajaAccessor(object):
     """Accessor for pandas DataFrame with trajectory-specific numerical and analytical functions."""
 
     def __init__(self, pandas_obj):
-        # self.trajectory = self.read_csv(path, **kwargs)
-        # return self.trajectory
         self._trj = pandas_obj
 
     def _strip(self, text):
@@ -150,8 +151,19 @@ class TrajaAccessor(object):
             # Update global meta variables
             # TODO: Replace with elegant solution
             if var not in kwargs:
-                kwargs[var] = None
+                # Metadata variable not specified in argument
+                if var in self._trj.__dict__:
+                    kwargs[var] = self._trj.__dict__[var]
         return kwargs
+
+    def get_time_col(self, df):
+        time_cols = [col for col in df if 'time' in col.lower()]
+        if time_cols:
+            time_col = time_cols[0]
+            if is_numeric_dtype(df[time_col]):
+                return time_col
+        else:
+            return None
 
     def plot(self, n_coords: int = None, days: tuple = None, **kwargs):
         """Plot trajectory for single animal over period.
@@ -166,12 +178,15 @@ class TrajaAccessor(object):
         xlabel = kwargs.pop('xlabel', f'x ({self._trj.spatial_units})')
         ylabel = kwargs.pop('ylabel', f'y ({self._trj.spatial_units})')
         title = kwargs.pop('title', None)
+        time_units = kwargs.pop('time_units', None)
+        fps = kwargs.pop('fps', None)
 
         if n_coords is not None and days is not None:
             raise NotImplementedError("Days and n_coords cannot both be specified.")
 
         start, end = None, None
         coords = self._trj[['x', 'y']]
+        time_col = self.get_time_col(self._trj)
 
         if days is not None:
             start, end = days
@@ -230,8 +245,13 @@ class TrajaAccessor(object):
         cbar = plt.colorbar(sm)
         cbar_yticklabels = cbar.ax.get_yticklabels()
         interval = n_coords // len(cbar_yticklabels)
-        cbar_yticklabels = [coords.index[interval * i] for i in range(len(cbar_yticklabels))]
+        if time_col:
+            cbar_yticklabels = [self._trj[[time_col]][interval * i] for i in range(len(cbar_yticklabels))]
+        else:
+            cbar_yticklabels = [coords.index[interval * i] for i in range(len(cbar_yticklabels))]
         cbar.ax.set_yticklabels(cbar_yticklabels)
+        # if time_col or time_units:
+        #     cbar.ax.set_ylabel(f'{time_units}')
         plt.tight_layout()
         plt.show()
         return ax
@@ -456,27 +476,27 @@ def generate(n=1000, random=True, step_length=2,
              fps=50,
              spatial_units='m',
              **kwargs):
-    """Generates a trajectory. If \code{random} is \code{TRUE}, the trajectory will
-    be a correllated random walk/idiothetic directed walk (Kareiva & Shigesada,
+    """Generates a trajectory. If ``random``` is ``True``, the trajectory will
+    be a correlated random walk/idiothetic directed walk (Kareiva & Shigesada,
     1983), corresponding to an animal navigating without a compass (Cheung,
-    Zhang, Stricker, & Srinivasan, 2008). If \code{random} is \code{FALSE}, it
+    Zhang, Stricker, & Srinivasan, 2008). If ``random`` is ``False``, it
     will be a directed walk/allothetic directed walk/oriented path, corresponding
     to an animal navigating with a compass (Cheung, Zhang, Stricker, &
     Srinivasan, 2007, 2008).
 
     By default, for both random and directed walks, errors are normally
-    distributed, unbiased, and independent of each other, so are \emph{simple
-    directed walks} in the terminology of Cheung, Zhang, Stricker, & Srinivasan,
+    distributed, unbiased, and independent of each other, so are **simple
+    directed walks** in the terminology of Cheung, Zhang, Stricker, & Srinivasan,
     (2008). This behaviour may be modified by specifying alternative values for
-    the \code{angularErrorDist} and/or \code{linearErrorDist} parameters.
+    the ``angularErrorDist`` and/or ``linearErrorDist`` parameters.
 
     The initial angle (for a random walk) or the intended direction (for a
-    directed walk) is \code{0} radians. The starting position is \code{(0, 0)}.
+    directed walk) is ``0`` radians. The starting position is ``(0, 0)``.
 
     Author: Jim McLean (trajr), ported to Python by Justin Shenk
     """
 
-    polar2z = lambda r, theta: r * np.exp(1j * theta)
+    polar_to_z = lambda r, theta: r * np.exp(1j * theta)
 
     if angular_error_dist is None:
         angular_error_dist = np.random.normal(loc=0., scale=angular_error_sd, size=n)
@@ -496,7 +516,7 @@ def generate(n=1000, random=True, step_length=2,
         for i in range(n):
             angle += angular_errors[i]
             length = step_length + linear_errors[i]
-            coords[i + 1] = coords[i] + polar2z(r=length, theta=angle)
+            coords[i + 1] = coords[i] + polar_to_z(r=length, theta=angle)
     else:
         coords = np.array([complex(0), np.cumsum(steps)], dtype=np.complex)
 
@@ -511,6 +531,22 @@ def generate(n=1000, random=True, step_length=2,
     return df
 
 
+def from_df(df):
+    """Convenience function for converting a Pandas DataFrame into a TrajaDataFrame.
+
+    Args:
+        df: pandas DataFrame
+
+    Return:
+        TrajaDataFrame
+    """
+    traj_df = TrajaDataFrame(df)
+    # Initialize metadata
+    for var in traj_df._metadata:
+        if not hasattr(traj_df, var):
+            traj_df.__dict__[var] = None
+    return traj_df
+
 def read_file(filepath, **kwargs):
     xlim = kwargs.pop('xlim', None)
     ylim = kwargs.pop('ylim', None)
@@ -522,10 +558,17 @@ def read_file(filepath, **kwargs):
     index_col = kwargs.pop('index_col', None)
     if index_col is None:
         # Set index to first column containing 'time'
-        df_test = pd.read_csv(filepath, nrows=10)
+        df_test = pd.read_csv(filepath, nrows=10, parse_dates=True, infer_datetime_format=True)
         time_cols = [col for col in df_test.columns if 'time' in col.lower()]
         if time_cols:
-            index_col = time_cols[0]  # Get first column
+            time_col = time_cols[0]
+            parsed_col_type = None
+            try:
+                parsed_col_type = pd.to_datetime(df_test[time_col]).dtype
+            except:
+                pass
+            if is_datetime64_any_dtype(df_test[time_col].dtype) or is_datetime64_any_dtype(parsed_col_type):
+                index_col = time_col
     if 'csv' in filepath:
         trj = pd.read_csv(filepath,
                           date_parser=kwargs.pop('date_parser',
