@@ -3,4 +3,5 @@ numpy
 seaborn
 matplotlib
 shapely
-descartes
+psutil
+scipy

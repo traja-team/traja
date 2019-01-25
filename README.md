@@ -1,11 +1,19 @@
 # traja
 Trajectory Analysis in Python
 
-traja is composed of a subclass for pandas DataFrame, along with an accessor for additional operations.
+traja is extends the capability of pandas DataFrame specific for animal trajectory analysis, and provides convenient interfaces to other geometric analysis packages (eg, shapely).
+
+## Introduction
+
+The traja Python package is a toolkit for the numerical characterisation and analysis of the trajectories of moving animals. Trajectory analysis is applicable in fields as diverse as optimal foraging theory, migration, and behavioural mimicry (e.g. for verifying similarities in locomotion). A trajectory is simply a record of the path followed by a moving animal. Trajr operates on trajectories in the form of a series of locations (as x, y coordinates) with times. Trajectories may be obtained by any method which provides this information, including manual tracking, radio telemetry, GPS tracking, and motion tracking from videos.
+
+The goal of this package (and this document) is to aid biological researchers, who may not have extensive experience with Python, to analyse trajectories without being handicapped by a limited knowledge of Python or programming. However, a basic understanding of Python is useful.
+
+If you use traja in your publications, please cite [add citation].
 
 ## Installation and setup
 
-Install traja onto your system with `pip install traja`
+Install traja onto your system with `pip install traja` or download the zip file and run the graphical user interface [coming soon].
 
 Import traja into your Python script or via the Python command-line with `import traja`.
 
@@ -18,19 +26,17 @@ Load trajectory:
 ```python
 import traja
 
-traj = traja.from_file('coords.csv')
+traj = traja.read_file('coords.csv')
 ```
 
 Once a DataFrame is loaded, use the `.traja` accessor to access the visualization and analysis methods:
 
 ```python
-traj.traja.plot()
+traj.traja.plot(title='Cage trajectory')
 ```
+
+![dvc_screenshot](dvc_screenshot.png)
 
 ## Demo
 
 Coming soon.
-
-![dvc_screenshot](dvc_screenshot.png)
-
-Details coming soon.
