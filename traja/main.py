@@ -236,6 +236,7 @@ class TrajaAccessor(object):
         plt.show()
         return ax
 
+
     def trip_grid(self, bins=16, log=False):
         """Generate a grid of time spent by point-to-cell gridding."""
         # TODO: Add kde-based method for line-to-cell gridding
