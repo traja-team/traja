@@ -1,7 +1,7 @@
 # traja
 Trajectory Analysis in Python
 
-traja is extends the capability of pandas DataFrame specific for animal trajectory analysis, and provides convenient interfaces to other geometric analysis packages (eg, shapely).
+traja extends the capability of pandas DataFrame specific for animal trajectory analysis in 2D, and provides convenient interfaces to other geometric analysis packages (eg, shapely).
 
 ## Introduction
 
