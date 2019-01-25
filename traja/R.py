@@ -1,5 +1,15 @@
 import traja
 import pandas as pd
+try:
+    import rpy2
+except ImportError:
+    raise ImportError("""
+    
+    Error: rpy2 not installed. Install it with
+    
+    pip install rpy2
+     
+    """)
 import rpy2.robjects.packages as rpackages
 import rpy2.robjects.numpy2ri
 import rpy2.robjects.pandas2ri as rpandas
@@ -19,11 +29,11 @@ adehabitat = importr('adehabitatLT')
 
 # !?Fractional seconds ignored for some reason (see https://bitbucket.org/rpy2/rpy2/issues/508/milliseconds-lost-converting-from-pandas)
 # Initialize dataframe with millisecond precision
-data = pd.DataFrame({
-    'Timestamp': pd.date_range('2017-01-01 00:00:00.234', periods=20, freq='ms', tz='UTC')
-    })
-
-rdata = rpandas.py2ri(data.Timestamp)
+# data = pd.DataFrame({
+#     'Timestamp': pd.date_range('2017-01-01 00:00:00.234', periods=20, freq='ms', tz='UTC')
+#     })
+#
+# rdata = rpandas.py2ri(data.Timestamp)
 
 ## Example
 # input:
@@ -37,3 +47,4 @@ rdata = rpandas.py2ri(data.Timestamp)
 
 # Create ltraj object for adehabitat analysis and plotting.
 # ltraj = adehabitat.as_ltraj(xy, date=rdate, id='1')
+
