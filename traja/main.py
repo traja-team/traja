@@ -15,7 +15,7 @@ import matplotlib.patches as patches
 import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
-import seaborn as sns
+from scipy.spatial.distance import directed_hausdorff, euclidean
 from numpy import unravel_index
 from shapely.geometry import shape
 
@@ -180,7 +180,6 @@ class TrajaAccessor(object):
         path = Path(verts, codes)
 
         fig, ax = plt.subplots()
-        import ipdb;ipdb.set_trace()
         patch = patches.PathPatch(path, edgecolor=GRAY, facecolor='none', lw=3, alpha=0.3)
         ax.add_patch(patch)
 
@@ -235,7 +234,7 @@ class TrajaAccessor(object):
         hist, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges))
         fig, ax = plt.subplots()
         if log:
-            hist = np.log(hist+np.e)
+            hist = np.log(hist + np.e)
         image = plt.imshow(hist, interpolation='bilinear')
         # TODO: Set xticks and yticks to original data coordinates
         # TODO: Adjust colorbar ytick_labels to correspond with time
@@ -245,6 +244,12 @@ class TrajaAccessor(object):
         plt.show()
         # TODO: Add most common locations in grid
         # peak_index = unravel_index(hist.argmax(), hist.shape)
+
+    @property
+    def xy(self):
+        """Return numpy array of x,y coordinates."""
+        return self._trj[['x','y']].values()
+
 
     def to_shapely(self):
         """Return shapely object for area, bounds, etc. functions."""
@@ -403,6 +408,23 @@ def traj(filepath, xlim=None, ylim=None, **kwargs):
     return df
 
 
+def distance(A, B, method='dtw'):
+    if method is 'hausdorff':
+        dist0 = directed_hausdorff(A, B)[0]
+        dist1 = directed_hausdorff(B, A)[0]
+        symmetric_dist = max(dist0, dist1)
+        return symmetric_dist
+    elif method is 'dtw':
+        try:
+            from fastdtw import fastdtw
+        except ImportError:
+            raise ImportError("""            
+            fastdtw is not installed. Install it with: 
+            pip install fastdtw.""")
+        distance, path = fastdtw(A,B,dist=euclidean)
+        return distance
+
+
 def read_file(filepath, **kwargs):
     xlim = kwargs.pop('xlim', None)
     ylim = kwargs.pop('ylim', None)
@@ -417,7 +439,7 @@ def read_file(filepath, **kwargs):
         df_test = pd.read_csv(filepath, nrows=10)
         time_cols = [col for col in df_test.columns if 'time' in col.lower()]
         if time_cols:
-            index_col = time_cols[0] # Get first column
+            index_col = time_cols[0]  # Get first column
     if 'csv' in filepath:
         trj = pd.read_csv(filepath,
                           date_parser=kwargs.pop('date_parser',
