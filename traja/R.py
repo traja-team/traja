@@ -13,7 +13,7 @@ except ImportError:
 import rpy2.robjects.packages as rpackages
 import rpy2.robjects.numpy2ri
 import rpy2.robjects.pandas2ri as rpandas
-rpandas.activate()
+
 from rpy2.robjects.vectors import DataFrame
 from rpy2.robjects.packages import importr, data
 
