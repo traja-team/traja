@@ -22,7 +22,9 @@ from scipy.spatial.distance import directed_hausdorff, euclidean
 from numpy import unravel_index
 from shapely.geometry import shape
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
+from traja.utils import polar_to_z
+
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 
 
 class TrajaDataFrame(pd.DataFrame):
@@ -284,9 +286,18 @@ class TrajaAccessor(object):
         # peak_index = unravel_index(hist.argmax(), hist.shape)
 
     @property
+    def _has_cols(self, cols):
+        return self._trj.columns.isin(cols).all()
+
+    @property
     def xy(self):
         """Return numpy array of x,y coordinates."""
-        return self._trj[['x', 'y']].values()
+        if self._has_cols(['x','y']):
+            xy = self._trj[['x', 'y']].values
+            return xy
+        else:
+            raise Exception("'x' and 'y' are not in the dataframe.")
+
 
     def to_shapely(self):
         """Return shapely object for area, bounds, etc. functions."""
@@ -305,13 +316,13 @@ class TrajaAccessor(object):
 
     def calc_angle(self):
         """Calculate angle between steps as a funciton of distance w.r.t x axis."""
-        if not set(self._trj.columns.tolist()).issuperset({'dx', 'distance'}):
+        if not self._has_cols(['dx', 'distance']):
             self.calc_distance()
         self._trj['angle'] = np.rad2deg(np.arccos(np.abs(self._trj['dx']) / self._trj['distance']))
 
     def scale(self, scale, spatial_units="m"):
         """Scale trajectory when converting, eg, from pixels to meters."""
-        self._trj[['x', 'y']] * scale
+        self._trj[['x', 'y']] *= scale
         self._trj['spatial_units'] = spatial_units
 
     def rediscretize_points(self, R):  # WIP #
@@ -375,7 +386,7 @@ class TrajaAccessor(object):
         return result
 
     def calc_heading(self):
-        if not set(self._trj.columns.tolist()).issuperset({'dx', 'dy'}):
+        if not self._has_cols(['dx', 'dy']):
             self.calc_distance()
         # Get heading from angle
         mask = (self._trj['dx'] > 0) & (self._trj['dy'] >= 0)
@@ -467,7 +478,6 @@ def distance(A, B, method='dtw'):
         distance, path = fastdtw(A, B, dist=euclidean)
         return distance
 
-
 def generate(n=1000, random=True, step_length=2,
              angular_error_sd=0.5,
              angular_error_dist=None,
@@ -496,8 +506,6 @@ def generate(n=1000, random=True, step_length=2,
     Author: Jim McLean (trajr), ported to Python by Justin Shenk
     """
 
-    polar_to_z = lambda r, theta: r * np.exp(1j * theta)
-
     if angular_error_dist is None:
         angular_error_dist = np.random.normal(loc=0., scale=angular_error_sd, size=n)
     if linear_error_dist is None:
@@ -507,7 +515,7 @@ def generate(n=1000, random=True, step_length=2,
     step_lengths = step_length + linear_errors
     # Don't allow negative lengths
     step_lengths[step_lengths < 0] = 0
-    steps = polar2z(step_lengths, angular_errors)
+    steps = polar_to_z(step_lengths, angular_errors)
 
     if random:
         # Accumulate angular errors

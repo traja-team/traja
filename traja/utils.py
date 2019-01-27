@@ -1,4 +1,5 @@
 #! /usr/local/env python3
+import math
 import numpy as np
 import scipy
 
@@ -50,6 +51,24 @@ def angles(trj, lag = 1, compass_direction = None):
     trj.loc[trj.turn_angle >= 180, 'turn_angle'] -= 360
     trj.loc[trj.turn_angle < -180, 'turn_angle'] += 360
 
+def step_lengths(trj):
+    """Length of the steps of `trj`."""
+    raise NotImplementedError()
+
+
+def polar_to_z(r, theta):
+    """Converts polar coordinates `z` and `theta` to complex number `z`."""
+    return r * np.exp(1j * theta)
+
+
+def cartesian_to_polar(xy):
+    """Convert np.array `xy` to polar coordinates `r` and `theta`."""
+    assert xy.ndim == 2, f"Dimensions are {xy.ndim}, expecting 2"
+    x, y = np.split(xy,[-1], axis=1)
+    x, y = np.squeeze(x), np.squeeze(y)
+    r = math.sqrt(x * x + y * y)
+    theta = math.atan2(y, x)
+    return r, theta
 
 def expected_sq_displacement(trj, n = None, eqn1= True, compass_direction = None):
     # TODO: Fix and test implementation
