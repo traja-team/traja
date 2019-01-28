@@ -106,3 +106,7 @@ venv.bak/
 .mypy_cache/
 
 .idea
+
+_build/
+_static/
+_templates/
