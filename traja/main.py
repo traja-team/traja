@@ -252,7 +252,7 @@ class TrajaAccessor(object):
         cbar_yticklabels = cbar.ax.get_yticklabels()
         interval = n_coords // len(cbar_yticklabels)
         if time_col:
-            cbar_yticklabels = [self._trj[[time_col]][interval * i] for i in range(len(cbar_yticklabels))]
+            cbar_yticklabels = [self._trj[time_col][interval * i] for i in range(len(cbar_yticklabels))]
         else:
             cbar_yticklabels = [coords.index[interval * i] for i in range(len(cbar_yticklabels))]
         cbar.ax.set_yticklabels(cbar_yticklabels)
@@ -290,8 +290,7 @@ class TrajaAccessor(object):
         # TODO: Add most common locations in grid
         # peak_index = unravel_index(hist.argmax(), hist.shape)
 
-    @property
-    def _has_cols(self, cols):
+    def _has_cols(self, cols:list):
         return set(cols).issubset(self._trj.columns)
 
     @property
@@ -734,16 +733,21 @@ class Debug():
 
     def __init__(self, n_coords=1000):
         import glob
+        import traja
         from traja.main import TrajaAccessor, traj
-        files = glob.glob('/Users/justinshenk/neurodata/data/raw_centroids_rev2/*')
-        df = traja.read_file(files[10])
-        df.traja.set(xlim=(-0.06, 0.06),
-                     ylim=(-0.13, 0.13),
-                     xlabel=("x (m)"),
-                     ylabel=("y (m)"),
-                     title="Cage trajectory")
+        # files = glob.glob('/Users/justinshenk/neurodata/data/raw_centroids_rev2/*')
+        # df = traja.read_file(files[10])
+        # df.traja.set(xlim=(-0.06, 0.06),
+        #              ylim=(-0.13, 0.13),
+        #              xlabel=("x (m)"),
+        #              ylabel=("y (m)"),
+        #              title="Cage trajectory")
         # FIXME: Function below takes forerver (or doesn't complete)
-        result = df.traja.rediscretize_points(R=0.0002)
+        # result = df.traja.rediscretize_points(R=0.0002)
+        basepath = os.path.dirname(traja.__file__)
+        filepath = os.path.join(basepath, 'test','test_data','3527.csv')
+        df = traja.read_file(filepath)
+        df.traja.plot()
 
 
 def main(args):
