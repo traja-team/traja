@@ -2,9 +2,7 @@
 import argparse
 import glob
 import logging
-import multiprocessing as mp
 import os
-import psutil
 import sys
 import traja
 
@@ -101,11 +99,13 @@ class TrajaAccessor(object):
 
     @property
     def night(self, begin='19:00', end='7:00'):
-        return self._trj.between_time(begin, end)
+        """Returns trajectory indices for time between `begin` and `end`."""
+        return self.between(begin, end)
 
     @property
     def day(self, begin='7:00', end='19:00'):
-        return self._trj.between_time(begin, end)
+        """Return trajectory indices for daytime from `begin` to `end`."""
+        return self.between(begin, end)
 
     def read_csv(self, path, **kwargs):
         index_col = kwargs.pop('index_col', None)
@@ -167,7 +167,22 @@ class TrajaAccessor(object):
         else:
             return None
 
-    def plot(self, n_coords: int = None, days: tuple = None, **kwargs):
+    @property
+    def between(self, begin, end):
+        """Return indices of 'time' column between `begin` and end`.
+        Example:
+            morning_mask = df.traja.between('9:00','12:00')
+            morning = morning_mask = df[time_mask]
+
+        """
+        if pd.core.dtypes.common.is_datetime64_dtype(self._trj.time):
+            indices = self._trj.time.between_time(begin, end)
+            return self._trj[indices]
+        else:
+            raise TypeError(f"{self._trj.time.dtype} is not datetime64")
+
+
+    def plot(self, n_coords: int = None, **kwargs):
         """Plot trajectory for single animal over period.
             n_coords: int
             days: tuple of strings ('2018-01-01', '2019-02-01') or tuple of event-related ints (-1, 7)
@@ -183,24 +198,14 @@ class TrajaAccessor(object):
         time_units = kwargs.pop('time_units', None)
         fps = kwargs.pop('fps', None)
 
-        if n_coords is not None and days is not None:
+        if n_coords is not None:
             raise NotImplementedError("Days and n_coords cannot both be specified.")
 
         start, end = None, None
         coords = self._trj[['x', 'y']]
         time_col = self.get_time_col(self._trj)
 
-        if days is not None:
-            start, end = days
-            if isinstance(start, str) and isinstance(end, str):
-                # Datetime format
-                mask = coords.between(start, end, inclusive=True)
-                verts = coords.loc[mask].values
-            elif isinstance(start, int) and isinstance(end, int):
-                # Range of days w.r.t. event, eg, for surgery, (-1, 7)
-                # TODO: Implement this with reference to day of event (eg, `Days_from_surgery` column)
-                raise NotImplementedError("Reference day will be column in `self._trj` or somewhere else")
-        elif n_coords is not None:
+        if n_coords is not None:
             # Plot first `n_coords`
             start, end = 0, n_coords
             verts = coords.iloc[:n_coords].values
@@ -219,7 +224,6 @@ class TrajaAccessor(object):
         xs, ys = zip(*verts)
 
         colors = plt.cm.viridis(np.linspace(0, 1, n_coords))
-        # for i in range(len(xs)):
         ax.scatter(xs, ys, c=colors, s=8, zorder=2, alpha=0.3)
 
         if xlim is not None:
@@ -258,9 +262,10 @@ class TrajaAccessor(object):
         plt.show()
         return ax
 
+    # def polar_bar(self):
 
     def trip_grid(self, bins=16, log=False):
-        """Generate a grid of time spent by point-to-cell gridding."""
+        """Generate a heatmap of time spent by point-to-cell gridding."""
         # TODO: Add kde-based method for line-to-cell gridding
         df = self._trj[['x', 'y']].dropna()
         x0, x1 = df.xlim or (df.x.min(), df.x.max())
@@ -287,7 +292,7 @@ class TrajaAccessor(object):
 
     @property
     def _has_cols(self, cols):
-        return self._trj.columns.isin(cols).all()
+        return set(cols).issubset(self._trj.columns)
 
     @property
     def xy(self):
@@ -298,6 +303,104 @@ class TrajaAccessor(object):
         else:
             raise Exception("'x' and 'y' are not in the dataframe.")
 
+    def _check_has_time(self):
+        """Check for presence of displacement time column."""
+        if 'displacement_time' not in self._trj:
+            raise Exception("Missing time information in trajectory.")
+
+    def calc_derivatives(self, assign=True):
+        """Calculate derivatives `displacement` and `displacement_time`."""
+        self._check_has_time()
+        if not 'displacement' in self._trj:
+            displacement = self.calc_displacement(assign=assign)
+        else:
+            displacement = self._trj.displacement
+
+        displacement_time = self._trj.time - self._trj.time.iloc[0]
+
+        v = displacement.iloc[1:len(displacement)] / displacement_time.diff()
+        vt = displacement_time.iloc[1:]
+
+        derivs = dict(displacement=displacement, displacement_time=displacement_time)
+        if assign:
+            self._trj = self._trj.assign(derivs)
+        return derivs
+
+    def get_derivatives(self):
+        """Get derivatives."""
+        if not self._has_cols(['displacement','displacement_time']):
+            derivs = self.calc_derivatives(assign=False)
+        else:
+            d = self._trj.displacement
+            t = self._trj.displacement_time
+            derivs = dict(displacement=d, displacement_time=t)
+        v = d[1: len(d)] / t.diff()
+        vt = t[1: len(t)]
+        # Calculate linear acceleration
+        a = v.diff() / vt.diff()
+        at = vt[1: len(vt)]
+        derivs.update(dict(speed = v, speed_times = vt, acceleration = a, acceleration_times = at))
+        return derivs
+
+    @property
+    def speed_intervals(self, faster_than = None, slower_than = None, interpolate_times = True):
+        """Calculate speed time intervals.
+
+        Returns a dictionary of time intervals where speed is slower and/or faster than specified values.
+
+        Implementation ported to Python from Jim McLean's trajr package.
+        """
+        derivs = self.get_derivatives()
+
+        if faster_than is not None:
+            pass
+        if slower_than is not None:
+            pass
+
+        # Calculate trajectory speeds
+        derivs = self.get_derivatives()
+        speed = derivs.get('speed')
+        times = derivs.get('speed_times')
+        flags = np.full(len(speed), 1)
+
+        if faster_than is not None:
+            flags = flags & (speed > faster_than)
+        if slower_than is not None:
+            flags = flags & (speed < slower_than)
+
+        changes = np.diff(flags)
+        stop_frames = np.where(changes == -1)[0]
+        start_frames = np.where(changes == 1)[0]
+
+        # Handle situation where interval begins or ends outside of trajectory
+        if len(start_frames) > 0 or len(stop_frames) > 0:
+            # Assume interval started at beginning of trajectory, since we don't know what happened before that
+            if len(stop_frames) > 0 and (len(start_frames) == 0 or stop_frames[0] < start_frames[0]):
+                start_frames = np.append(1, start_frames)
+            # Similarly, assume that interval can't extend past end of trajectory
+            if len(stop_frames) == 0 or start_frames[len(start_frames)-1] > stop_frames[len(stop_frames)-1]:
+                stop_frames = np.append(stop_frames, len(speed))
+
+        stop_times = times[stop_frames]
+        start_times = times[start_frames]
+
+        if (interpolate_times and len(start_frames) > 0):
+            # TODO: Implement
+            raise NotImplementedError()
+            r = self.linear_interp_times(slower_than, faster_than, speed, times, start_frames, start_times)
+            start_times = r[:,0]
+            stop_times = r[:,1]
+
+        durations = stop_times - start_times
+        result = traja.TrajaDataFrame(dict(start_frame=start_frames,
+                                           start_time=start_times,
+                                           stop_frame = stop_frames,
+                                           stop_time=stop_times,
+                                           duration = durations))
+
+        metadata = dict(slower_than = slower_than, faster_than= faster_than, derivs=derivs,trajectory = self._trj)
+        result.__dict__.update(metadata)
+        return result
 
     def to_shapely(self):
         """Return shapely object for area, bounds, etc. functions."""
@@ -308,17 +411,31 @@ class TrajaAccessor(object):
         tracks_shape = shape(tracks_data)
         return tracks_shape
 
-    def calc_distance(self):
-        self._trj['distance'] = np.sqrt(np.power(self._trj.x.shift() - self._trj.x, 2) +
+    def calc_displacement(self, assign=True):
+        """Calculate displacement between consecutive indices."""
+        displacement = np.sqrt(np.power(self._trj.x.shift() - self._trj.x, 2) +
                                         np.power(self._trj.y.shift() - self._trj.y, 2))
-        self._trj['dx'] = self._trj.x.diff()
-        self._trj['dy'] = self._trj.y.diff()
 
-    def calc_angle(self):
-        """Calculate angle between steps as a funciton of distance w.r.t x axis."""
-        if not self._has_cols(['dx', 'distance']):
-            self.calc_distance()
-        self._trj['angle'] = np.rad2deg(np.arccos(np.abs(self._trj['dx']) / self._trj['distance']))
+        # dx = self._trj.x.diff()
+        # dy = self._trj.y.diff()
+
+        data = dict(displacement=displacement)
+        if assign:
+            self._trj = self._trj.assign(data)
+        return traja.TrajaDataFrame(data)
+
+
+    def calc_angle(self, assign=True):
+        """Calculate angle between steps as a funciton of displacement w.r.t x axis."""
+        if not self._has_cols(['dx', 'displacement']):
+            displacement = self.calc_displacement()
+        else:
+            displacement = self._trj.displacement
+
+        angle = np.rad2deg(np.arccos(np.abs(self._trj.x.diff()) / displacement))
+        if assign:
+            self._trj['angle'] = angle
+        return angle
 
     def scale(self, scale, spatial_units="m"):
         """Scale trajectory when converting, eg, from pixels to meters."""
@@ -385,27 +502,41 @@ class TrajaAccessor(object):
         result = result[:I + 2]
         return result
 
-    def calc_heading(self):
-        if not self._has_cols(['dx', 'dy']):
-            self.calc_distance()
+    def calc_heading(self, assign=True):
+        if not self._has_cols('angle'):
+            angle = self.calc_angle(assign=True)
+        else:
+            angle = self._trj.angle
+        df = self._trj
+        dx = df.x.diff()
+        dy = df.y.diff()
         # Get heading from angle
-        mask = (self._trj['dx'] > 0) & (self._trj['dy'] >= 0)
-        self._trj.loc[mask, 'heading'] = self._trj['angle'][mask]
-        mask = (self._trj['dx'] >= 0) & (self._trj['dy'] < 0)
-        self._trj.loc[mask, 'heading'] = -self._trj['angle'][mask]
-        mask = (self._trj['dx'] < 0) & (self._trj['dy'] <= 0)
-        self._trj.loc[mask, 'heading'] = -(180 - self._trj['angle'][mask])
-        mask = (self._trj['dx'] <= 0) & (self._trj['dy'] > 0)
-        self._trj.loc[mask, 'heading'] = (180 - self._trj['angle'])[mask]
+        mask = (dx > 0) & (dy >= 0)
+        df.loc[mask, 'heading'] = angle[mask]
+        mask = (dx >= 0) & (dy < 0)
+        df.loc[mask, 'heading'] = -angle[mask]
+        mask = (dx < 0) & (dy <= 0)
+        df.loc[mask, 'heading'] = -(180 - angle[mask])
+        mask = (dx <= 0) & (dy > 0)
+        df.loc[mask, 'heading'] = (180 - angle[mask])
+        if assign:
+            self._trj['heading'] = df.heading
+        return df.heading
 
-    def calc_turn_angle(self):
+    def calc_turn_angle(self, assign=True):
+        """Calculate turn angle."""
         if 'heading' not in self._trj:
-            self.calc_heading()
-        self._trj['turn_angle'] = self._trj['heading'].diff()
+            heading = self.calc_heading(assign=False)
+        else:
+            heading = self._trj.heading
+        turn_angle = heading.diff()
         # Correction for 360-degree angle range
-        self._trj.loc[self._trj.turn_angle >= 180, 'turn_angle'] -= 360
-        self._trj.loc[self._trj.turn_angle < -180, 'turn_angle'] += 360
-
+        turn_angle[turn_angle >= 180] -= 360
+        turn_angle[turn_angle < -180] += 360
+        if assign:
+            self._trj['turn_angle'] = turn_angle
+        else:
+            return turn_angle
 
 def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units='m', time_units='s'):
     # TODO: Convert to DataFrame if not already
@@ -556,6 +687,7 @@ def from_df(df):
     return traj_df
 
 def read_file(filepath, **kwargs):
+    """Convenience method wrapping pandas `read_csv` and initializing metadata."""
     xlim = kwargs.pop('xlim', None)
     ylim = kwargs.pop('ylim', None)
     title = kwargs.pop('title', "Trajectory")
@@ -563,28 +695,23 @@ def read_file(filepath, **kwargs):
     xlabel = kwargs.pop('xlabel', f"x ({spatial_units})")
     ylabel = kwargs.pop('ylabel', f"y ({spatial_units})")
     fps = kwargs.pop('fps', None)
-    index_col = kwargs.pop('index_col', None)
-    if index_col is None:
-        # Set index to first column containing 'time'
-        df_test = pd.read_csv(filepath, nrows=10, parse_dates=True, infer_datetime_format=True)
-        time_cols = [col for col in df_test.columns if 'time' in col.lower()]
-        if time_cols:
-            time_col = time_cols[0]
-            parsed_col_type = None
-            try:
-                parsed_col_type = pd.to_datetime(df_test[time_col]).dtype
-            except:
-                pass
-            if is_datetime64_any_dtype(df_test[time_col].dtype) or is_datetime64_any_dtype(parsed_col_type):
-                index_col = time_col
+    date_parser = kwargs.pop('data_parser', None)
+    # Set index to first column containing 'time'
+    df_test = pd.read_csv(filepath, nrows=10, parse_dates=True, infer_datetime_format=True)
+    time_cols = [col for col in df_test.columns if 'time' in col.lower()]
+
     if 'csv' in filepath:
         trj = pd.read_csv(filepath,
-                          date_parser=kwargs.pop('date_parser',
-                                                 lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')),
+                          date_parser=date_parser,
                           infer_datetime_format=kwargs.pop('infer_datetime_format', True),
                           parse_dates=kwargs.pop('parse_dates', True),
-                          index_col=index_col,
                           **kwargs)
+        if time_cols:
+            time_col = time_cols[0]
+            trj.rename(columns={time_col:'time'})
+        else:
+            time = (trj.index) / fps
+            trj['time'] = time
     else:
         # TODO: Implement for HDF5 and .npy files.
         raise NotImplementedError("Non-csv's not yet implemented")
@@ -615,15 +742,16 @@ class Debug():
                      xlabel=("x (m)"),
                      ylabel=("y (m)"),
                      title="Cage trajectory")
-        # df.traja.plot(n_coords=n_coords)
+        # FIXME: Function below takes forerver (or doesn't complete)
         result = df.traja.rediscretize_points(R=0.0002)
 
 
 def main(args):
-    experiment = traja.contrib.DVCExperiment(experiment_name='Stroke_olive_oil',
-                                             centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
-    experiment.aggregate_files()
-    activity_files = experiment.get_activity_files()
+    # experiment = traja.contrib.DVCExperiment(experiment_name='Stroke_olive_oil',
+    #                                          centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
+    # experiment.aggregate_files()
+    # activity_files = experiment.get_activity_files()
+    Debug();
 
 
 def parse_arguments(argv=sys.argv[1:]):

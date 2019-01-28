@@ -414,7 +414,7 @@ class DVCExperiment(object):
                                       date_parser=lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f'))
                 # Make csv with columns for cage+activity+day+diet+surgery
                 cage_df['Activity'] = cage_df[col_list].sum(axis=1)
-                day = cage_df.Activity.between_time('7:00', '19:00').resample('D').sum().to_frame()
+                day = cage_df.traja.day.groupby(pd.Grouper(key='time', freq='D'))['Activity'].sum().to_frame()
                 day['Cage'] = cage_id
                 day['Period'] = 'Daytime'
                 day['Surgery'] = self.get_stroke(cage_id)
@@ -423,7 +423,7 @@ class DVCExperiment(object):
                 day['Days'] = [int(x) for x in range(len(day.index))]
                 activity_list.append(day)
 
-                night = cage_df.Activity.between_time('19:00', '7:00').resample('D').sum().to_frame()
+                night = cage_df.traja.night.groupby(pd.Grouper(key='time', freq='D'))['Activity'].sum().to_frame()
                 night['Cage'] = cage_id
                 night['Period'] = 'Nighttime'
                 night['Surgery'] = self.get_stroke(cage_id)
@@ -435,7 +435,7 @@ class DVCExperiment(object):
             activity = pd.concat(activity_list)
             activity.to_csv(activity_csv)
         else:
-            activity = pd.read_csv(activity_csv,
+            activity = traja.read_file(activity_csv,
                                    index_col='time_stamp_start',
                                    parse_dates=['Surgery', 'time_stamp_start'],
                                    infer_datetime_format=True)
@@ -454,7 +454,7 @@ class DVCExperiment(object):
         df.x *= 100
         df.y *= 100
         if not 'distance' in trajectory:
-            self.calc_distance()
+            df.traja.calc_distance()
         df.distance *= 100
 
         df.traja.calc_turn_angle()
@@ -470,7 +470,7 @@ class DVCExperiment(object):
 
         fig, axes = plt.subplots(2, 1, figsize=(8, 6), gridspec_kw={'height_ratios': [9, 1]})
 
-        def colfunc(val, minval, maxval, startcolor, stopcolor):
+        def col_func(val, minval, maxval, startcolor, stopcolor):
             """ Convert value in the range minval...maxval to a color in the range
                 startcolor to stopcolor. The colors passed and the one returned are
                 composed of a sequence of N component values (e.g. RGB).
@@ -503,7 +503,7 @@ class DVCExperiment(object):
             elif laterality < 0:
                 laterality = 0
 
-            color = colfunc(laterality, minval, maxval, BLUE, RED)
+            color = col_func(laterality, minval, maxval, BLUE, RED)
             ax.plot(x, y, color=color, marker='o')
             ax.invert_yaxis()
 
