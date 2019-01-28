@@ -15,11 +15,9 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 
-
 from scipy.spatial.distance import directed_hausdorff, euclidean
 from numpy import unravel_index
 from shapely.geometry import shape
-
 from traja.utils import polar_to_z
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
