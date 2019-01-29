@@ -63,10 +63,9 @@ visualization and analysis methods:
 
     df.traja.plot(title='Cage trajectory')
 
-.. figure:: dvc_screenshot.png
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/docs/images/dvc_screenshot.png
    :alt: dvc\_screenshot
 
-   dvc\_screenshot
 
 Random walk
 ~~~~~~~~~~~
@@ -78,10 +77,8 @@ Generate random walks with
     df = traja.generate(n=1000, step_length=2)
     df.traja.plot()
 
-.. figure:: walk_screenshot.png
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/docs/images/walk_screenshot.png
    :alt: walk\_screenshot.png
-
-   walk\_screenshot.png
 
 Demo
 ----
