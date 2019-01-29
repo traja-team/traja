@@ -5,6 +5,13 @@ from setuptools import setup, find_packages
 
 import os
 from os import path
+import re
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+def read(*parts):
+    with open(os.path.join(here, *parts), 'r', encoding='utf8') as fp:
+        return fp.read()
 
 # Get package version
 def find_version(*file_paths):
