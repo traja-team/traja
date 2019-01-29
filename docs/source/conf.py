@@ -25,7 +25,7 @@ author = 'Justin Shenk'
 
 # The short X.Y version
 import traja
-version = release = traja.version.__version__
+version = release = traja.__version__
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.2-alpha.1'
@@ -55,17 +55,17 @@ import traja
 autosummary_generate = True
 
 # Sphinx gallery configuration
-sphinx_gallery_conf = {
-    'examples_dirs': ['../../examples'],
-    'filename_pattern': '^((?!sgskip).)*$',
-    'gallery_dirs': ['gallery'],
-    'doc_module': ('traja',),
-    'reference_url': {'matplotlib': 'http://matplotlib.org',
-                      'numpy': 'http://docs.scipy.org/doc/numpy',
-                      'scipy': 'http://docs.scipy.org/doc/scipy/reference',
-                      'geopandas': 'https://geopandas.readthedocs.io/en/latest/'},
-    'backreferences_dir': 'reference'
-}
+# sphinx_gallery_conf = {
+# #    'examples_dirs': ['../../examples'],
+    # 'filename_pattern': '^((?!sgskip).)*$',
+    # 'gallery_dirs': ['gallery'],
+    # 'doc_module': ('traja',),
+    # 'reference_url': {'matplotlib': 'http://matplotlib.org',
+                      # 'numpy': 'http://docs.scipy.org/doc/numpy',
+                      # 'scipy': 'http://docs.scipy.org/doc/scipy/reference',
+                      # 'geopandas': 'https://geopandas.readthedocs.io/en/latest/'},
+    # 'backreferences_dir': 'reference'
+# }
 
 # Napoleon settings
 napoleon_google_docstring = True
