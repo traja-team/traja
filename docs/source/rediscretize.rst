@@ -1,0 +1,6 @@
+Rediscretizing Trajectories
+===========================
+
+Coming soon.
+
+
