@@ -20,10 +20,10 @@ install:
 - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION 
 - source activate test-environment
 - pip install -r requirements.txt
-- pip install --upgrade pytest flake8
+- pip install --upgrade pytest flake8 sphinx
 - pip install .
 script:
-    pytest
+    cd docs && make doctest
 deploy:
   provider: pypi
   user: jshenk

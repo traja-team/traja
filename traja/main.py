@@ -35,10 +35,11 @@ class TrajaDataFrame(pd.DataFrame):
       .. doctest::
 
       >>> traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
-           x  y
-        0  0  1
-        1  1  2
-        2  2  3
+         x  y
+      0  0  1
+      1  1  2
+      2  2  3
+
     """
 
     _metadata = ['xlim', 'ylim', 'spatial_units', 'xlabel', 'ylabel', 'title', 'fps', 'time_units']
@@ -153,9 +154,6 @@ class TrajaDataFrame(pd.DataFrame):
 def main(args):
     # experiment = traja.contrib.DVCExperiment(experiment_name='Stroke_olive_oil',
     #                                          centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
-    # experiment.aggregate_files()
-    # activity_files = experiment.get_activity_files()
-    # Debug();
     pass
 
 
