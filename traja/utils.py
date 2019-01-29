@@ -47,7 +47,16 @@ def fill_in_traj(trj):
     return trj
 
 def smooth_sg(trj, w = None, p = 3):
-    """Savitzky-Golay filtering."""
+    """Savitzky-Golay filtering.
+
+    Args:
+      trj: 
+      w:  (Default value = None)
+      p:  (Default value = 3)
+
+    Returns:
+
+    """
     if w is None:
         w = p + 3 - p % 2
 
@@ -75,17 +84,39 @@ def angles(trj, lag = 1, compass_direction = None):
     trj.loc[trj.turn_angle < -180, 'turn_angle'] += 360
 
 def step_lengths(trj):
-    """Length of the steps of `trj`."""
+    """Length of the steps of `trj`.
+
+    Args:
+      trj: 
+
+    Returns:
+
+    """
     raise NotImplementedError()
 
 
 def polar_to_z(r, theta):
-    """Converts polar coordinates `z` and `theta` to complex number `z`."""
+    """Converts polar coordinates `z` and `theta` to complex number `z`.
+
+    Args:
+      r: 
+      theta: 
+
+    Returns:
+
+    """
     return r * np.exp(1j * theta)
 
 
 def cartesian_to_polar(xy):
-    """Convert np.array `xy` to polar coordinates `r` and `theta`."""
+    """Convert np.array `xy` to polar coordinates `r` and `theta`.
+
+    Args:
+      xy: 
+
+    Returns:
+
+    """
     assert xy.ndim == 2, f"Dimensions are {xy.ndim}, expecting 2"
     x, y = np.split(xy,[-1], axis=1)
     x, y = np.squeeze(x), np.squeeze(y)
@@ -201,17 +232,32 @@ def generate(n=1000, random=True, step_length=2,
     will be a directed walk/allothetic directed walk/oriented path, corresponding
     to an animal navigating with a compass (Cheung, Zhang, Stricker, &
     Srinivasan, 2007, 2008).
-
+    
     By default, for both random and directed walks, errors are normally
     distributed, unbiased, and independent of each other, so are **simple
     directed walks** in the terminology of Cheung, Zhang, Stricker, & Srinivasan,
     (2008). This behaviour may be modified by specifying alternative values for
     the ``angularErrorDist`` and/or ``linearErrorDist`` parameters.
-
+    
     The initial angle (for a random walk) or the intended direction (for a
     directed walk) is ``0`` radians. The starting position is ``(0, 0)``.
-
+    
     Author: Jim McLean (trajr), ported to Python by Justin Shenk
+
+    Args:
+      n:  (Default value = 1000)
+      random:  (Default value = True)
+      step_length:  (Default value = 2)
+      angular_error_sd:  (Default value = 0.5)
+      angular_error_dist:  (Default value = None)
+      linear_error_sd:  (Default value = 0.2)
+      linear_error_dist:  (Default value = None)
+      fps:  (Default value = 50)
+      spatial_units:  (Default value = 'm')
+      **kwargs: 
+
+    Returns:
+
     """
 
     if angular_error_dist is None:
@@ -251,14 +297,14 @@ def from_df(df):
     """Convenience function for converting a Pandas DataFrame into a TrajaDataFrame.
 
     Args:
-        df: pandas DataFrame
+      df: pandas DataFrame
 
-    Return:
-        TrajaDataFrame
+    Returns:
+      TrajaDataFrame
+      
+      .. doctest::
 
-    .. doctest::
-
-        >>> df = pd.DataFrame({'x':[0,1,2],'y':[1,2,3]})
+    >>> df = pd.DataFrame({'x':[0,1,2],'y':[1,2,3]})
         >>> traja.from_df(df)
            x  y
         0  0  1
@@ -275,10 +321,15 @@ def from_df(df):
 
 def from_xy(xy: np.ndarray):
     """Convenience function for initializing TrajaDataFrame with x,y coordinates.
-
+    
     .. doctest::
 
-        >>> import numpy as np
+    Args:
+      xy: np.ndarray: 
+
+    Returns:
+
+    >>> import numpy as np
         >>> xy = np.array([[0,1],[1,2],[2,3]])
         >>> traja.from_xy(xy)
            x  y
@@ -291,7 +342,15 @@ def from_xy(xy: np.ndarray):
 
 
 def read_file(filepath, **kwargs):
-    """Convenience method wrapping pandas `read_csv` and initializing metadata."""
+    """Convenience method wrapping pandas `read_csv` and initializing metadata.
+
+    Args:
+      filepath: 
+      **kwargs: 
+
+    Returns:
+
+    """
 
     xlim = kwargs.pop('xlim', None)
     ylim = kwargs.pop('ylim', None)

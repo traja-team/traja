@@ -26,12 +26,15 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 class TrajaDataFrame(pd.DataFrame):
     """A TrajaDataFrame object is a subclass of Pandas DataFrame.
 
-    :param args: Typical arguments for pandas.DataFrame.
-    :returns: traja.TrajaDataFrame -- TrajaDataFrame constructor.
+    Args:
+      args: Typical arguments for pandas.DataFrame.
 
-    .. doctest::
+    Returns:
+      traja.TrajaDataFrame -- TrajaDataFrame constructor.
+      
+      .. doctest::
 
-        >>> traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+    >>> traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
            x  y
         0  0  1
         1  1  2
@@ -111,9 +114,11 @@ class TrajaDataFrame(pd.DataFrame):
     def copy(self, deep=True):
         """Make a copy of this TrajaDataFrame object
 
-        :param deep: Make a deep copy, i.e. also copy data
-        :type deep: bool
-        :returns: TrajaDataFrame -- copy
+        Args:
+          deep(bool, optional): Make a deep copy, i.e. also copy data (Default value = True)
+
+        Returns:
+          TrajaDataFrame -- copy
 
         """
         data = self._data
