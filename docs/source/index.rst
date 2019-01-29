@@ -10,8 +10,8 @@ Welcome to traja's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   ../README.rst
    traja.rst
-   modules.rst
 
 
 Indices and tables
