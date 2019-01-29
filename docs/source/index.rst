@@ -28,13 +28,14 @@ If you use traja in your publications, please cite it.
 .. toctree::
    :maxdepth: 1
    :caption: User Guide
+
    Extending pandas <pandas>
    Making plots <plots>
    Rediscretizing trajectory <rediscretize>
 
 .. toctree::
    :maxdepth: 1
-   :Reference Guide
+   :caption: Reference Guide
 
    Reference to all attibutes and methods <reference>
 
