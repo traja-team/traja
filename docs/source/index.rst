@@ -9,8 +9,8 @@ Welcome to traja's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-   ../README.rst
+   
+   readme <readme_link>
    traja.rst
 
 
