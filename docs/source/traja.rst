@@ -11,6 +11,14 @@ Subpackages
 Submodules
 ----------
 
+traja.accessor module
+---------------------
+
+.. automodule:: traja.accessor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 traja.main module
 -----------------
 
