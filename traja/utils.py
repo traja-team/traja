@@ -112,9 +112,10 @@ def cartesian_to_polar(xy):
     """Convert np.array `xy` to polar coordinates `r` and `theta`.
 
     Args:
-      xy: 
+      xy (np.ndarray): x,y coordinates
 
     Returns:
+        r, theta (tuple of float): step-length and angle
 
     """
     assert xy.ndim == 2, f"Dimensions are {xy.ndim}, expecting 2"
@@ -225,7 +226,9 @@ def generate(n=1000, random=True, step_length=2,
              fps=50,
              spatial_units='m',
              **kwargs):
-    """Generates a trajectory. If ``random``` is ``True``, the trajectory will
+    """Generates a trajectory.
+
+    If ``random``` is ``True``, the trajectory will
     be a correlated random walk/idiothetic directed walk (Kareiva & Shigesada,
     1983), corresponding to an animal navigating without a compass (Cheung,
     Zhang, Stricker, & Srinivasan, 2008). If ``random`` is ``False``, it
@@ -242,7 +245,9 @@ def generate(n=1000, random=True, step_length=2,
     The initial angle (for a random walk) or the intended direction (for a
     directed walk) is ``0`` radians. The starting position is ``(0, 0)``.
     
-    Author: Jim McLean (trajr), ported to Python by Justin Shenk
+    .. note::
+
+        Author: Jim McLean (trajr), ported to Python by Justin Shenk.
 
     Args:
       n:  (Default value = 1000)
@@ -302,14 +307,15 @@ def from_df(df):
     Returns:
       TrajaDataFrame
       
-      .. doctest::
+    .. doctest::
 
-    >>> df = pd.DataFrame({'x':[0,1,2],'y':[1,2,3]})
+        >>> df = pd.DataFrame({'x':[0,1,2],'y':[1,2,3]})
         >>> traja.from_df(df)
            x  y
         0  0  1
         1  1  2
         2  2  3
+
     """
     traj_df = TrajaDataFrame(df)
     # Initialize metadata
@@ -321,21 +327,22 @@ def from_df(df):
 
 def from_xy(xy: np.ndarray):
     """Convenience function for initializing TrajaDataFrame with x,y coordinates.
-    
-    .. doctest::
 
     Args:
       xy: np.ndarray: 
 
     Returns:
 
-    >>> import numpy as np
+    .. doctest::
+
+        >>> import numpy as np
         >>> xy = np.array([[0,1],[1,2],[2,3]])
         >>> traja.from_xy(xy)
            x  y
         0  0  1
         1  1  2
         2  2  3
+
     """
     df = traja.TrajaDataFrame.from_records(xy, columns=['x', 'y'])
     return df
