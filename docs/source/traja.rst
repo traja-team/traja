@@ -11,14 +11,6 @@ Subpackages
 Submodules
 ----------
 
-traja.Rtesting module
----------------------
-
-.. automodule:: traja.Rtesting
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 traja.main module
 -----------------
 
