@@ -53,20 +53,21 @@ class TrajaAccessor(object):
           end:  (Default value = '7:00')
 
         Returns:
-
+          TrajaDataFrame -- DataFrame during night.
+          
         """
         return self.between(begin, end)
 
     @property
     def day(self, begin='7:00', end='19:00'):
-        """
+        """Get day between `begin` and `end`.
 
         Args:
           begin:  (Default value = '7:00')
           end:  (Default value = '19:00')
 
         Returns:
-          
+          TrajaDataFrame -- DataFrame during day.
 
         """
         return self.between(begin, end)
