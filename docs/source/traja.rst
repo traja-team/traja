@@ -35,14 +35,6 @@ traja.utils module
     :undoc-members:
     :show-inheritance:
 
-traja.version module
---------------------
-
-.. automodule:: traja.version
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------
