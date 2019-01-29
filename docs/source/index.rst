@@ -20,7 +20,7 @@ If you use traja in your publications, please cite it.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting started
+   :caption: Getting Started
    
    Installation <install>
    Examples Gallery <gallery/index>
@@ -30,16 +30,17 @@ If you use traja in your publications, please cite it.
    :caption: User Guide
 
    Extending pandas <pandas>
-   Making plots <plots>
-   Rediscretizing trajectory <rediscretize>
+   Making Plots <plots>
+   Rediscretizing Trajectory <rediscretize>
 
 .. toctree::
    :maxdepth: 1
    :caption: Reference Guide
 
-   Reference to all attibutes and methods <reference>
+   Reference to All Attributes and Methods <reference>
 
 .. |version| replace:: 0.0.2 
+
 
 Indices and tables
 ==================
