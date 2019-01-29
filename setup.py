@@ -7,7 +7,13 @@ import os
 from os import path
 
 # Get package version
-exec(open('traja/version.py', 'r').read())
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 requirements = ['matplotlib','pandas','numpy','seaborn', 'shapely','psutil', 'scipy']
 
@@ -17,7 +23,7 @@ with open(os.path.join(this_dir, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='traja',
-    version=__version__,
+    version=find_version('traja','__init__.py'),
     description='Traja is a trajectory analysis and visualization tool',
     url='https://github.com/justinshenk/traja',
     author='Justin Shenk',

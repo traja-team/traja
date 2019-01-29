@@ -39,8 +39,6 @@ If you use traja in your publications, please cite it.
 
    Reference to All Attributes and Methods <reference>
 
-.. |version| replace:: 0.0.2 
-
 
 Indices and tables
 ==================
