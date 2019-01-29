@@ -107,13 +107,14 @@ class TrajaAccessor(object):
         Returns:
           TrajaDataFrame -- Data frame between values.
           
-          .. doctest ::
+        .. doctest ::
 
-        >>> s = pd.to_datetime(pd.Series(['Jun 30 2000 12:00:01', 'Jun 30 2000 12:00:02', 'Jun 30 2000 12:00:03']))
+            >>> s = pd.to_datetime(pd.Series(['Jun 30 2000 12:00:01', 'Jun 30 2000 12:00:02', 'Jun 30 2000 12:00:03']))
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':s})
             >>> df.traja.between('12:00:00','12:00:01')
                              time  x  y
             0 2000-06-30 12:00:01  0  1
+
         """
         if pd.core.dtypes.common.is_datetime64_dtype(self._trj.time):
             self._trj.set_index('time', inplace=True)
@@ -257,13 +258,14 @@ class TrajaAccessor(object):
         Returns:
           np.ndarray -- x,y coordinates
           
-          .. doctest::
+        .. doctest::
 
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
             >>> df.traja.xy
             array([[0, 1],
                    [1, 2],
                    [2, 3]])
+
         """
         if self._has_cols(['x', 'y']):
             xy = self._trj[['x', 'y']].values
@@ -280,14 +282,13 @@ class TrajaAccessor(object):
         """Calculate derivatives `displacement` and `displacement_time`.
 
         Args:
-          assign: Assign output to `TrajaDataFrame` (Default value = False)
+          assign (bool): Assign output to `TrajaDataFrame` (Default value = False)
 
         Returns:
-          dict -- Derivatives in dictionary.
+          dict: Derivatives in dictionary.
           
-          .. doctest::
+        .. doctest::
 
-        >>> import traja
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0., 0.2, 0.4]})
             >>> df.traja.calc_derivatives()
             OrderedDict([('displacement', 0         NaN
@@ -297,6 +298,7 @@ class TrajaAccessor(object):
             1    0.2
             2    0.4
             Name: time, dtype: float64)])
+
         """
         self._check_has_time()
         if not 'displacement' in self._trj:
@@ -317,11 +319,10 @@ class TrajaAccessor(object):
         Args:
 
         Returns:
-          OrderedDict -- Derivatives in dictionary.
+          OrderedDict: Derivatives in dictionary.
           
-          .. doctest::
+        .. doctest::
 
-        >>> import traja
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0.,0.2,0.4]})
             >>> df.traja.get_derivatives()
             OrderedDict([('displacement', 0         NaN
@@ -340,6 +341,7 @@ class TrajaAccessor(object):
             2    0.0
             dtype: float64), ('acceleration_times', 2    0.4
             Name: accleration_times, dtype: float64)])
+
         """
         if not self._has_cols(['displacement', 'displacement_time']):
             derivs = self.calc_derivatives(assign=False)
@@ -366,16 +368,16 @@ class TrajaAccessor(object):
         Returns a dictionary of time intervals where speed is slower and/or faster than specified values.
 
         Args:
-          faster_than(float, optional): Minimum speed threshold. (Default value = None)
-          slower_than(float or int., optional): Maximum speed threshold. (Default value = None)
-          interpolate_times(bool., optional): Interpolate times between steps. (Default value = True)
+          faster_than (float, optional): Minimum speed threshold. (Default value = None)
+          slower_than (float or int, optional): Maximum speed threshold. (Default value = None)
+          interpolate_times (bool, optional): Interpolate times between steps. (Default value = True)
 
         Returns:
           OrderedDict -- time intervals as dictionary.
           
           .. note::
           
-          Implementation ported to Python, heavily inspired by Jim McLean's trajr package.
+            Implementation ported to Python, heavily inspired by Jim McLean's trajr package.
 
         """
         derivs = self.get_derivatives()
@@ -437,12 +439,13 @@ class TrajaAccessor(object):
         Returns:
           shapely.geometry.linestring.LineString -- Shapely shape.
           
-          .. doctest::
+        .. doctest::
 
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
             >>> shape = df.traja.to_shapely()
             >>> shape.is_closed
             False
+
         """
         df = self._trj[['x', 'y']].dropna()
         coords = df.values
@@ -460,14 +463,15 @@ class TrajaAccessor(object):
         Returns:
           pd.Series -- Displacement series.
           
-          .. doctest::
+        .. doctest::
 
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
             >>> df.traja.calc_displacement()
             0         NaN
             1    1.414214
             2    1.414214
             dtype: float64
+
         """
         displacement = np.sqrt(np.power(self._trj.x.shift() - self._trj.x, 2) +
                                np.power(self._trj.y.shift() - self._trj.y, 2))
@@ -482,19 +486,20 @@ class TrajaAccessor(object):
         """Calculate angle between steps as a function of displacement w.r.t x axis.
 
         Args:
-          assign(bool., optional): Assign displacement to TrajaDataFrame (Default value = True)
+          assign (bool, optional): Assign displacement to TrajaDataFrame (Default value = True)
 
         Returns:
           pd.Series -- Angle series.
           
-          .. doctest::
+        .. doctest::
 
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
             >>> df.traja.calc_angle()
             0     NaN
             1    45.0
             2    45.0
             dtype: float64
+
         """
         if not self._has_cols(['dx', 'displacement']):
             displacement = self.calc_displacement()
@@ -510,20 +515,19 @@ class TrajaAccessor(object):
         """Scale trajectory when converting, eg, from pixels to meters.
 
         Args:
-          spatial_units(str.
+          spatial_units(str., optional): Spatial units (eg, 'm') (Default value = "m")
+          scale(float): Scale to convert coordinates
 
-.. doctest::, optional): Spatial units (eg, 'm') (Default value = "m")
-          scale: 
+        .. doctest::
 
-        Returns:
-
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
             >>> df.traja.scale(0.1)
             >>> df
                  x    y
             0  0.0  0.1
             1  0.1  0.2
             2  0.2  0.3
+
         """
         self._trj[['x', 'y']] *= scale
         self._trj.__dict__['spatial_units'] = spatial_units
@@ -533,23 +537,24 @@ class TrajaAccessor(object):
         """Resample a trajectory to a constant step length. R is rediscretized step length.
 
         Args:
-          R(float.): Rediscretized step length (eg, 0.02)
+          R (float): Rediscretized step length (eg, 0.02)
 
         Returns:
           Rediscretized coordinates.
           
-          .. note::
+        .. note::
           
-          Based on the appendix in Bovet and Benhamou, (1988) and @JimMcL's trajr implementation.
+            Based on the appendix in Bovet and Benhamou, (1988) and @JimMcL's trajr implementation.
           
-          .. doctest::
+        .. doctest::
 
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
             >>> df.traja.rediscretize(1.)
                       x         y
             0  0.000000  1.000000
             1  0.707107  1.707107
             2  1.414214  2.414214
+
         """
         rt = self._rediscretize_points(R)
 
@@ -624,20 +629,21 @@ class TrajaAccessor(object):
 
     def calc_heading(self, assign=True):
         """Calculate trajectory heading.
-        
-        ..doctest::
 
         Args:
           assign:  (Default value = True)
 
         Returns:
 
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+        ..doctest::
+
+            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
             >>> df.traja.calc_heading()
             0     NaN
             1    45.0
             2    45.0
             Name: heading, dtype: float64
+
         """
         if not self._has_cols('angle'):
             angle = self.calc_angle(assign=True)
@@ -661,20 +667,22 @@ class TrajaAccessor(object):
 
     def calc_turn_angle(self, assign=True):
         """Calculate turn angle.
-        
-        .. doctest::
+
 
         Args:
           assign:  (Default value = True)
 
         Returns:
 
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+        .. doctest::
+
+            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
             >>> df.traja.calc_turn_angle()
             0    NaN
             1    NaN
             2    0.0
             Name: turn_angle, dtype: float64
+
         """
         if 'heading' not in self._trj:
             heading = self.calc_heading(assign=False)

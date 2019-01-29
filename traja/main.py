@@ -34,7 +34,7 @@ class TrajaDataFrame(pd.DataFrame):
       
       .. doctest::
 
-    >>> traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+      >>> traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
            x  y
         0  0  1
         1  1  2
