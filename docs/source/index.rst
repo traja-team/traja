@@ -3,16 +3,42 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to traja's documentation!
+traja |version|
 =================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-   
-   readme <readme_link>
-   traja.rst
+Trajectory Analysis in Python
 
+traja extends the capability of pandas DataFrame specific for animal trajectory analysis in 2D, and provides convenient interfaces to other geometric analysis packages (eg, shapely).
+
+Introduction
+The traja Python package is a toolkit for the numerical characterisation and analysis of the trajectories of moving animals. Trajectory analysis is applicable in fields as diverse as optimal foraging theory, migration, and behavioural mimicry (e.g. for verifying similarities in locomotion). A trajectory is simply a record of the path followed by a moving animal. Trajr operates on trajectories in the form of a series of locations (as x, y coordinates) with times. Trajectories may be obtained by any method which provides this information, including manual tracking, radio telemetry, GPS tracking, and motion tracking from videos.
+
+The goal of this package (and this document) is to aid biological researchers, who may not have extensive experience with Python, to analyse trajectories without being handicapped by a limited knowledge of Python or programming. However, a basic understanding of Python is useful.
+
+If you use traja in your publications, please cite it.
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Getting started
+   
+   Installation <install>
+   Examples Gallery <gallery/index>
+
+.. toctree::
+   :maxdepth: 1
+   :caption: User Guide
+   Extending pandas <pandas>
+   Making plots <plots>
+   Rediscretizing trajectory <rediscretize>
+
+.. toctree::
+   :maxdepth: 1
+   :Reference Guide
+
+   Reference to all attibutes and methods <reference>
+
+.. |version| replace:: 0.0.2 
 
 Indices and tables
 ==================
