@@ -228,10 +228,10 @@ def generate(n=1000, random=True, step_length=2,
              **kwargs):
     """Generates a trajectory.
 
-    If ``random``` is ``True``, the trajectory will
+    If `random` is `True`, the trajectory will
     be a correlated random walk/idiothetic directed walk (Kareiva & Shigesada,
     1983), corresponding to an animal navigating without a compass (Cheung,
-    Zhang, Stricker, & Srinivasan, 2008). If ``random`` is ``False``, it
+    Zhang, Stricker, & Srinivasan, 2008). If `random` is `False`, it
     will be a directed walk/allothetic directed walk/oriented path, corresponding
     to an animal navigating with a compass (Cheung, Zhang, Stricker, &
     Srinivasan, 2007, 2008).
@@ -240,10 +240,10 @@ def generate(n=1000, random=True, step_length=2,
     distributed, unbiased, and independent of each other, so are **simple
     directed walks** in the terminology of Cheung, Zhang, Stricker, & Srinivasan,
     (2008). This behaviour may be modified by specifying alternative values for
-    the ``angularErrorDist`` and/or ``linearErrorDist`` parameters.
+    the `angularErrorDist` and/or `linearErrorDist` parameters.
     
     The initial angle (for a random walk) or the intended direction (for a
-    directed walk) is ``0`` radians. The starting position is ``(0, 0)``.
+    directed walk) is `0` radians. The starting position is `(0, 0)`.
     
     .. note::
 

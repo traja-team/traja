@@ -54,7 +54,7 @@ class TrajaAccessor(object):
 
         Returns:
           TrajaDataFrame -- DataFrame during night.
-          
+
         """
         return self.between(begin, end)
 
