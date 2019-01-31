@@ -110,3 +110,7 @@ venv.bak/
 _build/
 _static/
 _templates/
+
+# BUILD FILES
+*.zip
+docs/source/gallery/images/*
