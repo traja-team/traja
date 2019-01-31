@@ -1,6 +1,5 @@
 pandas
 numpy
-seaborn
 matplotlib
 shapely
 psutil

@@ -8,6 +8,8 @@ from collections import OrderedDict
 
 import traja
 import matplotlib as mpl
+if 'sphinx' in sys.argv[0]:
+    mpl.use('agg')
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
