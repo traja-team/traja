@@ -7,7 +7,6 @@ import traja
 
 df = traja.generate(angular_error_sd=0.5)
 
-
 ###############################################################################
 # Fast Dynamic Time Warping of Trajectories
 # =========================================
@@ -16,9 +15,13 @@ df = traja.generate(angular_error_sd=0.5)
 # ``fastdtw``. It can be installed with ``pip install fastdtw``. 
 # Source article: `link <https://cs.fit.edu/~pkc/papers/tdm04.pdf>`_.
 import numpy as np
-rotated = traja.utils.rotate(df,np.pi/10)
+rotated = traja.utils.rotate(df, angle=np.pi/10)
 rotated.traja.plot()
 
+###############################################################################
+# Compare trajectories point-wise 
+# =========================================
+#
 dist = traja.utils.distance(df.traja.xy, rotated.traja.xy)
 
-print(dist)
+print(f"Distance between the two trajectories is {dist}")
