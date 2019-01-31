@@ -1,0 +1,22 @@
+
+
+Examples using ``traja.DataFrame``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Plotting with traja">
+
+.. only:: html
+
+    .. figure:: /gallery/images/thumb/sphx_glr_plot_test_thumb.png
+
+        :ref:`sphx_glr_gallery_plot_test.py`
+
+.. raw:: html
+
+    </div>
+
+.. only:: not html
+
+    * :ref:`sphx_glr_gallery_plot_test.py`
