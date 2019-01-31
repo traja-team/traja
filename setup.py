@@ -22,7 +22,7 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
-requirements = ['matplotlib','pandas','numpy','seaborn', 'shapely','psutil', 'scipy']
+requirements = ['matplotlib','pandas','numpy','shapely','psutil', 'scipy']
 
 this_dir = path.abspath(path.dirname(__file__))
 with open(os.path.join(this_dir, 'README.rst'), encoding='utf-8') as f:
@@ -37,7 +37,6 @@ setup(
     author_email='shenkjustin@gmail.com',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    license='MIT license',
     install_requires=requirements,
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
@@ -54,6 +53,7 @@ setup(
     python_requires='!= 3.0.*, != 3.1.*',
     packages=find_packages(),
     include_package_data=True,
+    license='MIT',
     keywords='trajectory analysis',
     zip_safe=False,
 )
