@@ -172,11 +172,10 @@ class TrajaAccessor(object):
         fig, ax = plt.subplots()
         fig.canvas.draw()
         patch = patches.PathPatch(path, edgecolor=GRAY, facecolor='none', lw=3, alpha=0.3)
-        # ax.add_patch(patch)
+        ax.add_patch(patch)
 
         xs, ys = zip(*verts)
 
-        # colors = plt.cm.viridis(np.linspace(0, 1, n_coords))
         if time_col:
             # Time determines color
             colors = [ind for ind, x in enumerate(self._trj[time_col].iloc[:n_coords])]
