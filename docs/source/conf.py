@@ -211,9 +211,10 @@ epub_exclude_files = ['search.html']
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python':       ('https://docs.python.org/', None),
-    'matplotlib':   ('https://matplotlib.org/', None),
-    'pandas':       ('https://pandas.pydata.org', None),
+    'python':       ('https://docs.python.org', None),
+    'matplotlib':   ('http://matplotlib.sourceforge.net', None),
+    'pandas':       ('http://pandas-docs.github.io/pandas-docs-travis/', None),
+    'scipy': ('http://docs.scipy.org/doc/scipy/reference', None),
 }
 
 autodoc_member_order = 'bysource'
@@ -251,3 +252,9 @@ def special_methods_callback(app, what, name, obj, skip, options):
         return False
     else:
         return skip
+
+# Tell sphinx what the primary language being documented is.
+primary_domain = 'py'
+
+# Tell sphinx what the pygments highlight language should be.
+highlight_language = 'py'

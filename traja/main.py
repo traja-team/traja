@@ -26,7 +26,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 
 
 class TrajaDataFrame(pd.DataFrame):
-    """A TrajaDataFrame object is a subclass of Pandas DataFrame.
+    """A TrajaDataFrame object is a subclass of pandas :class:`DataFrame<pandas.dataframe.DataFrame>`.
 
     Args:
       args: Typical arguments for pandas.DataFrame.
