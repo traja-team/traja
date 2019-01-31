@@ -1,0 +1,7 @@
+pandas
+numpy
+matplotlib
+shapely
+psutil
+scipy
+sphinx-gallery
