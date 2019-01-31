@@ -279,7 +279,7 @@ def generate(n=1000, random=True, step_length=2,
             length = step_length + linear_errors[i]
             coords[i + 1] = coords[i] + polar_to_z(r=length, theta=angle)
     else:
-        coords = np.array([complex(0), np.cumsum(steps)], dtype=np.complex)
+        coords = np.append(complex(0), np.cumsum(steps))
 
     x = coords.real
     y = coords.imag
