@@ -198,6 +198,8 @@ class TrajaAccessor(object):
             vmax = self._trj.index[n_coords-1]
             if not show_time:
                 time_units = ''
+        label = f"Time ({time_units})" if time_units else ""
+
         sc = ax.scatter(xs, ys, c=colors, s=25, cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax)
 
         if xlim is not None:
@@ -217,17 +219,10 @@ class TrajaAccessor(object):
         ax.set_title(title)
         ax.set_aspect('equal')
 
-        # aspect = 20
-        # pad_fraction = 0.5
-        # divider = make_axes_locatable(ax)
-        # width = axes_size.AxesY(ax, aspect=1. / aspect)
-        # pad = axes_size.Fraction(pad_fraction, width)
-        # cax = divider.append_axes("right", size=width, pad=pad)
-        #
-        # # Number of color bar ticks
+        # Number of color bar ticks
         CBAR_TICKS = 10
         indices = np.linspace(0, n_coords-1, CBAR_TICKS, endpoint=True, dtype=int)
-        cbar = plt.colorbar(sc, fraction=0.046, pad=0.04, orientation='vertical', label=time_units)
+        cbar = plt.colorbar(sc, fraction=0.046, pad=0.04, orientation='vertical', label=label)
         if time_col and is_datetime:
             cbar_labels = self._trj[time_col].iloc[indices].dt.strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
         else:

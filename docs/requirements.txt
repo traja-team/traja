@@ -5,3 +5,4 @@ shapely
 psutil
 scipy
 sphinx-gallery
+fastdtw

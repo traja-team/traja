@@ -9,6 +9,46 @@ A gallery of examples
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Plotting trajectories on a grid">
+
+.. only:: html
+
+    .. figure:: /gallery/images/thumb/sphx_glr_grid_visualiations_thumb.png
+
+        :ref:`sphx_glr_gallery_grid_visualiations.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /gallery/grid_visualiations
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Comparing">
+
+.. only:: html
+
+    .. figure:: /gallery/images/thumb/sphx_glr_comparing_thumb.png
+
+        :ref:`sphx_glr_gallery_comparing.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /gallery/comparing
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Plotting with traja">
 
 .. only:: html

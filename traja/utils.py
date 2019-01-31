@@ -205,7 +205,9 @@ def distance(A, B, method='dtw'):
         except ImportError:
             raise ImportError("""            
             fastdtw is not installed. Install it with: 
-            pip install fastdtw.""")
+            pip install fastdtw.
+            
+            """)
         distance, path = fastdtw(A, B, dist=euclidean)
         return distance
 
@@ -283,13 +285,65 @@ def generate(n=1000, random=True, step_length=2,
     y = coords.imag
 
     df = traja.TrajaDataFrame(data={'x': x, 'y': y})
+    if fps in (0, None):
+        raise Exception("fps must be greater than 0")
     df.fps = fps
     time = df.index / fps
     df['time'] = time
     df.spatial_units = spatial_units
-    for key, value in kwargs:
+    for key, value in kwargs.items():
         df.__dict__[key] = value
+    # Update metavars
+    metavars = dict(angular_error_sd=angular_error_sd, linear_error_sd=linear_error_sd)
+    df.__dict__.update(metavars)
+
     return df
+
+def rotate(df, angle=0, origin=None):
+    """Rotate a trajectory `angle` in radians.
+
+    Args:
+        trj: Traja.DataFrame
+        angle
+
+    Returns:
+        trj: Traja.DataFrame
+
+    .. note::
+
+        Based on Lyle Scott's `implementation <https://gist.github.com/LyleScott/e36e08bfb23b1f87af68c9051f985302>`_.
+
+    """
+    trj = df.copy()
+    # Calculate current orientation
+    if isinstance(trj, traja.TrajaDataFrame):
+        xy = df.traja.xy
+    elif isinstance(trj, pd.DataFrame):
+        trj = df[['x','y']]
+
+    x, y = np.split(xy, [-1], axis=1)
+    if origin is None:
+        # Assume middle of x and y is origin
+        origin = ((x.max()-x.min())/2, (y.max()-y.min())/2)
+
+    offset_x, offset_y = origin
+    new_coords = []
+
+    for x,y in xy:
+
+        adjusted_x = (x - offset_x)
+        adjusted_y = (y - offset_y)
+        cos_rad = math.cos(angle)
+        sin_rad = math.sin(angle)
+        qx = offset_x + cos_rad * adjusted_x + sin_rad * adjusted_y
+        qy = offset_y + -sin_rad * adjusted_x + cos_rad * adjusted_y
+        new_coords.append((qx, qy))
+
+    new_xy = np.array(new_coords)
+    x, y = np.split(new_xy, [-1], axis=1)
+    trj['x'] = x
+    trj['y'] = y
+    return trj
 
 
 def from_df(df):

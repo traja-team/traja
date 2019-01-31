@@ -33,13 +33,13 @@ Plotting with Traja
 =====================
 
 We start out by plotting a basic sime series trajectory using the ``traja``
-accessor.
+accessor and ``.plot()`` method.
 
 
 
 .. code-block:: python
 
-    df.traja.plot(figsize=(6,4))
+    df.traja.plot()
 
 
 
@@ -60,7 +60,7 @@ Also, random walks can be generated using ``generate``.
 .. code-block:: python
 
     df = traja.generate(n=1000, random=True, fps=30)
-    df.traja.plot(figsize=(6,4))
+    df.traja.plot()
 
 
 
@@ -79,8 +79,8 @@ Traja can re-scale data with any units
 
 
     df.traja.scale(100)
-    df.spatial_units='m'
-    df.traja.plot(figsize=(6, 4))
+    df.spatial_units='cm'
+    df.traja.plot()
 
 
 
@@ -94,15 +94,15 @@ Traja can re-scale data with any units
 Rediscretize step lengths
 =========================
 
-``rediscretize`` method allows resample the trajectory into an arbitrary step
-length.
+``rediscretize`` method allows resampling the trajectory into an arbitrary step
+length ``R``.
 
 
 
 .. code-block:: python
 
     rt = df.traja.rediscretize(R=5000)
-    rt.traja.plot(figsize=(6, 4))
+    rt.traja.plot()
 
 
 
@@ -143,7 +143,7 @@ examples, refer to the
 traja  documentation.
 
 
-**Total running time of the script:** ( 0 minutes  1.042 seconds)
+**Total running time of the script:** ( 0 minutes  0.734 seconds)
 
 
 .. _sphx_glr_download_gallery_plotting_with_traja.py:
