@@ -16,8 +16,8 @@ df = traja.TrajaDataFrame({'x':[0,1,2,3,4],'y':[1,3,2,4,5]})
 # =====================
 #
 # We start out by plotting a basic sime series trajectory using the ``traja``
-# accessor.
-df.traja.plot(figsize=(6,4))
+# accessor and ``.plot()`` method.
+df.traja.plot()
 
 ###############################################################################
 # Generate Random Walks
@@ -25,23 +25,23 @@ df.traja.plot(figsize=(6,4))
 #
 # Also, random walks can be generated using ``generate``.
 df = traja.generate(n=1000, random=True, fps=30)
-df.traja.plot(figsize=(6,4))
+df.traja.plot()
 
 ###############################################################################
 # Traja can re-scale data with any units
 
 df.traja.scale(100)
-df.spatial_units='m'
-df.traja.plot(figsize=(6, 4))
+df.spatial_units='cm'
+df.traja.plot()
 
 ###############################################################################
 # Rediscretize step lengths
 # =========================
 #
-# ``rediscretize`` method allows resample the trajectory into an arbitrary step
-# length.
+# ``rediscretize`` method allows resampling the trajectory into an arbitrary step
+# length ``R``.
 rt = df.traja.rediscretize(R=5000)
-rt.traja.plot(figsize=(6, 4))
+rt.traja.plot()
 
 ###############################################################################
 # Calculate derivatives
