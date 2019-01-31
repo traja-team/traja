@@ -98,7 +98,7 @@ class TrajaDataFrame(pd.DataFrame):
         return self
 
     def _init_metadata(self):
-        defaults = dict(fps=1,
+        defaults = dict(fps=None,
                         spatial_units='m',
                         time_units='s')
         for name, value in defaults.items():
