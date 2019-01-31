@@ -14,6 +14,7 @@ import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
 from matplotlib.dates import date2num, num2date, DateFormatter
+from mpl_toolkits.axes_grid1 import make_axes_locatable, axes_size
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 
 from scipy.spatial.distance import directed_hausdorff, euclidean
@@ -149,6 +150,7 @@ class TrajaAccessor(object):
         title = kwargs.pop('title', None)
         time_units = kwargs.pop('time_units', None)
         fps = kwargs.pop('fps', None)
+        figsize = kwargs.pop('figsize',None)
 
         start, end = None, None
         coords = self._trj[['x', 'y']]
@@ -169,7 +171,7 @@ class TrajaAccessor(object):
         codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 1)
         path = Path(verts, codes)
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=figsize)
         fig.canvas.draw()
         patch = patches.PathPatch(path, edgecolor=GRAY, facecolor='none', lw=3, alpha=0.3)
         ax.add_patch(patch)
@@ -194,7 +196,9 @@ class TrajaAccessor(object):
             # Index is our only reference
             vmin = self._trj.index[0]
             vmax = self._trj.index[n_coords-1]
-        sc = ax.scatter(xs, ys, c=colors, s=35, cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax)
+            if not show_time:
+                time_units = ''
+        sc = ax.scatter(xs, ys, c=colors, s=25, cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax)
 
         if xlim is not None:
             ax.set_xlim(xlim)
@@ -213,10 +217,17 @@ class TrajaAccessor(object):
         ax.set_title(title)
         ax.set_aspect('equal')
 
-        # Number of color bar ticks
+        # aspect = 20
+        # pad_fraction = 0.5
+        # divider = make_axes_locatable(ax)
+        # width = axes_size.AxesY(ax, aspect=1. / aspect)
+        # pad = axes_size.Fraction(pad_fraction, width)
+        # cax = divider.append_axes("right", size=width, pad=pad)
+        #
+        # # Number of color bar ticks
         CBAR_TICKS = 10
         indices = np.linspace(0, n_coords-1, CBAR_TICKS, endpoint=True, dtype=int)
-        cbar = fig.colorbar(sc, orientation='vertical', label=time_units)
+        cbar = plt.colorbar(sc, fraction=0.046, pad=0.04, orientation='vertical', label=time_units)
         if time_col and is_datetime:
             cbar_labels = self._trj[time_col].iloc[indices].dt.strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
         else:

@@ -101,10 +101,10 @@ def polar_to_z(r, theta):
 
 
 def cartesian_to_polar(xy):
-    """Convert np.array `xy` to polar coordinates `r` and `theta`.
+    """Convert :class:`np.ndarray` `xy` to polar coordinates `r` and `theta`.
 
     Args:
-      xy (np.ndarray): x,y coordinates
+      xy (:class:`np.ndarray`): x,y coordinates
 
     Returns:
         r, theta (tuple of float): step-length and angle
@@ -293,7 +293,7 @@ def generate(n=1000, random=True, step_length=2,
 
 
 def from_df(df):
-    """Convenience function for converting a Pandas DataFrame into a TrajaDataFrame.
+    """Convenience function for converting a :class:`pandas DataFrame<pandas.dataframe.DataFrame>` into a :class:`traja.main.TrajaDataFrame`.
 
     Args:
       df: pandas DataFrame
@@ -320,10 +320,10 @@ def from_df(df):
 
 
 def from_xy(xy: np.ndarray):
-    """Convenience function for initializing TrajaDataFrame with x,y coordinates.
+    """Convenience function for initializing :class:`TrajaDataFrame<traja.main.TrajaDataFrame>` with x,y coordinates.
 
     Args:
-      xy: np.ndarray: 
+      xy: np.ndarray:
 
     Returns:
 
