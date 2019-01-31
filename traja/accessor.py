@@ -559,6 +559,12 @@ class TrajaAccessor(object):
         self._trj.__dict__['spatial_units'] = spatial_units
 
 
+    def _transfer_metavars(self, df):
+        for attr in self._trj._metadata:
+            df.__dict__[attr] = getattr(self._trj, attr, None)
+        return df
+
+
     def rediscretize(self, R):
         """Resample a trajectory to a constant step length. R is rediscretized step length.
 
@@ -587,6 +593,7 @@ class TrajaAccessor(object):
         if len(rt) < 2:
             raise RuntimeError(f"Step length {R} is too large for path (path length {len(self._trj)})")
         rt = traja.from_xy(rt)
+        self._transfer_metavars(rt)
         return rt
 
     def _rediscretize_points(self, R):

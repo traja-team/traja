@@ -219,6 +219,7 @@ def generate(n=1000, random=True, step_length=2,
              linear_error_dist=None,
              fps=50,
              spatial_units='m',
+             seed=None,
              **kwargs):
     """Generates a trajectory.
 
@@ -258,7 +259,8 @@ def generate(n=1000, random=True, step_length=2,
     Returns:
 
     """
-
+    if seed is None:
+        np.random.seed(0)
     if angular_error_dist is None:
         angular_error_dist = np.random.normal(loc=0., scale=angular_error_sd, size=n)
     if linear_error_dist is None:
