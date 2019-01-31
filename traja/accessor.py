@@ -129,7 +129,7 @@ class TrajaAccessor(object):
         else:
             raise TypeError(f"{self._trj.time.dtype} must be datetime64")
 
-    def plot(self, n_coords: int = None, frames_only=False, **kwargs):
+    def plot(self, n_coords: int = None, show_time=False, **kwargs):
         """Plot trajectory for single animal over period.
 
         Args:
@@ -222,7 +222,7 @@ class TrajaAccessor(object):
         else:
             # Convert frames to time
             cbar_labels = self._trj.index[indices].values
-            if fps is not None and fps > 0 and fps is not 1 and not frames_only:
+            if fps is not None and fps > 0 and fps is not 1 and show_time:
                 cbar_labels = cbar_labels / fps
         cbar.set_ticks(indices)
         cbar.set_ticklabels(cbar_labels)
