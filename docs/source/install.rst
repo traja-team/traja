@@ -17,13 +17,22 @@ To install the latest development version, clone the `GitHub` repository and use
 Dependencies
 ------------
 
-Installation with pip should also include all dependenies, but a complete list is 
+Installation with pip should also include all dependencies, but a complete list is
 
 - `numpy`
 - `matplotlib`
 - `scipy`
 - `pandas`
+
+Optional dependencies include:
+
 - `shapely`
+- `rpy2`
+
+and can be installed with
+
+  pip install shapely rpy2
+
 
 .. _GitHub: https://github.com/justinshenk/github
 
@@ -34,6 +43,3 @@ Installation with pip should also include all dependenies, but a complete list i
 .. _shapely: http://toblerity.github.io/shapely
 
 .. _matplotlib: http://matplotlib.org
-
-
-

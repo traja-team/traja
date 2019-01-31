@@ -11,9 +11,9 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
-import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
+from matplotlib.dates import date2num, num2date, DateFormatter
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 
 from scipy.spatial.distance import directed_hausdorff, euclidean
@@ -93,7 +93,11 @@ class TrajaAccessor(object):
         time_cols = [col for col in self._trj if 'time' in col.lower()]
         if time_cols:
             time_col = time_cols[0]
-            if is_numeric_dtype(self._trj[time_col]):
+            if is_datetime64_any_dtype(self._trj[time_col]):
+                return time_col
+            else:
+                # Time column is float, etc. but not datetime64.
+                # FIXME: Add conditional return, etc.
                 return time_col
         else:
             return None
@@ -125,12 +129,11 @@ class TrajaAccessor(object):
         else:
             raise TypeError(f"{self._trj.time.dtype} must be datetime64")
 
-    def plot(self, n_coords: int = None, **kwargs):
+    def plot(self, n_coords: int = None, frames_only=False, **kwargs):
         """Plot trajectory for single animal over period.
 
         Args:
-          n_coords(int.): Number of coordinates to plot
-          n_coords: int:  (Default value = None)
+          n_coords (int): Number of coordinates to plot
           **kwargs: 
 
         Returns:
@@ -147,33 +150,52 @@ class TrajaAccessor(object):
         time_units = kwargs.pop('time_units', None)
         fps = kwargs.pop('fps', None)
 
-        if n_coords is not None:
-            raise NotImplementedError("Days and n_coords cannot both be specified.")
-
         start, end = None, None
         coords = self._trj[['x', 'y']]
         time_col = self.get_time_col()
+        is_datetime = is_datetime64_any_dtype(self._trj[time_col]) if time_col else False
 
-        if n_coords is not None:
+        if n_coords is None:
+            # Plot all coords
+            start, end = 0, len(coords)
+            verts = coords.iloc[:end].values
+        else:
             # Plot first `n_coords`
             start, end = 0, n_coords
             verts = coords.iloc[:n_coords].values
-        else:
-            start, end = 0, len(coords)
-            verts = coords.iloc[:end].values
 
         n_coords = len(verts)
+
         codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 1)
         path = Path(verts, codes)
 
         fig, ax = plt.subplots()
+        fig.canvas.draw()
         patch = patches.PathPatch(path, edgecolor=GRAY, facecolor='none', lw=3, alpha=0.3)
-        ax.add_patch(patch)
+        # ax.add_patch(patch)
 
         xs, ys = zip(*verts)
 
-        colors = plt.cm.viridis(np.linspace(0, 1, n_coords))
-        ax.scatter(xs, ys, c=colors, s=8, zorder=2, alpha=0.3)
+        # colors = plt.cm.viridis(np.linspace(0, 1, n_coords))
+        if time_col:
+            # Time determines color
+            colors = [ind for ind, x in enumerate(self._trj[time_col].iloc[:n_coords])]
+        else:
+            # Frame count determines color
+            colors = self._trj.index[:n_coords]
+
+        if time_col:
+            # TODO: Calculate fps if not in datetime
+            vmin = min(colors)
+            vmax = max(colors)
+            if is_datetime:
+                # Show timestamps without units
+                time_units = ''
+        else:
+            # Index is our only reference
+            vmin = self._trj.index[0]
+            vmax = self._trj.index[n_coords-1]
+        sc = ax.scatter(xs, ys, c=colors, s=35, cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax)
 
         if xlim is not None:
             ax.set_xlim(xlim)
@@ -192,21 +214,19 @@ class TrajaAccessor(object):
         ax.set_title(title)
         ax.set_aspect('equal')
 
-        N = 21  # bins
-        cmap = plt.get_cmap('viridis', N)
-        norm = mpl.colors.Normalize(vmin=0, vmax=N)
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-        sm._A = []
-        cbar = plt.colorbar(sm)
-        cbar_yticklabels = cbar.ax.get_yticklabels()
-        interval = n_coords // len(cbar_yticklabels)
-        if time_col:
-            cbar_yticklabels = [self._trj[time_col][interval * i] for i in range(len(cbar_yticklabels))]
+        # Number of color bar ticks
+        CBAR_TICKS = 10
+        indices = np.linspace(0, n_coords-1, CBAR_TICKS, endpoint=True, dtype=int)
+        cbar = fig.colorbar(sc, orientation='vertical', label=time_units)
+        if time_col and is_datetime:
+            cbar_labels = self._trj[time_col].iloc[indices].dt.strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
         else:
-            cbar_yticklabels = [coords.index[interval * i] for i in range(len(cbar_yticklabels))]
-        cbar.ax.set_yticklabels(cbar_yticklabels)
-        # if time_col or time_units:
-        #     cbar.ax.set_ylabel(f'{time_units}')
+            # Convert frames to time
+            cbar_labels = self._trj.index[indices].values
+            if fps is not None and fps > 0 and fps is not 1 and not frames_only:
+                cbar_labels = cbar_labels / fps
+        cbar.set_ticks(indices)
+        cbar.set_ticklabels(cbar_labels)
         plt.tight_layout()
         plt.show()
         return ax

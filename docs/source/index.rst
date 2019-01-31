@@ -23,7 +23,7 @@ If you use traja in your publications, please cite it.
 .. toctree::
    :maxdepth: 1
    :caption: Getting Started
-   
+
    Installation <install>
    Examples Gallery <gallery/index>
 

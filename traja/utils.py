@@ -1,27 +1,15 @@
 #! /usr/local/env python3
-import argparse
-import glob
 import logging
 import math
-import os
-import sys
-from collections import OrderedDict
 
 import traja
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.path import Path
-import matplotlib.patches as patches
-import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
 import scipy
 
 from traja import TrajaDataFrame
-from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 from scipy.spatial.distance import directed_hausdorff, euclidean
-from numpy import unravel_index
-from shapely.geometry import shape
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 
@@ -41,6 +29,10 @@ def shift_xtick_labels(xtick_labels, first_index=None):
         if first_index is not None:
             xtick_labels[0] = first_index
     return xtick_labels
+
+def sans_serif():
+    """Convenience function for changing plot text to serif font."""
+    plt.rc('font', family='serif')
 
 def fill_in_traj(trj):
     # FIXME: Implement
@@ -290,8 +282,10 @@ def generate(n=1000, random=True, step_length=2,
     x = coords.real
     y = coords.imag
 
-    df = pd.DataFrame(data={'x': x, 'y': y})
+    df = traja.TrajaDataFrame(data={'x': x, 'y': y})
     df.fps = fps
+    time = df.index / fps
+    df['time'] = time
     df.spatial_units = spatial_units
     for key, value in kwargs:
         df.__dict__[key] = value
