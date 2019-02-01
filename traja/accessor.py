@@ -220,7 +220,8 @@ class TrajaAccessor(object):
         ax.set_aspect('equal')
 
         # Number of color bar ticks
-        CBAR_TICKS = 10
+        # FIXME: Implement customizable
+        CBAR_TICKS = 10 if n_coords > 20 else n_coords
         indices = np.linspace(0, n_coords-1, CBAR_TICKS, endpoint=True, dtype=int)
         cbar = plt.colorbar(sc, fraction=0.046, pad=0.04, orientation='vertical', label=label)
         if time_col and is_datetime:
@@ -400,7 +401,7 @@ class TrajaAccessor(object):
           interpolate_times (bool, optional): Interpolate times between steps. (Default value = True)
 
         Returns:
-          OrderedDict -- time intervals as dictionary.
+          :class:`~collections.OrderedDict` -- time intervals as dictionary.
           
           .. note::
           

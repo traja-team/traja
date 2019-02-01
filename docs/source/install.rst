@@ -4,7 +4,8 @@ Installation
 Installing traja
 ----------------
 
-Install with pip:
+For installing on Windows, it is recommend to download and install Conda.
+Install with pip::
 
    pip install traja
 

@@ -50,6 +50,8 @@ extensions = [
     'sphinx_gallery.gen_gallery',
 ]
 
+
+
 doctest_global_setup = '''
 import pandas as pd
 import traja
@@ -58,6 +60,7 @@ import traja
 autosummary_generate = True
 
 # Sphinx gallery configuration
+from sphinx_gallery.sorting import FileNameSortKey
 sphinx_gallery_conf = {
     'examples_dirs': ['../examples'],
     'filename_pattern': '^((?!sgskip).)*$',
@@ -66,7 +69,9 @@ sphinx_gallery_conf = {
     'reference_url': {'numpy': 'http://docs.scipy.org/doc/numpy',
                       'scipy': 'http://docs.scipy.org/doc/scipy/reference',
                       'geopandas': 'https://geopandas.readthedocs.io/en/latest/'},
-    'backreferences_dir': 'reference'
+                      'sphinx_gallery': None,
+    'backreferences_dir': 'reference',
+    'within_subsection_order': FileNameSortKey,
 }
 
 # Napoleon settings
