@@ -242,8 +242,8 @@ class TrajaAccessor(object):
         """Generate a heatmap of time spent by point-to-cell gridding.
 
         Args:
-          bins(int., optional): Number of bins (Default value = 16)
-          log:  (Default value = False)
+          bins (int, optional): Number of bins (Default value = 16)
+          log (bool): (Default value = False)
 
         Returns:
 
@@ -263,13 +263,14 @@ class TrajaAccessor(object):
         if log:
             hist = np.log(hist + np.e)
         image = plt.imshow(hist, interpolation='bilinear')
-        # TODO: Set xticks and yticks to original data coordinates
         # TODO: Adjust colorbar ytick_labels to correspond with time
         cbar = plt.colorbar(image, ax=ax)
+        ax.set_xlabel("x{}".format(" " + self.spatial_units if self.spatial_units else ""))
+        ax.set_xlabel("y{}".format(" " + self.spatial_units if self.spatial_units else ""))
         plt.title("Time spent{}".format(' (Logarithmic)' if log else ''))
         plt.tight_layout()
         plt.show()
-        # TODO: Add most common locations in grid
+        # TODO: Add method for most common locations in grid
         # peak_index = unravel_index(hist.argmax(), hist.shape)
 
     def _has_cols(self, cols: list):
@@ -664,7 +665,7 @@ class TrajaAccessor(object):
         """Calculate trajectory heading.
 
         Args:
-          assign:  (Default value = True)
+          assign: (Default value = True)
 
         Returns:
 

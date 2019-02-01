@@ -24,7 +24,7 @@ df.traja.plot()
 # =====================
 #
 # Also, random walks can be generated using ``generate``.
-df = traja.generate(n=1000, random=True, fps=30)
+df = traja.generate(n=1000, fps=30)
 df.traja.plot()
 
 ###############################################################################
