@@ -16,14 +16,14 @@ df = traja.TrajaDataFrame({'x':[0,1,2,3,4],'y':[1,3,2,4,5]})
 # =====================
 #
 # We start out by plotting a basic sime series trajectory using the ``traja``
-# accessor and ``.plot()`` method.
+# accessor and :meth:`~traja.main.TrajaAccessor.plot`` method.
 df.traja.plot()
 
 ###############################################################################
 # Generate Random Walks
 # =====================
 #
-# Also, random walks can be generated using ``generate``.
+# Also, random walks can be generated using :meth:`~traja.utils.generate`.
 df = traja.generate(n=1000, fps=30)
 df.traja.plot()
 
@@ -38,7 +38,7 @@ df.traja.plot()
 # Rediscretize step lengths
 # =========================
 #
-# ``rediscretize`` method allows resampling the trajectory into an arbitrary step
+# :meth:`~traja.utils.rediscretize` method allows resampling the trajectory into an arbitrary step
 # length ``R``.
 rt = df.traja.rediscretize(R=5000)
 rt.traja.plot()
