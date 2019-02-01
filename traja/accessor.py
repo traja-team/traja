@@ -50,11 +50,11 @@ class TrajaAccessor(object):
         """Returns trajectory indices for time between `begin` and `end`.
 
         Args:
-          begin:  (Default value = '19:00')
-          end:  (Default value = '7:00')
+          begin (str):  (Default value = '19:00')
+          end (str):  (Default value = '7:00')
 
         Returns:
-          TrajaDataFrame -- DataFrame during night.
+          trj (:class:`~traja.main.TrajaDataFrame`): Trajectory during night.
 
         """
         return self.between(begin, end)
@@ -64,11 +64,11 @@ class TrajaAccessor(object):
         """Get day between `begin` and `end`.
 
         Args:
-          begin:  (Default value = '7:00')
-          end:  (Default value = '19:00')
+          begin (str):  (Default value = '7:00')
+          end (str):  (Default value = '19:00')
 
         Returns:
-          TrajaDataFrame -- DataFrame during day.
+          trj (:class:`~traja.main.TrajaDataFrame`): Trajectory during day.
 
         """
         return self.between(begin, end)
@@ -90,7 +90,7 @@ class TrajaAccessor(object):
                     kwargs[var] = self._trj.__dict__[var]
         return kwargs
 
-    def get_time_col(self):
+    def _get_time_col(self):
         time_cols = [col for col in self._trj if 'time' in col.lower()]
         if time_cols:
             time_col = time_cols[0]
@@ -107,11 +107,11 @@ class TrajaAccessor(object):
         """Return trajectory between `begin` and end` if `time` column is `datetime64`.
 
         Args:
-          begin(str.): Beginning of time slice.
-          end(str.): End of time slice.
+          begin (str): Beginning of time slice.
+          end (str): End of time slice.
 
         Returns:
-          TrajaDataFrame -- Data frame between values.
+          trj (:class:`~traja.main.TrajaDataFrame`): Data frame between values.
           
         .. doctest ::
 
@@ -124,9 +124,9 @@ class TrajaAccessor(object):
         """
         if pd.core.dtypes.common.is_datetime64_dtype(self._trj.time):
             self._trj.set_index('time', inplace=True)
-            df = self._trj.between_time(begin, end)
-            df = df.reset_index()
-            return df
+            trj = self._trj.between_time(begin, end)
+            trj = trj.reset_index()
+            return trj
         else:
             raise TypeError(f"{self._trj.time.dtype} must be datetime64")
 
@@ -154,7 +154,7 @@ class TrajaAccessor(object):
 
         start, end = None, None
         coords = self._trj[['x', 'y']]
-        time_col = self.get_time_col()
+        time_col = self._get_time_col()
         is_datetime = is_datetime64_any_dtype(self._trj[time_col]) if time_col else False
 
         if n_coords is None:
@@ -237,7 +237,6 @@ class TrajaAccessor(object):
         plt.show()
         return ax
 
-    # def polar_bar(self):
 
     def trip_grid(self, bins=16, log=False):
         """Generate a heatmap of time spent by point-to-cell gridding.
@@ -247,6 +246,7 @@ class TrajaAccessor(object):
           log (bool): (Default value = False)
 
         Returns:
+
 
         """
         # TODO: Add kde-based method for line-to-cell gridding
@@ -285,7 +285,7 @@ class TrajaAccessor(object):
         Args:
 
         Returns:
-          np.ndarray -- x,y coordinates
+          xy (:class:`numpy.ndarray`) -- x,y coordinates
           
         .. doctest::
 
@@ -348,7 +348,7 @@ class TrajaAccessor(object):
         Args:
 
         Returns:
-          OrderedDict: Derivatives in dictionary.
+          derivs (:class:`~collections.OrderedDict`) : Derivatives in dictionary.
           
         .. doctest::
 
@@ -402,9 +402,9 @@ class TrajaAccessor(object):
           interpolate_times (bool, optional): Interpolate times between steps. (Default value = True)
 
         Returns:
-          :class:`~collections.OrderedDict` -- time intervals as dictionary.
+          result (:class:`~collections.OrderedDict`) -- time intervals as dictionary.
           
-          .. note::
+        .. note::
           
             Implementation ported to Python, heavily inspired by Jim McLean's trajr package.
 
@@ -579,7 +579,8 @@ class TrajaAccessor(object):
           
         .. note::
           
-            Based on the appendix in Bovet and Benhamou, (1988) and @JimMcL's trajr implementation.
+            Based on the appendix in Bovet and Benhamou, (1988) and Jim McLean's
+            `trajr <https://github.com/JimMcL/trajr>`_ implementation.
           
         .. doctest::
 
@@ -600,13 +601,13 @@ class TrajaAccessor(object):
         return rt
 
     def _rediscretize_points(self, R):
-        """Helper function for `self.rediscretize`
+        """Helper function for :meth:`~traja.utils.rediscretize`.
 
         Args:
-          R(float.): Rediscretized step length (eg, 0.02)
+          R (float): Rediscretized step length (eg, 0.02)
 
         Returns:
-          Rediscretized coordinates.
+          result (:class:`numpy.ndarray`): Rediscretized coordinates
 
         """
         # TODO: Implement with complex numbers
@@ -615,61 +616,62 @@ class TrajaAccessor(object):
         result = np.empty((128, 2))
         p0 = points[0]
         result[0] = p0
-        I = 0
-        j = 1
+        step_nr = 0
+        candidate = 1 # running index of candidate
 
-        while j <= n_points:
-            # Find the first point k for which |p[k] - p_0| >= R
-            k = np.NaN
-            for i in range(j, n_points):  # range of search space for next point
-                d = np.linalg.norm(points[i] - result[I])
+        while candidate <= n_points:
+            # Find the first point `curr_ind` for which |points[curr_ind] - p_0| >= R
+            curr_ind = np.NaN
+            for i in range(candidate_start, n_points):  # range of search space for next point
+                d = np.linalg.norm(points[i] - result[step_nr])
                 if d >= R:
-                    k = i  # [j, n_points)
+                    curr_ind = i  # curr_ind is in [candidate, n_points)
                     break
-            if np.isnan(k):
+            if np.isnan(curr_ind):
                 # End of path
                 break
 
             # The next point may lie on the same segment
-            j = k
+            candidate_start = curr_ind
 
             # The next point lies on the segment p[k-1], p[k]
-            XI = result[I][0]
-            xk_1 = points[k - 1, 0]
-            YI = result[I][1]
-            yk_1 = points[k - 1, 1]
+            curr_result_x = result[step_nr][0]
+            prev_x = points[curr_ind - 1, 0]
+            curr_result_y = result[step_nr][1]
+            prev_y = points[curr_ind - 1, 1]
 
             # a = 1 if points[k, 0] <= xk_1 else 0
-            lambda_ = np.arctan2(points[k, 1] - yk_1, points[k, 0] - xk_1) # angle
+            lambda_ = np.arctan2(points[curr_ind, 1] - prev_y, points[curr_ind, 0] - prev_x) # angle
             cos_l = np.cos(lambda_)
             sin_l = np.sin(lambda_)
-            U = (XI - xk_1) * cos_l + (YI - yk_1) * sin_l
-            V = (YI - yk_1) * cos_l - (XI - xk_1) * sin_l
+            U = (curr_result_x - prev_x) * cos_l + (curr_result_y - prev_y) * sin_l
+            V = (curr_result_y - prev_y) * cos_l - (curr_result_x - prev_x) * sin_l
 
             # Compute distance H between (X_{i+1}, Y_{i+1}) and (x_{k-1}, y_{k-1})
             H = U + np.sqrt(abs(R ** 2 - V ** 2))
-            XIp1 = H * cos_l + xk_1
-            YIp1 = H * sin_l + yk_1
+            XIp1 = H * cos_l + prev_x
+            YIp1 = H * sin_l + prev_y
 
             # Increase array size progressively to make the code run (significantly) faster
-            if len(result) <= I + 1:
+            if len(result) <= step_nr + 1:
                 result = np.concatenate((result, np.empty_like(result)))
 
             # Save the point
-            result[I + 1] = np.array([XIp1, YIp1])
-            I += 1
+            result[step_nr + 1] = np.array([XIp1, YIp1])
+            step_nr += 1
 
         # Truncate result
-        result = result[:I + 1]
+        result = result[:step_nr + 1]
         return result
 
     def calc_heading(self, assign=True):
         """Calculate trajectory heading.
 
         Args:
-          assign: (Default value = True)
+          assign (bool): (Default value = True)
 
         Returns:
+            heading (:class:`pandas.Series`): heading as a `Series`
 
         ..doctest::
 
@@ -706,9 +708,10 @@ class TrajaAccessor(object):
 
 
         Args:
-          assign:  (Default value = True)
+          assign (bool):  (Default value = True)
 
         Returns:
+            turn_angle (:class:`~pandas.Series`): Turn angle
 
         .. doctest::
 

@@ -1,6 +1,6 @@
 """
 Plotting with traja
------------------------------------
+-------------------
 `traja  <https://traja.readthedocs.io>`_ is a Python
 library providing a selection of easy-to-use spatial visualizations. It is
 built on top of pandas and is designed to work with a range of libraries.
@@ -13,7 +13,7 @@ df = traja.TrajaDataFrame({'x':[0,1,2,3,4],'y':[1,3,2,4,5]})
 
 ###############################################################################
 # Plotting with Traja
-# =====================
+# ===================
 #
 # We start out by plotting a basic sime series trajectory using the ``traja``
 # accessor and :meth:`~traja.main.TrajaAccessor.plot`` method.
