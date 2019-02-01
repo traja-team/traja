@@ -266,8 +266,9 @@ class TrajaAccessor(object):
         image = plt.imshow(hist, interpolation='bilinear')
         # TODO: Adjust colorbar ytick_labels to correspond with time
         cbar = plt.colorbar(image, ax=ax)
-        ax.set_xlabel("x{}".format(" " + self.spatial_units if self.spatial_units else ""))
-        ax.set_xlabel("y{}".format(" " + self.spatial_units if self.spatial_units else ""))
+        # TODO: Make methods work with generic pandas DataFrame
+        ax.set_xlabel("x{}".format(" " + self._trj.spatial_units if self._trj.spatial_units else ""))
+        ax.set_xlabel("y{}".format(" " + self._trj.spatial_units if self._trj.spatial_units else ""))
         plt.title("Time spent{}".format(' (Logarithmic)' if log else ''))
         plt.tight_layout()
         plt.show()
