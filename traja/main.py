@@ -151,21 +151,3 @@ class TrajaDataFrame(pd.DataFrame):
 #         filepath = os.path.join(basepath, 'test', 'test_data', '3527.csv')
 #         df = traja.read_file(filepath)
 #         df.traja.plot()
-
-
-def main(args):
-    # experiment = traja.contrib.DVCExperiment(experiment_name='Stroke_olive_oil',
-    #                                          centroids_dir='/Users/justinshenk/neurodata/data/Stroke_olive_oil/dvc_tracking_position_raw/')
-    pass
-
-
-def parse_arguments(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='Load and analyze trajectory data')
-    # TODO: Add command line options
-    args = parser.parse_args(argv)
-    return args
-
-
-if __name__ == '__main__':
-    args = parse_arguments(sys.argv)
-    main()
