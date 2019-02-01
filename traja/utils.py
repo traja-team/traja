@@ -43,8 +43,8 @@ def smooth_sg(trj, w = None, p = 3):
 
     Args:
       trj: 
-      w:  (Default value = None)
-      p:  (Default value = 3)
+      w: window size (Default value = None)
+      p: polynomial order (Default value = 3)
 
     Returns:
 
@@ -91,8 +91,8 @@ def polar_to_z(r, theta):
     """Converts polar coordinates `z` and `theta` to complex number `z`.
 
     Args:
-      r: 
-      theta: 
+      r: step size
+      theta: angle
 
     Returns:
 
@@ -101,10 +101,10 @@ def polar_to_z(r, theta):
 
 
 def cartesian_to_polar(xy):
-    """Convert :class:`np.ndarray` `xy` to polar coordinates `r` and `theta`.
+    """Convert :class:`numpy.ndarray` `xy` to polar coordinates `r` and `theta`.
 
     Args:
-      xy (:class:`np.ndarray`): x,y coordinates
+      xy (:class:`numpy.ndarray`): x,y coordinates
 
     Returns:
         r, theta (tuple of float): step-length and angle
@@ -194,6 +194,14 @@ def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_unit
 
 
 def distance(A, B, method='dtw'):
+    """Calculate distance between two trajectories.
+
+    Args:
+        method (str): `dtw` for dynamic time warping, `hausdorff` for Hausdorff
+
+    Returns:
+        distance (str): Distance
+    """
     if method is 'hausdorff':
         dist0 = directed_hausdorff(A, B)[0]
         dist1 = directed_hausdorff(B, A)[0]
