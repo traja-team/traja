@@ -4,6 +4,7 @@ matplotlib
 shapely
 psutil
 scipy
+sphinx
 sphinx-gallery
 fastdtw
 pillow

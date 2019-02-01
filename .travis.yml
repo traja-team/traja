@@ -19,7 +19,6 @@ install:
 - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
 - source activate test-environment
 - pip install -r docs/requirements.txt
-- pip install --upgrade pytest flake8 sphinx
 - pip install .
 script: cd docs && make doctest
 deploy:
