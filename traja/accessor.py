@@ -617,9 +617,9 @@ class TrajaAccessor(object):
         p0 = points[0]
         result[0] = p0
         step_nr = 0
-        candidate = 1 # running index of candidate
+        candidate_start = 1 # running index of candidate
 
-        while candidate <= n_points:
+        while candidate_start <= n_points:
             # Find the first point `curr_ind` for which |points[curr_ind] - p_0| >= R
             curr_ind = np.NaN
             for i in range(candidate_start, n_points):  # range of search space for next point
