@@ -1,6 +1,7 @@
 #! /usr/local/env python3
 import logging
 import math
+from typing import Callable
 
 import traja
 import matplotlib.pyplot as plt
@@ -30,23 +31,27 @@ def shift_xtick_labels(xtick_labels, first_index=None):
             xtick_labels[0] = first_index
     return xtick_labels
 
+
 def sans_serif():
     """Convenience function for changing plot text to serif font."""
     plt.rc('font', family='serif')
+
 
 def fill_in_traj(trj):
     # FIXME: Implement
     return trj
 
-def smooth_sg(trj, w = None, p = 3):
+
+def smooth_sg(trj, w=None, p=3):
     """Savitzky-Golay filtering.
 
     Args:
-      trj: 
+      trj (:class:`~traja.main.TrajaDataFrame`): Trajectory
       w: window size (Default value = None)
       p: polynomial order (Default value = 3)
 
     Returns:
+      trj: :class:`~traja.main.TrajaDataFrame`
 
     """
     if w is None:
@@ -54,12 +59,13 @@ def smooth_sg(trj, w = None, p = 3):
 
     if (w % 2 != 1):
         raise Exception(f"Invalid smoothing parameter w ({w}): n must be odd")
-    trj.x = scipy.signal.savgol_filter(trj.x, window_length = w, polyorder=p, axis=0)
-    trj.y = scipy.signal.savgol_filter(trj.y, window_length = w, polyorder=p, axis=0)
+    trj.x = scipy.signal.savgol_filter(trj.x, window_length=w, polyorder=p, axis=0)
+    trj.y = scipy.signal.savgol_filter(trj.y, window_length=w, polyorder=p, axis=0)
     trj = fill_in_traj(trj)
     return trj
 
-def angles(trj, lag = 1, compass_direction = None):
+
+def angles(trj, lag=1, compass_direction=None):
     trj['angle'] = np.rad2deg(np.arccos(np.abs(trj['dx']) / trj['distance']))
     # Get heading from angle
     mask = (trj['dx'] > 0) & (trj['dy'] >= 0)
@@ -75,11 +81,12 @@ def angles(trj, lag = 1, compass_direction = None):
     trj.loc[trj.turn_angle >= 180, 'turn_angle'] -= 360
     trj.loc[trj.turn_angle < -180, 'turn_angle'] += 360
 
+
 def step_lengths(trj):
     """Length of the steps of `trj`.
 
     Args:
-      trj: 
+      trj (:class:`~traja.main.TrajaDataFrame`): Trajectory
 
     Returns:
 
@@ -87,12 +94,12 @@ def step_lengths(trj):
     raise NotImplementedError()
 
 
-def polar_to_z(r, theta):
+def polar_to_z(r: float, theta: float):
     """Converts polar coordinates `z` and `theta` to complex number `z`.
 
     Args:
-      r: step size
-      theta: angle
+      r (float): step size
+      theta (float): angle
 
     Returns:
 
@@ -111,16 +118,24 @@ def cartesian_to_polar(xy):
 
     """
     assert xy.ndim == 2, f"Dimensions are {xy.ndim}, expecting 2"
-    x, y = np.split(xy,[-1], axis=1)
+    x, y = np.split(xy, [-1], axis=1)
     x, y = np.squeeze(x), np.squeeze(y)
     r = math.sqrt(x * x + y * y)
     theta = math.atan2(y, x)
     return r, theta
 
-def expected_sq_displacement(trj, n = None, eqn1= True, compass_direction = None):
+
+def expected_sq_displacement(trj, n=None, eqn1=True, compass_direction=None):
+    """Expected displacment.
+
+    .. note::
+
+        This method is experimental and needs testing.
+
+    """
     # TODO: Fix and test implementation
     sl = step_lengths(trj)
-    ta = angles(trj, compass_direction = compass_direction)
+    ta = angles(trj, compass_direction=compass_direction)
     l = np.mean(sl)
     l2 = np.mean(sl ^ 2)
     c = np.mean(np.cos(ta))
@@ -130,13 +145,15 @@ def expected_sq_displacement(trj, n = None, eqn1= True, compass_direction = None
     if eqn1:
         # Eqn 1
         alpha = np.arctan2(s, c)
-        gamma = ((1 - c)^2 - s2) * np.cos((n + 1) * alpha) - 2 * s * (1 - c) * np.sin((n + 1) * alpha)
-        esd = n * l2 + 2 * l^2 * ((c - c^2 - s2) * n  - c) / ((1 - c)^2 + s2) + 2 * l^2 * ((2 * s2 + (c + s2) ^ ((n + 1) / 2)) / ((1 - c)^2 + s2)^2) * gamma
+        gamma = ((1 - c) ^ 2 - s2) * np.cos((n + 1) * alpha) - 2 * s * (1 - c) * np.sin((n + 1) * alpha)
+        esd = n * l2 + 2 * l ^ 2 * ((c - c ^ 2 - s2) * n - c) / ((1 - c) ^ 2 + s2) + 2 * l ^ 2 * (
+                    (2 * s2 + (c + s2) ^ ((n + 1) / 2)) / ((1 - c) ^ 2 + s2) ^ 2) * gamma
         return abs(esd)
     else:
         # Eqn 2
         esd = n * l2 + 2 * l ^ 2 * c / (1 - c) * (n - (1 - c ^ n) / (1 - c))
         return esd
+
 
 def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units='m', time_units='s'):
     # TODO: Convert to DataFrame if not already
@@ -172,6 +189,7 @@ def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_unit
     ...
     return trj
 
+
 # TODO: Delete if unusable
 # def traj(filepath, xlim=None, ylim=None, **kwargs):
 #     df_test = pd.read_csv(filepath, nrows=100)
@@ -193,10 +211,12 @@ def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_unit
 #     return df
 
 
-def distance(A, B, method='dtw'):
+def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
     """Calculate distance between two trajectories.
 
     Args:
+        A (:class:`~traja.main.TrajaDataFrame`) : Trajectory 1
+        B (:class:`~traja.main.TrajaDataFrame`) : Trajectory 2
         method (str): `dtw` for dynamic time warping, `hausdorff` for Hausdorff
 
     Returns:
@@ -220,14 +240,14 @@ def distance(A, B, method='dtw'):
         return distance
 
 
-def generate(n=1000, random=True, step_length=2,
-             angular_error_sd=0.5,
-             angular_error_dist=None,
-             linear_error_sd=0.2,
-             linear_error_dist=None,
-             fps=50,
-             spatial_units='m',
-             seed=None,
+def generate(n: int = 1000, random: bool = True, step_length: int = 2,
+             angular_error_sd: float = 0.5,
+             angular_error_dist: Callable = None,
+             linear_error_sd: float = 0.2,
+             linear_error_dist: Callable = None,
+             fps: float = 50,
+             spatial_units: str = 'm',
+             seed: int = None,
              **kwargs):
     """Generates a trajectory.
 
@@ -243,14 +263,10 @@ def generate(n=1000, random=True, step_length=2,
     distributed, unbiased, and independent of each other, so are **simple
     directed walks** in the terminology of Cheung, Zhang, Stricker, & Srinivasan,
     (2008). This behaviour may be modified by specifying alternative values for
-    the `angularErrorDist` and/or `linearErrorDist` parameters.
+    the `angular_error_dist` and/or `linear_error_dist` parameters.
     
     The initial angle (for a random walk) or the intended direction (for a
     directed walk) is `0` radians. The starting position is `(0, 0)`.
-    
-    .. note::
-
-        Author: Jim McLean (trajr), ported to Python by Justin Shenk.
 
     Args:
       n:  (Default value = 1000)
@@ -265,6 +281,14 @@ def generate(n=1000, random=True, step_length=2,
       **kwargs: 
 
     Returns:
+        trj (:class:`traja.main.TrajaDataFrame`): Trajectory
+
+    .. note::
+
+        Based on Jim McLean's `trajr <https://github.com/JimMcL/trajr>`_, ported to Python by Justin Shenk.
+
+        **Reference**: McLean, D. J., & Skowron Volponi, M. A. (2018). trajr: An R package for characterisation of animal
+        trajectories. Ethology, 124(6), 440-448. https://doi.org/10.1111/eth.12739.
 
     """
     if seed is None:
@@ -309,6 +333,7 @@ def generate(n=1000, random=True, step_length=2,
 
     return df
 
+
 def rotate(df, angle=0, origin=None):
     """Rotate a trajectory `angle` in radians.
 
@@ -329,18 +354,17 @@ def rotate(df, angle=0, origin=None):
     if isinstance(trj, traja.TrajaDataFrame):
         xy = df.traja.xy
     elif isinstance(trj, pd.DataFrame):
-        trj = df[['x','y']]
+        trj = df[['x', 'y']]
 
     x, y = np.split(xy, [-1], axis=1)
     if origin is None:
         # Assume middle of x and y is origin
-        origin = ((x.max()-x.min())/2, (y.max()-y.min())/2)
+        origin = ((x.max() - x.min()) / 2, (y.max() - y.min()) / 2)
 
     offset_x, offset_y = origin
     new_coords = []
 
-    for x,y in xy:
-
+    for x, y in xy:
         adjusted_x = (x - offset_x)
         adjusted_y = (y - offset_y)
         cos_rad = math.cos(angle)
@@ -360,10 +384,10 @@ def from_df(df):
     """Convenience function for converting a :class:`pandas DataFrame<pandas.dataframe.DataFrame>` into a :class:`traja.main.TrajaDataFrame`.
 
     Args:
-      df: pandas DataFrame
+      df (:class:`pandas.DataFrame`): Trajectory as pandas `DataFrame`
 
     Returns:
-      TrajaDataFrame
+      traj_df (:class:`~traja.main.TrajaDataFrame`): Trajectory
       
     .. doctest::
 
@@ -387,9 +411,10 @@ def from_xy(xy: np.ndarray):
     """Convenience function for initializing :class:`TrajaDataFrame<traja.main.TrajaDataFrame>` with x,y coordinates.
 
     Args:
-      xy: np.ndarray:
+        xy (:class:`numpy.ndarray`): x,y coordinates
 
     Returns:
+        traj_df (:class:`~traja.main.TrajaDataFrame`): Trajectory as dataframe
 
     .. doctest::
 
@@ -406,14 +431,15 @@ def from_xy(xy: np.ndarray):
     return df
 
 
-def read_file(filepath, **kwargs):
+def read_file(filepath:str, **kwargs):
     """Convenience method wrapping pandas `read_csv` and initializing metadata.
 
     Args:
-      filepath: 
-      **kwargs: 
+      filepath (str): path to csv file with `x`, `y` and `time` (optional) columns
+      **kwargs: Additional arguments for :meth:`pandas.read_csv`.
 
     Returns:
+        traj_df (:class:`~traja.main.TrajaDataFrame`): Trajectory
 
     """
 
@@ -431,8 +457,8 @@ def read_file(filepath, **kwargs):
 
     # Strip whitespace
     whitespace_cols = [c for c in df_test if ' ' in df_test[c].name]
-    stripped_cols = {c: lambda x:x.strip() for c in whitespace_cols}
-    converters = {**stripped_cols, **kwargs.pop('converters',{})}
+    stripped_cols = {c: lambda x: x.strip() for c in whitespace_cols}
+    converters = {**stripped_cols, **kwargs.pop('converters', {})}
 
     # Downcast to float32 # TODO: Benchmark float32 vs float64 for very big datasets
     float_cols = [c for c in df_test if 'float' in df_test[c].dtype]

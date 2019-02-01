@@ -1,6 +1,6 @@
 """
 Comparing
------------------------------------
+---------
 traja allows comparing trajectories using various methods.
 """
 import traja
@@ -20,8 +20,7 @@ rotated.traja.plot()
 
 ###############################################################################
 # Compare trajectories point-wise 
-# =========================================
-#
+# ===============================
 dist = traja.utils.distance(df.traja.xy, rotated.traja.xy)
 
 print(f"Distance between the two trajectories is {dist}")
