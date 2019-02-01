@@ -6,3 +6,4 @@ psutil
 scipy
 sphinx-gallery
 fastdtw
+pillow
