@@ -130,11 +130,11 @@ class TrajaAccessor(object):
         else:
             raise TypeError(f"{self._trj.time.dtype} must be datetime64")
 
-    def trip_grid(self, bins=16, normalize=False):
+    def trip_grid(self, bins=16, normalize=False, hist_only=False):
         hist, image = traja.utils.trip_grid(self._trj,
                                             bins=bins,
                                             spatial_units=self._trj.spatial_units,
-                                            normalize=normalize)
+                                            normalize=normalize, hist_only=hist_only)
         return hist, image
 
     def plot(self, n_coords: int = None, show_time=False, **kwargs):
