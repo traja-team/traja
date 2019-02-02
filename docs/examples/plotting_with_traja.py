@@ -38,8 +38,8 @@ df.traja.plot()
 # Rediscretize step lengths
 # =========================
 #
-# :meth:`~traja.utils.rediscretize` method allows resampling the trajectory into an arbitrary step
-# length ``R``.
+# :meth:`~traja.utils.rediscretize` method allows resampling the trajectory
+# into an arbitrary step length ``R``.
 rt = df.traja.rediscretize(R=5000)
 rt.traja.plot()
 
@@ -48,7 +48,7 @@ rt.traja.plot()
 # =====================
 #
 # Derivatives can be calculated with ``derivatives`` and histograms can be
-# plotted using pandas built-in :meth:`plot <pandas.pandas.DataFrame.plot>` method.
+# plotted using pandas built-in :meth:`~pandas.DataFrame.hist>` method.
 derivs = df.traja.get_derivatives()
 speed = derivs['speed']
 speed.hist()

@@ -16,6 +16,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 
 
 def stylize_axes(ax):
+    """Add top and right border to plot, set ticks."""
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
@@ -41,6 +42,45 @@ def fill_in_traj(trj):
     # FIXME: Implement
     return trj
 
+def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False):
+    """Generate a heatmap of time spent by point-to-cell gridding.
+
+    Args:
+      bins (int, optional): Number of bins (Default value = 16)
+      log (bool): (Default value = False)
+
+    Returns:
+        hist (:class:`numpy.ndarray`): 2D histogram as array
+        image: image of histogram
+
+    """
+    # TODO: Add kde-based method for line-to-cell gridding
+    df = trj[['x', 'y']].dropna()
+
+    # Set aspect if `xlim` and `ylim` set.
+    x0, x1 = df.xlim or (df.x.min(), df.x.max())
+    y0, y1 = df.ylim or (df.y.min(), df.y.max())
+    aspect = (y1 - y0) / (x1 - x0)
+    x_edges = np.linspace(x0, x1, num=bins)
+    y_edges = np.linspace(y0, y1, num=int(bins / aspect))
+
+    x, y = zip(*df.values)
+    # # TODO: Remove redundant histogram calculation
+    hist, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges), density=normalize)
+    fig, ax = plt.subplots()
+    if log:
+        hist = np.log(hist + np.e)
+    image = plt.imshow(hist, interpolation='bilinear')
+    # TODO: Adjust colorbar ytick_labels to correspond with time
+    cbar = plt.colorbar(image, ax=ax)
+    ax.set_xlabel("x{}".format(" (" + spatial_units + ")" if spatial_units else ""))
+    ax.set_ylabel("y{}".format(" (" + spatial_units + ")" if spatial_units else ""))
+    plt.title("Time spent{}".format(' (Logarithmic)' if log else ''))
+    plt.tight_layout()
+    plt.show()
+    # TODO: Add method for most common locations in grid
+    # peak_index = unravel_index(hist.argmax(), hist.shape)
+    return hist, image
 
 def smooth_sg(trj, w=None, p=3):
     """Savitzky-Golay filtering.

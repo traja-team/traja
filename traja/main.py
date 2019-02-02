@@ -1,26 +1,13 @@
 #! /usr/local/env python3
-import argparse
-import glob
 import logging
-import os
 import sys
-from collections import OrderedDict
 
 import traja
 import matplotlib as mpl
 if 'sphinx' in sys.argv[0]:
     mpl.use('agg')
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-import matplotlib.patches as patches
-import matplotlib.colors as colors
-import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
-
-from scipy.spatial.distance import directed_hausdorff, euclidean
-from numpy import unravel_index
-from shapely.geometry import shape
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 
