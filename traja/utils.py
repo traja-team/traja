@@ -47,11 +47,14 @@ def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist
 
     Args:
       bins (int, optional): Number of bins (Default value = 16)
-      log (bool): (Default value = False)
+      log (bool): log scale histogram (Default value = False)
+      spatial_units (str): units for plotting
+      normalize (bool): normalize histogram into density plot
+      hist_only (bool): return histogram without plotting
 
     Returns:
         hist (:class:`numpy.ndarray`): 2D histogram as array
-        image: image of histogram
+        image (:class:`matplotlib.collections.PathCollection`: image of histogram
 
     """
     # TODO: Add kde-based method for line-to-cell gridding

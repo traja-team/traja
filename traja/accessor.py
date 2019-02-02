@@ -91,8 +91,17 @@ class TrajaAccessor(object):
         return kwargs
 
     def _get_time_col(self):
+        # Check if saved in metadata
+        time_col = self._trj.__dict__.get('time_col', None)
+        if time_col:
+            return time_col
+        # Check if index is datetime
+        if is_datetime64_any_dtype(self._trj.index):
+            return 'index'
+        # Check if any column contains 'time'
         time_cols = [col for col in self._trj if 'time' in col.lower()]
         if time_cols:
+            # Try first column
             time_col = time_cols[0]
             if is_datetime64_any_dtype(self._trj[time_col]):
                 return time_col
@@ -101,6 +110,7 @@ class TrajaAccessor(object):
                 # FIXME: Add conditional return, etc.
                 return time_col
         else:
+            # No time column found
             return None
 
     def between(self, begin, end):
@@ -122,17 +132,44 @@ class TrajaAccessor(object):
             0 2000-06-30 12:00:01  0  1
 
         """
-        if pd.core.dtypes.common.is_datetime64_dtype(self._trj.time):
-            self._trj.set_index('time', inplace=True)
-            trj = self._trj.between_time(begin, end)
-            trj = trj.reset_index()
+        time_col = self._get_time_col()
+        if time_col is 'index':
+            return self._trj.between_time(begin, end)
+        elif time_col and is_datetime64_any_dtype(self._trj[time_col]):
+            # Backup index
+            dt_index_col = self._trj.index.name
+            # Set dt_index
+            trj = self._trj.copy()
+            trj.set_index(time_col, inplace=True)
+            # Create slice of trajectory
+            trj = trj.between_time(begin, end)
+            # Restore index and return column
+            if dt_index_col:
+                trj.set_index(dt_index_col, inplace=True)
+            else:
+                trj.reset_index(inplace=True)
             return trj
         else:
-            raise TypeError(f"{self._trj.time.dtype} must be datetime64")
+            raise TypeError("Either time column or index must be datetime64")
 
-    def trip_grid(self, bins=16, normalize=False, hist_only=False):
+    def trip_grid(self, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False):
+        """Make a 2D histogram of trip.
+
+        Args:
+          bins (int, optional): Number of bins (Default value = 16)
+          log (bool): log scale histogram (Default value = False)
+          spatial_units (str): units for plotting
+          normalize (bool): normalize histogram into density plot
+          hist_only (bool): return histogram without plotting
+
+        Returns:
+            hist (:class:`numpy.ndarray`): 2D histogram as array
+            image (:class:`matplotlib.collections.PathCollection`: image of histogram
+
+        """
         hist, image = traja.utils.trip_grid(self._trj,
                                             bins=bins,
+                                            log=log,
                                             spatial_units=self._trj.spatial_units,
                                             normalize=normalize, hist_only=hist_only)
         return hist, image
@@ -142,9 +179,10 @@ class TrajaAccessor(object):
 
         Args:
           n_coords (int): Number of coordinates to plot
-          **kwargs: 
+          **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
 
         Returns:
+            ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
 
         """
         GRAY = '#999999'
@@ -185,8 +223,11 @@ class TrajaAccessor(object):
 
         xs, ys = zip(*verts)
 
-        if time_col:
-            # Time determines color
+        if time_col is 'index':
+            # DatetimeIndex determines color
+            colors = [ind for ind, x in enumerate(self._trj.index[:n_coords])]
+        elif time_col and time_col is not 'index':
+            # `time_col` determines color
             colors = [ind for ind, x in enumerate(self._trj[time_col].iloc[:n_coords])]
         else:
             # Frame count determines color
@@ -200,7 +241,7 @@ class TrajaAccessor(object):
                 # Show timestamps without units
                 time_units = ''
         else:
-            # Index is our only reference
+            # Index/frame count is our only reference
             vmin = self._trj.index[0]
             vmax = self._trj.index[n_coords-1]
             if not show_time:
@@ -231,7 +272,9 @@ class TrajaAccessor(object):
         CBAR_TICKS = 10 if n_coords > 20 else n_coords
         indices = np.linspace(0, n_coords-1, CBAR_TICKS, endpoint=True, dtype=int)
         cbar = plt.colorbar(sc, fraction=0.046, pad=0.04, orientation='vertical', label=label)
-        if time_col and is_datetime:
+        if time_col is 'index':
+            cbar_labels = self._trj.index[indices].strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
+        elif time_col and is_datetime:
             cbar_labels = self._trj[time_col].iloc[indices].dt.strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
         else:
             # Convert frames to time
