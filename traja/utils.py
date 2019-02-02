@@ -42,7 +42,7 @@ def fill_in_traj(trj):
     # FIXME: Implement
     return trj
 
-def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False):
+def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False):
     """Generate a heatmap of time spent by point-to-cell gridding.
 
     Args:
@@ -67,9 +67,11 @@ def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False):
     x, y = zip(*df.values)
     # # TODO: Remove redundant histogram calculation
     hist, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges), density=normalize)
-    fig, ax = plt.subplots()
     if log:
         hist = np.log(hist + np.e)
+    if hist_only:
+        return hist, None
+    fig, ax = plt.subplots()
     image = plt.imshow(hist, interpolation='bilinear')
     # TODO: Adjust colorbar ytick_labels to correspond with time
     cbar = plt.colorbar(image, ax=ax)
@@ -87,8 +89,8 @@ def smooth_sg(trj, w=None, p=3):
 
     Args:
       trj (:class:`~traja.main.TrajaDataFrame`): Trajectory
-      w: window size (Default value = None)
-      p: polynomial order (Default value = 3)
+      w (int): window size (Default value = None)
+      p (int): polynomial order (Default value = 3)
 
     Returns:
       trj: :class:`~traja.main.TrajaDataFrame`
