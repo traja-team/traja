@@ -71,11 +71,12 @@ def _get_time_col(trj):
         return None
 
 
-def plot(trj, n_coords: int = None, show_time=False, **kwargs):
+def plot(trj, accessor=None, n_coords: int = None, show_time=False, **kwargs):
     """Plot trajectory for single animal over period.
 
     Args:
       trj (:class:traja.TrajaDataFrame): trajectory
+
       n_coords (int): Number of coordinates to plot
       **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
 
@@ -85,7 +86,8 @@ def plot(trj, n_coords: int = None, show_time=False, **kwargs):
     """
     GRAY = '#999999'
     self = kwargs.get('self', {})
-    if self:
+    if accessor:
+        self = accessor
         kwargs = self._get_plot_args(**kwargs)
     else:
         kwargs = kwargs
