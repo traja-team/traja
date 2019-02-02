@@ -89,7 +89,14 @@ class TrajaAccessor(object):
         return kwargs
 
     def _get_time_col(self):
-        # Look for time column in trajectory
+        """Search for time column in trajectory.
+
+        Args:
+
+        Returns:
+           time_col (str or None): name of time column, 'index' or None
+
+        """
         return traja.utils._get_time_col(self._trj)
 
     def between(self, begin, end):
