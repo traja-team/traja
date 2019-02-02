@@ -30,7 +30,7 @@ Optional dependencies include:
 - `shapely`
 - `rpy2`
 
-and can be installed with
+and can be installed with::
 
   pip install shapely rpy2
 
