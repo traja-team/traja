@@ -130,6 +130,13 @@ class TrajaAccessor(object):
         else:
             raise TypeError(f"{self._trj.time.dtype} must be datetime64")
 
+    def trip_grid(self, bins=16, normalize=False):
+        hist, image = traja.utils.trip_grid(self._trj,
+                                            bins=bins,
+                                            spatial_units=self._trj.spatial_units,
+                                            normalize=normalize)
+        return hist, image
+
     def plot(self, n_coords: int = None, show_time=False, **kwargs):
         """Plot trajectory for single animal over period.
 
@@ -145,8 +152,8 @@ class TrajaAccessor(object):
         kwargs = self._get_plot_args(**kwargs)
         xlim = kwargs.pop('xlim', None)
         ylim = kwargs.pop('ylim', None)
-        xlabel = kwargs.pop('xlabel', f'x ({self._trj.spatial_units})')
-        ylabel = kwargs.pop('ylabel', f'y ({self._trj.spatial_units})')
+        xlabel = kwargs.pop('xlabel', None) or f'x ({self._trj.spatial_units})'
+        ylabel = kwargs.pop('ylabel', None) or f'y ({self._trj.spatial_units})'
         title = kwargs.pop('title', None)
         time_units = kwargs.pop('time_units', None)
         fps = kwargs.pop('fps', None)
@@ -237,43 +244,6 @@ class TrajaAccessor(object):
         plt.show()
         return ax
 
-
-    def trip_grid(self, bins=16, log=False):
-        """Generate a heatmap of time spent by point-to-cell gridding.
-
-        Args:
-          bins (int, optional): Number of bins (Default value = 16)
-          log (bool): (Default value = False)
-
-        Returns:
-
-
-        """
-        # TODO: Add kde-based method for line-to-cell gridding
-        df = self._trj[['x', 'y']].dropna()
-        x0, x1 = df.xlim or (df.x.min(), df.x.max())
-        y0, y1 = df.ylim or (df.y.min(), df.y.max())
-        aspect = (y1 - y0) / (x1 - x0)
-        x_edges = np.linspace(x0, x1, num=bins)
-        y_edges = np.linspace(y0, y1, num=int(bins / aspect))
-
-        x, y = zip(*df.values)
-        # # TODO: Remove redundant histogram calculation
-        hist, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges))
-        fig, ax = plt.subplots()
-        if log:
-            hist = np.log(hist + np.e)
-        image = plt.imshow(hist, interpolation='bilinear')
-        # TODO: Adjust colorbar ytick_labels to correspond with time
-        cbar = plt.colorbar(image, ax=ax)
-        # TODO: Make methods work with generic pandas DataFrame
-        ax.set_xlabel("x{}".format(" " + self._trj.spatial_units if self._trj.spatial_units else ""))
-        ax.set_xlabel("y{}".format(" " + self._trj.spatial_units if self._trj.spatial_units else ""))
-        plt.title("Time spent{}".format(' (Logarithmic)' if log else ''))
-        plt.tight_layout()
-        plt.show()
-        # TODO: Add method for most common locations in grid
-        # peak_index = unravel_index(hist.argmax(), hist.shape)
 
     def _has_cols(self, cols: list):
         return set(cols).issubset(self._trj.columns)
@@ -487,10 +457,10 @@ class TrajaAccessor(object):
         """Calculate displacement between consecutive indices.
 
         Args:
-          assign(bool., optional): Assign displacement to TrajaDataFrame (Default value = True)
+          assign (bool, optional): Assign displacement to TrajaDataFrame (Default value = True)
 
         Returns:
-          pd.Series -- Displacement series.
+          displacement (:class:`pandas.Series`): Displacement series.
           
         .. doctest::
 
@@ -518,7 +488,7 @@ class TrajaAccessor(object):
           assign (bool, optional): Assign displacement to TrajaDataFrame (Default value = True)
 
         Returns:
-          pd.Series -- Angle series.
+          angle (:class:`pandas.Series`): Angle series.
           
         .. doctest::
 
