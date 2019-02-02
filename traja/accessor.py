@@ -170,7 +170,7 @@ class TrajaAccessor(object):
         Returns:
             ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
         """
-        ax = traja.utils.plot(self=self, **kwargs)
+        ax = traja.utils.plot(trj=self._trj, accessor=self, n_coords=n_coords, show_time=show_time, **kwargs)
         return ax
 
 

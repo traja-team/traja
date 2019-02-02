@@ -32,5 +32,5 @@ You can also do resampling to select average coordinate every second, for exampl
     resampled = df.resample('S').mean()
     plot(resampled)
 
-.. image:: ../images/resampled.png
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/resampled.png
 
