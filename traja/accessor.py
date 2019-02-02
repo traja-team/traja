@@ -9,8 +9,6 @@ from collections import OrderedDict
 import traja
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.path import Path
-import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
 from matplotlib.dates import date2num, num2date, DateFormatter
@@ -91,27 +89,8 @@ class TrajaAccessor(object):
         return kwargs
 
     def _get_time_col(self):
-        # Check if saved in metadata
-        time_col = self._trj.__dict__.get('time_col', None)
-        if time_col:
-            return time_col
-        # Check if index is datetime
-        if is_datetime64_any_dtype(self._trj.index):
-            return 'index'
-        # Check if any column contains 'time'
-        time_cols = [col for col in self._trj if 'time' in col.lower()]
-        if time_cols:
-            # Try first column
-            time_col = time_cols[0]
-            if is_datetime64_any_dtype(self._trj[time_col]):
-                return time_col
-            else:
-                # Time column is float, etc. but not datetime64.
-                # FIXME: Add conditional return, etc.
-                return time_col
-        else:
-            # No time column found
-            return None
+        # Look for time column in trajectory
+        return traja.utils._get_time_col(self._trj)
 
     def between(self, begin, end):
         """Return trajectory between `begin` and end` if `time` column is `datetime64`.
@@ -183,108 +162,8 @@ class TrajaAccessor(object):
 
         Returns:
             ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
-
         """
-        GRAY = '#999999'
-
-        kwargs = self._get_plot_args(**kwargs)
-        xlim = kwargs.pop('xlim', None)
-        ylim = kwargs.pop('ylim', None)
-        xlabel = kwargs.pop('xlabel', None) or f'x ({self._trj.spatial_units})'
-        ylabel = kwargs.pop('ylabel', None) or f'y ({self._trj.spatial_units})'
-        title = kwargs.pop('title', None)
-        time_units = kwargs.pop('time_units', None)
-        fps = kwargs.pop('fps', None)
-        figsize = kwargs.pop('figsize',None)
-
-        start, end = None, None
-        coords = self._trj[['x', 'y']]
-        time_col = self._get_time_col()
-        is_datetime = is_datetime64_any_dtype(self._trj[time_col]) if time_col else False
-
-        if n_coords is None:
-            # Plot all coords
-            start, end = 0, len(coords)
-            verts = coords.iloc[:end].values
-        else:
-            # Plot first `n_coords`
-            start, end = 0, n_coords
-            verts = coords.iloc[:n_coords].values
-
-        n_coords = len(verts)
-
-        codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 1)
-        path = Path(verts, codes)
-
-        fig, ax = plt.subplots(figsize=figsize)
-        fig.canvas.draw()
-        patch = patches.PathPatch(path, edgecolor=GRAY, facecolor='none', lw=3, alpha=0.3)
-        ax.add_patch(patch)
-
-        xs, ys = zip(*verts)
-
-        if time_col is 'index':
-            # DatetimeIndex determines color
-            colors = [ind for ind, x in enumerate(self._trj.index[:n_coords])]
-        elif time_col and time_col is not 'index':
-            # `time_col` determines color
-            colors = [ind for ind, x in enumerate(self._trj[time_col].iloc[:n_coords])]
-        else:
-            # Frame count determines color
-            colors = self._trj.index[:n_coords]
-
-        if time_col:
-            # TODO: Calculate fps if not in datetime
-            vmin = min(colors)
-            vmax = max(colors)
-            if is_datetime:
-                # Show timestamps without units
-                time_units = ''
-        else:
-            # Index/frame count is our only reference
-            vmin = self._trj.index[0]
-            vmax = self._trj.index[n_coords-1]
-            if not show_time:
-                time_units = ''
-        label = f"Time ({time_units})" if time_units else ""
-
-        sc = ax.scatter(xs, ys, c=colors, s=25, cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax)
-
-        if xlim is not None:
-            ax.set_xlim(xlim)
-        else:
-            ax.set_xlim((coords.x.min(), coords.x.max()))
-        if ylim is not None:
-            ax.set_ylim(ylim)
-        else:
-            ax.set_ylim((coords.y.min(), coords.y.max()))
-
-        if kwargs.pop('invert_yaxis', None):
-            plt.gca().invert_yaxis()
-
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.set_title(title)
-        ax.set_aspect('equal')
-
-        # Number of color bar ticks
-        # FIXME: Implement customizable
-        CBAR_TICKS = 10 if n_coords > 20 else n_coords
-        indices = np.linspace(0, n_coords-1, CBAR_TICKS, endpoint=True, dtype=int)
-        cbar = plt.colorbar(sc, fraction=0.046, pad=0.04, orientation='vertical', label=label)
-        if time_col is 'index':
-            cbar_labels = self._trj.index[indices].strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
-        elif time_col and is_datetime:
-            cbar_labels = self._trj[time_col].iloc[indices].dt.strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
-        else:
-            # Convert frames to time
-            cbar_labels = self._trj.index[indices].values
-            if fps is not None and fps > 0 and fps is not 1 and show_time:
-                cbar_labels = cbar_labels / fps
-        cbar.set_ticks(indices)
-        cbar.set_ticklabels(cbar_labels)
-        plt.tight_layout()
-        plt.show()
+        ax = traja.utils.plot(self=self, **kwargs)
         return ax
 
 
