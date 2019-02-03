@@ -540,6 +540,7 @@ def generate(n: int = 1000, random: bool = True, step_length: int = 2,
     return df
 
 
+
 def rotate(df, angle=0, origin=None):
     """Rotate a trajectory `angle` in radians.
 
@@ -637,7 +638,7 @@ def from_xy(xy: np.ndarray):
     return df
 
 
-def read_file(filepath:str, **kwargs):
+def read_file(filepath:str, id=None, xlim=None, ylim=None, title=None, spatial_units='m', fps=None, **kwargs):
     """Convenience method wrapping pandas `read_csv` and initializing metadata.
 
     Args:
@@ -649,13 +650,6 @@ def read_file(filepath:str, **kwargs):
 
     """
 
-    xlim = kwargs.pop('xlim', None)
-    ylim = kwargs.pop('ylim', None)
-    title = kwargs.pop('title', "Trajectory")
-    spatial_units = kwargs.pop('spatial_units', 'm')
-    xlabel = kwargs.pop('xlabel', f"x ({spatial_units})")
-    ylabel = kwargs.pop('ylabel', f"y ({spatial_units})")
-    fps = kwargs.pop('fps', None)
     date_parser = kwargs.pop('data_parser', None)
 
     # TODO: Set index to first column containing 'time'
@@ -697,6 +691,7 @@ def read_file(filepath:str, **kwargs):
 
     trj = TrajaDataFrame(trj)
     # Set meta properties of TrajaDataFrame
+    trj.id = id
     trj.xlim = xlim
     trj.ylim = ylim
     trj.spatial_units = spatial_units

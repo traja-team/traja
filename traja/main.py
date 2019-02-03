@@ -31,7 +31,7 @@ class TrajaDataFrame(pd.DataFrame):
 
     """
 
-    _metadata = ['xlim', 'ylim', 'spatial_units', 'xlabel', 'ylabel', 'title', 'fps', 'time_units', 'time_col']
+    _metadata = ['xlim', 'ylim', 'spatial_units', 'xlabel', 'ylabel', 'title', 'fps', 'time_units', 'time_col', 'id']
 
     def __init__(self, *args, **kwargs):
         # Allow setting metadata from constructor
