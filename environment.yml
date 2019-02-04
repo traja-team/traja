@@ -5,6 +5,7 @@ dependencies:
   - pip:
     - torch
     - fastdtw
+    - sphinx-gallery
   - pandas
   - numpy
   - matplotlib
@@ -14,4 +15,3 @@ dependencies:
   - sphinx
   - pillow
   - rpy2
-  - sphinx-gallery
