@@ -26,20 +26,14 @@ author = 'Justin Shenk'
 import traja
 version = release = traja.__version__
 
-# The full version, including alpha/beta/rc tags
-release = '0.0.2-alpha.1'
-
-
 # -- General configuration ---------------------------------------------------
-
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.mathjax',
@@ -50,6 +44,8 @@ extensions = [
     'sphinx_gallery.gen_gallery',
 ]
 
+# continue doc build and only print warnings/errors in examples
+ipython_warning_is_error = False
 
 
 doctest_global_setup = '''
