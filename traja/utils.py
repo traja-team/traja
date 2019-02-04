@@ -229,8 +229,12 @@ def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist
     df = trj[['x', 'y']].dropna()
 
     # Set aspect if `xlim` and `ylim` set.
-    x0, x1 = df.xlim or (df.x.min(), df.x.max())
-    y0, y1 = df.ylim or (df.y.min(), df.y.max())
+    if 'xlim' in df.__dict__ and 'ylim' in df.__dict__ and isinstance(df.xlim,tuple): # TrajaDataFrame
+        x0, x1 = df.xlim
+        y0, y1 = df.ylim
+    else:
+        x0, x1 = (df.x.min(), df.x.max())
+        y0, y1 = (df.y.min(), df.y.max())
     aspect = (y1 - y0) / (x1 - x0)
     x_edges = np.linspace(x0, x1, num=bins)
     y_edges = np.linspace(y0, y1, num=int(bins / aspect))

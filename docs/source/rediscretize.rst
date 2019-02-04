@@ -1,7 +1,12 @@
-Rediscretizing Trajectories
-===========================
+Resampling Trajectories
+=======================
 
-Rediscretize the trajectory into consistent step lengths with :func:`traja.utils.rediscretize(R)` where `R` is
+Rediscretize
+------------
+Rediscretize the trajectory into consistent step lengths with :func:`traja.utils.rediscretize` where the `R` parameter is
 the new step length.
 
+Resample time
+-------------
+:meth:`~traja.utils.resample_time` allows resampling by a `step_time`.
 
