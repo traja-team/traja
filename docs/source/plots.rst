@@ -1,7 +1,6 @@
 .. ipython:: python
    :suppress:
 
-   import geopandas
    import matplotlib
    import pandas as pd
    orig = matplotlib.rcParams['figure.figsize']
