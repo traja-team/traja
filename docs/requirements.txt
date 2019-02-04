@@ -8,3 +8,5 @@ sphinx
 sphinx-gallery
 fastdtw
 pillow
+rpy2
+torch
