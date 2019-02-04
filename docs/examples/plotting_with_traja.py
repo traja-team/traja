@@ -40,8 +40,23 @@ df.traja.plot()
 #
 # :meth:`~traja.utils.rediscretize` method allows resampling the trajectory
 # into an arbitrary step length ``R``.
+# .. note::
+#
+#   This can also be achieved using `traja.utils.rediscretize(trj, step_length)`
 rt = df.traja.rediscretize(R=5000)
 rt.traja.plot()
+
+###############################################################################
+# Resample step time
+# =========================
+#
+# :meth:`~traja.utils.resample_time` method allows resampling the trajectory by
+# time into `step_time`.
+# .. note::
+#
+#   This can also be achieved using `traja.utils.resample_time(trj, step_time)`
+resampled = df.traja.resample_time(step_time='2s')
+resampled.traja.plot()
 
 ###############################################################################
 # Calculate derivatives

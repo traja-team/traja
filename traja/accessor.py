@@ -138,6 +138,9 @@ class TrajaAccessor(object):
         else:
             raise TypeError("Either time column or index must be datetime64")
 
+    def resample_time(self, step_time):
+        return traja.utils.resample_time(self._trj, step_time=step_time)
+
     def trip_grid(self, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False):
         """Make a 2D histogram of trip.
 
@@ -178,13 +181,14 @@ class TrajaAccessor(object):
         return set(cols).issubset(self._trj.columns)
 
     @property
-    def xy(self):
+    def xy(self, split=False):
         """Return numpy array of x,y coordinates.
 
         Args:
+            split (bool): Split into seaprate x and y :class:`numpy.ndarrays`
 
         Returns:
-          xy (:class:`numpy.ndarray`) -- x,y coordinates
+          xy (:class:`numpy.ndarray`) -- x,y coordinates (separate if `split` is `True`)
           
         .. doctest::
 
@@ -197,6 +201,8 @@ class TrajaAccessor(object):
         """
         if self._has_cols(['x', 'y']):
             xy = self._trj[['x', 'y']].values
+            if split:
+                xy = np.split(xy, [-1], axis=1)
             return xy
         else:
             raise Exception("'x' and 'y' are not in the dataframe.")
