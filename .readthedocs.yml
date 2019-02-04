@@ -1,10 +1,13 @@
 # .readthedocs.yml
 
 build:
-        image: latest
+  image: latest
 
 python:
-        version: 3.6
-        pip_install: true
+  version: 3.6
+  pip_install: true
+
+conda:
+  environment: environment.yml
 
 requirements_file: docs/requirements.txt
