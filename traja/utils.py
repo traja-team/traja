@@ -3,8 +3,6 @@ import logging
 import math
 from typing import Callable
 
-from pandas.core.dtypes.common import is_datetime_or_timedelta_dtype, is_datetime64_any_dtype, is_timedelta64_dtype
-
 import traja
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
@@ -14,6 +12,7 @@ import pandas as pd
 import scipy
 
 from traja import TrajaDataFrame
+from pandas.core.dtypes.common import is_datetime_or_timedelta_dtype, is_datetime64_any_dtype, is_timedelta64_dtype
 from scipy.spatial.distance import directed_hausdorff, euclidean
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
@@ -70,6 +69,12 @@ def _get_time_col(trj):
         # No time column found
         return None
 
+
+def predict(xy, nb_steps=10, epochs=1000, batch_size=1, model='lstm'):
+    """Method for training and visualizing LSTM with trajectory data."""
+    if model is 'lstm':
+        from traja.nn import TrajectoryLSTM
+        TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
 
 def plot(trj, accessor=None, n_coords: int = None, show_time=False, **kwargs):
     """Plot trajectory for single animal over period.
@@ -189,6 +194,8 @@ def plot(trj, accessor=None, n_coords: int = None, show_time=False, **kwargs):
                 logging.ERROR("Time unit {} not yet implemented".format(time_units))
         else:
             raise NotImplementedError("Indexing on {} is not yet implemented".format(type(trj.index)))
+    elif time_col and is_timedelta64_dtype(trj[time_col]):
+        cbar_labels = trj[time_col].iloc[indices].dt.total_seconds().values.astype(str)
     elif time_col and is_datetime:
         cbar_labels = trj[time_col].iloc[indices].dt.strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
     else:
@@ -539,6 +546,59 @@ def generate(n: int = 1000, random: bool = True, step_length: int = 2,
 
     return df
 
+def _resample_time(trj, step_time):
+    if not is_datetime_or_timedelta_dtype(trj.index):
+        raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
+    return trj.resample(step_time).agg({'x': np.mean, 'y': np.mean})
+
+def resample_time(trj, step_time, new_fps = None):
+    """Resample trajectory to consistent `step_time` intervals.
+
+    Args:
+        trj (:class:`~traja.TrajaDataFrame`): trajectory
+        step_time (str): step time interval (eg, '1s')
+        new_fps (bool, optional): new fps
+
+    Results:
+        trj (:class:`~traja.TrajaDataFrame`): trajectory
+
+
+    .. doctest::
+
+        >>> from traja import generate
+        >>> from traja.utils import resample_time
+        >>> df = generate()
+        >>> resampled = resample_time(df, '2s')
+        >>> resampled.head()
+              time          x          y
+        0 00:00:00  14.555071 -26.482614
+        1 00:00:02  -3.582797  -6.491297
+        2 00:00:04  -4.299709  26.937443
+        3 00:00:06 -25.337042  42.131848
+        4 00:00:08  33.069915  32.780830
+
+
+
+    """
+    time_col = _get_time_col(trj)
+    if time_col is 'index' and is_datetime64_any_dtype(trj.index):
+        _trj = _resample_time(trj, step_time)
+    elif time_col is 'index' and is_timedelta64_dtype(trj.index):
+        _trj = _resample_time(trj, step_time)
+    elif time_col:
+        if isinstance(step_time, str):
+            try:
+                if '.' in step_time:
+                    raise NotImplementedError("Fractional step time not implemented.")
+            except Exception:
+                raise NotImplementedError(f"Inferring from time format {step_time} not yet implemented.")
+        _trj = trj.set_index(time_col)
+        _trj.index = pd.to_timedelta(_trj.index, unit='s')
+        _trj = _resample_time(_trj, step_time)
+        _trj.reset_index(inplace=True)
+    else:
+        raise NotImplementedError(f"Time column ({time_col}) not of expected data type.")
+    return _trj
 
 
 def rotate(df, angle=0, origin=None):
@@ -638,7 +698,7 @@ def from_xy(xy: np.ndarray):
     return df
 
 
-def read_file(filepath:str, id=None, xlim=None, ylim=None, title=None, spatial_units='m', fps=None, **kwargs):
+def read_file(filepath:str, id=None, xlim=None, ylim=None, spatial_units='m', fps=None, **kwargs):
     """Convenience method wrapping pandas `read_csv` and initializing metadata.
 
     Args:
@@ -695,8 +755,8 @@ def read_file(filepath:str, id=None, xlim=None, ylim=None, title=None, spatial_u
     trj.xlim = xlim
     trj.ylim = ylim
     trj.spatial_units = spatial_units
-    trj.title = title
-    trj.xlabel = xlabel
-    trj.ylabel = ylabel
+    trj.title = kwargs.get('title', None)
+    trj.xlabel = kwargs.get('xlabel',None)
+    trj.ylabel = kwargs.get('ylabel',None)
     trj.fps = fps
     return trj
