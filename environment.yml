@@ -1,0 +1,17 @@
+name: traja
+dependencies:
+  - r-base
+  - r-essentials
+  - pip:
+    - torch
+    - fastdtw
+  - pandas
+  - numpy
+  - matplotlib
+  - shapely
+  - psutil
+  - scipy
+  - sphinx
+  - pillow
+  - rpy2
+  - sphinx-gallery
