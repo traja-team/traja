@@ -1,4 +1,5 @@
 pandas
+ipython
 numpy
 matplotlib
 shapely
