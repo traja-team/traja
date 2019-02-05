@@ -220,6 +220,7 @@ intersphinx_mapping = {
 }
 
 autodoc_member_order = 'bysource'
+autodoc_mock_imports = ['rpy2']
 
 
 def setup(app):
