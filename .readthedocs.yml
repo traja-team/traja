@@ -5,7 +5,6 @@ build:
 
 python:
   version: 3.6
-  pip_install: true
 
 conda:
   environment: environment.yml
