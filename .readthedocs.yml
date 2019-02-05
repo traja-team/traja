@@ -5,7 +5,9 @@ build:
 
 python:
   version: 3.6
+  install: 
+    - requirements: docs/requirements.txt
 
 conda:
-  environment: environment.yml
+  file: environment.yml
 
