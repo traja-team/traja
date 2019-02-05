@@ -2,8 +2,8 @@ name: traja
 dependencies:
   - r-base
   - ipython
+  - pytorch-cpu
   - pip:
-    - torch
     - fastdtw
     - sphinx-gallery
     - sphinx_rtd_theme
