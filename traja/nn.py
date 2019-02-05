@@ -13,6 +13,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
+import logging
 
 plt.style.use('dark_background')
 
@@ -38,7 +39,8 @@ class LSTM(nn.Module):
 class TrajectoryLSTM():
 
     def __init__(self, xy, nb_steps=10, epochs=1000, batch_size=1, criterion=nn.MSELoss()):
-        f, ax = plt.subplots(2, 1)
+        fig, ax = plt.subplots(2, 1)
+        self.fig = fig
         self.ax = ax
         self.xy = xy
         self.nb_steps = nb_steps
@@ -80,27 +82,42 @@ class TrajectoryLSTM():
                 print('Epoch: {} | Loss: {:.6f}'.format(epoch, mean_loss))
                 mean_loss = 0
 
-    def plot(self, interactive=False):
+    def savefig(self, filepath):
+        self.fig.savefig(filepath)
+
+    def _plot(self):
         t_1_b, t_b = self.load_batch(1)
-        pred = self.rnn(t_1_b).detach().numpy().reshape(-1,2)
+        pred = self.rnn(t_1_b).detach().numpy().reshape(-1, 2)
 
         real = t_1_b.numpy().reshape(-1, 2)
         x, y = self.xy.T
         self.ax[0].plot(x, y, label='Real')
-        self.ax[0].plot(real[:,0], real[:,1], label='Real batch')
-        self.ax[0].plot(pred[:,0], pred[:,1], label='Pred')
+        self.ax[0].plot(real[:, 0], real[:, 1], label='Real batch')
+        self.ax[0].plot(pred[:, 0], pred[:, 1], label='Pred')
 
-        self.ax[1].scatter(real[:,0], real[:,1], label='Real')
-        self.ax[1].scatter(pred[:,0], pred[:,1], label='Pred')
+        self.ax[1].scatter(real[:, 0], real[:, 1], label='Real')
+        self.ax[1].scatter(pred[:, 0], pred[:, 1], label='Pred')
 
         for a in self.ax:
             a.legend()
 
-        plt.pause(0.1)
-        if interactive:
-            print("Press enter")
-            input()
+    def plot(self, interactive=False, as_generator=False):
+        if interactive and (plt.get_backend() == 'agg'):
+            logging.ERROR("Not able to use interactive plotting in mpl `agg` mode.")
+            interactive = False
+        if as_generator:
+            while True:
+                self._plot()
+                yield self.fig
+        elif interactive:
+            while True:
+                for a in self.ax:
+                    a.clear()
+                self._plot()
+                plt.pause(0.1)
+                plt.show()
+                input("Press [enter] to continue.")
 
-            for a in self.ax:
-                a.clear()
-            self.plot()
+        else:
+            self._plot()
+            return self.fig
