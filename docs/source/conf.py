@@ -59,7 +59,7 @@ autosummary_generate = True
 from sphinx_gallery.sorting import FileNameSortKey
 sphinx_gallery_conf = {
     'examples_dirs': ['../examples'],
-    'filename_pattern': '^((?!sgskip).)*$',
+    #'filename_pattern': '^((?!sgskip).)*$',
     'gallery_dirs': ['gallery'],
     'doc_module': ('traja',),
     'reference_url': {'numpy': 'http://docs.scipy.org/doc/numpy',
