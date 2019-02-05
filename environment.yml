@@ -6,6 +6,7 @@ dependencies:
     - torch
     - fastdtw
     - sphinx-gallery
+    - sphinx_rtd_theme
   - pandas
   - numpy
   - matplotlib
