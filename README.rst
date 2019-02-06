@@ -3,6 +3,16 @@ traja
 
 Trajectory Analysis in Python
 
+.. image:: https://travis-ci.org/justinshenk/traja.svg?branch=master
+    :target: https://travis-ci.org/justinshenk/traja
+
+.. image:: https://badge.fury.io/py/traja.svg
+    :target: https://badge.fury.io/py/traja
+
+.. image:: https://readthedocs.org/projects/traja/badge/?version=latest
+:target: https://traja.readthedocs.io/en/latest/?badge=latest
+:alt: Documentation Status
+
 traja extends the capability of pandas DataFrame specific for animal
 trajectory analysis in 2D, and provides convenient interfaces to other
 geometric analysis packages (eg, shapely).
@@ -63,7 +73,7 @@ visualization and analysis methods:
 
     df.traja.plot(title='Cage trajectory')
 
-.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static//dvc_screenshot.png
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/dvc_screenshot.png
    :alt: dvc\_screenshot
 
 
