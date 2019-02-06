@@ -38,6 +38,8 @@ If you use traja in your publications, please cite "`Shenk, J. C., et al. traja:
    Extending pandas <pandas>
    Making Plots <plots>
    Rediscretizing Trajectory <rediscretize>
+   Predicting Trajectory <predictions>
+   R interface <rinterface>
 
 .. toctree::
    :maxdepth: 1
