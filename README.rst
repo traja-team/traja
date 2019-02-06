@@ -10,8 +10,8 @@ Trajectory Analysis in Python
     :target: https://badge.fury.io/py/traja
 
 .. image:: https://readthedocs.org/projects/traja/badge/?version=latest
-:target: https://traja.readthedocs.io/en/latest/?badge=latest
-:alt: Documentation Status
+    :target: https://traja.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 traja extends the capability of pandas DataFrame specific for animal
 trajectory analysis in 2D, and provides convenient interfaces to other
