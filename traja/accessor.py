@@ -52,7 +52,7 @@ class TrajaAccessor(object):
           end (str):  (Default value = '7:00')
 
         Returns:
-          trj (:class:`~traja.main.TrajaDataFrame`): Trajectory during night.
+          trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory during night.
 
         """
         return self.between(begin, end)
@@ -66,7 +66,7 @@ class TrajaAccessor(object):
           end (str):  (Default value = '19:00')
 
         Returns:
-          trj (:class:`~traja.main.TrajaDataFrame`): Trajectory during day.
+          trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory during day.
 
         """
         return self.between(begin, end)
@@ -107,7 +107,7 @@ class TrajaAccessor(object):
           end (str): End of time slice.
 
         Returns:
-          trj (:class:`~traja.main.TrajaDataFrame`): Data frame between values.
+          trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Data frame between values.
           
         .. doctest ::
 
@@ -506,7 +506,7 @@ class TrajaAccessor(object):
         return rt
 
     def _rediscretize_points(self, R):
-        """Helper function for :meth:`~traja.utils.rediscretize`.
+        """Helper function for :meth:`~traja.trajectory.rediscretize`.
 
         Args:
           R (float): Rediscretized step length (eg, 0.02)

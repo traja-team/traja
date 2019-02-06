@@ -7,6 +7,7 @@ import matplotlib as mpl
 if 'sphinx' in sys.argv[0]:
     mpl.use('agg')
 import pandas as pd
+
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
@@ -115,26 +116,3 @@ class TrajaDataFrame(pd.DataFrame):
         if deep:
             data = data.copy()
         return TrajaDataFrame(data).__finalize__(self)
-
-
-# TODO: Replace with tests.
-# class Debug():
-#     """Debug only.
-#     """
-#
-#     def __init__(self, n_coords=1000):
-#         import glob
-#         import traja
-#         from traja import TrajaAccessor
-#         # files = glob.glob('/Users/justinshenk/neurodata/data/raw_centroids_rev2/*')
-#         # df = traja.read_file(files[10])
-#         # df.traja.set(xlim=(-0.06, 0.06),
-#         #              ylim=(-0.13, 0.13),
-#         #              xlabel=("x (m)"),
-#         #              ylabel=("y (m)"),
-#         #              title="Cage trajectory")
-#         # FIXME: Function below takes forerver (or doesn't complete)
-#         basepath = os.path.dirname(traja.__file__)
-#         filepath = os.path.join(basepath, 'test', 'test_data', '3527.csv')
-#         df = traja.read_file(filepath)
-#         df.traja.plot()

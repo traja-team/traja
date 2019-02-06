@@ -1,4 +1,4 @@
-from .main import TrajaDataFrame
+from .trajadataframe import TrajaDataFrame
 from .accessor import TrajaAccessor
 from .plotting import *
 from .trajectory import *
