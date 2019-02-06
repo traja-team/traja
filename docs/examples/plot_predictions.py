@@ -12,7 +12,12 @@ df = traja.generate(n=1000)
 # Train and visualize predictions
 # ===============================
 # Recommended training is over 5000 epochs.
-from traja.models.nn import TrajectoryLSTM
-lstm = TrajectoryLSTM(xy = df.traja.xy, epochs=10)
-lstm.train()
-lstm.plot(interactive=False)
+.. code-block:: python
+
+    from traja.models.nn import TrajectoryLSTM
+
+    lstm = TrajectoryLSTM(xy = df.traja.xy, epochs=10)
+    lstm.train()
+    lstm.plot(interactive=False)
+
+.. image::
