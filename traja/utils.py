@@ -73,7 +73,7 @@ def _get_time_col(trj):
 def predict(xy, nb_steps=10, epochs=1000, batch_size=1, model='lstm'):
     """Method for training and visualizing LSTM with trajectory data."""
     if model is 'lstm':
-        from traja.nn import TrajectoryLSTM
+        from traja.models.nn import TrajectoryLSTM
         TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
 
 def plot(trj, accessor=None, n_coords: int = None, show_time=False, **kwargs):
@@ -263,7 +263,7 @@ def smooth_sg(trj, w=None, p=3):
     """Savitzky-Golay filtering.
 
     Args:
-      trj (:class:`~traja.main.TrajaDataFrame`): Trajectory
+      trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory
       w (int): window size (Default value = None)
       p (int): polynomial order (Default value = 3)
 
@@ -303,7 +303,7 @@ def step_lengths(trj):
     """Length of the steps of `trj`.
 
     Args:
-      trj (:class:`~traja.main.TrajaDataFrame`): Trajectory
+      trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory
 
     Returns:
 
@@ -432,7 +432,7 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
     """Calculate distance between two trajectories.
 
     Args:
-        A (:class:`~traja.main.TrajaDataFrame`) : Trajectory 1
+        A (:class:`~traja.trajadataframe.TrajaDataFrame`) : Trajectory 1
         B (:class:`~traja.main.TrajaDataFrame`) : Trajectory 2
         method (str): `dtw` for dynamic time warping, `hausdorff` for Hausdorff
 
