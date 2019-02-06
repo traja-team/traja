@@ -68,7 +68,8 @@ sphinx_gallery_conf = {
                       'sphinx_gallery': None,
     'backreferences_dir': 'reference',
     'within_subsection_order': FileNameSortKey,
-    'expected_failing_examples': ['../examples/rinterface.py']
+    'expected_failing_examples': ['../examples/rinterface.py',
+                                  '../examples/plot_predictions.py']
 }
 
 # Napoleon settings
