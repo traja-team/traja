@@ -1,3 +1,6 @@
+Predicting Trajectories
+=======================
+
 Predicting trajectories with `traja` can be done with an LSTM neural network
 via :class:`~traja.models.nn.TrajectoryLSTM`.
 
@@ -11,7 +14,7 @@ Train and visualize predictions
 
 .. note::
 
-    Recommended training is over 5000 epochs.
+    Recommended training is over 5000 epochs. This example only uses 10 epochs for demonstration.
 
 .. code-block:: python
 
