@@ -1,17 +1,18 @@
-"""
-Predicting Trajectories
------------------------
 Predicting trajectories with `traja` can be done with an LSTM neural network
-via :class:`~traja.nn.TrajectoryLSTM`.
-"""
-import traja
+via :class:`~traja.models.nn.TrajectoryLSTM`.
 
-df = traja.generate(n=1000)
+.. code-block:: python
 
-###############################################################################
-# Train and visualize predictions
-# ===============================
-# Recommended training is over 5000 epochs.
+    import traja
+
+    df = traja.generate(n=1000)
+
+Train and visualize predictions
+
+.. note::
+
+    Recommended training is over 5000 epochs.
+
 .. code-block:: python
 
     from traja.models.nn import TrajectoryLSTM

@@ -8,3 +8,4 @@ sphinx
 sphinx-gallery
 fastdtw
 pillow
+sphinx_rtd_theme
