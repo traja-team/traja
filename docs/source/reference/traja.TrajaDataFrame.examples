@@ -9,9 +9,9 @@ Examples using ``traja.TrajaDataFrame``
 
 .. only:: html
 
-    .. figure:: /gallery/images/thumb/sphx_glr_plot_with_traja_thumb.png
+    .. figure:: /gallery/images/thumb/sphx_glr_0_plot_with_traja_thumb.png
 
-        :ref:`sphx_glr_gallery_plot_with_traja.py`
+        :ref:`sphx_glr_gallery_0_plot_with_traja.py`
 
 .. raw:: html
 
@@ -19,4 +19,4 @@ Examples using ``traja.TrajaDataFrame``
 
 .. only:: not html
 
-    * :ref:`sphx_glr_gallery_plot_with_traja.py`
+    * :ref:`sphx_glr_gallery_0_plot_with_traja.py`
