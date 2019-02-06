@@ -3,7 +3,7 @@ Resampling Trajectories
 
 Rediscretize
 ------------
-Rediscretize the trajectory into consistent step lengths with :meth:`traja.trajectory.rediscretize` where the `R` parameter is
+Rediscretize the trajectory into consistent step lengths with :meth:`~traja.trajectory.rediscretize` where the `R` parameter is
 the new step length.
 
 .. note::
