@@ -50,7 +50,7 @@ functions to be used.
 
 Load trajectory with x,y and time coordinates:
 
-.. code:: python
+.. code-block:: python
 
     import traja
 
@@ -59,7 +59,7 @@ Load trajectory with x,y and time coordinates:
 Once a DataFrame is loaded, use the ``.traja`` accessor to access the
 visualization and analysis methods:
 
-.. code:: python
+.. code-block:: python
 
     df.traja.plot(title='Cage trajectory')
 
@@ -72,7 +72,7 @@ Random walk
 
 Generate random walks with
 
-.. code:: python
+.. code-block:: python
 
     df = traja.generate(n=1000, step_length=2)
     df.traja.plot()
