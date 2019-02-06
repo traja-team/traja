@@ -6,6 +6,4 @@ build:
 python:
   version: 3.6
 
-conda:
-  file: environment.yml
-
+requirements_file: docs/requirements.txt
