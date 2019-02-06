@@ -20,4 +20,4 @@ df = traja.generate(n=1000)
     lstm.train()
     lstm.plot(interactive=False)
 
-.. image::
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/rnn_prediction.png
