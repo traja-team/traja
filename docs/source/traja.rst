@@ -27,14 +27,6 @@ traja.trajadatadataframe module
     :undoc-members:
     :show-inheritance:
 
-traja.utils module
-------------------
-
-.. automodule:: traja.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------
