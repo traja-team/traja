@@ -18,7 +18,7 @@ from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 from scipy.spatial.distance import directed_hausdorff, euclidean
 from numpy import unravel_index
 from shapely.geometry import shape
-from traja.utils import polar_to_z
+from traja.trajectory import polar_to_z
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 
@@ -97,7 +97,7 @@ class TrajaAccessor(object):
            time_col (str or None): name of time column, 'index' or None
 
         """
-        return traja.utils._get_time_col(self._trj)
+        return traja.trajectory._get_time_col(self._trj)
 
     def between(self, begin, end):
         """Return trajectory between `begin` and end` if `time` column is `datetime64`.
@@ -139,7 +139,7 @@ class TrajaAccessor(object):
             raise TypeError("Either time column or index must be datetime64")
 
     def resample_time(self, step_time):
-        return traja.utils.resample_time(self._trj, step_time=step_time)
+        return traja.trajectory.resample_time(self._trj, step_time=step_time)
 
     def trip_grid(self, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False):
         """Make a 2D histogram of trip.
@@ -156,11 +156,11 @@ class TrajaAccessor(object):
             image (:class:`matplotlib.collections.PathCollection`: image of histogram
 
         """
-        hist, image = traja.utils.trip_grid(self._trj,
-                                            bins=bins,
-                                            log=log,
-                                            spatial_units=self._trj.spatial_units,
-                                            normalize=normalize, hist_only=hist_only)
+        hist, image = traja.plotting.trip_grid(self._trj,
+                                               bins=bins,
+                                               log=log,
+                                               spatial_units=self._trj.spatial_units,
+                                               normalize=normalize, hist_only=hist_only)
         return hist, image
 
     def plot(self, n_coords: int = None, show_time=False, **kwargs):
@@ -173,7 +173,7 @@ class TrajaAccessor(object):
         Returns:
             ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
         """
-        ax = traja.utils.plot(trj=self._trj, accessor=self, n_coords=n_coords, show_time=show_time, **kwargs)
+        ax = traja.plotting.plot(trj=self._trj, accessor=self, n_coords=n_coords, show_time=show_time, **kwargs)
         return ax
 
 

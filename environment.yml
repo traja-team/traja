@@ -13,7 +13,6 @@ dependencies:
   - numpy
   - matplotlib
   - shapely
-  - psutil
   - scipy
   - sphinx
   - pillow

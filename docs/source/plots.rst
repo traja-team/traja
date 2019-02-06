@@ -17,7 +17,7 @@ Making plots of trajectories is easy using the :meth:`~traja.accessor.TrajaAcces
 Trip Grid
 =========
 
-Trip grid can be plotted for `TrajaDataFrames` with :meth:`~traja.utils.trip_grid`:
+Trip grid can be plotted for `TrajaDataFrames` with :meth:`~traja.trip_grid`:
 
 .. ipython:: python
 
@@ -31,7 +31,7 @@ or for any pandas `DataFrame` containing `x` and `y` columns with:
 
 .. ipython:: python
 
-    from traja.utils import trip_grid
+    from traja import trip_grid
 
     df = pd.DataFrame({'x':range(10),'y':range(10)})
     hist, image = trip_grid(df)
@@ -52,7 +52,7 @@ Highly dense plots be more easily visualized using the `bins` and `log` argument
 
 .. ipython:: python
 
-    from traja.utils import generate
+    from traja import generate
 
     df = generate(1000)
     df.traja.trip_grid(bins=30, log=True)
