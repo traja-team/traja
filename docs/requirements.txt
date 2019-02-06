@@ -2,7 +2,6 @@ pandas
 numpy
 matplotlib
 shapely
-psutil
 scipy
 sphinx
 sphinx-gallery
