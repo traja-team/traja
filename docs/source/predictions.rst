@@ -22,6 +22,6 @@ Train and visualize predictions
 
     lstm = TrajectoryLSTM(xy = df.traja.xy, epochs=10)
     lstm.train()
-    lstm.plot(interactive=False)
+    lstm.plot(interactive=True)
 
 .. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/rnn_prediction.png

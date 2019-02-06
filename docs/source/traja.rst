@@ -19,10 +19,10 @@ traja.accessor module
     :undoc-members:
     :show-inheritance:
 
-traja.main module
------------------
+traja.trajadatadataframe module
+-------------------------------
 
-.. automodule:: traja.main
+.. automodule:: traja.trajadataframe
     :members:
     :undoc-members:
     :show-inheritance:

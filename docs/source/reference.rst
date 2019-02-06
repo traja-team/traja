@@ -10,12 +10,34 @@ Traja Accessor Methods
     :show-inheritance:
     :noindex:
 
-Helper functions
+Plotting functions
 ------------------
 
-The following methods are available via `traja.utils`:
+The following methods are available via `traja.plotting`:
 
-.. automodule:: traja.utils
+.. automodule:: traja.plotting
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :noindex:
+
+R functions
+------------------
+
+The following methods are available via `traja.rutils`:
+
+.. automodule:: traja.rutils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :noindex:
+
+Trajectory functions
+--------------------
+
+The following methods are available via `traja.trajectory`:
+
+.. automodule:: traja.rutils
     :members:
     :undoc-members:
     :show-inheritance:

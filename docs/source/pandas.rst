@@ -5,7 +5,7 @@ traja is built on top of pandas `DataFrame`, giving access to low-level pandas i
 
 This allows indexing, resampling, etc., just as in pandas::
 
-    from traja.utils import generate, plot
+    from traja import generate, plot
     import pandas as pd
 
     # Generate random walk
