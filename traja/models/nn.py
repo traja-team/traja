@@ -13,8 +13,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 
-plt.style.use('dark_background')
-
 nb_steps = 10
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
