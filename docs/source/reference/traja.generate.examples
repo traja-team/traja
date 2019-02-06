@@ -9,9 +9,9 @@ Examples using ``traja.generate``
 
 .. only:: html
 
-    .. figure:: /gallery/images/thumb/sphx_glr_comparing_thumb.png
+    .. figure:: /gallery/images/thumb/sphx_glr_plot_comparing_thumb.png
 
-        :ref:`sphx_glr_gallery_comparing.py`
+        :ref:`sphx_glr_gallery_plot_comparing.py`
 
 .. raw:: html
 
@@ -19,7 +19,7 @@ Examples using ``traja.generate``
 
 .. only:: not html
 
-    * :ref:`sphx_glr_gallery_comparing.py`
+    * :ref:`sphx_glr_gallery_plot_comparing.py`
 
 .. raw:: html
 
@@ -27,9 +27,9 @@ Examples using ``traja.generate``
 
 .. only:: html
 
-    .. figure:: /gallery/images/thumb/sphx_glr_grid_visualizations_thumb.png
+    .. figure:: /gallery/images/thumb/sphx_glr_plot_grid_visualizations_thumb.png
 
-        :ref:`sphx_glr_gallery_grid_visualizations.py`
+        :ref:`sphx_glr_gallery_plot_grid_visualizations.py`
 
 .. raw:: html
 
@@ -37,7 +37,7 @@ Examples using ``traja.generate``
 
 .. only:: not html
 
-    * :ref:`sphx_glr_gallery_grid_visualizations.py`
+    * :ref:`sphx_glr_gallery_plot_grid_visualizations.py`
 
 .. raw:: html
 
