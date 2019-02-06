@@ -16,7 +16,7 @@ def smooth_sg(trj, w=None, p=3):
     """Savitzky-Golay filtering.
 
     Args:
-      trj (:class:`~traja.main.TrajaDataFrame`): Trajectory
+      trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory
       w (int): window size (Default value = None)
       p (int): polynomial order (Default value = 3)
 
@@ -56,7 +56,7 @@ def step_lengths(trj):
     """Length of the steps of `trj`.
 
     Args:
-      trj (:class:`~traja.main.TrajaDataFrame`): Trajectory
+      trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory
 
     Returns:
 
@@ -185,7 +185,7 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
     """Calculate distance between two trajectories.
 
     Args:
-        A (:class:`~traja.main.TrajaDataFrame`) : Trajectory 1
+        A (:class:`~traja.trajadataframe.TrajaDataFrame`) : Trajectory 1
         B (:class:`~traja.main.TrajaDataFrame`) : Trajectory 2
         method (str): `dtw` for dynamic time warping, `hausdorff` for Hausdorff
 
