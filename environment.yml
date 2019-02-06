@@ -1,4 +1,7 @@
 name: traja
+channels:
+  - conda-forge
+  - pytorch
 dependencies:
   - r-base
   - ipython
