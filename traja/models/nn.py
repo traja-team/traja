@@ -4,9 +4,7 @@
 try:
     import torch
 except ImportError:
-    raise ImportError("pytorch is not installed. Install it with"
-                      " pip install torch"
-                      "")
+    raise ImportError("pytorch is not installed. Install it via pytorch.org")
 import traja
 import torch.nn as nn
 import torch.optim as optim
