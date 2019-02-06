@@ -52,8 +52,8 @@ def to_ltraj(trj, id=1, typeII=False):
         >>> import traja.rutils as rutils # doctest:+ELLIPSIS
         >>>
         >>> df=traja.TrajaDataFrame({'x':range(5),'y':range(5)})
-        >>> ltraj = rutils.to_ltraj(df)
-        >>> print(ltraj[0])
+        >>> ltraj = rutils.to_ltraj(df) # doctest: +SKIP
+        >>> print(ltraj[0]) # doctest: +SKIP
         ...
            x  y  date          dx    ...              dt   R2n  abs.angle  rel.angle
         0  0  0     1           1    ...               1   0.0   0.785398        NaN
