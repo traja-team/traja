@@ -38,3 +38,21 @@ Examples using ``traja.generate``
 .. only:: not html
 
     * :ref:`sphx_glr_gallery_plot_grid.py`
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Plotting with traja">
+
+.. only:: html
+
+    .. figure:: /gallery/images/thumb/sphx_glr_plot_with_traja_thumb.png
+
+        :ref:`sphx_glr_gallery_plot_with_traja.py`
+
+.. raw:: html
+
+    </div>
+
+.. only:: not html
+
+    * :ref:`sphx_glr_gallery_plot_with_traja.py`
