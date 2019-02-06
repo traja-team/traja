@@ -8,7 +8,10 @@ except ImportError:
                       "")
 import rpy2.robjects.packages as rpackages
 import pandas as pd
-import rpy2.robjects.pandas2ri as rpandas
+try:
+    import rpy2.robjects.pandas2ri as rpandas
+except ModuleNotFoundError as e:
+    raise ModuleNotFoundError(e + "\n Install tzlocal with `pip install tzlocal`.")
 from rpy2.robjects.packages import importr
 
 rpandas.activate()

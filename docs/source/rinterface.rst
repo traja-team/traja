@@ -1,6 +1,8 @@
 R interface
 ===========
 
+`ryp2` allows connecting R packages to Python. Install rpy2 with ``pip install rpy2``.
+
 .. code-block:: python
 
     import traja
@@ -19,6 +21,8 @@ analysis.
 
     ltraj = rutils.to_ltraj(df)
     rutils.plot_ltraj(ltraj)
+
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/ltraj_plot.png
 
 Perform further analysis in Python
 ==================================
