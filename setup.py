@@ -22,7 +22,7 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
-requirements = ['matplotlib','pandas','numpy','shapely','psutil', 'scipy']
+requirements = ['matplotlib','pandas','numpy','shapely','scipy','scipy']
 
 this_dir = path.abspath(path.dirname(__file__))
 with open(os.path.join(this_dir, 'README.rst'), encoding='utf-8') as f:
