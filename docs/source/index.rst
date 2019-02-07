@@ -48,6 +48,12 @@ If you use traja in your publications, please cite "`traja: A Python Trajectory 
 
    Reference to All Attributes and Methods <reference>
 
+.. toctree::
+  :maxdepth: 1
+  :caption: Developer
+
+  Contributing to traja <contributing>
+
 
 Indices and tables
 ==================
