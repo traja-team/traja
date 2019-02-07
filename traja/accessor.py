@@ -1,24 +1,12 @@
 #! /usr/local/env python3
-import argparse
-import glob
 import logging
-import os
-import sys
 from collections import OrderedDict
 
 import traja
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib.dates import date2num, num2date, DateFormatter
-from mpl_toolkits.axes_grid1 import make_axes_locatable, axes_size
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
-
-from scipy.spatial.distance import directed_hausdorff, euclidean
-from numpy import unravel_index
 from shapely.geometry import shape
-from traja.trajectory import polar_to_z
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 
