@@ -34,7 +34,7 @@ Data frame is stored in first index.
 
 Out:
 
-.. code-block:: python
+.. code-block:: 
 
                x        y date           dx           dy     dist dt       R2n
     0  0.0000000 0.000000    1  1.341849037  1.629900330 2.111193  1  0.000000
