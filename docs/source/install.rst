@@ -29,6 +29,7 @@ Optional dependencies include:
 
 - `shapely`
 - `rpy2`
+- `pytorch`
 
 and can be installed with::
 
