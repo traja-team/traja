@@ -1,5 +1,5 @@
-Contributing to GeoPandas
-=========================
+Contributing to traja
+=====================
 
 (Contribution guidelines largely copied from `geopandas <https://geopandas.readthedocs.io/en/latest/contributing.html>`_)
 
