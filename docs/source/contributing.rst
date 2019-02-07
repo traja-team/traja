@@ -34,10 +34,7 @@ In particular, when submitting a pull request:
   line of a docstring should be a standalone summary.  Parameters and
   return values should be ducumented explicitly.
 
-- traja supports python 3 (3.6+).  Use modern python idioms when possible that are
-  compatibile with both major versions, and use the
-  `six <https://pythonhosted.org/six>`_ library where helpful to smooth
-  over the differences.
+- traja supports python 3 (3.6+).  Use modern python idioms when possible.
 
 - Follow PEP 8 when possible.
 
