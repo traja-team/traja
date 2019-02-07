@@ -10,8 +10,8 @@ R interface
 
     df = traja.generate()
 
-Convert objects to adehabitat class ltraj for further analysis with R
-=====================================================================
+Convert to adehabitat class `ltraj` for further analysis with R
+===============================================================
 
 `adehabitat <https://www.rdocumentation.org/packages/adehabitat/versions/1.8.20>`_
 is a widely used R library for animal tracking and trajectory
@@ -32,9 +32,7 @@ Data frame is stored in first index.
 
     print(ltraj[0].head())
 
-Out:
-
-.. code-block:: 
+Out::
 
                x        y date           dx           dy     dist dt       R2n
     0  0.0000000 0.000000    1  1.341849037  1.629900330 2.111193  1  0.000000

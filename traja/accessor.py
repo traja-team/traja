@@ -141,7 +141,7 @@ class TrajaAccessor(object):
     def resample_time(self, step_time):
         return traja.trajectory.resample_time(self._trj, step_time=step_time)
 
-    def trip_grid(self, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False):
+    def trip_grid(self, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False, plot=True):
         """Make a 2D histogram of trip.
 
         Args:
@@ -160,7 +160,9 @@ class TrajaAccessor(object):
                                                bins=bins,
                                                log=log,
                                                spatial_units=self._trj.spatial_units,
-                                               normalize=normalize, hist_only=hist_only)
+                                               normalize=normalize,
+                                               hist_only=hist_only,
+                                               plot=plot)
         return hist, image
 
     def plot(self, n_coords: int = None, show_time=False, **kwargs):
