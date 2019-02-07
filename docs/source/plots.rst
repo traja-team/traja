@@ -17,7 +17,7 @@ Making plots of trajectories is easy using the :meth:`~traja.accessor.TrajaAcces
 Trip Grid
 =========
 
-Trip grid can be plotted for :class:`~traja.trajadataframe.TrajaDataFrame`s with :meth:`~traja.plotting.trip_grid`:
+Trip grid can be plotted for :class:`~traja.trajadataframe.TrajaDataFrame`s with :func:`~traja.plotting.trip_grid`:
 
 .. ipython:: python
 
