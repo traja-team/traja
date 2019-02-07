@@ -177,7 +177,7 @@ def plot(trj, accessor=None, n_coords: int = None, show_time=False, **kwargs):
     return ax
 
 
-def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False):
+def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False, plot=False):
     """Generate a heatmap of time spent by point-to-cell gridding.
 
     Args:
@@ -221,7 +221,8 @@ def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist
     ax.set_ylabel("y{}".format(" (" + spatial_units + ")" if spatial_units else ""))
     plt.title("Time spent{}".format(' (Logarithmic)' if log else ''))
     plt.tight_layout()
-    plt.show()
+    if plot:
+        plt.show()
     # TODO: Add method for most common locations in grid
     # peak_index = unravel_index(hist.argmax(), hist.shape)
     return hist, image

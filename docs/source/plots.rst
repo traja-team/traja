@@ -56,4 +56,5 @@ Highly dense plots be more easily visualized using the `bins` and `log` argument
 
     df = generate(1000)
     df.traja.trip_grid(bins=30, log=True)
-    plt.show()
+
+.. image:: .. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/trip_grid.png
