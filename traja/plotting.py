@@ -2,13 +2,8 @@
 import logging
 
 import traja
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-import matplotlib.patches as patches
 import numpy as np
-import pandas as pd
 
-from traja import TrajaDataFrame
 from pandas.core.dtypes.common import is_datetime_or_timedelta_dtype, is_datetime64_any_dtype, is_timedelta64_dtype
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
@@ -34,6 +29,7 @@ def shift_xtick_labels(xtick_labels, first_index=None):
 
 def sans_serif():
     """Convenience function for changing plot text to serif font."""
+    import matplotlib.pyplot as plt
     plt.rc('font', family='serif')
 
 
@@ -47,7 +43,7 @@ def plot(trj, accessor=None, n_coords: int = None, show_time=False, **kwargs):
     """Plot trajectory for single animal over period.
 
     Args:
-      trj (:class:traja.TrajaDataFrame): trajectory
+      trj (:class:`traja.TrajaDataFrame`): trajectory
 
       n_coords (int): Number of coordinates to plot
       **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
@@ -56,6 +52,10 @@ def plot(trj, accessor=None, n_coords: int = None, show_time=False, **kwargs):
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
 
     """
+    import matplotlib.patches as patches
+    import matplotlib.pyplot as plt
+    from matplotlib.path import Path
+
     GRAY = '#999999'
     self = kwargs.get('self', {})
     if accessor:
@@ -192,6 +192,7 @@ def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist
         image (:class:`matplotlib.collections.PathCollection`: image of histogram
 
     """
+    import matplotlib.pyplot as plt
     # TODO: Add kde-based method for line-to-cell gridding
     df = trj[['x', 'y']].dropna()
 
