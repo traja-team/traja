@@ -1,7 +1,7 @@
 Generate Random Walk
 ====================
 
-Random walks can be generated using :meth:`~traja.trajectory.generate`.
+Random walks can be generated using :func:traja:`~traja.trajectory.generate`.
 
 .. note ::
 

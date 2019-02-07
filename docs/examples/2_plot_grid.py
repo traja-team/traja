@@ -10,7 +10,7 @@ df = traja.generate()
 ###############################################################################
 # Plot a heat map of the trajectory
 # =================================
-#
+# A heat map can be generated using :func:`~traja.trajectory.trip_grid`.
 df.traja.trip_grid()
 
 ###############################################################################

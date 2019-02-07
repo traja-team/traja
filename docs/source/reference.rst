@@ -13,7 +13,7 @@ Traja Accessor Methods
 Plotting functions
 ------------------
 
-The following methods are available via `traja.plotting`:
+The following methods are available via :mod:`traja.plotting`:
 
 .. automodule:: traja.plotting
     :members:
