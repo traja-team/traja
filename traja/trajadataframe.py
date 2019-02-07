@@ -4,8 +4,8 @@ import sys
 
 import traja
 import matplotlib as mpl
-if 'sphinx' in sys.argv[0]:
-    mpl.use('agg')
+# if 'sphinx' in sys.argv[0]:
+#     mpl.use('agg')
 import pandas as pd
 
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
