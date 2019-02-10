@@ -37,7 +37,7 @@ Trajectory functions
 
 The following methods are available via `traja.trajectory`:
 
-.. automodule:: traja.rutils
+.. automodule:: traja.trajectory
     :members:
     :undoc-members:
     :show-inheritance:
