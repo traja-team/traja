@@ -60,8 +60,8 @@ def to_trajr(trj):
 
         >>> from traja import rutils
         >>> df = traja.TrajaDataFrame({'x':range(5),'y':range(5)})
-        >>> trjr_df = rutils.to_trajr(df)
-        >>> [x for x in trjr_df.names]
+        >>> trjr_df = rutils.to_trajr(df) # doctest: +SKIP
+        >>> [x for x in trjr_df.names] # doctest: +SKIP
         ...
         ['x', 'y', 'id', 'time', 'displacementTime', 'polar', 'displacement']
 
