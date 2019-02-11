@@ -11,8 +11,7 @@ df = traja.generate(angular_error_sd=0.5)
 # Fast Dynamic Time Warping of Trajectories
 # =========================================
 #
-# Fast dynamic time warping can be performed using the optional package 
-# ``fastdtw``. It can be installed with ``pip install fastdtw``. 
+# Fast dynamic time warping can be performed using ``fastdtw``.
 # Source article: `link <https://cs.fit.edu/~pkc/papers/tdm04.pdf>`_.
 import numpy as np
 rotated = traja.rotate(df, angle=np.pi / 10)
