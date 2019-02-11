@@ -39,14 +39,14 @@ def predict(xy, nb_steps=10, epochs=1000, batch_size=1, model='lstm'):
         from traja.models.nn import TrajectoryLSTM
         TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
 
-def plot(trj, accessor=None, n_coords: int = None, show_time=False, accessor=None, **kwargs):
+def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
     """Plot trajectory for single animal over period.
 
     Args:
       trj (:class:`traja.TrajaDataFrame`): trajectory
       n_coords (int): Number of coordinates to plot
       show_time (bool): Show colormap as time
-      cls (object, optional): TrajaAccessor class
+      accessor (:class:`~traja.accessor.TrajaAccessor`, optional): TrajaAccessor instance
       **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
 
     Returns:
