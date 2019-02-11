@@ -160,27 +160,6 @@ def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_unit
     return trj
 
 
-# TODO: Delete if unusable
-# def traj(filepath, xlim=None, ylim=None, **kwargs):
-#     df_test = pd.read_csv(filepath, nrows=100)
-#     # Select first col with 'time_stamp' in name as index
-#     time_stamp_cols = [x for x in df_test.columns if 'time_stamp' in x]
-#     index_col = kwargs.pop('index_col', time_stamp_cols[0])
-#
-#     df = pd.read_csv(filepath,
-#                      date_parser=kwargs.pop('date_parser',
-#                                             lambda x: pd.datetime.strptime(x, '%Y-%m-%d %H:%M:%S:%f')),
-#                      infer_datetime_format=kwargs.pop('infer_datetime_format', True),
-#                      parse_dates=kwargs.pop('parse_dates', True),
-#                      index_col=index_col,
-#                      **kwargs)
-#     if xlim is not None and isinstance(xlim, tuple):
-#         df.traja.xlim = xlim
-#     if ylim is not None and isinstance(ylim, tuple):
-#         df.traja.ylim = ylim
-#     return df
-
-
 def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
     """Calculate distance between two trajectories.
 
@@ -210,7 +189,9 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
         return distance
 
 
-def generate(n: int = 1000, random: bool = True, step_length: int = 2,
+def generate(n: int = 1000,
+             random: bool = True,
+             step_length: int = 2,
              angular_error_sd: float = 0.5,
              angular_error_dist: Callable = None,
              linear_error_sd: float = 0.2,

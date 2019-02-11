@@ -1,13 +1,7 @@
-#! /usr/local/env python3
-import logging
-
 import traja
 import numpy as np
 
 from pandas.core.dtypes.common import is_datetime_or_timedelta_dtype, is_datetime64_any_dtype, is_timedelta64_dtype
-
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
-
 
 def stylize_axes(ax):
     """Add top and right border to plot, set ticks."""
@@ -156,7 +150,7 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
             if time_units in ('s', '', None):
                 cbar_labels = [round(x,2) for x in trj.index[indices].total_seconds()]
             else:
-                logging.ERROR("Time unit {} not yet implemented".format(time_units))
+                print("Time unit {} not yet implemented".format(time_units))
         else:
             raise NotImplementedError("Indexing on {} is not yet implemented".format(type(trj.index)))
     elif time_col and is_timedelta64_dtype(trj[time_col]):

@@ -1,6 +1,5 @@
 #! /usr/local/env python3
 import logging
-import sys
 
 import traja
 import pandas as pd
@@ -68,18 +67,6 @@ class TrajaDataFrame(pd.DataFrame):
         else:
             for name in self._metadata:
                 object.__setattr__(self, name, getattr(other, name, None))
-
-        # Requires 'time' column, so find one
-        # time_col = self._get_time_col()
-        # fps = kwargs.pop('fps',1)
-        # assert isinstance(fps, (int, float)), f"{fps} is not a float or int"
-        # if time_col is not None:
-        #     self.rename(columns={time_col:'time'})
-        # else:
-        #     # Otherwise, create one from index and `fps`
-        #     self['time'] = self.index
-        #     self.time /= fps
-
         return self
 
     def _init_metadata(self):

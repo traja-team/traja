@@ -1,5 +1,3 @@
-#! /usr/local/env python3
-import logging
 from collections import OrderedDict
 
 import traja
@@ -7,8 +5,6 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 from shapely.geometry import shape
-
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
 
 
 @pd.api.extensions.register_dataframe_accessor("traja")
@@ -64,7 +60,7 @@ class TrajaAccessor(object):
             try:
                 self.__setattr__(key, value)
             except Exception as e:
-                logging.ERROR(f"Cannot set {key} to {value}")
+                print(f"Cannot set {key} to {value}")
 
     def _get_plot_args(self, **kwargs):
         for var in self._trj._metadata:
@@ -487,77 +483,9 @@ class TrajaAccessor(object):
             2  1.414214  2.414214
 
         """
-        rt = self._rediscretize_points(R)
-
-        if len(rt) < 2:
-            raise RuntimeError(f"Step length {R} is too large for path (path length {len(self._trj)})")
-        rt = traja.from_xy(rt)
+        rt = traja.trajectory.rediscretize_points(self._trj, R)
         self._transfer_metavars(rt)
         return rt
-
-    def _rediscretize_points(self, R):
-        """Helper function for :meth:`~traja.trajectory.rediscretize`.
-
-        Args:
-          R (float): Rediscretized step length (eg, 0.02)
-
-        Returns:
-          result (:class:`numpy.ndarray`): Rediscretized coordinates
-
-        """
-        # TODO: Implement with complex numbers
-        points = self._trj[['x', 'y']].dropna().values.astype('float64')
-        n_points = len(points)
-        result = np.empty((128, 2))
-        p0 = points[0]
-        result[0] = p0
-        step_nr = 0
-        candidate_start = 1 # running index of candidate
-
-        while candidate_start <= n_points:
-            # Find the first point `curr_ind` for which |points[curr_ind] - p_0| >= R
-            curr_ind = np.NaN
-            for i in range(candidate_start, n_points):  # range of search space for next point
-                d = np.linalg.norm(points[i] - result[step_nr])
-                if d >= R:
-                    curr_ind = i  # curr_ind is in [candidate, n_points)
-                    break
-            if np.isnan(curr_ind):
-                # End of path
-                break
-
-            # The next point may lie on the same segment
-            candidate_start = curr_ind
-
-            # The next point lies on the segment p[k-1], p[k]
-            curr_result_x = result[step_nr][0]
-            prev_x = points[curr_ind - 1, 0]
-            curr_result_y = result[step_nr][1]
-            prev_y = points[curr_ind - 1, 1]
-
-            # a = 1 if points[k, 0] <= xk_1 else 0
-            lambda_ = np.arctan2(points[curr_ind, 1] - prev_y, points[curr_ind, 0] - prev_x) # angle
-            cos_l = np.cos(lambda_)
-            sin_l = np.sin(lambda_)
-            U = (curr_result_x - prev_x) * cos_l + (curr_result_y - prev_y) * sin_l
-            V = (curr_result_y - prev_y) * cos_l - (curr_result_x - prev_x) * sin_l
-
-            # Compute distance H between (X_{i+1}, Y_{i+1}) and (x_{k-1}, y_{k-1})
-            H = U + np.sqrt(abs(R ** 2 - V ** 2))
-            XIp1 = H * cos_l + prev_x
-            YIp1 = H * sin_l + prev_y
-
-            # Increase array size progressively to make the code run (significantly) faster
-            if len(result) <= step_nr + 1:
-                result = np.concatenate((result, np.empty_like(result)))
-
-            # Save the point
-            result[step_nr + 1] = np.array([XIp1, YIp1])
-            step_nr += 1
-
-        # Truncate result
-        result = result[:step_nr + 1]
-        return result
 
     def calc_heading(self, assign=True):
         """Calculate trajectory heading.
