@@ -8,7 +8,7 @@ traja |version|
 
 Trajectory Analysis in Python
 
-traja allows analyzing trajectory datasets using a wide range of tools, including pandas and R. traja extends the capability of pandas :class:`~pandas.DataFrame` specific for animal or object trajectory analysis in 2D, and provides convenient interfaces to other geometric analysis packages (eg, shapely).
+Traja allows analyzing trajectory datasets using a wide range of tools, including pandas and R. traja extends the capability of pandas :class:`~pandas.DataFrame` specific for animal or object trajectory analysis in 2D, and provides convenient interfaces to other geometric analysis packages (eg, shapely).
 
 .. warning::
 
@@ -17,7 +17,7 @@ traja allows analyzing trajectory datasets using a wide range of tools, includin
 Description
 -----------
 
-The traja Python package is a toolkit for the numerical characterisation and analysis of the trajectories of moving animals. Trajectory analysis is applicable in fields as diverse as optimal foraging theory, migration, and behavioural mimicry (e.g. for verifying similarities in locomotion). A trajectory is simply a record of the path followed by a moving animal. Trajr operates on trajectories in the form of a series of locations (as x, y coordinates) with times. Trajectories may be obtained by any method which provides this information, including manual tracking, radio telemetry, GPS tracking, and motion tracking from videos.
+The traja Python package is a toolkit for the numerical characterisation and analysis of the trajectories of moving animals. Trajectory analysis is applicable in fields as diverse as optimal foraging theory, migration, and behavioural mimicry (e.g. for verifying similarities in locomotion). A trajectory is simply a record of the path followed by a moving animal. Traja operates on trajectories in the form of a series of locations (as x, y coordinates) with times. Trajectories may be obtained by any method which provides this information, including manual tracking, radio telemetry, GPS tracking, and motion tracking from videos.
 
 The goal of this package (and this document) is to aid biological researchers, who may not have extensive experience with Python, to analyse trajectories without being handicapped by a limited knowledge of Python or programming. However, a basic understanding of Python is useful.
 

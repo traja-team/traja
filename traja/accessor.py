@@ -209,7 +209,7 @@ class TrajaAccessor(object):
           assign (bool): Assign output to `TrajaDataFrame` (Default value = False)
 
         Returns:
-          dict: Derivatives in dictionary.
+          derivs (:class:`~collections.OrderedDict`): Derivatives in dictionary.
           
         .. doctest::
 
@@ -470,7 +470,7 @@ class TrajaAccessor(object):
           R (float): Rediscretized step length (eg, 0.02)
 
         Returns:
-          Rediscretized coordinates.
+          rt (:class:`numpy.ndarray`): rediscretized trajectory
           
         .. note::
           
