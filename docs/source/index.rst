@@ -36,7 +36,7 @@ If you use traja in your publications, please cite "`traja: A Python Trajectory 
    :caption: User Guide
 
    Reading and Writing Files <reading>
-   Indexing <pandas>
+   pandas indexing and resampling <pandas>
    Generate Random Walk <generate>
    Making Plots <plots>
    Rediscretizing Trajectory <rediscretize>
