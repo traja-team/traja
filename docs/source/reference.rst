@@ -56,7 +56,7 @@ Methods of pandas ``Series`` objects are also available.
 TrajaDataFrame
 --------------
 
-A ``TrajaDataFrame`` is a tabular data structure that contains ``x``,``y``, and ``time`` columns.
+A ``TrajaDataFrame`` is a tabular data structure that contains ``x``, ``y``, and ``time`` columns.
 
 All pandas ``DataFrame`` methods are also available, although they may
 not operate in a meaningful way on the ``x``, ``y``, and ``time`` columns.

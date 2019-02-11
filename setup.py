@@ -22,7 +22,9 @@ def find_version(*file_paths):
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
-requirements = ['matplotlib','pandas','numpy','shapely','scipy','scipy']
+requirements = ['matplotlib','pandas','numpy','shapely','scipy','scipy', 'psutil']
+
+extras_requirements = {'all':  ['torch', 'rpy2', 'tzlocal']}
 
 this_dir = path.abspath(path.dirname(__file__))
 with open(os.path.join(this_dir, 'README.rst'), encoding='utf-8') as f:
@@ -38,6 +40,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=requirements,
+    extras_require=extras_requirements,
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

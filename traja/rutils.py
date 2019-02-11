@@ -58,9 +58,9 @@ def to_trajr(trj):
 
     .. doctest::
 
-        >>> from traja import rutils
+        >>> import traja
         >>> df = traja.TrajaDataFrame({'x':range(5),'y':range(5)})
-        >>> trjr_df = rutils.to_trajr(df) # doctest: +SKIP
+        >>> trjr_df = traja.rutils.to_trajr(df) # doctest: +SKIP
         >>> [x for x in trjr_df.names] # doctest: +SKIP
         ...
         ['x', 'y', 'id', 'time', 'displacementTime', 'polar', 'displacement']
@@ -98,10 +98,9 @@ def to_ltraj(trj, id=1, typeII=False):
 
     .. doctest::
 
-        >>> import traja.rutils as rutils # doctest:+ELLIPSIS
-        >>>
-        >>> df=traja.TrajaDataFrame({'x':range(5),'y':range(5)})
-        >>> ltraj = rutils.to_ltraj(df) # doctest: +SKIP
+        >>> import traja
+        >>> df = traja.TrajaDataFrame({'x':range(5),'y':range(5)})
+        >>> ltraj = traja.rutils.to_ltraj(df) # doctest: +SKIP
         >>> print(ltraj[0]) # doctest: +SKIP
         ...
            x  y  date          dx    ...              dt   R2n  abs.angle  rel.angle
