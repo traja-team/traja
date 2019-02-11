@@ -11,7 +11,7 @@ R interface
     df = traja.generate()
 
 Convert to adehabitat class `ltraj` for further analysis with R
-===============================================================
+---------------------------------------------------------------
 
 `adehabitat <https://www.rdocumentation.org/packages/adehabitat/versions/1.8.20>`_
 is a widely used R library for animal tracking and trajectory
@@ -24,8 +24,25 @@ analysis.
 
 .. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/ltraj_plot.png
 
+Convert to `trajr` object
+-------------------------
+
+`trajr <https://cran.r-project.org/web/packages/trajr/vignettes/trajr-vignette.html>`_ is another widely used R package.
+Convert a `TrajaDataFrame` to `trajr` dataframe with:
+
+.. code-block:: python
+
+    from traja.rutils import trajr
+
+    # Convert to trajr trajectory
+    traj = rutils.to_trajr(df)
+
+    # Plot trajectory using trajr backend
+    trajr.plot_Trajectory(traj)
+
+
 Perform further analysis in Python
-==================================
+----------------------------------
 Data frame is stored in first index.
 
 .. code-block:: python
