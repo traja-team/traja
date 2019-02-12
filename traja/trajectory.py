@@ -1,4 +1,3 @@
-#! /usr/local/env python3
 import math
 from typing import Callable
 
@@ -6,6 +5,7 @@ import traja
 import numpy as np
 import pandas as pd
 import scipy
+from fastdtw import fastdtw
 
 from traja import TrajaDataFrame
 from pandas.core.dtypes.common import is_datetime_or_timedelta_dtype, is_datetime64_any_dtype, is_timedelta64_dtype
@@ -177,14 +177,6 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
         symmetric_dist = max(dist0, dist1)
         return symmetric_dist
     elif method is 'dtw':
-        try:
-            from fastdtw import fastdtw
-        except ImportError:
-            raise ImportError("""            
-            fastdtw is not installed. Install it with: 
-            pip install fastdtw.
-
-            """)
         distance, path = fastdtw(A, B, dist=euclidean)
         return distance
 
@@ -271,7 +263,7 @@ def generate(n: int = 1000,
 
     df = traja.TrajaDataFrame(data={'x': x, 'y': y})
     if fps in (0, None):
-        raise Exception("fps must be greater than 0")
+        raise ValueError("fps must be greater than 0")
     df.fps = fps
     time = df.index / fps
     df['time'] = time
@@ -386,7 +378,7 @@ def rotate(df, angle=0, origin=None):
 
 
 def rediscretize_points(trj, R):
-    """Resample a trajectory to a constant step length. R is rediscretized step length.
+    """Resample a trajectory to a constant step length.
 
     Args:
       trj (:class:`traja.TrajaDataframe`): trajectory

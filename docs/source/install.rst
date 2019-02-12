@@ -25,15 +25,9 @@ Installation with pip should also include all dependencies, but a complete list 
 - `scipy`
 - `pandas`
 
-Optional dependencies include:
+To install optional dependencies run:
 
-- `shapely`
-- `rpy2`
-- `pytorch`
-
-and can be installed with::
-
-  pip install shapely rpy2
+  pip install 'traja[all]'
 
 
 .. _GitHub: https://github.com/justinshenk/github

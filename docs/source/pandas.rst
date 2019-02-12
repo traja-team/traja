@@ -1,5 +1,5 @@
-Extending pandas
-================
+Pandas Indexing and Resampling
+==============================
 
 traja is built on top of pandas :class:`~pandas.DataFrame`, giving access to low-level pandas indexing functions.
 
@@ -26,7 +26,7 @@ You can also do resampling to select average coordinate every second, for exampl
 
     # Convert 'time' column to timedelta
     df.time = pd.to_timedelta(df.time, unit='s')
-    df.set_index('time', inplace=True)
+    df = df.set_index('time')
 
     # Resample with average for every second
     resampled = df.resample('S').mean()
