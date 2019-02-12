@@ -36,11 +36,11 @@ If you use traja in your publications, please cite "`traja: A Python Trajectory 
    :caption: User Guide
 
    Reading and Writing Files <reading>
-   pandas indexing and resampling <pandas>
+   Pandas Indexing and Resampling <pandas>
    Generate Random Walk <generate>
    Making Plots <plots>
-   Rediscretizing Trajectory <rediscretize>
-   Predicting Trajectory <predictions>
+   Rediscretizing Trajectories <rediscretize>
+   Predicting Trajectories <predictions>
    R interface <rinterface>
 
 .. toctree::
