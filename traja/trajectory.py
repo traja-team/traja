@@ -8,7 +8,11 @@ import scipy
 from fastdtw import fastdtw
 
 from traja import TrajaDataFrame
-from pandas.core.dtypes.common import is_datetime_or_timedelta_dtype, is_datetime64_any_dtype, is_timedelta64_dtype
+from pandas.core.dtypes.common import (
+    is_datetime_or_timedelta_dtype,
+    is_datetime64_any_dtype,
+    is_timedelta64_dtype,
+)
 from scipy.spatial.distance import directed_hausdorff, euclidean
 
 
@@ -27,7 +31,7 @@ def smooth_sg(trj, w=None, p=3):
     if w is None:
         w = p + 3 - p % 2
 
-    if (w % 2 != 1):
+    if w % 2 != 1:
         raise Exception(f"Invalid smoothing parameter w ({w}): n must be odd")
     trj.x = scipy.signal.savgol_filter(trj.x, window_length=w, polyorder=p, axis=0)
     trj.y = scipy.signal.savgol_filter(trj.y, window_length=w, polyorder=p, axis=0)
@@ -36,20 +40,20 @@ def smooth_sg(trj, w=None, p=3):
 
 
 def angles(trj, lag=1, compass_direction=None):
-    trj['angle'] = np.rad2deg(np.arccos(np.abs(trj['dx']) / trj['distance']))
+    trj["angle"] = np.rad2deg(np.arccos(np.abs(trj["dx"]) / trj["distance"]))
     # Get heading from angle
-    mask = (trj['dx'] > 0) & (trj['dy'] >= 0)
-    trj.loc[mask, 'heading'] = trj['angle'][mask]
-    mask = (trj['dx'] >= 0) & (trj['dy'] < 0)
-    trj.loc[mask, 'heading'] = -trj['angle'][mask]
-    mask = (trj['dx'] < 0) & (trj['dy'] <= 0)
-    trj.loc[mask, 'heading'] = -(180 - trj['angle'][mask])
-    mask = (trj['dx'] <= 0) & (trj['dy'] > 0)
-    trj.loc[mask, 'heading'] = (180 - trj['angle'])[mask]
-    trj['turn_angle'] = trj['heading'].diff()
+    mask = (trj["dx"] > 0) & (trj["dy"] >= 0)
+    trj.loc[mask, "heading"] = trj["angle"][mask]
+    mask = (trj["dx"] >= 0) & (trj["dy"] < 0)
+    trj.loc[mask, "heading"] = -trj["angle"][mask]
+    mask = (trj["dx"] < 0) & (trj["dy"] <= 0)
+    trj.loc[mask, "heading"] = -(180 - trj["angle"][mask])
+    mask = (trj["dx"] <= 0) & (trj["dy"] > 0)
+    trj.loc[mask, "heading"] = (180 - trj["angle"])[mask]
+    trj["turn_angle"] = trj["heading"].diff()
     # Correction for 360-degree angle range
-    trj.loc[trj.turn_angle >= 180, 'turn_angle'] -= 360
-    trj.loc[trj.turn_angle < -180, 'turn_angle'] += 360
+    trj.loc[trj.turn_angle >= 180, "turn_angle"] -= 360
+    trj.loc[trj.turn_angle < -180, "turn_angle"] += 360
 
 
 def step_lengths(trj):
@@ -115,9 +119,14 @@ def expected_sq_displacement(trj, n=None, eqn1=True, compass_direction=None):
     if eqn1:
         # Eqn 1
         alpha = np.arctan2(s, c)
-        gamma = ((1 - c) ^ 2 - s2) * np.cos((n + 1) * alpha) - 2 * s * (1 - c) * np.sin((n + 1) * alpha)
-        esd = n * l2 + 2 * l ^ 2 * ((c - c ^ 2 - s2) * n - c) / ((1 - c) ^ 2 + s2) + 2 * l ^ 2 * (
-                (2 * s2 + (c + s2) ^ ((n + 1) / 2)) / ((1 - c) ^ 2 + s2) ^ 2) * gamma
+        gamma = ((1 - c) ^ 2 - s2) * np.cos((n + 1) * alpha) - 2 * s * (1 - c) * np.sin(
+            (n + 1) * alpha
+        )
+        esd = (
+            n * l2 + 2 * l
+            ^ 2 * ((c - c ^ 2 - s2) * n - c) / ((1 - c) ^ 2 + s2) + 2 * l
+            ^ 2 * ((2 * s2 + (c + s2) ^ ((n + 1) / 2)) / ((1 - c) ^ 2 + s2) ^ 2) * gamma
+        )
         return abs(esd)
     else:
         # Eqn 2
@@ -125,7 +134,9 @@ def expected_sq_displacement(trj, n=None, eqn1=True, compass_direction=None):
         return esd
 
 
-def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units='m', time_units='s'):
+def traj_from_coords(
+    track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units="m", time_units="s"
+):
     # TODO: Convert to DataFrame if not already
     trj = track
     trj.traja.spatial_units = spatial_units
@@ -141,26 +152,30 @@ def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_unit
             trj.rename(columns={col: name})
 
     # Ensure column names are as expected
-    rename(x_col, 'x')
-    rename(y_col, 'y')
+    rename(x_col, "x")
+    rename(y_col, "y")
     if time_col is not None:
-        rename(time_col, 'time')
+        rename(time_col, "time")
 
     # Allocate times if they aren't already known
-    if 'time' not in trj:
+    if "time" not in trj:
         if fps is None:
-            raise Exception(("Cannot create a trajectory without times: either fps or a time column must be specified"))
+            raise Exception(
+                (
+                    "Cannot create a trajectory without times: either fps or a time column must be specified"
+                )
+            )
         # Assign times to each frame, starting at 0
-        trj['time'] = pd.Series(np.arange(0, len(trj) - 1) / fps)
+        trj["time"] = pd.Series(np.arange(0, len(trj) - 1) / fps)
 
     # Get displacement time for each coordinate, with the first point at time 0
-    trj['dt'] = trj.time - trj.time.iloc[0]
+    trj["dt"] = trj.time - trj.time.iloc[0]
 
     ...
     return trj
 
 
-def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
+def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
     """Calculate distance between two trajectories.
 
     Args:
@@ -171,27 +186,29 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
     Returns:
         distance (str): Distance
     """
-    if method is 'hausdorff':
+    if method is "hausdorff":
         dist0 = directed_hausdorff(A, B)[0]
         dist1 = directed_hausdorff(B, A)[0]
         symmetric_dist = max(dist0, dist1)
         return symmetric_dist
-    elif method is 'dtw':
+    elif method is "dtw":
         distance, path = fastdtw(A, B, dist=euclidean)
         return distance
 
 
-def generate(n: int = 1000,
-             random: bool = True,
-             step_length: int = 2,
-             angular_error_sd: float = 0.5,
-             angular_error_dist: Callable = None,
-             linear_error_sd: float = 0.2,
-             linear_error_dist: Callable = None,
-             fps: float = 50,
-             spatial_units: str = 'm',
-             seed: int = None,
-             **kwargs):
+def generate(
+    n: int = 1000,
+    random: bool = True,
+    step_length: int = 2,
+    angular_error_sd: float = 0.5,
+    angular_error_dist: Callable = None,
+    linear_error_sd: float = 0.2,
+    linear_error_dist: Callable = None,
+    fps: float = 50,
+    spatial_units: str = "m",
+    seed: int = None,
+    **kwargs,
+):
     """Generates a trajectory.
 
     If `random` is `True`, the trajectory will
@@ -237,9 +254,9 @@ def generate(n: int = 1000,
     if seed is None:
         np.random.seed(0)
     if angular_error_dist is None:
-        angular_error_dist = np.random.normal(loc=0., scale=angular_error_sd, size=n)
+        angular_error_dist = np.random.normal(loc=0.0, scale=angular_error_sd, size=n)
     if linear_error_dist is None:
-        linear_error_dist = np.random.normal(loc=0., scale=linear_error_sd, size=n)
+        linear_error_dist = np.random.normal(loc=0.0, scale=linear_error_sd, size=n)
     angular_errors = angular_error_dist
     linear_errors = linear_error_dist
     step_lengths = step_length + linear_errors
@@ -261,12 +278,12 @@ def generate(n: int = 1000,
     x = coords.real
     y = coords.imag
 
-    df = traja.TrajaDataFrame(data={'x': x, 'y': y})
+    df = traja.TrajaDataFrame(data={"x": x, "y": y})
     if fps in (0, None):
         raise ValueError("fps must be greater than 0")
     df.fps = fps
     time = df.index / fps
-    df['time'] = time
+    df["time"] = time
     df.spatial_units = spatial_units
     for key, value in kwargs.items():
         df.__dict__[key] = value
@@ -280,7 +297,7 @@ def generate(n: int = 1000,
 def _resample_time(trj, step_time):
     if not is_datetime_or_timedelta_dtype(trj.index):
         raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
-    return trj.resample(step_time).agg({'x': np.mean, 'y': np.mean})
+    return trj.resample(step_time).agg({"x": np.mean, "y": np.mean})
 
 
 def resample_time(trj, step_time, new_fps=None):
@@ -311,23 +328,27 @@ def resample_time(trj, step_time, new_fps=None):
 
     """
     time_col = _get_time_col(trj)
-    if time_col is 'index' and is_datetime64_any_dtype(trj.index):
+    if time_col is "index" and is_datetime64_any_dtype(trj.index):
         _trj = _resample_time(trj, step_time)
-    elif time_col is 'index' and is_timedelta64_dtype(trj.index):
+    elif time_col is "index" and is_timedelta64_dtype(trj.index):
         _trj = _resample_time(trj, step_time)
     elif time_col:
         if isinstance(step_time, str):
             try:
-                if '.' in step_time:
+                if "." in step_time:
                     raise NotImplementedError("Fractional step time not implemented.")
             except Exception:
-                raise NotImplementedError(f"Inferring from time format {step_time} not yet implemented.")
+                raise NotImplementedError(
+                    f"Inferring from time format {step_time} not yet implemented."
+                )
         _trj = trj.set_index(time_col)
-        _trj.index = pd.to_timedelta(_trj.index, unit='s')
+        _trj.index = pd.to_timedelta(_trj.index, unit="s")
         _trj = _resample_time(_trj, step_time)
         _trj.reset_index(inplace=True)
     else:
-        raise NotImplementedError(f"Time column ({time_col}) not of expected data type.")
+        raise NotImplementedError(
+            f"Time column ({time_col}) not of expected data type."
+        )
     return _trj
 
 
@@ -351,7 +372,7 @@ def rotate(df, angle=0, origin=None):
     if isinstance(trj, traja.TrajaDataFrame):
         xy = df.traja.xy
     elif isinstance(trj, pd.DataFrame):
-        trj = df[['x', 'y']]
+        trj = df[["x", "y"]]
 
     x, y = np.split(xy, [-1], axis=1)
     if origin is None:
@@ -362,8 +383,8 @@ def rotate(df, angle=0, origin=None):
     new_coords = []
 
     for x, y in xy:
-        adjusted_x = (x - offset_x)
-        adjusted_y = (y - offset_y)
+        adjusted_x = x - offset_x
+        adjusted_y = y - offset_y
         cos_rad = math.cos(angle)
         sin_rad = math.sin(angle)
         qx = offset_x + cos_rad * adjusted_x + sin_rad * adjusted_y
@@ -372,8 +393,8 @@ def rotate(df, angle=0, origin=None):
 
     new_xy = np.array(new_coords)
     x, y = np.split(new_xy, [-1], axis=1)
-    trj['x'] = x
-    trj['y'] = y
+    trj["x"] = x
+    trj["y"] = y
     return trj
 
 
@@ -391,9 +412,12 @@ def rediscretize_points(trj, R):
     rt = _rediscretize_points(trj, R)
 
     if len(rt) < 2:
-        raise RuntimeError(f"Step length {R} is too large for path (path length {len(self._trj)})")
+        raise RuntimeError(
+            f"Step length {R} is too large for path (path length {len(self._trj)})"
+        )
     rt = traja.from_xy(rt)
     return rt
+
 
 def _rediscretize_points(trj, R):
     """Helper function for :meth:`~traja.trajectory.rediscretize`.
@@ -407,18 +431,20 @@ def _rediscretize_points(trj, R):
 
     """
     # TODO: Implement with complex numbers
-    points = trj[['x', 'y']].dropna().values.astype('float64')
+    points = trj[["x", "y"]].dropna().values.astype("float64")
     n_points = len(points)
     result = np.empty((128, 2))
     p0 = points[0]
     result[0] = p0
     step_nr = 0
-    candidate_start = 1 # running index of candidate
+    candidate_start = 1  # running index of candidate
 
     while candidate_start <= n_points:
         # Find the first point `curr_ind` for which |points[curr_ind] - p_0| >= R
         curr_ind = np.NaN
-        for i in range(candidate_start, n_points):  # range of search space for next point
+        for i in range(
+            candidate_start, n_points
+        ):  # range of search space for next point
             d = np.linalg.norm(points[i] - result[step_nr])
             if d >= R:
                 curr_ind = i  # curr_ind is in [candidate, n_points)
@@ -437,7 +463,9 @@ def _rediscretize_points(trj, R):
         prev_y = points[curr_ind - 1, 1]
 
         # a = 1 if points[k, 0] <= xk_1 else 0
-        lambda_ = np.arctan2(points[curr_ind, 1] - prev_y, points[curr_ind, 0] - prev_x) # angle
+        lambda_ = np.arctan2(
+            points[curr_ind, 1] - prev_y, points[curr_ind, 0] - prev_x
+        )  # angle
         cos_l = np.cos(lambda_)
         sin_l = np.sin(lambda_)
         U = (curr_result_x - prev_x) * cos_l + (curr_result_y - prev_y) * sin_l
@@ -457,7 +485,7 @@ def _rediscretize_points(trj, R):
         step_nr += 1
 
     # Truncate result
-    result = result[:step_nr + 1]
+    result = result[: step_nr + 1]
     return result
 
 
@@ -508,7 +536,7 @@ def from_xy(xy: np.ndarray):
         2  2  3
 
     """
-    df = traja.TrajaDataFrame.from_records(xy, columns=['x', 'y'])
+    df = traja.TrajaDataFrame.from_records(xy, columns=["x", "y"])
     return df
 
 
@@ -519,14 +547,14 @@ def fill_in_traj(trj):
 
 def _get_time_col(trj):
     # Check if saved in metadata
-    time_col = trj.__dict__.get('time_col', None)
+    time_col = trj.__dict__.get("time_col", None)
     if time_col:
         return time_col
     # Check if index is datetime
     if is_datetime_or_timedelta_dtype(trj.index):
-        return 'index'
+        return "index"
     # Check if any column contains 'time'
-    time_cols = [col for col in trj if 'time' in col.lower()]
+    time_cols = [col for col in trj if "time" in col.lower()]
     if time_cols:
         # Try first column
         time_col = time_cols[0]
