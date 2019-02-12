@@ -9,7 +9,7 @@ First we'll load in data using traja.
 """
 import traja
 
-df = traja.TrajaDataFrame({'x':[0,1,2,3,4],'y':[1,3,2,4,5]})
+df = traja.TrajaDataFrame({"x": [0, 1, 2, 3, 4], "y": [1, 3, 2, 4, 5]})
 
 ###############################################################################
 # Plotting with Traja
@@ -31,7 +31,7 @@ df.traja.plot()
 # Traja can re-scale data with any units
 
 df.traja.scale(100)
-df.spatial_units='cm'
+df.spatial_units = "cm"
 df.traja.plot()
 
 ###############################################################################
@@ -55,7 +55,7 @@ rt.traja.plot()
 # .. note::
 #
 #   This can also be achieved using `traja.utils.resample_time(trj, step_time)`
-resampled = df.traja.resample_time(step_time='2s')
+resampled = df.traja.resample_time(step_time="2s")
 resampled.traja.plot()
 
 ###############################################################################
@@ -65,7 +65,7 @@ resampled.traja.plot()
 # Derivatives can be calculated with ``derivatives`` and histograms can be
 # plotted using pandas built-in :meth:`~pandas.DataFrame.hist>` method.
 derivs = df.traja.get_derivatives()
-speed = derivs['speed']
+speed = derivs["speed"]
 speed.hist()
 
 ###############################################################################
