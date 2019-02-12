@@ -195,9 +195,9 @@ def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist
     else:
         x0, x1 = (df.x.min(), df.x.max())
         y0, y1 = (df.y.min(), df.y.max())
-    aspect = (y1 - y0) / (x1 - x0)
+
     x_edges = np.linspace(x0, x1, num=bins)
-    y_edges = np.linspace(y0, y1, num=int(bins / aspect))
+    y_edges = np.linspace(y0, y1, num=bins)
 
     x, y = zip(*df.values)
     # # TODO: Remove redundant histogram calculation
