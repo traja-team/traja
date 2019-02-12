@@ -200,11 +200,11 @@ def trip_grid(trj, bins=16, log=False, spatial_units=None, normalize=False, hist
     y_edges = np.linspace(y0, y1, num=bins)
 
     x, y = zip(*df.values)
-    # # TODO: Remove redundant histogram calculation
+    # FIXME: Remove redundant histogram calculation
     hist, x_edges, y_edges = np.histogram2d(x, y, bins=(x_edges, y_edges), density=normalize)
     if log:
         hist = np.log(hist + np.e)
-    if hist_only:
+    if hist_only: # TODO: Evaluate potential use cases or remove
         return hist, None
     fig, ax = plt.subplots()
     image = plt.imshow(hist, interpolation='bilinear')
