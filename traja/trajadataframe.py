@@ -6,7 +6,7 @@ import pandas as pd
 
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.ERROR)
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.ERROR)
 
 
 class TrajaDataFrame(pd.DataFrame):
@@ -28,7 +28,18 @@ class TrajaDataFrame(pd.DataFrame):
 
     """
 
-    _metadata = ['xlim', 'ylim', 'spatial_units', 'xlabel', 'ylabel', 'title', 'fps', 'time_units', 'time_col', 'id']
+    _metadata = [
+        "xlim",
+        "ylim",
+        "spatial_units",
+        "xlabel",
+        "ylabel",
+        "title",
+        "fps",
+        "time_units",
+        "time_col",
+        "id",
+    ]
 
     def __init__(self, *args, **kwargs):
         # Allow setting metadata from constructor
@@ -57,11 +68,11 @@ class TrajaDataFrame(pd.DataFrame):
     def __finalize__(self, other, method=None, **kwargs):
         """propagate metadata from other to self """
         # merge operation: using metadata of the left object
-        if method == 'merge':
+        if method == "merge":
             for name in self._metadata:
                 object.__setattr__(self, name, getattr(other.left, name, None))
         # concat operation: using metadata of the first object
-        elif method == 'concat':
+        elif method == "concat":
             for name in self._metadata:
                 object.__setattr__(self, name, getattr(other.objs[0], name, None))
         else:
@@ -70,15 +81,13 @@ class TrajaDataFrame(pd.DataFrame):
         return self
 
     def _init_metadata(self):
-        defaults = dict(fps=None,
-                        spatial_units='m',
-                        time_units='s')
+        defaults = dict(fps=None, spatial_units="m", time_units="s")
         for name, value in defaults.items():
             if name not in self.__dict__:
                 self.__dict__[name] = value
 
     def _get_time_col(self):
-        time_cols = [col for col in self if 'time' in col.lower()]
+        time_cols = [col for col in self if "time" in col.lower()]
         if time_cols:
             time_col = time_cols[0]
             if is_numeric_dtype(self[time_col]):

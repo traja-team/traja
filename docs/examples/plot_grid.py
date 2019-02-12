@@ -18,4 +18,3 @@ df.traja.trip_grid()
 # ============================
 # Number of bins can be specified with the `bins` parameter.
 df.traja.trip_grid(bins=40)
-
