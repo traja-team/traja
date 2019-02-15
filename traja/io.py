@@ -14,8 +14,7 @@ def read_file(filepath:str, id=None, xlim=None, ylim=None, spatial_units='m', fp
         traj_df (:class:`~traja.main.TrajaDataFrame`): Trajectory
 
     """
-
-    date_parser = kwargs.pop('data_parser', None)
+    date_parser = kwargs.pop('date_parser', None)
 
     # TODO: Set index to first column containing 'time'
     df_test = pd.read_csv(filepath, nrows=10, parse_dates=True, infer_datetime_format=True)
