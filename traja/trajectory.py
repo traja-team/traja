@@ -12,7 +12,7 @@ from pandas.core.dtypes.common import is_datetime_or_timedelta_dtype, is_datetim
 from scipy.spatial.distance import directed_hausdorff, euclidean
 
 
-def smooth_sg(trj, w=None, p=3):
+def smooth_sg(trj: TrajaDataFrame, w: int=None, p: int=3):
     """Savitzky-Golay filtering.
 
     Args:
@@ -35,7 +35,7 @@ def smooth_sg(trj, w=None, p=3):
     return trj
 
 
-def angles(trj, lag=1, compass_direction=None):
+def angles(trj, lag:int=1, compass_direction:float=None):
     trj['angle'] = np.rad2deg(np.arccos(np.abs(trj['dx']) / trj['distance']))
     # Get heading from angle
     mask = (trj['dx'] > 0) & (trj['dy'] >= 0)
@@ -188,6 +188,69 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
         distance, path = fastdtw(A, B, dist=euclidean)
         return distance
 
+
+def transition_matrix(transitions: np.ndarray):
+    """Get Markov transition probability matrix for grid cell transitions."""
+    n = 1 + max(transitions.flatten())  # number of states
+
+    M = [[0] * n for _ in range(n)]
+
+    for (i, j) in zip(transitions, transitions[1:]):
+        M[i][j] += 1
+
+    # Convert to probabilities
+    for row in M:
+        s = sum(row)
+        if s > 0:
+            row[:] = [f / s for f in row]
+    return np.array(M)
+
+
+def quiver_plot(trj):
+    U, V = np.meshgrid(np.linspace(trj.x.min(), trj.x.max(), 16), np.linspace(trj.y.min(), trj.y.max(), 16))
+    raise NotImplementedError()
+
+def _grid_coords1D(grid_indices):
+    """Convert 2D grid indices to 1D indices."""
+    if isinstance(grid_indices, pd.DataFrame):
+        grid_indices = grid_indices.values
+    grid_indices1D = []
+    nr_cols = int(grid_indices[:,0].max())
+    for coord in grid_indices:
+        grid_indices1D.append(coord[1]*nr_cols+coord[0]) # nr_rows * col_length + nr_cols
+
+    return np.array(grid_indices1D,dtype=int)
+
+
+def transitions(trj, **kwargs):
+    """Get first-order Markov model for transitions between grid cells."""
+    if 'xbin' not in trj.columns or 'ybin' not in trj.columns:
+        grid_indices = grid_coordinates(trj, **kwargs)
+    else:
+        grid_indices = trj[['xbin','ybin']]
+
+    grid_indices1D = _grid_coords1D(grid_indices)
+    transitions_matrix = transition_matrix(grid_indices1D)
+    return transitions_matrix.astype(int)
+
+
+def grid_coordinates(trj, bins=(16,16), xlim=None, ylim=None, assign=False):
+    """Discretize each x,y coordinate into a 2D lattice grid coordinate."""
+    xmin = trj.x.min() if xlim is None else xlim[0]
+    xmax = trj.x.max() if xlim is None else xlim[1]
+    ymin = trj.y.min() if ylim is None else ylim[0]
+    ymax = trj.y.max() if ylim is None else ylim[1]
+
+    xbins = np.linspace(xmin, xmax, bins[0])
+    ybins = np.linspace(ymin, ymax, bins[1])
+
+    xbin = np.digitize(trj.x, xbins)
+    ybin = np.digitize(trj.y, ybins)
+
+    if assign:
+        trj['xbin'] = xbin
+        trj['ybin'] = ybin
+    return pd.DataFrame({'xbin':xbin,'ybin':ybin}, dtype=int)
 
 def generate(n: int = 1000,
              random: bool = True,
