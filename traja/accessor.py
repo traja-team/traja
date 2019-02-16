@@ -12,7 +12,8 @@ class TrajaAccessor(object):
     """Accessor for pandas DataFrame with trajectory-specific numerical and analytical functions."""
 
     def __init__(self, pandas_obj):
-        self._trj = pandas_obj
+        self._validate(pandas_obj)
+        self._obj = pandas_obj
 
     def _strip(self, text):
         try:
@@ -23,9 +24,21 @@ class TrajaAccessor(object):
     def set(self, **kwargs):
         for key, value in kwargs:
             try:
-                self._trj.__dict__[key] = value
+                self._obj.__dict__[key] = value
             except Exception as e:
                 raise Exception(f"Exception {e} assigning df.{key} to {value}")
+
+    @staticmethod
+    def _validate(obj):
+        if 'x' not in obj.columns or 'y' not in obj.columns:
+            raise AttributeError("Must have 'x' and 'y'.")
+
+    @property
+    def center(self):
+        # return the center point of this DataFrame
+        x = self._obj.x
+        y = self._obj.y
+        return (float(x.mean()), float(y.mean()))
 
     @property
     def night(self, begin='19:00', end='7:00'):
@@ -63,13 +76,13 @@ class TrajaAccessor(object):
                 print(f"Cannot set {key} to {value}")
 
     def _get_plot_args(self, **kwargs):
-        for var in self._trj._metadata:
+        for var in self._obj._metadata:
             # Update global meta variables
             # TODO: Replace with elegant solution
             if var not in kwargs:
                 # Metadata variable not specified in argument
-                if var in self._trj.__dict__:
-                    kwargs[var] = self._trj.__dict__[var]
+                if var in self._obj.__dict__:
+                    kwargs[var] = self._obj.__dict__[var]
         return kwargs
 
     def _get_time_col(self):
@@ -81,7 +94,7 @@ class TrajaAccessor(object):
            time_col (str or None): name of time column, 'index' or None
 
         """
-        return traja.trajectory._get_time_col(self._trj)
+        return traja.trajectory._get_time_col(self._obj)
 
     def between(self, begin, end):
         """Return trajectory between `begin` and end` if `time` column is `datetime64`.
@@ -104,12 +117,12 @@ class TrajaAccessor(object):
         """
         time_col = self._get_time_col()
         if time_col is 'index':
-            return self._trj.between_time(begin, end)
-        elif time_col and is_datetime64_any_dtype(self._trj[time_col]):
+            return self._obj.between_time(begin, end)
+        elif time_col and is_datetime64_any_dtype(self._obj[time_col]):
             # Backup index
-            dt_index_col = self._trj.index.name
+            dt_index_col = self._obj.index.name
             # Set dt_index
-            trj = self._trj.copy()
+            trj = self._obj.copy()
             trj.set_index(time_col, inplace=True)
             # Create slice of trajectory
             trj = trj.between_time(begin, end)
@@ -123,7 +136,7 @@ class TrajaAccessor(object):
             raise TypeError("Either time column or index must be datetime64")
 
     def resample_time(self, step_time):
-        return traja.trajectory.resample_time(self._trj, step_time=step_time)
+        return traja.trajectory.resample_time(self._obj, step_time=step_time)
 
     def trip_grid(self, bins=16, log=False, spatial_units=None, normalize=False, hist_only=False, plot=True):
         """Make a 2D histogram of trip.
@@ -140,10 +153,10 @@ class TrajaAccessor(object):
             image (:class:`matplotlib.collections.PathCollection`: image of histogram
 
         """
-        hist, image = traja.plotting.trip_grid(self._trj,
+        hist, image = traja.plotting.trip_grid(self._obj,
                                                bins=bins,
                                                log=log,
-                                               spatial_units=self._trj.spatial_units,
+                                               spatial_units=self._obj.spatial_units,
                                                normalize=normalize,
                                                hist_only=hist_only,
                                                plot=plot)
@@ -159,12 +172,12 @@ class TrajaAccessor(object):
         Returns:
             ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
         """
-        ax = traja.plotting.plot(trj=self._trj, accessor=self, n_coords=n_coords, show_time=show_time, **kwargs)
+        ax = traja.plotting.plot(trj=self._obj, accessor=self, n_coords=n_coords, show_time=show_time, **kwargs)
         return ax
 
 
     def _has_cols(self, cols: list):
-        return set(cols).issubset(self._trj.columns)
+        return set(cols).issubset(self._obj.columns)
 
     @property
     def xy(self, split=False):
@@ -186,7 +199,7 @@ class TrajaAccessor(object):
 
         """
         if self._has_cols(['x', 'y']):
-            xy = self._trj[['x', 'y']].values
+            xy = self._obj[['x', 'y']].values
             if split:
                 xy = np.split(xy, [-1], axis=1)
             return xy
@@ -195,7 +208,8 @@ class TrajaAccessor(object):
 
     def _check_has_time(self):
         """Check for presence of displacement time column."""
-        if 'time' not in self._trj:
+        time_col = self._get_time_col()
+        if time_col is None:
             raise Exception("Missing time information in trajectory.")
 
     def calc_derivatives(self, assign=False):
@@ -220,17 +234,23 @@ class TrajaAccessor(object):
             Name: time, dtype: float64)])
 
         """
-        self._check_has_time()
-        if not 'displacement' in self._trj:
+        time_col = self._get_time_col()
+        if time_col is None:
+            raise Exception("Missing time information in trajectory.")
+
+        if not 'displacement' in self._obj:
             displacement = self.calc_displacement(assign=assign)
         else:
-            displacement = self._trj.displacement
+            displacement = self._obj.displacement
 
-        displacement_time = self._trj.time - self._trj.time.iloc[0]
+        # get cumulative seconds
+        displacement_time = self._obj[time_col].astype(int).div(10 ** 9).diff().fillna(0).cumsum()
 
         derivs = OrderedDict(displacement=displacement, displacement_time=displacement_time)
+        import ipdb;ipdb.set_trace()
         if assign:
-            self._trj = self._trj.join(traja.TrajaDataFrame.from_records(derivs))
+            trj = self._obj.merge(pd.DataFrame.from_records(derivs),left_index=True, right_index=True)
+            self._obj = trj
         return derivs
 
     def get_derivatives(self):
@@ -268,8 +288,8 @@ class TrajaAccessor(object):
             d = derivs['displacement']
             t = derivs['displacement_time']
         else:
-            d = self._trj.displacement
-            t = self._trj.displacement_time
+            d = self._obj.displacement
+            t = self._obj.displacement_time
             derivs = OrderedDict(displacement=d, displacement_time=t)
         v = d[1: len(d)] / t.diff()
         v.rename('speed')
@@ -347,7 +367,7 @@ class TrajaAccessor(object):
                                            stop_time=stop_times,
                                            duration=durations))
 
-        metadata = OrderedDict(slower_than=slower_than, faster_than=faster_than, derivs=derivs, trajectory=self._trj)
+        metadata = OrderedDict(slower_than=slower_than, faster_than=faster_than, derivs=derivs, trajectory=self._obj)
         result.__dict__.update(metadata)
         return result
 
@@ -367,11 +387,11 @@ class TrajaAccessor(object):
             False
 
         """
-        df = self._trj[['x', 'y']].dropna()
+        df = self._obj[['x', 'y']].dropna()
         coords = df.values
-        tracks_data = {'type': 'LineString',
+        tracks_obj = {'type': 'LineString',
                        'coordinates': coords}
-        tracks_shape = shape(tracks_data)
+        tracks_shape = shape(tracks_obj)
         return tracks_shape
 
     def calc_displacement(self, assign=True):
@@ -393,13 +413,13 @@ class TrajaAccessor(object):
             dtype: float64
 
         """
-        displacement = np.sqrt(np.power(self._trj.x.shift() - self._trj.x, 2) +
-                               np.power(self._trj.y.shift() - self._trj.y, 2))
+        displacement = np.sqrt(np.power(self._obj.x.shift() - self._obj.x, 2) +
+                               np.power(self._obj.y.shift() - self._obj.y, 2))
 
-        # dx = self._trj.x.diff()
-        # dy = self._trj.y.diff()
+        # dx = self._obj.x.diff()
+        # dy = self._obj.y.diff()
         if assign:
-            self._trj = self._trj.assign(displacement=displacement)
+            self._obj = self._obj.assign(displacement=displacement)
         return displacement
 
     def calc_angle(self, assign=True):
@@ -424,11 +444,11 @@ class TrajaAccessor(object):
         if not self._has_cols(['dx', 'displacement']):
             displacement = self.calc_displacement()
         else:
-            displacement = self._trj.displacement
+            displacement = self._obj.displacement
 
-        angle = np.rad2deg(np.arccos(np.abs(self._trj.x.diff()) / displacement))
+        angle = np.rad2deg(np.arccos(np.abs(self._obj.x.diff()) / displacement))
         if assign:
-            self._trj['angle'] = angle
+            self._obj['angle'] = angle
         return angle
 
     def scale(self, scale, spatial_units="m"):
@@ -449,13 +469,13 @@ class TrajaAccessor(object):
             2  0.2  0.3
 
         """
-        self._trj[['x', 'y']] *= scale
-        self._trj.__dict__['spatial_units'] = spatial_units
+        self._obj[['x', 'y']] *= scale
+        self._obj.__dict__['spatial_units'] = spatial_units
 
 
     def _transfer_metavars(self, df):
-        for attr in self._trj._metadata:
-            df.__dict__[attr] = getattr(self._trj, attr, None)
+        for attr in self._obj._metadata:
+            df.__dict__[attr] = getattr(self._obj, attr, None)
         return df
 
 
@@ -483,7 +503,7 @@ class TrajaAccessor(object):
             2  1.414214  2.414214
 
         """
-        rt = traja.trajectory.rediscretize_points(self._trj, R)
+        rt = traja.trajectory.rediscretize_points(self._obj, R)
         self._transfer_metavars(rt)
         return rt
 
@@ -509,8 +529,8 @@ class TrajaAccessor(object):
         if not self._has_cols('angle'):
             angle = self.calc_angle(assign=True)
         else:
-            angle = self._trj.angle
-        df = self._trj
+            angle = self._obj.angle
+        df = self._obj
         dx = df.x.diff()
         dy = df.y.diff()
         # Get heading from angle
@@ -523,7 +543,7 @@ class TrajaAccessor(object):
         mask = (dx <= 0) & (dy > 0)
         df.loc[mask, 'heading'] = (180 - angle[mask])
         if assign:
-            self._trj['heading'] = df.heading
+            self._obj['heading'] = df.heading
         return df.heading
 
     def calc_turn_angle(self, assign=True):
@@ -546,14 +566,14 @@ class TrajaAccessor(object):
             Name: turn_angle, dtype: float64
 
         """
-        if 'heading' not in self._trj:
+        if 'heading' not in self._obj:
             heading = self.calc_heading(assign=False)
         else:
-            heading = self._trj.heading
+            heading = self._obj.heading
         turn_angle = heading.diff().rename('turn_angle')
         # Correction for 360-degree angle range
         turn_angle[turn_angle >= 180] -= 360
         turn_angle[turn_angle < -180] += 360
         if assign:
-            self._trj['turn_angle'] = turn_angle
+            self._obj['turn_angle'] = turn_angle
         return turn_angle
