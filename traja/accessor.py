@@ -259,9 +259,14 @@ class TrajaAccessor(object):
             displacement = self._obj.displacement
 
         # get cumulative seconds
-        displacement_time = (
-            self._obj[time_col].astype(int).div(10 ** 9).diff().fillna(0).cumsum()
-        )
+        if is_datetime64_any_dtype(self._obj[time_col]):
+            displacement_time = (
+                self._obj[time_col].astype(int).div(10 ** 9).diff().fillna(0).cumsum()
+            )
+        else:
+            displacement_time = (
+                self._obj[time_col].diff().fillna(0).cumsum()
+            )
 
         derivs = OrderedDict(
             displacement=displacement, displacement_time=displacement_time
