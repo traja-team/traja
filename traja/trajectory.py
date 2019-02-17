@@ -189,13 +189,13 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method='dtw'):
         return distance
 
 
-def transition_matrix(transitions: np.ndarray):
+def transition_matrix(grid_indices1D: np.ndarray):
     """Get Markov transition probability matrix for grid cell transitions."""
-    n = 1 + max(transitions.flatten())  # number of states
+    n = 1 + max(grid_indices1D.flatten())  # number of states
 
     M = [[0] * n for _ in range(n)]
 
-    for (i, j) in zip(transitions, transitions[1:]):
+    for (i, j) in zip(grid_indices1D, grid_indices1D[1:]):
         M[i][j] += 1
 
     # Convert to probabilities
@@ -206,9 +206,59 @@ def transition_matrix(transitions: np.ndarray):
     return np.array(M)
 
 
-def quiver_plot(trj):
-    U, V = np.meshgrid(np.linspace(trj.x.min(), trj.x.max(), 16), np.linspace(trj.y.min(), trj.y.max(), 16))
-    raise NotImplementedError()
+def calculate_flow_angles(grid_indices: np.ndarray, bins):
+    """Calculate average flow between grid indices."""
+    n = bins[0] * bins[1] # number of states
+
+    M = np.empty(bins,dtype=np.ndarray)
+
+    grid_indices -= 1 # zero-indexing
+    for (i, j) in zip(grid_indices, grid_indices[1:]):
+        ix = i[0]
+        iy = i[1]
+        jx = j[0]
+        jy = j[1]
+
+        if np.array_equal(i, j):
+            angle = None
+        elif ix == jx and iy>jy: # move towards y origin (down by default)
+            angle = 3 * np.pi / 2
+        elif ix == jx and iy<jy: # move towards y origin (up by default)
+            angle = np.pi / 2
+        elif ix < jx and iy == jy:  # move right
+            angle = 0
+        elif ix > jx and iy == jy:  # move left
+            angle = np.pi
+        elif ix > jx and iy > jy:  # move towards origin (top left)
+            angle = 3 * np.pi / 4
+        elif ix < jx and iy < jy: # move away from origin (bottom right)
+            angle = 7 * np.pi / 4
+        elif ix < jx and iy > jy: # move top right
+            angle = np.pi / 4
+        if angle is not None:
+            M[iy, ix] = np.append(M[iy, ix], angle)
+
+    U = np.ones_like(M) # x component of arrow
+    V = np.empty_like(M) # y component of arrow
+    for i, row in enumerate(M):
+        for j, angles in enumerate(row):
+            x = y = 0
+            average_angle = None
+            if angles is not None and len(angles) > 1:
+                for angle in angles:
+                    if angle is None:
+                        continue
+                    x += np.cos(angle)
+                    y += np.sin(angle)
+                # average_angle = np.arctan2(y, x)
+                U[i, j] = x
+                V[i, j] = y
+            else:
+                U[i,j] = 0
+                V[i,j] = 0
+
+    return U.astype(float), V.astype(float)
+
 
 def _grid_coords1D(grid_indices):
     """Convert 2D grid indices to 1D indices."""
