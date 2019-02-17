@@ -1,3 +1,4 @@
+#! /usr/local/env python3
 import math
 from typing import Callable
 
@@ -5,7 +6,6 @@ import traja
 import numpy as np
 import pandas as pd
 import scipy
-from fastdtw import fastdtw
 
 from traja import TrajaDataFrame
 from pandas.core.dtypes.common import (
@@ -16,7 +16,7 @@ from pandas.core.dtypes.common import (
 from scipy.spatial.distance import directed_hausdorff, euclidean
 
 
-def smooth_sg(trj, w=None, p=3):
+def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
     """Savitzky-Golay filtering.
 
     Args:
@@ -39,7 +39,7 @@ def smooth_sg(trj, w=None, p=3):
     return trj
 
 
-def angles(trj, lag=1, compass_direction=None):
+def angles(trj, lag: int = 1, compass_direction: float = None):
     trj["angle"] = np.rad2deg(np.arccos(np.abs(trj["dx"]) / trj["distance"]))
     # Get heading from angle
     mask = (trj["dx"] > 0) & (trj["dy"] >= 0)
@@ -192,8 +192,134 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
         symmetric_dist = max(dist0, dist1)
         return symmetric_dist
     elif method is "dtw":
+        try:
+            from fastdtw import fastdtw
+        except ImportError:
+            raise ImportError(
+                """            
+            fastdtw is not installed. Install it with: 
+            pip install fastdtw.
+
+            """
+            )
         distance, path = fastdtw(A, B, dist=euclidean)
         return distance
+
+
+def transition_matrix(grid_indices1D: np.ndarray):
+    """Get Markov transition probability matrix for grid cell transitions."""
+    n = 1 + max(grid_indices1D.flatten())  # number of states
+
+    M = [[0] * n for _ in range(n)]
+
+    for (i, j) in zip(grid_indices1D, grid_indices1D[1:]):
+        M[i][j] += 1
+
+    # Convert to probabilities
+    for row in M:
+        s = sum(row)
+        if s > 0:
+            row[:] = [f / s for f in row]
+    return np.array(M)
+
+
+def calculate_flow_angles(grid_indices: np.ndarray, bins):
+    """Calculate average flow between grid indices."""
+    n = bins[0] * bins[1]  # number of states
+
+    M = np.empty(bins, dtype=np.ndarray)
+
+    grid_indices -= 1  # zero-indexing
+    for (i, j) in zip(grid_indices, grid_indices[1:]):
+        ix = i[0]
+        iy = i[1]
+        jx = j[0]
+        jy = j[1]
+
+        if np.array_equal(i, j):
+            angle = None
+        elif ix == jx and iy > jy:  # move towards y origin (down by default)
+            angle = 3 * np.pi / 2
+        elif ix == jx and iy < jy:  # move towards y origin (up by default)
+            angle = np.pi / 2
+        elif ix < jx and iy == jy:  # move right
+            angle = 0
+        elif ix > jx and iy == jy:  # move left
+            angle = np.pi
+        elif ix > jx and iy > jy:  # move towards origin (top left)
+            angle = 3 * np.pi / 4
+        elif ix < jx and iy < jy:  # move away from origin (bottom right)
+            angle = 7 * np.pi / 4
+        elif ix < jx and iy > jy:  # move top right
+            angle = np.pi / 4
+        if angle is not None:
+            M[iy, ix] = np.append(M[iy, ix], angle)
+
+    U = np.ones_like(M)  # x component of arrow
+    V = np.empty_like(M)  # y component of arrow
+    for i, row in enumerate(M):
+        for j, angles in enumerate(row):
+            x = y = 0
+            average_angle = None
+            if angles is not None and len(angles) > 1:
+                for angle in angles:
+                    if angle is None:
+                        continue
+                    x += np.cos(angle)
+                    y += np.sin(angle)
+                # average_angle = np.arctan2(y, x)
+                U[i, j] = x
+                V[i, j] = y
+            else:
+                U[i, j] = 0
+                V[i, j] = 0
+
+    return U.astype(float), V.astype(float)
+
+
+def _grid_coords1D(grid_indices):
+    """Convert 2D grid indices to 1D indices."""
+    if isinstance(grid_indices, pd.DataFrame):
+        grid_indices = grid_indices.values
+    grid_indices1D = []
+    nr_cols = int(grid_indices[:, 0].max())
+    for coord in grid_indices:
+        grid_indices1D.append(
+            coord[1] * nr_cols + coord[0]
+        )  # nr_rows * col_length + nr_cols
+
+    return np.array(grid_indices1D, dtype=int)
+
+
+def transitions(trj, **kwargs):
+    """Get first-order Markov model for transitions between grid cells."""
+    if "xbin" not in trj.columns or "ybin" not in trj.columns:
+        grid_indices = grid_coordinates(trj, **kwargs)
+    else:
+        grid_indices = trj[["xbin", "ybin"]]
+
+    grid_indices1D = _grid_coords1D(grid_indices)
+    transitions_matrix = transition_matrix(grid_indices1D)
+    return transitions_matrix.astype(int)
+
+
+def grid_coordinates(trj, bins=(16, 16), xlim=None, ylim=None, assign=False):
+    """Discretize each x,y coordinate into a 2D lattice grid coordinate."""
+    xmin = trj.x.min() if xlim is None else xlim[0]
+    xmax = trj.x.max() if xlim is None else xlim[1]
+    ymin = trj.y.min() if ylim is None else ylim[0]
+    ymax = trj.y.max() if ylim is None else ylim[1]
+
+    xbins = np.linspace(xmin, xmax, bins[0])
+    ybins = np.linspace(ymin, ymax, bins[1])
+
+    xbin = np.digitize(trj.x, xbins)
+    ybin = np.digitize(trj.y, ybins)
+
+    if assign:
+        trj["xbin"] = xbin
+        trj["ybin"] = ybin
+    return pd.DataFrame({"xbin": xbin, "ybin": ybin}, dtype=int)
 
 
 def generate(
@@ -280,7 +406,7 @@ def generate(
 
     df = traja.TrajaDataFrame(data={"x": x, "y": y})
     if fps in (0, None):
-        raise ValueError("fps must be greater than 0")
+        raise Exception("fps must be greater than 0")
     df.fps = fps
     time = df.index / fps
     df["time"] = time
@@ -399,7 +525,7 @@ def rotate(df, angle=0, origin=None):
 
 
 def rediscretize_points(trj, R):
-    """Resample a trajectory to a constant step length.
+    """Resample a trajectory to a constant step length. R is rediscretized step length.
 
     Args:
       trj (:class:`traja.TrajaDataframe`): trajectory

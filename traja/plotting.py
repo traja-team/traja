@@ -1,6 +1,8 @@
 import traja
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 from pandas.core.dtypes.common import (
     is_datetime_or_timedelta_dtype,
     is_datetime64_any_dtype,
@@ -194,6 +196,25 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
     plt.tight_layout()
     plt.show()
     return ax
+
+
+def quiver_plot(trj, bins=(16, 16)):
+    """Plot average flow from each grid cell to neighbor."""
+    X, Y = np.meshgrid(
+        np.linspace(trj.x.min(), trj.x.max(), bins[0]),
+        np.linspace(trj.y.min(), trj.y.max(), bins[1]),
+    )
+    if "xbin" not in trj.columns or "ybin" not in trj.columns:
+        grid_indices = traja.grid_coordinates(trj)
+    else:
+        grid_indices = trj[["xbin", "ybin"]]
+
+    U, V = traja.calculate_flow_angles(grid_indices.values, bins)
+
+    fig1, ax = plt.subplots()
+    Q = ax.quiver(U, V, units="width")
+    ax.title("Average direction for trajectory")
+    plt.show()
 
 
 def trip_grid(

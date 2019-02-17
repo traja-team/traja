@@ -17,7 +17,7 @@ def read_file(
         traj_df (:class:`~traja.main.TrajaDataFrame`): Trajectory
 
     """
-    date_parser = kwargs.pop('date_parser', None)
+    date_parser = kwargs.pop("date_parser", None)
 
     # TODO: Set index to first column containing 'time'
     df_test = pd.read_csv(
