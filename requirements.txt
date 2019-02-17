@@ -4,3 +4,4 @@ matplotlib
 shapely
 psutil
 scipy
+fastdtw
