@@ -25,7 +25,7 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
       p (int): polynomial order (Default value = 3)
 
     Returns:
-      trj: :class:`~traja.main.TrajaDataFrame`
+      trj: :class:`~traja.trajadataframe.TrajaDataFrame`
 
     """
     if w is None:
@@ -180,7 +180,7 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
 
     Args:
         A (:class:`~traja.trajadataframe.TrajaDataFrame`) : Trajectory 1
-        B (:class:`~traja.main.TrajaDataFrame`) : Trajectory 2
+        B (:class:`~traja.trajadataframe.TrajaDataFrame`) : Trajectory 2
         method (str): `dtw` for dynamic time warping, `hausdorff` for Hausdorff
 
     Returns:
@@ -223,11 +223,33 @@ def transition_matrix(grid_indices1D: np.ndarray):
     return np.array(M)
 
 
-def calculate_flow_angles(grid_indices: np.ndarray, bins):
+def _bins_to_tuple(trj,bins):
+    if bins is None:
+        # set default
+        bins = 32
+
+    if isinstance(bins, int):
+        # make aspect equal
+        aspect = (trj.y.max() - trj.y.min()) / (trj.x.max() - trj.x.min())
+        bins = (bins, int(bins * aspect))
+
+    assert isinstance(bins, tuple), f"bins should be tuple but is {type(bins)}"
+    return bins
+
+def _to_tuple(bins):
+    """Create tuple from bins if it is an `int`."""
+    if isinstance(bins, tuple):
+        return bins
+    elif isinstance(bins, int):
+        return (bins, bins)
+
+def calculate_flow_angles(grid_indices: np.ndarray):
     """Calculate average flow between grid indices."""
+
+    bins = (grid_indices[:,0].max(), grid_indices[:,1].max())
     n = bins[0] * bins[1]  # number of states
 
-    M = np.empty(bins, dtype=np.ndarray)
+    M = np.empty((bins[1],bins[0]), dtype=np.ndarray)
 
     grid_indices -= 1  # zero-indexing
     for (i, j) in zip(grid_indices, grid_indices[1:]):
@@ -246,11 +268,13 @@ def calculate_flow_angles(grid_indices: np.ndarray, bins):
             angle = 0
         elif ix > jx and iy == jy:  # move left
             angle = np.pi
-        elif ix > jx and iy > jy:  # move towards origin (top left)
+        elif ix > jx and iy > jy:  # move towards y origin (top left)
             angle = 3 * np.pi / 4
-        elif ix < jx and iy < jy:  # move away from origin (bottom right)
+        elif ix > jx and iy < jy:  # move away from y origin (bottom left)
+            angle = 5 * np.pi / 4
+        elif ix < jx and iy < jy:  # move away from y origin (bottom right)
             angle = 7 * np.pi / 4
-        elif ix < jx and iy > jy:  # move top right
+        elif ix < jx and iy > jy:  # move towards y origin (top right)
             angle = np.pi / 4
         if angle is not None:
             M[iy, ix] = np.append(M[iy, ix], angle)
@@ -303,8 +327,10 @@ def transitions(trj, **kwargs):
     return transitions_matrix.astype(int)
 
 
-def grid_coordinates(trj, bins=(16, 16), xlim=None, ylim=None, assign=False):
+def grid_coordinates(trj, bins=None, xlim=None, ylim=None, assign=False):
     """Discretize each x,y coordinate into a 2D lattice grid coordinate."""
+    bins = _bins_to_tuple(trj, bins)
+
     xmin = trj.x.min() if xlim is None else xlim[0]
     xmax = trj.x.max() if xlim is None else xlim[1]
     ymin = trj.y.min() if ylim is None else ylim[0]
@@ -333,8 +359,7 @@ def generate(
     fps: float = 50,
     spatial_units: str = "m",
     seed: int = None,
-    **kwargs,
-):
+    **kwargs):
     """Generates a trajectory.
 
     If `random` is `True`, the trajectory will
@@ -355,19 +380,19 @@ def generate(
     directed walk) is `0` radians. The starting position is `(0, 0)`.
 
     Args:
-      n:  (Default value = 1000)
-      random:  (Default value = True)
+      n (int):  (Default value = 1000)
+      random (bool):  (Default value = True)
       step_length:  (Default value = 2)
-      angular_error_sd:  (Default value = 0.5)
-      angular_error_dist:  (Default value = None)
-      linear_error_sd:  (Default value = 0.2)
-      linear_error_dist:  (Default value = None)
-      fps:  (Default value = 50)
+      angular_error_sd (float):  (Default value = 0.5)
+      angular_error_dist (Callable):  (Default value = None)
+      linear_error_sd (float):  (Default value = 0.2)
+      linear_error_dist (Callable):  (Default value = None)
+      fps (float):  (Default value = 50)
       spatial_units:  (Default value = 'm')
-      **kwargs:
+      **kwargs: Additional arguments
 
     Returns:
-        trj (:class:`traja.main.TrajaDataFrame`): Trajectory
+        trj (:class:`traja.trajadataframe.TrajaDataFrame`): Trajectory
 
     .. note::
 
@@ -430,12 +455,12 @@ def resample_time(trj, step_time, new_fps=None):
     """Resample trajectory to consistent `step_time` intervals.
 
     Args:
-        trj (:class:`~traja.TrajaDataFrame`): trajectory
+        trj (:class:`~traja.trajadataframe.TrajaDataFrame`): trajectory
         step_time (str): step time interval (eg, '1s')
         new_fps (bool, optional): new fps
 
     Results:
-        trj (:class:`~traja.TrajaDataFrame`): trajectory
+        trj (:class:`~traja.trajadataframe.TrajaDataFrame`): trajectory
 
 
     .. doctest::
@@ -482,11 +507,11 @@ def rotate(df, angle=0, origin=None):
     """Rotate a trajectory `angle` in radians.
 
     Args:
-        trj: Traja.DataFrame
+        trj (:class:`traja.trajadataframe.TrajaDataFrame`): Traja.DataFrame
         angle (float): angle in radians
 
     Returns:
-        trj: Traja.DataFrame
+        trj (:class:`traja.trajadataframe.TrajaDataFrame`): Traja.DataFrame
 
     .. note::
 
@@ -528,7 +553,7 @@ def rediscretize_points(trj, R):
     """Resample a trajectory to a constant step length. R is rediscretized step length.
 
     Args:
-      trj (:class:`traja.TrajaDataframe`): trajectory
+      trj (:class:`traja.trajadataframe.TrajaDataFrame`): trajectory
       R (float): Rediscretized step length (eg, 0.02)
 
     Returns:
@@ -549,7 +574,7 @@ def _rediscretize_points(trj, R):
     """Helper function for :meth:`~traja.trajectory.rediscretize`.
 
     Args:
-      trj (:class:`traja.TrajaDataframe`): trajectory
+      trj (:class:`traja.trajadataframe.TrajaDataFrame`): trajectory
       R (float): Rediscretized step length (eg, 0.02)
 
     Returns:
@@ -616,13 +641,13 @@ def _rediscretize_points(trj, R):
 
 
 def from_df(df):
-    """Convenience function for converting a :class:`pandas DataFrame<pandas.DataFrame>` into a :class:`traja.main.TrajaDataFrame`.
+    """Convenience function for converting a :class:`pandas DataFrame<pandas.DataFrame>` into a :class:`traja.trajadataframe.TrajaDataFrame`.
 
     Args:
       df (:class:`pandas.DataFrame`): Trajectory as pandas `DataFrame`
 
     Returns:
-      traj_df (:class:`~traja.main.TrajaDataFrame`): Trajectory
+      traj_df (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory
 
     .. doctest::
 
@@ -642,14 +667,45 @@ def from_df(df):
     return traj_df
 
 
+def coords_to_flow(trj, bins=None):
+    """Calculate grid cell flow from trajectory.
+
+    Args:
+        trj (trajectory)
+        bins (int or tuple)
+
+    Returns:
+        X (:class:`~numpy.ndarray`): X coordinates of arrow locations
+        Y (:class:`~numpy.ndarray`): Y coordinates of arrow locations
+        U (:class:`~numpy.ndarray`): X component of vector data
+        V (:class:`~numpy.ndarray`): Y component of vector data
+
+    """
+    bins = _bins_to_tuple(trj, bins)
+
+    X, Y = np.meshgrid(
+        np.linspace(trj.x.min(), trj.x.max(), bins[0]),
+        np.linspace(trj.y.min(), trj.y.max(), bins[1]),
+    )
+
+    if "xbin" not in trj.columns or "ybin" not in trj.columns:
+        grid_indices = traja.grid_coordinates(trj, bins=bins)
+    else:
+        grid_indices = trj[["xbin", "ybin"]]
+
+    U, V = traja.calculate_flow_angles(grid_indices.values)
+
+    return X, Y, U, V
+
+
 def from_xy(xy: np.ndarray):
-    """Convenience function for initializing :class:`TrajaDataFrame<traja.main.TrajaDataFrame>` with x,y coordinates.
+    """Convenience function for initializing :class:`~traja.trajadataframe.TrajaDataFrame` with x,y coordinates.
 
     Args:
         xy (:class:`numpy.ndarray`): x,y coordinates
 
     Returns:
-        traj_df (:class:`~traja.main.TrajaDataFrame`): Trajectory as dataframe
+        traj_df (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory as dataframe
 
     .. doctest::
 

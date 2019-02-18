@@ -5,6 +5,24 @@ Examples using ``traja.generate``
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Average direction for each grid cell">
+
+.. only:: html
+
+    .. figure:: /gallery/images/thumb/sphx_glr_plot_average_direction_thumb.png
+
+        :ref:`sphx_glr_gallery_plot_average_direction.py`
+
+.. raw:: html
+
+    </div>
+
+.. only:: not html
+
+    * :ref:`sphx_glr_gallery_plot_average_direction.py`
+
+.. raw:: html
+
     <div class="sphx-glr-thumbcontainer" tooltip="Comparing">
 
 .. only:: html
