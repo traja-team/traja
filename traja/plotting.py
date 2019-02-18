@@ -1,4 +1,7 @@
+from matplotlib.ticker import FormatStrFormatter
+
 import traja
+import matplotlib
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -8,6 +11,7 @@ from pandas.core.dtypes.common import (
     is_datetime64_any_dtype,
     is_timedelta64_dtype,
 )
+from traja.trajectory import coords_to_flow
 
 
 def stylize_axes(ax):
@@ -67,13 +71,7 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
         kwargs = self._get_plot_args(**kwargs)
     xlim = kwargs.pop("xlim", None)
     ylim = kwargs.pop("ylim", None)
-    spatial_units = trj.__dict__.get("spatial_units", None)
-    xlabel = (
-        kwargs.pop("xlabel", None) or f"x ({spatial_units})" if spatial_units else ""
-    )
-    ylabel = (
-        kwargs.pop("ylabel", None) or f"y ({spatial_units})" if spatial_units else ""
-    )
+
     title = kwargs.pop("title", None)
     time_units = kwargs.pop("time_units", None)
     fps = kwargs.pop("fps", None)
@@ -151,8 +149,7 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
     if kwargs.pop("invert_yaxis", None):
         plt.gca().invert_yaxis()
 
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    _label_axes(trj, ax)
     ax.set_title(title)
     ax.set_aspect("equal")
 
@@ -194,32 +191,166 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
     cbar.set_ticks(indices)
     cbar.set_ticklabels(cbar_labels)
     plt.tight_layout()
+
     plt.show()
     return ax
 
 
-def quiver_plot(trj, bins=(16, 16)):
-    """Plot average flow from each grid cell to neighbor."""
-    X, Y = np.meshgrid(
-        np.linspace(trj.x.min(), trj.x.max(), bins[0]),
-        np.linspace(trj.y.min(), trj.y.max(), bins[1]),
-    )
-    if "xbin" not in trj.columns or "ybin" not in trj.columns:
-        grid_indices = traja.grid_coordinates(trj)
-    else:
-        grid_indices = trj[["xbin", "ybin"]]
+def _label_axes(trj, ax):
+    if 'spatial_units' in trj.__dict__:
+        ax.set_xlabel(trj.spatial_units)
+        ax.set_ylabel(trj.spatial_units)
+    return ax
 
-    U, V = traja.calculate_flow_angles(grid_indices.values, bins)
+def plot_quiver(trj, bins=None, quiverplot_kws = {}):
+    """Plot average flow from each grid cell to neighbor.
 
-    fig1, ax = plt.subplots()
-    Q = ax.quiver(U, V, units="width")
-    ax.title("Average direction for trajectory")
+    Args:
+        bins (int or tuple): Tuple of x,y bin counts; if `bins` is int, bin count of x,
+                                with y inferred from aspect ratio
+        quiverplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.quiver`
+
+    Returns:
+        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+    """
+    X, Y, U, V = coords_to_flow(trj, bins)
+    Z = np.sqrt(U * U + V * V)
+
+    fig, ax = plt.subplots()
+
+    qp = ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
+    ax = _label_axes(trj, ax)
+
     plt.show()
+    return ax
+
+def plot_contour(trj, bins=None, filled=True, quiver=True, contourplot_kws = {}, contourfplot_kws = {}, quiverplot_kws={}):
+    """Plot average flow from each grid cell to neighbor.
+
+    Args:
+        bins (int or tuple): Tuple of x,y bin counts; if `bins` is int, bin count of x,
+                                with y inferred from aspect ratio
+        contourplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.contour`
+        contourfplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.contourf`
+        quiverplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.quiver`
+
+    Returns:
+        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+    """
+    X, Y, U, V = coords_to_flow(trj, bins)
+    Z = np.sqrt(U * U + V * V)
+
+    fig, ax = plt.subplots()
+
+    if filled:
+        cfp = plt.contourf(X, Y, Z, **contourfplot_kws)
+    cp = plt.contour(X, Y, Z, colors='k', linewidths=1, linestyles='solid', **contourplot_kws)
+    if quiver:
+        qp = ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
+
+    ax = _label_axes(trj, ax)
+
+    plt.show()
+    return ax
+
+
+def plot_surface(trj, bins=None, cmap='jet', **surfaceplot_kws):
+    """Plot surface of flow from each grid cell to neighbor in 3D.
+
+    Args:
+        bins (int or tuple): Tuple of x,y bin counts; if `bins` is int, bin count of x,
+                                with y inferred from aspect ratio
+        cmap (str): color map
+        surfaceplot_kws: Additional keyword arguments for :meth:`~mpl_toolkits.mplot3D.Axes3D.plot_surface`
+
+    Returns:
+        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+    """
+    from mpl_toolkits.mplot3d import Axes3D
+    X, Y, U, V = coords_to_flow(trj, bins)
+    Z = np.sqrt(U * U + V * V)
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax.plot_surface(X, Y, Z, cmap=matplotlib.cm.coolwarm, linewidth=0, **surfaceplot_kws)
+
+    ax = _label_axes(trj, ax)
+
+    plt.show()
+    return ax
+
+def plot_stream(trj, bins=None, cmap='jet', contourfplot_kws = {}, contourplot_kws = {}, streamplot_kws={}):
+    """Plot average flow from each grid cell to neighbor.
+
+    Args:
+        bins (int or tuple): Tuple of x,y bin counts; if `bins` is int, bin count of x,
+                                with y inferred from aspect ratio
+        contourplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.contour`
+        contourfplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.contourf`
+        streamplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.streamplot`
+
+    Returns:
+        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+
+    """
+    X, Y, U, V = coords_to_flow(trj, bins)
+    Z = np.sqrt(U * U + V * V)
+
+    fig, ax = plt.subplots()
+
+    cfp = plt.contourf(X, Y, Z, **contourfplot_kws)
+    cp = plt.contour(X, Y, Z, colors='k', linewidths=1, linestyles='solid', **contourplot_kws)
+    sp = ax.streamplot(X, Y, U, V, color=Z, cmap=cmap, **streamplot_kws)
+
+    ax = _label_axes(trj, ax)
+
+    plt.show()
+    return ax
+
+def plot_flow(trj,
+              kind='quiver',
+                 *args,
+                 contourplot_kws = {},
+                 contourfplot_kws={},
+                 streamplot_kws ={},
+                 quiverplot_kws={},
+                 surfaceplot_kws={}):
+    """Plot average flow from each grid cell to neighbor.
+
+    Args:
+        bins (int or tuple): Tuple of x,y bin counts; if `bins` is int, bin count of x,
+                                with y inferred from aspect ratio
+        kind (str): Choice of 'quiver','contourf','stream','surface'. Default is 'quiver'.
+        contourplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.contour`
+        contourfplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.contourf`
+        streamplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.streamplot`
+        quiverplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.quiver`
+        surfaceplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.plot_surface`
+
+    Returns:
+        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+    """
+    if kind is 'quiver':
+        return plot_contour(trj, filled=False, *args, **quiverplot_kws)
+    elif kind is 'contourf':
+        return plot_contour(trj, *args, **quiverplot_kws)
+    elif kind is 'stream':
+        return plot_stream(trj,
+                           *args,
+                           contourplot_kws=contourplot_kws,
+                           contourfplot_kws=contourfplot_kws,
+                           streamplot_kws=streamplot_kws)
+    elif kind is 'surface':
+        return plot_surface(trj,
+                            *args,
+                            **surfaceplot_kws)
+    else:
+        raise NotImplementedError(f"Kind {kind} is not implemented.")
 
 
 def trip_grid(
     trj,
-    bins=16,
+    bins=32,
     log=False,
     spatial_units=None,
     normalize=False,
@@ -240,8 +371,7 @@ def trip_grid(
         image (:class:`matplotlib.collections.PathCollection`: image of histogram
 
     """
-    import matplotlib.pyplot as plt
-
+    bins = traja.trajectory._bins_to_tuple(trj, bins)
     # TODO: Add kde-based method for line-to-cell gridding
     df = trj[["x", "y"]].dropna()
 
@@ -255,26 +385,30 @@ def trip_grid(
         x0, x1 = (df.x.min(), df.x.max())
         y0, y1 = (df.y.min(), df.y.max())
 
-    x_edges = np.linspace(x0, x1, num=bins)
-    y_edges = np.linspace(y0, y1, num=bins)
+    x_edges = np.linspace(x0, x1, num=bins[0])
+    y_edges = np.linspace(y0, y1, num=bins[1])
 
     x, y = zip(*df.values)
     # FIXME: Remove redundant histogram calculation
     hist, x_edges, y_edges = np.histogram2d(
-        x, y, bins=(x_edges, y_edges), density=normalize
+        x, y, bins=(x_edges, y_edges), normed=normalize
     )
     if log:
         hist = np.log(hist + np.e)
     if hist_only:  # TODO: Evaluate potential use cases or remove
         return hist, None
     fig, ax = plt.subplots()
-    image = plt.imshow(hist, interpolation="bilinear")
+    image = ax.imshow(hist, interpolation="bilinear", extent=[x0,x1,y0,y1])
+    # ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    # ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     # TODO: Adjust colorbar ytick_labels to correspond with time
-    cbar = plt.colorbar(image, ax=ax)
-    ax.set_xlabel("x{}".format(" (" + spatial_units + ")" if spatial_units else ""))
-    ax.set_ylabel("y{}".format(" (" + spatial_units + ")" if spatial_units else ""))
+    label = 'Frames' if not log else '$ln(Frames)$'
+    cbar = plt.colorbar(image, ax=ax, label='Frames')
+
+    ax = _label_axes(trj, ax)
+
     plt.title("Time spent{}".format(" (Logarithmic)" if log else ""))
-    plt.tight_layout()
+
     if plot:
         plt.show()
     # TODO: Add method for most common locations in grid
