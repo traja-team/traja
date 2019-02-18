@@ -239,11 +239,6 @@ Writing tests
 All tests should go into the ``tests`` directory. This folder contains many
 current examples of tests, and we suggest looking to these for inspiration.
 
-The ``.util`` module has some special ``assert`` functions that
-make it easier to make statements about whether GeoSeries or GeoDataFrame
-objects are equivalent. The easiest way to verify that your code is correct is to
-explicitly construct the result you expect, then compare the actual result to
-the expected correct result, using eg the function ``assert_geoseries_equal``.
 
 Running the test suite
 ~~~~~~~~~~~~~~~~~~~~~~
