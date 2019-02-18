@@ -1,4 +1,4 @@
-.. ipython:: python
+.. ipython:: python :okwarning:
    :suppress:
 
    import matplotlib
@@ -36,7 +36,7 @@ If only the histogram is need for further computation, use the `hist_only` optio
     from traja.plotting import trip_grid
 
     hist, _ = trip_grid(df, hist_only=True)
-    print(hist[:5)
+    print(hist[:5])
 
 
 Highly dense plots be more easily visualized using the `bins` and `log` argument:
