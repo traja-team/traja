@@ -23,17 +23,16 @@ Trip grid can be plotted for :class:`~traja.frame.TrajaDataFrame`s with :func:`~
 .. ipython:: python :okwarning:
 
     import traja
+    from traja import trip_grid
 
     df = traja.TrajaDataFrame({'x':range(10),'y':range(10)})
     @savefig trip_grid.png
-    hist, image = df.traja.trip_grid();
+    hist, image = trip_grid(df);
 
 
 If only the histogram is need for further computation, use the `hist_only` option:
 
 .. ipython:: python
-
-    from traja.plotting import trip_grid
 
     hist, _ = trip_grid(df, hist_only=True)
     print(hist[:5])
@@ -43,12 +42,11 @@ Highly dense plots be more easily visualized using the `bins` and `log` argument
 
 .. ipython:: python :okwarning:
 
-    from traja import generate
-
-    df = generate(1000)
+    # Generate random walk
+    df = traja.generate(1000)
 
     @savefig trip_grid_log.png
-    df.traja.trip_grid(bins=32, log=True);
+    trip_grid(df, bins=32, log=True);
 
 The plot can also be normalized into a density function with `normalize`:
 
