@@ -1,5 +1,5 @@
-#! /usr/local/env python3
 import math
+from collections import OrderedDict
 from typing import Callable
 
 import traja
@@ -134,9 +134,7 @@ def expected_sq_displacement(trj, n=None, eqn1=True, compass_direction=None):
         return esd
 
 
-def traj_from_coords(
-    track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units="m", time_units="s"
-):
+def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units="m", time_units="s"):
     # TODO: Convert to DataFrame if not already
     trj = track
     trj.traja.spatial_units = spatial_units
@@ -176,15 +174,15 @@ def traj_from_coords(
 
 
 def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
-    """Calculate distance between two trajectories.
+    """Returns distance between two trajectories.
 
     Args:
         A (:class:`~traja.frame.TrajaDataFrame`) : Trajectory 1
         B (:class:`~traja.frame.TrajaDataFrame`) : Trajectory 2
-        method (str): `dtw` for dynamic time warping, `hausdorff` for Hausdorff
+        method (str): ``dtw`` for dynamic time warping, ``hausdorff`` for Hausdorff
 
     Returns:
-        distance (str): Distance
+        distance (float): Distance
     """
     if method is "hausdorff":
         dist0 = directed_hausdorff(A, B)[0]
@@ -356,6 +354,7 @@ def grid_coordinates(trj, bins=None, xlim=None, ylim=None, assign=False):
     if assign:
         trj["xbin"] = xbin
         trj["ybin"] = ybin
+        return trj
     return pd.DataFrame({"xbin": xbin, "ybin": ybin}, dtype=int)
 
 
