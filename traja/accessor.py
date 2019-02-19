@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import traja
 import numpy as np
 import pandas as pd
@@ -22,13 +20,6 @@ class TrajaAccessor(object):
             return text.strip()
         except AttributeError:
             return pd.to_numeric(text, errors="coerce")
-
-    def set(self, **kwargs):
-        for key, value in kwargs:
-            try:
-                self._obj.__dict__[key] = value
-            except Exception as e:
-                raise Exception(f"Exception {e} assigning df.{key} to {value}")
 
     @staticmethod
     def _validate(obj):
@@ -269,61 +260,14 @@ class TrajaAccessor(object):
         return derivs
 
     def get_derivatives(self):
-        """Get derivatives.
-
-        Args:
-
-        Returns:
-          derivs (:class:`~collections.OrderedDict`) : Derivatives in dictionary.
-          
-        .. doctest::
-
-            >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0.,0.2,0.4]})
-            >>> df.traja.get_derivatives()
-            OrderedDict([('displacement', 0         NaN
-            1    1.414214
-            2    1.414214
-            dtype: float64), ('displacement_time', 0    0.0
-            1    0.2
-            2    0.4
-            Name: time, dtype: float64), ('speed', 0         NaN
-            1    7.071068
-            2    7.071068
-            dtype: float64), ('speed_times', 1    0.2
-            2    0.4
-            Name: speed_times, dtype: float64), ('acceleration', 0    NaN
-            1    NaN
-            2    0.0
-            dtype: float64), ('acceleration_times', 2    0.4
-            Name: accleration_times, dtype: float64)])
-
-        """
-        if not self._has_cols(["displacement", "displacement_time"]):
-            derivs = self.calc_derivatives(assign=False)
-            d = derivs["displacement"]
-            t = derivs["displacement_time"]
-        else:
-            d = self._obj.displacement
-            t = self._obj.displacement_time
-            derivs = OrderedDict(displacement=d, displacement_time=t)
-        v = d[1 : len(d)] / t.diff()
-        v.rename("speed")
-        vt = t[1 : len(t)].rename("speed_times")
-        # Calculate linear acceleration
-        a = v.diff() / vt.diff().rename("acceleration")
-        at = vt[1 : len(vt)].rename("accleration_times")
-        data = OrderedDict(
-            speed=v, speed_times=vt, acceleration=a, acceleration_times=at
-        )
-        derivs.update(data)
+        """Returns derivatives."""
+        derivs = traja.trajectory.get_derivatives(self._obj)
         return derivs
 
     @property
-    def speed_intervals(
-        self, faster_than=None, slower_than=None, interpolate_times=True
-    ):
-        """Calculate speed time intervals.
-        
+    def speed_intervals(self, faster_than=None, slower_than=None, interpolate_times=True):
+        """Returns ``TrajaDataFrame`` with speed time intervals.
+
         Returns a dictionary of time intervals where speed is slower and/or faster than specified values.
 
         Args:
@@ -333,78 +277,13 @@ class TrajaAccessor(object):
 
         Returns:
           result (:class:`~collections.OrderedDict`) -- time intervals as dictionary.
-          
+
         .. note::
-          
+
             Implementation ported to Python, heavily inspired by Jim McLean's trajr package.
 
         """
-        derivs = self.get_derivatives()
-
-        if faster_than is not None:
-            pass
-        if slower_than is not None:
-            pass
-
-        # Calculate trajectory speeds
-        speed = derivs.get("speed")
-        times = derivs.get("speed_times")
-        flags = np.full(len(speed), 1)
-
-        if faster_than is not None:
-            flags = flags & (speed > faster_than)
-        if slower_than is not None:
-            flags = flags & (speed < slower_than)
-
-        changes = np.diff(flags)
-        stop_frames = np.where(changes == -1)[0]
-        start_frames = np.where(changes == 1)[0]
-
-        # Handle situation where interval begins or ends outside of trajectory
-        if len(start_frames) > 0 or len(stop_frames) > 0:
-            # Assume interval started at beginning of trajectory, since we don't know what happened before that
-            if len(stop_frames) > 0 and (
-                len(start_frames) == 0 or stop_frames[0] < start_frames[0]
-            ):
-                start_frames = np.append(1, start_frames)
-            # Similarly, assume that interval can't extend past end of trajectory
-            if (
-                len(stop_frames) == 0
-                or start_frames[len(start_frames) - 1]
-                > stop_frames[len(stop_frames) - 1]
-            ):
-                stop_frames = np.append(stop_frames, len(speed))
-
-        stop_times = times[stop_frames]
-        start_times = times[start_frames]
-
-        if interpolate_times and len(start_frames) > 0:
-            # TODO: Implement
-            raise NotImplementedError()
-            r = self.linear_interp_times(
-                slower_than, faster_than, speed, times, start_frames, start_times
-            )
-            start_times = r[:, 0]
-            stop_times = r[:, 1]
-
-        durations = stop_times - start_times
-        result = traja.TrajaDataFrame(
-            OrderedDict(
-                start_frame=start_frames,
-                start_time=start_times,
-                stop_frame=stop_frames,
-                stop_time=stop_times,
-                duration=durations,
-            )
-        )
-
-        metadata = OrderedDict(
-            slower_than=slower_than,
-            faster_than=faster_than,
-            derivs=derivs,
-            trajectory=self._obj,
-        )
-        result.__dict__.update(metadata)
+        result = traja.trajectory.speed_intervals(self._obj, faster_than, slower_than, interpolate_times)
         return result
 
     def to_shapely(self):
@@ -472,12 +351,7 @@ class TrajaAccessor(object):
             dtype: float64
 
         """
-        if not self._has_cols(["dx", "displacement"]):
-            displacement = self.calc_displacement()
-        else:
-            displacement = self._obj.displacement
-
-        angle = np.rad2deg(np.arccos(np.abs(self._obj.x.diff()) / displacement))
+        angle = traja.trajectory.calc_angle(self._obj)
         if assign:
             self._obj["angle"] = angle
         return angle
@@ -555,29 +429,13 @@ class TrajaAccessor(object):
             Name: heading, dtype: float64
 
         """
-        if not self._has_cols("angle"):
-            angle = self.calc_angle(assign=True)
-        else:
-            angle = self._obj.angle
-        df = self._obj
-        dx = df.x.diff()
-        dy = df.y.diff()
-        # Get heading from angle
-        mask = (dx > 0) & (dy >= 0)
-        df.loc[mask, "heading"] = angle[mask]
-        mask = (dx >= 0) & (dy < 0)
-        df.loc[mask, "heading"] = -angle[mask]
-        mask = (dx < 0) & (dy <= 0)
-        df.loc[mask, "heading"] = -(180 - angle[mask])
-        mask = (dx <= 0) & (dy > 0)
-        df.loc[mask, "heading"] = 180 - angle[mask]
+        heading = traja.trajectory.calc_heading(self._obj)
         if assign:
-            self._obj["heading"] = df.heading
-        return df.heading
+            self._obj["heading"] = heading
+        return heading
 
     def calc_turn_angle(self, assign=True):
         """Calculate turn angle.
-
 
         Args:
           assign (bool):  (Default value = True)
@@ -595,14 +453,8 @@ class TrajaAccessor(object):
             Name: turn_angle, dtype: float64
 
         """
-        if "heading" not in self._obj:
-            heading = self.calc_heading(assign=False)
-        else:
-            heading = self._obj.heading
-        turn_angle = heading.diff().rename("turn_angle")
-        # Correction for 360-degree angle range
-        turn_angle[turn_angle >= 180] -= 360
-        turn_angle[turn_angle < -180] += 360
+        turn_angle = traja.trajectory.calc_turn_angle(self._obj)
+
         if assign:
             self._obj["turn_angle"] = turn_angle
         return turn_angle
