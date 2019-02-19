@@ -25,7 +25,7 @@ Installation with pip should also include all dependencies, but a complete list 
 - `scipy`
 - `pandas`
 
-To install optional dependencies run:
+To install optional dependencies run::
 
   pip install 'traja[all]'
 
