@@ -20,12 +20,12 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
     """Savitzky-Golay filtering.
 
     Args:
-      trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory
+      trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
       w (int): window size (Default value = None)
       p (int): polynomial order (Default value = 3)
 
     Returns:
-      trj: :class:`~traja.trajadataframe.TrajaDataFrame`
+      trj: :class:`~traja.frame.TrajaDataFrame`
 
     """
     if w is None:
@@ -60,7 +60,7 @@ def step_lengths(trj):
     """Length of the steps of `trj`.
 
     Args:
-      trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory
+      trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
     Returns:
 
@@ -179,8 +179,8 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
     """Calculate distance between two trajectories.
 
     Args:
-        A (:class:`~traja.trajadataframe.TrajaDataFrame`) : Trajectory 1
-        B (:class:`~traja.trajadataframe.TrajaDataFrame`) : Trajectory 2
+        A (:class:`~traja.frame.TrajaDataFrame`) : Trajectory 1
+        B (:class:`~traja.frame.TrajaDataFrame`) : Trajectory 2
         method (str): `dtw` for dynamic time warping, `hausdorff` for Hausdorff
 
     Returns:
@@ -392,7 +392,7 @@ def generate(
       **kwargs: Additional arguments
 
     Returns:
-        trj (:class:`traja.trajadataframe.TrajaDataFrame`): Trajectory
+        trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
 
     .. note::
 
@@ -455,12 +455,12 @@ def resample_time(trj, step_time, new_fps=None):
     """Resample trajectory to consistent `step_time` intervals.
 
     Args:
-        trj (:class:`~traja.trajadataframe.TrajaDataFrame`): trajectory
+        trj (:class:`~traja.frame.TrajaDataFrame`): trajectory
         step_time (str): step time interval (eg, '1s')
         new_fps (bool, optional): new fps
 
     Results:
-        trj (:class:`~traja.trajadataframe.TrajaDataFrame`): trajectory
+        trj (:class:`~traja.frame.TrajaDataFrame`): trajectory
 
 
     .. doctest::
@@ -507,11 +507,11 @@ def rotate(df, angle=0, origin=None):
     """Rotate a trajectory `angle` in radians.
 
     Args:
-        trj (:class:`traja.trajadataframe.TrajaDataFrame`): Traja.DataFrame
+        trj (:class:`traja.frame.TrajaDataFrame`): Traja.DataFrame
         angle (float): angle in radians
 
     Returns:
-        trj (:class:`traja.trajadataframe.TrajaDataFrame`): Traja.DataFrame
+        trj (:class:`traja.frame.TrajaDataFrame`): Traja.DataFrame
 
     .. note::
 
@@ -553,7 +553,7 @@ def rediscretize_points(trj, R):
     """Resample a trajectory to a constant step length. R is rediscretized step length.
 
     Args:
-      trj (:class:`traja.trajadataframe.TrajaDataFrame`): trajectory
+      trj (:class:`traja.frame.TrajaDataFrame`): trajectory
       R (float): Rediscretized step length (eg, 0.02)
 
     Returns:
@@ -574,7 +574,7 @@ def _rediscretize_points(trj, R):
     """Helper function for :meth:`~traja.trajectory.rediscretize`.
 
     Args:
-      trj (:class:`traja.trajadataframe.TrajaDataFrame`): trajectory
+      trj (:class:`traja.frame.TrajaDataFrame`): trajectory
       R (float): Rediscretized step length (eg, 0.02)
 
     Returns:
@@ -641,13 +641,13 @@ def _rediscretize_points(trj, R):
 
 
 def from_df(df):
-    """Convenience function for converting a :class:`pandas DataFrame<pandas.DataFrame>` into a :class:`traja.trajadataframe.TrajaDataFrame`.
+    """Convenience function for converting a :class:`pandas DataFrame<pandas.DataFrame>` into a :class:`traja.frame.TrajaDataFrame`.
 
     Args:
       df (:class:`pandas.DataFrame`): Trajectory as pandas `DataFrame`
 
     Returns:
-      traj_df (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory
+      traj_df (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
     .. doctest::
 
@@ -699,13 +699,13 @@ def coords_to_flow(trj, bins=None):
 
 
 def from_xy(xy: np.ndarray):
-    """Convenience function for initializing :class:`~traja.trajadataframe.TrajaDataFrame` with x,y coordinates.
+    """Convenience function for initializing :class:`~traja.frame.TrajaDataFrame` with x,y coordinates.
 
     Args:
         xy (:class:`numpy.ndarray`): x,y coordinates
 
     Returns:
-        traj_df (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory as dataframe
+        traj_df (:class:`~traja.frame.TrajaDataFrame`): Trajectory as dataframe
 
     .. doctest::
 

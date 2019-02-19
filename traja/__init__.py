@@ -1,4 +1,4 @@
-from .trajadataframe import TrajaDataFrame
+from .frame import TrajaDataFrame
 from .accessor import TrajaAccessor
 from .io import read_file
 from .plotting import *
