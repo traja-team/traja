@@ -205,7 +205,15 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
 
 
 def transition_matrix(grid_indices1D: np.ndarray):
-    """Returns ``np.ndarray`` of Markov transition probability matrix for grid cell transitions."""
+    """Returns ``np.ndarray`` of Markov transition probability matrix for grid cell transitions.
+
+    Args:
+        grid_indices1D
+
+    Returns:
+        M (:class:`numpy.ndarray`)
+
+    """
     n = 1 + max(grid_indices1D.flatten())  # number of states
 
     M = [[0] * n for _ in range(n)]

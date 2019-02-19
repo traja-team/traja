@@ -1,5 +1,3 @@
-from matplotlib.ticker import FormatStrFormatter
-
 import traja
 import matplotlib
 import numpy as np
@@ -400,8 +398,6 @@ def trip_grid(
         return hist, None
     fig, ax = plt.subplots()
     image = ax.imshow(hist, interpolation="bilinear", extent=[x0,x1,y0,y1])
-    # ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    # ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     # TODO: Adjust colorbar ytick_labels to correspond with time
     label = 'Frames' if not log else '$ln(Frames)$'
     cbar = plt.colorbar(image, ax=ax, label='Frames')
