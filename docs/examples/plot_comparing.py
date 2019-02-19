@@ -5,7 +5,8 @@ traja allows comparing trajectories using various methods.
 """
 import traja
 
-df = traja.generate(angular_error_sd=0.5)
+df = traja.generate()
+df.traja.plot()
 
 ###############################################################################
 # Fast Dynamic Time Warping of Trajectories

@@ -9,7 +9,9 @@ from shapely.geometry import shape
 
 @pd.api.extensions.register_dataframe_accessor("traja")
 class TrajaAccessor(object):
-    """Accessor for pandas DataFrame with trajectory-specific numerical and analytical functions."""
+    """Accessor for pandas DataFrame with trajectory-specific numerical and analytical functions.
+
+    Access with `df.traja`."""
 
     def __init__(self, pandas_obj):
         self._validate(pandas_obj)
@@ -35,14 +37,14 @@ class TrajaAccessor(object):
 
     @property
     def center(self):
-        # return the center point of this DataFrame
+        """Return the center point of this trajectory."""
         x = self._obj.x
         y = self._obj.y
         return (float(x.mean()), float(y.mean()))
 
     @property
     def night(self, begin="19:00", end="7:00"):
-        """Returns trajectory indices for time between `begin` and `end`.
+        """Get nighttime data between `begin` and `end`.
 
         Args:
           begin (str):  (Default value = '19:00')
@@ -56,7 +58,7 @@ class TrajaAccessor(object):
 
     @property
     def day(self, begin="7:00", end="19:00"):
-        """Get day between `begin` and `end`.
+        """Get daytime data between `begin` and `end`.
 
         Args:
           begin (str):  (Default value = '7:00')
@@ -69,6 +71,7 @@ class TrajaAccessor(object):
         return self.between(begin, end)
 
     def set(self, **kwargs):
+        """Convenience function for setting metadata in the `traja` accessor."""
         for key, value in kwargs.items():
             try:
                 self.__setattr__(key, value)
@@ -86,7 +89,7 @@ class TrajaAccessor(object):
         return kwargs
 
     def _get_time_col(self):
-        """Search for time column in trajectory.
+        """Returns time column in trajectory.
 
         Args:
 
@@ -97,14 +100,14 @@ class TrajaAccessor(object):
         return traja.trajectory._get_time_col(self._obj)
 
     def between(self, begin, end):
-        """Return trajectory between `begin` and end` if `time` column is `datetime64`.
+        """Returns trajectory between `begin` and end` if `time` column is `datetime64`.
 
         Args:
           begin (str): Beginning of time slice.
           end (str): End of time slice.
 
         Returns:
-          trj (:class:`~traja.frame.TrajaDataFrame`): Data frame between values.
+          trj (:class:`~traja.frame.TrajaDataFrame`): Dataframe between values.
           
         .. doctest ::
 
@@ -136,6 +139,14 @@ class TrajaAccessor(object):
             raise TypeError("Either time column or index must be datetime64")
 
     def resample_time(self, step_time):
+        """Returns trajectory resampled with `step_time`.
+
+        Args:
+           step_time (float): Step time
+
+        Returns:
+            trj (:class:`~traja.frame.TrajaDataFrame`): Dataframe resampled.
+        """
         return traja.trajectory.resample_time(self._obj, step_time=step_time)
 
     def trip_grid(
@@ -147,7 +158,7 @@ class TrajaAccessor(object):
         hist_only=False,
         plot=True,
     ):
-        """Make a 2D histogram of trip.
+        """Returns a 2D histogram of trip.
 
         Args:
           bins (int, optional): Number of bins (Default value = 16)
@@ -192,11 +203,11 @@ class TrajaAccessor(object):
         return ax
 
     def _has_cols(self, cols: list):
-        return set(cols).issubset(self._obj.columns)
+        return traja.trajectory._has_cols(self._obj, cols)
 
     @property
     def xy(self, split=False):
-        """Return numpy array of x,y coordinates.
+        """Returns a :class:`numpy.ndarray` of x,y coordinates.
 
         Args:
             split (bool): Split into seaprate x and y :class:`numpy.ndarrays`
@@ -228,10 +239,10 @@ class TrajaAccessor(object):
             raise Exception("Missing time information in trajectory.")
 
     def calc_derivatives(self, assign=False):
-        """Calculate derivatives `displacement` and `displacement_time`.
+        """Returns derivatives `displacement` and `displacement_time` as dictionary.
 
         Args:
-          assign (bool): Assign output to `TrajaDataFrame` (Default value = False)
+          assign (bool): Assign output to ``TrajaDataFrame`` (Default value = False)
 
         Returns:
           derivs (:class:`~collections.OrderedDict`): Derivatives in dictionary.
@@ -249,28 +260,7 @@ class TrajaAccessor(object):
             Name: time, dtype: float64)])
 
         """
-        time_col = self._get_time_col()
-        if time_col is None:
-            raise Exception("Missing time information in trajectory.")
-
-        if not "displacement" in self._obj:
-            displacement = self.calc_displacement(assign=assign)
-        else:
-            displacement = self._obj.displacement
-
-        # get cumulative seconds
-        if is_datetime64_any_dtype(self._obj[time_col]):
-            displacement_time = (
-                self._obj[time_col].astype(int).div(10 ** 9).diff().fillna(0).cumsum()
-            )
-        else:
-            displacement_time = (
-                self._obj[time_col].diff().fillna(0).cumsum()
-            )
-
-        derivs = OrderedDict(
-            displacement=displacement, displacement_time=displacement_time
-        )
+        derivs = traja.trajectory.calc_derivatives(self._obj)
         if assign:
             trj = self._obj.merge(
                 pd.DataFrame.from_records(derivs), left_index=True, right_index=True
@@ -440,7 +430,7 @@ class TrajaAccessor(object):
         return tracks_shape
 
     def calc_displacement(self, assign=True):
-        """Calculate displacement between consecutive indices.
+        """Returns ``Series`` of `float` with displacement between consecutive indices.
 
         Args:
           assign (bool, optional): Assign displacement to TrajaDataFrame (Default value = True)
@@ -458,19 +448,13 @@ class TrajaAccessor(object):
             dtype: float64
 
         """
-        displacement = np.sqrt(
-            np.power(self._obj.x.shift() - self._obj.x, 2)
-            + np.power(self._obj.y.shift() - self._obj.y, 2)
-        )
-
-        # dx = self._obj.x.diff()
-        # dy = self._obj.y.diff()
+        displacement = traja.trajectory.calc_displacement(self._obj)
         if assign:
             self._obj = self._obj.assign(displacement=displacement)
         return displacement
 
     def calc_angle(self, assign=True):
-        """Calculate angle between steps as a function of displacement w.r.t x axis.
+        """Return ``Series`` with angle between steps as a function of displacement w.r.t x axis.
 
         Args:
           assign (bool, optional): Assign displacement to TrajaDataFrame (Default value = True)
@@ -559,7 +543,7 @@ class TrajaAccessor(object):
           assign (bool): (Default value = True)
 
         Returns:
-            heading (:class:`pandas.Series`): heading as a `Series`
+            heading (:class:`pandas.Series`): heading as a ``Series``
 
         ..doctest::
 
