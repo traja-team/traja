@@ -35,3 +35,4 @@ print(grid_coords.head())
 # Probability of transitioning between cells is computed using :func:`traja.trajectory.transitions`.
 
 transitions_matrix = traja.trajectory.transitions(df, bins=32)
+print(transitions_matrix[:10])

@@ -17,7 +17,7 @@ from scipy.spatial.distance import directed_hausdorff, euclidean
 
 
 def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
-    """Savitzky-Golay filtering.
+    """Returns``DataFrame`` of trajectory after Savitzky-Golay filtering.
 
     Args:
       trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
@@ -25,7 +25,7 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
       p (int): polynomial order (Default value = 3)
 
     Returns:
-      trj: :class:`~traja.frame.TrajaDataFrame`
+      trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
     """
     if w is None:
@@ -57,7 +57,7 @@ def angles(trj, lag: int = 1, compass_direction: float = None):
 
 
 def step_lengths(trj):
-    """Length of the steps of `trj`.
+    """Length of the steps of ``trj``.
 
     Args:
       trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
@@ -69,7 +69,7 @@ def step_lengths(trj):
 
 
 def polar_to_z(r: float, theta: float):
-    """Converts polar coordinates `z` and `theta` to complex number `z`.
+    """Converts polar coordinates ``z`` and ``theta`` to complex number ``z``.
 
     Args:
       r (float): step size
@@ -82,7 +82,7 @@ def polar_to_z(r: float, theta: float):
 
 
 def cartesian_to_polar(xy):
-    """Convert :class:`numpy.ndarray` `xy` to polar coordinates `r` and `theta`.
+    """Convert :class:`numpy.ndarray` ``xy`` to polar coordinates ``r`` and ``theta``.
 
     Args:
       xy (:class:`numpy.ndarray`): x,y coordinates
@@ -207,7 +207,7 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
 
 
 def transition_matrix(grid_indices1D: np.ndarray):
-    """Get Markov transition probability matrix for grid cell transitions."""
+    """Returns ``np.ndarray`` of Markov transition probability matrix for grid cell transitions."""
     n = 1 + max(grid_indices1D.flatten())  # number of states
 
     M = [[0] * n for _ in range(n)]
@@ -237,7 +237,7 @@ def _bins_to_tuple(trj,bins):
     return bins
 
 def _to_tuple(bins):
-    """Create tuple from bins if it is an `int`."""
+    """Returns tuple from ``bins`` if it ``bins`` is an ``int``."""
     if isinstance(bins, tuple):
         return bins
     elif isinstance(bins, int):
@@ -328,7 +328,18 @@ def transitions(trj, **kwargs):
 
 
 def grid_coordinates(trj, bins=None, xlim=None, ylim=None, assign=False):
-    """Discretize each x,y coordinate into a 2D lattice grid coordinate."""
+    """Returns ``DataFrame`` of trajectory discretized into 2D lattice grid coordinates.
+    Args:
+        trj (~`traja.frame.TrajaDataFrame`): Trajectory
+        bins (tuple or int)
+        xlim (tuple)
+        ylim (tuple)
+        assign (bool): Return updated original dataframe
+
+    Returns:
+        trj (~`traja.frame.TrajaDataFrame`): Trajectory
+
+    """
     bins = _bins_to_tuple(trj, bins)
 
     xmin = trj.x.min() if xlim is None else xlim[0]
@@ -362,10 +373,10 @@ def generate(
     **kwargs):
     """Generates a trajectory.
 
-    If `random` is `True`, the trajectory will
+    If ``random`` is ``True``, the trajectory will
     be a correlated random walk/idiothetic directed walk (Kareiva & Shigesada,
     1983), corresponding to an animal navigating without a compass (Cheung,
-    Zhang, Stricker, & Srinivasan, 2008). If `random` is `False`, it
+    Zhang, Stricker, & Srinivasan, 2008). If ``random`` is ``False``, it
     will be a directed walk/allothetic directed walk/oriented path, corresponding
     to an animal navigating with a compass (Cheung, Zhang, Stricker, &
     Srinivasan, 2007, 2008).
@@ -374,10 +385,10 @@ def generate(
     distributed, unbiased, and independent of each other, so are **simple
     directed walks** in the terminology of Cheung, Zhang, Stricker, & Srinivasan,
     (2008). This behaviour may be modified by specifying alternative values for
-    the `angular_error_dist` and/or `linear_error_dist` parameters.
+    the ``angular_error_dist`` and/or ``linear_error_dist`` parameters.
 
     The initial angle (for a random walk) or the intended direction (for a
-    directed walk) is `0` radians. The starting position is `(0, 0)`.
+    directed walk) is ``0`` radians. The starting position is ``(0, 0)``.
 
     Args:
       n (int):  (Default value = 1000)
@@ -396,7 +407,7 @@ def generate(
 
     .. note::
 
-        Based on Jim McLean's `trajr <https://github.com/JimMcL/trajr>`_, ported to Python by Justin Shenk.
+        Based on Jim McLean's `trajr <https://github.com/JimMcL/trajr>`_, ported to Python.
 
         **Reference**: McLean, D. J., & Skowron Volponi, M. A. (2018). trajr: An R package for characterisation of animal
         trajectories. Ethology, 124(6), 440-448. https://doi.org/10.1111/eth.12739.
@@ -452,15 +463,15 @@ def _resample_time(trj, step_time):
 
 
 def resample_time(trj, step_time, new_fps=None):
-    """Resample trajectory to consistent `step_time` intervals.
+    """Returns a ``TrajaDataFrame`` resampled to consistent `step_time` intervals.
 
     Args:
-        trj (:class:`~traja.frame.TrajaDataFrame`): trajectory
+        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
         step_time (str): step time interval (eg, '1s')
         new_fps (bool, optional): new fps
 
     Results:
-        trj (:class:`~traja.frame.TrajaDataFrame`): trajectory
+        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
 
     .. doctest::
@@ -504,14 +515,14 @@ def resample_time(trj, step_time, new_fps=None):
 
 
 def rotate(df, angle=0, origin=None):
-    """Rotate a trajectory `angle` in radians.
+    """Returns a ``TrajaDataFrame`` Rotate a trajectory `angle` in radians.
 
     Args:
-        trj (:class:`traja.frame.TrajaDataFrame`): Traja.DataFrame
+        trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
         angle (float): angle in radians
 
     Returns:
-        trj (:class:`traja.frame.TrajaDataFrame`): Traja.DataFrame
+        trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
 
     .. note::
 
@@ -550,10 +561,10 @@ def rotate(df, angle=0, origin=None):
 
 
 def rediscretize_points(trj, R):
-    """Resample a trajectory to a constant step length. R is rediscretized step length.
+    """Returns a ``TrajaDataFrame`` rediscretized to a constant step length `R`.
 
     Args:
-      trj (:class:`traja.frame.TrajaDataFrame`): trajectory
+      trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
       R (float): Rediscretized step length (eg, 0.02)
 
     Returns:
@@ -571,10 +582,10 @@ def rediscretize_points(trj, R):
 
 
 def _rediscretize_points(trj, R):
-    """Helper function for :meth:`~traja.trajectory.rediscretize`.
+    """Helper function for :func:`traja.trajectory.rediscretize`.
 
     Args:
-      trj (:class:`traja.frame.TrajaDataFrame`): trajectory
+      trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
       R (float): Rediscretized step length (eg, 0.02)
 
     Returns:
@@ -640,11 +651,306 @@ def _rediscretize_points(trj, R):
     return result
 
 
-def from_df(df):
-    """Convenience function for converting a :class:`pandas DataFrame<pandas.DataFrame>` into a :class:`traja.frame.TrajaDataFrame`.
+def _has_cols(trj, cols: list):
+    """Check if `trj` has `cols`."""
+    return set(cols).issubset(trj.columns)
+
+def calc_turn_angle(trj):
+    """Return a ``Series`` of floats with turn angles.
 
     Args:
-      df (:class:`pandas.DataFrame`): Trajectory as pandas `DataFrame`
+      trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+        turn_angle (:class:`~pandas.Series`): Turn angle
+
+    .. doctest::
+
+        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+        >>> traja.calc_turn_angle(df)
+        0    NaN
+        1    NaN
+        2    0.0
+        Name: turn_angle, dtype: float64
+
+    """
+    if "heading" not in trj:
+        heading = calc_heading(trj)
+    else:
+        heading = trj.heading
+    turn_angle = heading.diff().rename("turn_angle")
+    # Correction for 360-degree angle range
+    turn_angle[turn_angle >= 180] -= 360
+    turn_angle[turn_angle < -180] += 360
+    return turn_angle
+
+def calc_angle(trj):
+    """Returns a ``Series`` with angle between steps as a function of displacement w.r.t x axis.
+
+    Args:
+       trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+      angle (:class:`pandas.Series`): Angle series.
+
+    """
+    if not _has_cols(trj, ["dx", "displacement"]):
+        displacement = calc_displacement(trj)
+    else:
+        displacement = trj.displacement
+
+    angle = np.rad2deg(np.arccos(np.abs(trj.x.diff()) / displacement))
+    return angle
+
+def calc_displacement(trj):
+    """Returns a ``Series`` of ``float`` displacement between consecutive indices.
+
+    Args:
+        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+      displacement (:class:`pandas.Series`): Displacement series.
+
+    .. doctest::
+
+        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+        >>> traja.calc_displacement(df)
+        0         NaN
+        1    1.414214
+        2    1.414214
+        dtype: float64
+
+    """
+    displacement = np.sqrt(
+        np.power(trj.x.shift() - trj.x, 2)
+        + np.power(trj.y.shift() - trj.y, 2)
+    )
+
+    # dx = self._obj.x.diff()
+    # dy = self._obj.y.diff()
+
+    return displacement
+
+def calc_derivatives(trj):
+    """Returns derivatives ``displacement`` and ``displacement_time`` as dictionary.
+
+    Args:
+      trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+      derivs (:class:`~collections.OrderedDict`): Derivatives in dictionary.
+
+    .. doctest::
+
+        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0., 0.2, 0.4]})
+        >>> traja.calc_derivatives(df)
+        OrderedDict([('displacement', 0         NaN
+        1    1.414214
+        2    1.414214
+        dtype: float64), ('displacement_time', 0    0.0
+        1    0.2
+        2    0.4
+        Name: time, dtype: float64)])
+
+    """
+
+    time_col = _get_time_col(trj)
+    if time_col is None:
+        raise Exception("Missing time information in trajectory.")
+
+    if not "displacement" in trj:
+        displacement = calc_displacement(trj)
+    else:
+        displacement = trj.displacement
+
+    # get cumulative seconds
+    if is_datetime64_any_dtype(trj[time_col]):
+        displacement_time = (
+            trj[time_col].astype(int).div(10 ** 9).diff().fillna(0).cumsum()
+        )
+    else:
+        displacement_time = (
+            trj[time_col].diff().fillna(0).cumsum()
+        )
+
+    derivs = OrderedDict(
+        displacement=displacement, displacement_time=displacement_time
+    )
+
+    return derivs
+
+def calc_heading(trj):
+    """Calculate trajectory heading.
+
+    Args:
+      assign (bool): (Default value = True)
+
+    Returns:
+        heading (:class:`pandas.Series`): heading as a ``Series``
+
+    ..doctest::
+
+        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+        >>> traja.calc_heading(df)
+        0     NaN
+        1    45.0
+        2    45.0
+        Name: heading, dtype: float64
+
+    """
+    if not _has_cols(trj, ["angle"]):
+        angle = calc_angle(trj)
+    else:
+        angle = trj.angle
+    df = trj
+    dx = df.x.diff()
+    dy = df.y.diff()
+    # Get heading from angle
+    mask = (dx > 0) & (dy >= 0)
+    df.loc[mask, "heading"] = angle[mask]
+    mask = (dx >= 0) & (dy < 0)
+    df.loc[mask, "heading"] = -angle[mask]
+    mask = (dx < 0) & (dy <= 0)
+    df.loc[mask, "heading"] = -(180 - angle[mask])
+    mask = (dx <= 0) & (dy > 0)
+    df.loc[mask, "heading"] = 180 - angle[mask]
+    return df.heading
+
+def speed_intervals(trj, faster_than=None, slower_than=None, interpolate_times=True):
+    """Calculate speed time intervals.
+
+    Returns a dictionary of time intervals where speed is slower and/or faster than specified values.
+
+    Args:
+      faster_than (float, optional): Minimum speed threshold. (Default value = None)
+      slower_than (float or int, optional): Maximum speed threshold. (Default value = None)
+      interpolate_times (bool, optional): Interpolate times between steps. (Default value = True)
+
+    Returns:
+      result (:class:`~collections.OrderedDict`) -- time intervals as dictionary.
+
+    .. note::
+
+        Implementation ported to Python, heavily inspired by Jim McLean's trajr package.
+
+    """
+    derivs = get_derivatives(trj)
+
+    if faster_than is not None:
+        pass
+    if slower_than is not None:
+        pass
+
+    # Calculate trajectory speeds
+    speed = derivs.get("speed")
+    times = derivs.get("speed_times")
+    flags = np.full(len(speed), 1)
+
+    if faster_than is not None:
+        flags = flags & (speed > faster_than)
+    if slower_than is not None:
+        flags = flags & (speed < slower_than)
+
+    changes = np.diff(flags)
+    stop_frames = np.where(changes == -1)[0]
+    start_frames = np.where(changes == 1)[0]
+
+    # Handle situation where interval begins or ends outside of trajectory
+    if len(start_frames) > 0 or len(stop_frames) > 0:
+        # Assume interval started at beginning of trajectory, since we don't know what happened before that
+        if len(stop_frames) > 0 and (
+                len(start_frames) == 0 or stop_frames[0] < start_frames[0]
+        ):
+            start_frames = np.append(1, start_frames)
+        # Similarly, assume that interval can't extend past end of trajectory
+        if (
+                len(stop_frames) == 0
+                or start_frames[len(start_frames) - 1]
+                > stop_frames[len(stop_frames) - 1]
+        ):
+            stop_frames = np.append(stop_frames, len(speed))
+
+    stop_times = times[stop_frames]
+    start_times = times[start_frames]
+
+    if interpolate_times and len(start_frames) > 0:
+        # TODO: Implement
+        raise NotImplementedError()
+        r = linear_interp_times(
+            slower_than, faster_than, speed, times, start_frames, start_times
+        )
+        start_times = r[:, 0]
+        stop_times = r[:, 1]
+
+    durations = stop_times - start_times
+    result = traja.TrajaDataFrame(
+        OrderedDict(
+            start_frame=start_frames,
+            start_time=start_times,
+            stop_frame=stop_frames,
+            stop_time=stop_times,
+            duration=durations,
+        )
+    )
+    return result
+
+def get_derivatives(trj):
+    """Returns derivatives ``displacement``, ``displacement_time``, ``speed``, ``speed_times``, ``acceleration``,
+    ``acceleration_times`` as dictionary.
+
+    Args:
+        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+      derivs (:class:`~collections.OrderedDict`) : Derivatives in dictionary
+
+    .. doctest::
+
+        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0.,0.2,0.4]})
+        >>> df.traja.get_derivatives()
+        OrderedDict([('displacement', 0         NaN
+        1    1.414214
+        2    1.414214
+        dtype: float64), ('displacement_time', 0    0.0
+        1    0.2
+        2    0.4
+        Name: time, dtype: float64), ('speed', 0         NaN
+        1    7.071068
+        2    7.071068
+        dtype: float64), ('speed_times', 1    0.2
+        2    0.4
+        Name: speed_times, dtype: float64), ('acceleration', 0    NaN
+        1    NaN
+        2    0.0
+        dtype: float64), ('acceleration_times', 2    0.4
+        Name: accleration_times, dtype: float64)])
+
+    """
+    if not _has_cols(trj, ["displacement", "displacement_time"]):
+        derivs = calc_derivatives(trj)
+        d = derivs["displacement"]
+        t = derivs["displacement_time"]
+    else:
+        d = trj.displacement
+        t = trj.displacement_time
+        derivs = OrderedDict(displacement=d, displacement_time=t)
+    v = d[1: len(d)] / t.diff()
+    v.rename("speed")
+    vt = t[1: len(t)].rename("speed_times")
+    # Calculate linear acceleration
+    a = v.diff() / vt.diff().rename("acceleration")
+    at = vt[1: len(vt)].rename("accleration_times")
+    data = OrderedDict(
+        speed=v, speed_times=vt, acceleration=a, acceleration_times=at
+    )
+    derivs.update(data)
+    return derivs
+
+def from_df(df):
+    """Returns a :class:`traja.frame.TrajaDataFrame` from a :class:`pandas DataFrame<pandas.DataFrame>`.
+
+    Args:
+      df (:class:`pandas.DataFrame`): Trajectory as pandas``DataFrame``
 
     Returns:
       traj_df (:class:`~traja.frame.TrajaDataFrame`): Trajectory

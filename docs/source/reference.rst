@@ -1,8 +1,10 @@
 Reference
 =============
 
-Traja Accessor Methods
-----------------------
+Accessor Methods
+----------------
+
+The following methods are available via :class:`traja.accessor.TrajaAccessor`:
 
 .. automodule:: traja.accessor
     :members:
@@ -19,7 +21,6 @@ The following methods are available via :mod:`traja.plotting`:
     :members:
     :undoc-members:
     :show-inheritance:
-    :noindex:
 
 R functions
 ------------------
@@ -30,7 +31,6 @@ The following methods are available via `traja.rutils`:
     :members:
     :undoc-members:
     :show-inheritance:
-    :noindex:
 
 Trajectory functions
 --------------------
@@ -41,17 +41,16 @@ The following methods are available via `traja.trajectory`:
     :members:
     :undoc-members:
     :show-inheritance:
-    :noindex:
 
-Module contents
----------------
+io functions
+------------
 
-.. automodule:: traja
+The following methods are available via `traja.io`:
+
+.. automodule:: traja.io
     :members:
     :undoc-members:
     :show-inheritance:
-
-Methods of pandas ``Series`` objects are also available.
 
 TrajaDataFrame
 --------------

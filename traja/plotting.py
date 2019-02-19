@@ -307,6 +307,7 @@ def plot_stream(trj, bins=None, cmap='jet', contourfplot_kws = {}, contourplot_k
     plt.show()
     return ax
 
+
 def plot_flow(trj,
               kind='quiver',
                  *args,
