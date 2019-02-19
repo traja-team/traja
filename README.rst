@@ -93,10 +93,60 @@ Generate random walks with
 .. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/walk_screenshot.png
    :alt: walk\_screenshot.png
 
-Demo
-----
+Rediscretize
+------------
+Rediscretize the trajectory into consistent step lengths with ``traja.trajectory.rediscretize`` where the ``R`` parameter is
+the new step length.
 
-Coming soon.
+.. note::
+
+    Based on the appendix in Bovet and Benhamou, (1988) and Jim McLean's
+    `trajr <https://github.com/JimMcL/trajr>`_ implementation.
+
+
+Resample time
+-------------
+``traja.trajectory.resample_time`` allows resampling trajectories by a ``step_time``.
+
+
+Flow Plotting
+-------------
+
+.. code-block:: python
+
+    df = traja.generate()
+    traja.plot_surface(df)
+
+.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_average_direction_001.png
+   :alt: 3D plot
+
+.. code-block:: python
+
+    traja.plot_quiver(df, bins=32)
+
+.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_average_direction_002.png
+   :alt: quiver plot
+
+.. code-block:: python
+
+    traja.plot_contour(df, filled=False, quiver=False, bins=32)
+
+.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_average_direction_003.png
+   :alt: contour plot
+
+.. code-block:: python
+
+    traja.plotting.plot_contour(df, filled=False, quiver=False, bins=32)
+
+.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_average_direction_004.png
+   :alt: contour plot filled
+
+.. code-block:: python
+
+    traja.plotting.plot_contour(df, bins=32, contourfplot_kws={'cmap':'coolwarm'})
+
+.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_average_direction_005.png
+   :alt: streamplot
 
 Acknowledgements
 ----------------
