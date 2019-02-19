@@ -22,7 +22,7 @@ traja.accessor module
 traja.trajadatadataframe module
 -------------------------------
 
-.. automodule:: traja.trajadataframe
+.. automodule:: traja.frame
     :members:
     :undoc-members:
     :show-inheritance:

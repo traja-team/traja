@@ -49,7 +49,7 @@ class TrajaAccessor(object):
           end (str):  (Default value = '7:00')
 
         Returns:
-          trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory during night.
+          trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory during night.
 
         """
         return self.between(begin, end)
@@ -63,7 +63,7 @@ class TrajaAccessor(object):
           end (str):  (Default value = '19:00')
 
         Returns:
-          trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Trajectory during day.
+          trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory during day.
 
         """
         return self.between(begin, end)
@@ -104,7 +104,7 @@ class TrajaAccessor(object):
           end (str): End of time slice.
 
         Returns:
-          trj (:class:`~traja.trajadataframe.TrajaDataFrame`): Data frame between values.
+          trj (:class:`~traja.frame.TrajaDataFrame`): Data frame between values.
           
         .. doctest ::
 
