@@ -136,14 +136,14 @@ Flow Plotting
 
 .. code-block:: python
 
-    traja.plotting.plot_contour(df, filled=False, quiver=False, bins=32)
+    traja.plot_contour(df, filled=False, quiver=False, bins=32)
 
 .. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_average_direction_004.png
    :alt: contour plot filled
 
 .. code-block:: python
 
-    traja.plotting.plot_contour(df, bins=32, contourfplot_kws={'cmap':'coolwarm'})
+    traja.plot_contour(df, bins=32, contourfplot_kws={'cmap':'coolwarm'})
 
 .. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_average_direction_005.png
    :alt: streamplot
