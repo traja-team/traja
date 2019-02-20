@@ -1,14 +1,15 @@
-import traja
+from typing import Union
+
 import matplotlib
-import numpy as np
-
 import matplotlib.pyplot as plt
-
+import numpy as np
 from pandas.core.dtypes.common import (
     is_datetime_or_timedelta_dtype,
     is_datetime64_any_dtype,
     is_timedelta64_dtype,
 )
+
+import traja
 from traja.trajectory import coords_to_flow
 
 
@@ -195,12 +196,13 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
 
 
 def _label_axes(trj, ax):
-    if 'spatial_units' in trj.__dict__:
+    if "spatial_units" in trj.__dict__:
         ax.set_xlabel(trj.spatial_units)
         ax.set_ylabel(trj.spatial_units)
     return ax
 
-def plot_quiver(trj, bins=None, quiverplot_kws = {}):
+
+def plot_quiver(trj, bins=None, quiverplot_kws={}):
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -222,7 +224,16 @@ def plot_quiver(trj, bins=None, quiverplot_kws = {}):
     plt.show()
     return ax
 
-def plot_contour(trj, bins=None, filled=True, quiver=True, contourplot_kws = {}, contourfplot_kws = {}, quiverplot_kws={}):
+
+def plot_contour(
+    trj,
+    bins=None,
+    filled=True,
+    quiver=True,
+    contourplot_kws={},
+    contourfplot_kws={},
+    quiverplot_kws={},
+):
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -242,7 +253,9 @@ def plot_contour(trj, bins=None, filled=True, quiver=True, contourplot_kws = {},
 
     if filled:
         cfp = plt.contourf(X, Y, Z, **contourfplot_kws)
-    cp = plt.contour(X, Y, Z, colors='k', linewidths=1, linestyles='solid', **contourplot_kws)
+    cp = plt.contour(
+        X, Y, Z, colors="k", linewidths=1, linestyles="solid", **contourplot_kws
+    )
     if quiver:
         qp = ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
 

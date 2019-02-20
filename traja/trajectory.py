@@ -6,6 +6,7 @@ import traja
 import numpy as np
 import pandas as pd
 import scipy
+from shapely.geometry import shape
 
 from traja import TrajaDataFrame
 from pandas.core.dtypes.common import (
@@ -204,6 +205,29 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
             )
         distance, path = fastdtw(A, B, dist=euclidean)
         return distance
+
+
+def to_shapely(trj):
+    """Returns shapely object for area, bounds, etc. functions.
+
+    Args:
+        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+      shapely.geometry.linestring.LineString -- Shapely shape.
+
+    .. doctest::
+
+        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
+        >>> shape = traja.to_shapely(df)
+        >>> shape.is_closed
+        False
+
+    """
+    coords = trj[["x", "y"]].values
+    tracks_obj = {"type": "LineString", "coordinates": coords}
+    tracks_shape = shape(tracks_obj)
+    return tracks_shape
 
 
 def transition_matrix(grid_indices1D: np.ndarray):
