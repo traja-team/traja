@@ -134,7 +134,9 @@ def expected_sq_displacement(trj, n=None, eqn1=True, compass_direction=None):
         return esd
 
 
-def traj_from_coords(track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units="m", time_units="s"):
+def traj_from_coords(
+    track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units="m", time_units="s"
+):
     # TODO: Convert to DataFrame if not already
     trj = track
     trj.traja.spatial_units = spatial_units
@@ -229,7 +231,7 @@ def transition_matrix(grid_indices1D: np.ndarray):
     return np.array(M)
 
 
-def _bins_to_tuple(trj,bins):
+def _bins_to_tuple(trj, bins):
     if bins is None:
         # set default
         bins = 32
@@ -242,6 +244,7 @@ def _bins_to_tuple(trj,bins):
     assert isinstance(bins, tuple), f"bins should be tuple but is {type(bins)}"
     return bins
 
+
 def _to_tuple(bins):
     """Returns tuple from ``bins`` if it ``bins`` is an ``int``."""
     if isinstance(bins, tuple):
@@ -249,13 +252,14 @@ def _to_tuple(bins):
     elif isinstance(bins, int):
         return (bins, bins)
 
+
 def calculate_flow_angles(grid_indices: np.ndarray):
     """Calculate average flow between grid indices."""
 
-    bins = (grid_indices[:,0].max(), grid_indices[:,1].max())
+    bins = (grid_indices[:, 0].max(), grid_indices[:, 1].max())
     n = bins[0] * bins[1]  # number of states
 
-    M = np.empty((bins[1],bins[0]), dtype=np.ndarray)
+    M = np.empty((bins[1], bins[0]), dtype=np.ndarray)
 
     grid_indices -= 1  # zero-indexing
     for (i, j) in zip(grid_indices, grid_indices[1:]):
@@ -377,7 +381,8 @@ def generate(
     fps: float = 50,
     spatial_units: str = "m",
     seed: int = None,
-    **kwargs):
+    **kwargs,
+):
     """Generates a trajectory.
 
     If ``random`` is ``True``, the trajectory will
@@ -662,6 +667,7 @@ def _has_cols(trj, cols: list):
     """Check if `trj` has `cols`."""
     return set(cols).issubset(trj.columns)
 
+
 def calc_turn_angle(trj):
     """Return a ``Series`` of floats with turn angles.
 
@@ -691,6 +697,7 @@ def calc_turn_angle(trj):
     turn_angle[turn_angle < -180] += 360
     return turn_angle
 
+
 def calc_angle(trj):
     """Returns a ``Series`` with angle between steps as a function of displacement w.r.t x axis.
 
@@ -708,6 +715,7 @@ def calc_angle(trj):
 
     angle = np.rad2deg(np.arccos(np.abs(trj.x.diff()) / displacement))
     return angle
+
 
 def calc_displacement(trj):
     """Returns a ``Series`` of ``float`` displacement between consecutive indices.
@@ -729,14 +737,14 @@ def calc_displacement(trj):
 
     """
     displacement = np.sqrt(
-        np.power(trj.x.shift() - trj.x, 2)
-        + np.power(trj.y.shift() - trj.y, 2)
+        np.power(trj.x.shift() - trj.x, 2) + np.power(trj.y.shift() - trj.y, 2)
     )
 
     # dx = self._obj.x.diff()
     # dy = self._obj.y.diff()
 
     return displacement
+
 
 def calc_derivatives(trj):
     """Returns derivatives ``displacement`` and ``displacement_time`` as dictionary.
@@ -776,15 +784,12 @@ def calc_derivatives(trj):
             trj[time_col].astype(int).div(10 ** 9).diff().fillna(0).cumsum()
         )
     else:
-        displacement_time = (
-            trj[time_col].diff().fillna(0).cumsum()
-        )
+        displacement_time = trj[time_col].diff().fillna(0).cumsum()
 
-    derivs = OrderedDict(
-        displacement=displacement, displacement_time=displacement_time
-    )
+    derivs = OrderedDict(displacement=displacement, displacement_time=displacement_time)
 
     return derivs
+
 
 def calc_heading(trj):
     """Calculate trajectory heading.
@@ -822,6 +827,7 @@ def calc_heading(trj):
     mask = (dx <= 0) & (dy > 0)
     df.loc[mask, "heading"] = 180 - angle[mask]
     return df.heading
+
 
 def speed_intervals(trj, faster_than=None, slower_than=None, interpolate_times=True):
     """Calculate speed time intervals.
@@ -866,14 +872,13 @@ def speed_intervals(trj, faster_than=None, slower_than=None, interpolate_times=T
     if len(start_frames) > 0 or len(stop_frames) > 0:
         # Assume interval started at beginning of trajectory, since we don't know what happened before that
         if len(stop_frames) > 0 and (
-                len(start_frames) == 0 or stop_frames[0] < start_frames[0]
+            len(start_frames) == 0 or stop_frames[0] < start_frames[0]
         ):
             start_frames = np.append(1, start_frames)
         # Similarly, assume that interval can't extend past end of trajectory
         if (
-                len(stop_frames) == 0
-                or start_frames[len(start_frames) - 1]
-                > stop_frames[len(stop_frames) - 1]
+            len(stop_frames) == 0
+            or start_frames[len(start_frames) - 1] > stop_frames[len(stop_frames) - 1]
         ):
             stop_frames = np.append(stop_frames, len(speed))
 
@@ -900,6 +905,7 @@ def speed_intervals(trj, faster_than=None, slower_than=None, interpolate_times=T
         )
     )
     return result
+
 
 def get_derivatives(trj):
     """Returns derivatives ``displacement``, ``displacement_time``, ``speed``, ``speed_times``, ``acceleration``,
@@ -941,17 +947,16 @@ def get_derivatives(trj):
         d = trj.displacement
         t = trj.displacement_time
         derivs = OrderedDict(displacement=d, displacement_time=t)
-    v = d[1: len(d)] / t.diff()
+    v = d[1 : len(d)] / t.diff()
     v.rename("speed")
-    vt = t[1: len(t)].rename("speed_times")
+    vt = t[1 : len(t)].rename("speed_times")
     # Calculate linear acceleration
     a = v.diff() / vt.diff().rename("acceleration")
-    at = vt[1: len(vt)].rename("accleration_times")
-    data = OrderedDict(
-        speed=v, speed_times=vt, acceleration=a, acceleration_times=at
-    )
+    at = vt[1 : len(vt)].rename("accleration_times")
+    data = OrderedDict(speed=v, speed_times=vt, acceleration=a, acceleration_times=at)
     derivs.update(data)
     return derivs
+
 
 def from_df(df):
     """Returns a :class:`traja.frame.TrajaDataFrame` from a :class:`pandas DataFrame<pandas.DataFrame>`.

@@ -252,7 +252,7 @@ def plot_contour(trj, bins=None, filled=True, quiver=True, contourplot_kws = {},
     return ax
 
 
-def plot_surface(trj, bins=None, cmap='jet', **surfaceplot_kws):
+def plot_surface(trj, bins=None, cmap="jet", **surfaceplot_kws):
     """Plot surface of flow from each grid cell to neighbor in 3D.
 
     Args:
@@ -265,19 +265,30 @@ def plot_surface(trj, bins=None, cmap='jet', **surfaceplot_kws):
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
     """
     from mpl_toolkits.mplot3d import Axes3D
+
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
     fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(X, Y, Z, cmap=matplotlib.cm.coolwarm, linewidth=0, **surfaceplot_kws)
+    ax = fig.gca(projection="3d")
+    ax.plot_surface(
+        X, Y, Z, cmap=matplotlib.cm.coolwarm, linewidth=0, **surfaceplot_kws
+    )
 
     ax = _label_axes(trj, ax)
 
     plt.show()
     return ax
 
-def plot_stream(trj, bins=None, cmap='jet', contourfplot_kws = {}, contourplot_kws = {}, streamplot_kws={}):
+
+def plot_stream(
+    trj,
+    bins=None,
+    cmap="jet",
+    contourfplot_kws={},
+    contourplot_kws={},
+    streamplot_kws={},
+):
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -297,7 +308,9 @@ def plot_stream(trj, bins=None, cmap='jet', contourfplot_kws = {}, contourplot_k
     fig, ax = plt.subplots()
 
     cfp = plt.contourf(X, Y, Z, **contourfplot_kws)
-    cp = plt.contour(X, Y, Z, colors='k', linewidths=1, linestyles='solid', **contourplot_kws)
+    cp = plt.contour(
+        X, Y, Z, colors="k", linewidths=1, linestyles="solid", **contourplot_kws
+    )
     sp = ax.streamplot(X, Y, U, V, color=Z, cmap=cmap, **streamplot_kws)
 
     ax = _label_axes(trj, ax)
@@ -306,14 +319,16 @@ def plot_stream(trj, bins=None, cmap='jet', contourfplot_kws = {}, contourplot_k
     return ax
 
 
-def plot_flow(trj,
-              kind='quiver',
-                 *args,
-                 contourplot_kws = {},
-                 contourfplot_kws={},
-                 streamplot_kws ={},
-                 quiverplot_kws={},
-                 surfaceplot_kws={}):
+def plot_flow(
+    trj,
+    kind="quiver",
+    *args,
+    contourplot_kws={},
+    contourfplot_kws={},
+    streamplot_kws={},
+    quiverplot_kws={},
+    surfaceplot_kws={},
+):
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -329,32 +344,32 @@ def plot_flow(trj,
     Returns:
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
     """
-    if kind is 'quiver':
+    if kind is "quiver":
         return plot_contour(trj, filled=False, *args, **quiverplot_kws)
-    elif kind is 'contourf':
+    elif kind is "contourf":
         return plot_contour(trj, *args, **quiverplot_kws)
-    elif kind is 'stream':
-        return plot_stream(trj,
-                           *args,
-                           contourplot_kws=contourplot_kws,
-                           contourfplot_kws=contourfplot_kws,
-                           streamplot_kws=streamplot_kws)
-    elif kind is 'surface':
-        return plot_surface(trj,
-                            *args,
-                            **surfaceplot_kws)
+    elif kind is "stream":
+        return plot_stream(
+            trj,
+            *args,
+            contourplot_kws=contourplot_kws,
+            contourfplot_kws=contourfplot_kws,
+            streamplot_kws=streamplot_kws,
+        )
+    elif kind is "surface":
+        return plot_surface(trj, *args, **surfaceplot_kws)
     else:
         raise NotImplementedError(f"Kind {kind} is not implemented.")
 
 
 def trip_grid(
     trj,
-    bins=32,
-    log=False,
-    spatial_units=None,
-    normalize=False,
-    hist_only=False,
-    plot=False,
+    bins: Union[tuple, int] = 32,
+    log: bool = False,
+    spatial_units: str = None,
+    normalize: bool = False,
+    hist_only: bool = False,
+    plot: bool = False,
 ):
     """Generate a heatmap of time spent by point-to-cell gridding.
 
@@ -397,10 +412,10 @@ def trip_grid(
     if hist_only:  # TODO: Evaluate potential use cases or remove
         return hist, None
     fig, ax = plt.subplots()
-    image = ax.imshow(hist, interpolation="bilinear", extent=[x0,x1,y0,y1])
+    image = ax.imshow(hist, interpolation="bilinear", extent=[x0, x1, y0, y1])
     # TODO: Adjust colorbar ytick_labels to correspond with time
-    label = 'Frames' if not log else '$ln(Frames)$'
-    cbar = plt.colorbar(image, ax=ax, label='Frames')
+    label = "Frames" if not log else "$ln(Frames)$"
+    cbar = plt.colorbar(image, ax=ax, label="Frames")
 
     ax = _label_axes(trj, ax)
 

@@ -14,5 +14,5 @@ the new step length.
 
 Resample time
 -------------
-:meth:`~traja.trajectory.resample_time` allows resampling trajectories by a `step_time`.
+:meth:`~traja.trajectory.resample_time` allows resampling trajectories by a ``step_time``.
 

@@ -130,7 +130,7 @@ class TrajaAccessor(object):
             raise TypeError("Either time column or index must be datetime64")
 
     def resample_time(self, step_time):
-        """Returns trajectory resampled with `step_time`.
+        """Returns trajectory resampled with ``step_time``.
 
         Args:
            step_time (float): Step time
@@ -142,12 +142,12 @@ class TrajaAccessor(object):
 
     def trip_grid(
         self,
-        bins=16,
-        log=False,
+        bins: Union[int, tuple] = 16,
+        log: bool = False,
         spatial_units=None,
-        normalize=False,
-        hist_only=False,
-        plot=True,
+        normalize: bool = False,
+        hist_only: bool = False,
+        plot: bool = True,
     ):
         """Returns a 2D histogram of trip.
 
@@ -197,7 +197,7 @@ class TrajaAccessor(object):
         return traja.trajectory._has_cols(self._obj, cols)
 
     @property
-    def xy(self, split=False):
+    def xy(self, split: bool = False):
         """Returns a :class:`numpy.ndarray` of x,y coordinates.
 
         Args:
@@ -265,7 +265,12 @@ class TrajaAccessor(object):
         return derivs
 
     @property
-    def speed_intervals(self, faster_than=None, slower_than=None, interpolate_times=True):
+    def speed_intervals(
+        self,
+        faster_than: Union[float, int] = None,
+        slower_than: Union[float, int] = None,
+        interpolate_times: bool = True,
+    ):
         """Returns ``TrajaDataFrame`` with speed time intervals.
 
         Returns a dictionary of time intervals where speed is slower and/or faster than specified values.
@@ -283,16 +288,18 @@ class TrajaAccessor(object):
             Implementation ported to Python, heavily inspired by Jim McLean's trajr package.
 
         """
-        result = traja.trajectory.speed_intervals(self._obj, faster_than, slower_than, interpolate_times)
+        result = traja.trajectory.speed_intervals(
+            self._obj, faster_than, slower_than, interpolate_times
+        )
         return result
 
     def to_shapely(self):
-        """Return shapely object for area, bounds, etc. functions.
+        """Returns shapely object for area, bounds, etc. functions.
 
         Args:
 
         Returns:
-          shapely.geometry.linestring.LineString -- Shapely shape.
+          shape (shapely.geometry.linestring.LineString): Shapely shape.
           
         .. doctest::
 
@@ -302,13 +309,11 @@ class TrajaAccessor(object):
             False
 
         """
-        df = self._obj[["x", "y"]].dropna()
-        coords = df.values
-        tracks_obj = {"type": "LineString", "coordinates": coords}
-        tracks_shape = shape(tracks_obj)
+        trj = self._obj[["x", "y"]].dropna()
+        tracks_shape = traja.trajectory.to_shapely(trj)
         return tracks_shape
 
-    def calc_displacement(self, assign=True):
+    def calc_displacement(self, assign: bool = True):
         """Returns ``Series`` of `float` with displacement between consecutive indices.
 
         Args:
@@ -333,7 +338,7 @@ class TrajaAccessor(object):
         return displacement
 
     def calc_angle(self, assign=True):
-        """Return ``Series`` with angle between steps as a function of displacement w.r.t x axis.
+        """Returns ``Series`` with angle between steps as a function of displacement w.r.t x axis.
 
         Args:
           assign (bool, optional): Assign displacement to TrajaDataFrame (Default value = True)
