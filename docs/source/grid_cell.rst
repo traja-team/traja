@@ -9,7 +9,7 @@ each grid cell to its neighbor can be plotted with :func:`~traja.plotting.plot_f
     traja.plot_flow(df, kind='stream')
 
 :func:`~traja.plotting.plot_flow` ``kind`` Arguments
----------------------------------------------------
+----------------------------------------------------
 
 * `surface` - 3D surface plot extending :meth:`mpl_toolkits.mplot3D.Axes3D.plot_surface``
 * `contourf` - Filled contour plot extending :meth:`matplotlib.axes.Axes.contourf`
