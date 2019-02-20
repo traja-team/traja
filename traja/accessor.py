@@ -1,8 +1,8 @@
-import traja
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
-from shapely.geometry import shape
+
+import traja
 
 
 @pd.api.extensions.register_dataframe_accessor("traja")
