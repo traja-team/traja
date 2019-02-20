@@ -5,7 +5,13 @@ from traja import TrajaDataFrame
 
 
 def read_file(
-    filepath: str, id=None, xlim=None, ylim=None, spatial_units="m", fps=None, **kwargs
+    filepath: str,
+    id: str = None,
+    xlim: tuple = None,
+    ylim: tuple = None,
+    spatial_units: str = "m",
+    fps: float = None,
+    **kwargs,
 ):
     """Convenience method wrapping pandas `read_csv` and initializing metadata.
 
