@@ -17,11 +17,8 @@ Random walks can be generated using :func:`~traja.trajectory.generate`.
     **Reference**: McLean, D. J., & Skowron Volponi, M. A. (2018). trajr: An R package for characterisation of animal
     trajectories. Ethology, 124(6), 440-448. https://doi.org/10.1111/eth.12739.
 
-TODO: `generate` arguments:
+
 
 **seed**
 
 Specify the random seed number (``int``) with ``seed``.
-
-**
-
