@@ -82,7 +82,7 @@ def polar_to_z(r: float, theta: float):
     return r * np.exp(1j * theta)
 
 
-def cartesian_to_polar(xy):
+def cartesian_to_polar(xy: np.ndarray):
     """Convert :class:`numpy.ndarray` ``xy`` to polar coordinates ``r`` and ``theta``.
 
     Args:
@@ -361,7 +361,13 @@ def transitions(trj, **kwargs):
     return transitions_matrix.astype(int)
 
 
-def grid_coordinates(trj, bins=None, xlim=None, ylim=None, assign=False):
+def grid_coordinates(
+    trj,
+    bins: Union[int, tuple] = None,
+    xlim: tuple = None,
+    ylim: tuple = None,
+    assign: bool = False,
+):
     """Returns ``DataFrame`` of trajectory discretized into 2D lattice grid coordinates.
     Args:
         trj (~`traja.frame.TrajaDataFrame`): Trajectory
@@ -492,7 +498,7 @@ def generate(
     return df
 
 
-def _resample_time(trj, step_time):
+def _resample_time(trj, step_time: Union[float, int]):
     if not is_datetime_or_timedelta_dtype(trj.index):
         raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
     return trj.resample(step_time).agg({"x": np.mean, "y": np.mean})
@@ -550,12 +556,13 @@ def resample_time(trj, step_time, new_fps=None):
     return _trj
 
 
-def rotate(df, angle=0, origin=None):
+def rotate(df, angle=0, origin: tuple = None):
     """Returns a ``TrajaDataFrame`` Rotate a trajectory `angle` in radians.
 
     Args:
         trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
         angle (float): angle in radians
+        origin (tuple. optional): rotate around point (x,y)
 
     Returns:
         trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
@@ -596,7 +603,7 @@ def rotate(df, angle=0, origin=None):
     return trj
 
 
-def rediscretize_points(trj, R):
+def rediscretize_points(trj, R: Union[float, int]):
     """Returns a ``TrajaDataFrame`` rediscretized to a constant step length `R`.
 
     Args:
@@ -617,7 +624,7 @@ def rediscretize_points(trj, R):
     return rt
 
 
-def _rediscretize_points(trj, R):
+def _rediscretize_points(trj, R: Union[float, int]):
     """Helper function for :func:`traja.trajectory.rediscretize`.
 
     Args:
@@ -853,7 +860,12 @@ def calc_heading(trj):
     return df.heading
 
 
-def speed_intervals(trj, faster_than=None, slower_than=None, interpolate_times=True):
+def speed_intervals(
+    trj,
+    faster_than: float = None,
+    slower_than: float = None,
+    interpolate_times: bool = True,
+):
     """Calculate speed time intervals.
 
     Returns a dictionary of time intervals where speed is slower and/or faster than specified values.
@@ -982,7 +994,7 @@ def get_derivatives(trj):
     return derivs
 
 
-def from_df(df):
+def from_df(df: pd.DataFrame):
     """Returns a :class:`traja.frame.TrajaDataFrame` from a :class:`pandas DataFrame<pandas.DataFrame>`.
 
     Args:

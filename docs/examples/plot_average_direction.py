@@ -37,11 +37,16 @@ traja.plotting.plot_contour(df, filled=False, quiver=False, bins=32)
 # Contour (Filled)
 # ================
 
-traja.plotting.plot_contour(df, bins=32, contourfplot_kws={'cmap':'coolwarm'})
+traja.plotting.plot_contour(df, bins=32, contourfplot_kws={"cmap": "coolwarm"})
 
 ###############################################################################
 # Stream
 # ======
 # `cmap` can be specified, eg, 'coolwarm', 'viridis', etc.
 # Additional arguments can be specified as a dictionary to `streamplot_kws`.
-traja.plotting.plot_stream(df, cmap='jet', bins=32)
+traja.plotting.plot_stream(df, cmap="jet", bins=32)
+
+###############################################################################
+# Polar bar
+# =========
+traja.plotting.polar_bar(df)
