@@ -1,5 +1,10 @@
 import numpy as np
 import pandas as pd
+from pandas.core.dtypes.common import (
+    is_datetime_or_timedelta_dtype,
+    is_datetime64_any_dtype,
+    is_timedelta64_dtype,
+)
 
 from traja import TrajaDataFrame
 
@@ -7,6 +12,7 @@ from traja import TrajaDataFrame
 def read_file(
     filepath: str,
     id: str = None,
+    parse_dates=False,
     xlim: tuple = None,
     ylim: tuple = None,
     spatial_units: str = "m",
@@ -27,7 +33,7 @@ def read_file(
 
     # TODO: Set index to first column containing 'time'
     df_test = pd.read_csv(
-        filepath, nrows=10, parse_dates=True, infer_datetime_format=True
+        filepath, nrows=10, parse_dates=parse_dates, infer_datetime_format=True
     )
 
     # Strip whitespace
@@ -44,20 +50,44 @@ def read_file(
     category_cols = {c: "category" for c in string_cols}
     dtype = {**float32_cols, **category_cols, **kwargs.pop("dtype", {})}
 
+    # Parse time column if present
     time_cols = [col for col in df_test.columns if "time" in col.lower()]
+    time_col = time_cols[0] if time_cols else None
+
+    if parse_dates and not date_parser and time_col:
+        # try different parsers
+        format_strs = [
+            "%Y-%m-%d %H:%M:%S:%f",
+            "%Y-%m-%d %H:%M:%S.%f",
+            "%Y-%m-%d %H:%M:%S",
+        ]
+        for format_str in format_strs:
+            date_parser = lambda x: pd.datetime.strptime(x, format_str)
+            try:
+                df_test = pd.read_csv(
+                    filepath, date_parser=date_parser, nrows=10, parse_dates=[time_col]
+                )
+            except ValueError:
+                pass
+            if is_datetime64_any_dtype(df_test[time_col]):
+                break
+            elif is_timedelta64_dtype(df_test[time_col]):
+                break
+            else:
+                # No datetime or timestamp column found
+                date_parser = None
 
     if "csv" in filepath:
         trj = pd.read_csv(
             filepath,
             date_parser=date_parser,
-            infer_datetime_format=kwargs.pop("infer_datetime_format", True),
-            parse_dates=kwargs.pop("parse_dates", True),
+            parse_dates=parse_dates or [time_col] if date_parser else False,
             converters=converters,
             dtype=dtype,
             **kwargs,
         )
-        if time_cols:
-            time_col = time_cols[0]
+        # TODO: Replace default column renaming with user option if needed
+        if time_col:
             trj.rename(columns={time_col: "time"})
         elif fps is not None:
             time = np.array([x for x in trj.index], dtype=int) / fps
@@ -70,13 +100,16 @@ def read_file(
         raise NotImplementedError("Non-csv's not yet implemented")
 
     trj = TrajaDataFrame(trj)
+
     # Set meta properties of TrajaDataFrame
-    trj.id = id
-    trj.xlim = xlim
-    trj.ylim = ylim
-    trj.spatial_units = spatial_units
-    trj.title = kwargs.get("title", None)
-    trj.xlabel = kwargs.get("xlabel", None)
-    trj.ylabel = kwargs.get("ylabel", None)
-    trj.fps = fps
+    metadata = dict(
+        id=id,
+        xlim=xlim,
+        spatial_units=spatial_units,
+        title=kwargs.get("title", None),
+        xlabel=kwargs.get("xlabel", None),
+        ylabel=kwargs.get("ylabel", None),
+        fps=fps,
+    )
+    trj.__dict__.update(**metadata)
     return trj
