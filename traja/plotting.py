@@ -451,24 +451,9 @@ def trip_grid(
         return (hist, None)
     fig, ax = plt.subplots()
 
-    if kde:
-        data = np.vstack([x, y])
-        kde = gaussian_kde(data)
-        Z = kde.evaluate(np.vstack([Xgrid.ravel(), Ygrid.ravel()]))
-        # Plot the result as an image
-        image = ax.imshow(
-            Z.reshape(Xgrid.shape),
-            origin="lower",
-            aspect="equal",
-            extent=[x0, x1, y0, y1],
-            cmap="Blues",
-        )
-        cb = plt.colorbar()
-        cb.set_label("density")
-    else:
-        image = ax.imshow(
-            hist, interpolation="bilinear", aspect="equal", extent=[x0, x1, y0, y1]
-        )
+    image = ax.imshow(
+        hist, interpolation="bilinear", aspect="equal", extent=[x0, x1, y0, y1]
+    )
     # TODO: Adjust colorbar ytick_labels to correspond with time
     label = "Frames" if not log else "$ln(frames)$"
     cbar = plt.colorbar(image, ax=ax, label=label)
