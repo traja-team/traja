@@ -46,6 +46,34 @@ def predict(xy, nb_steps=10, epochs=1000, batch_size=1, model="lstm"):
         TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
 
 
+def bar_plot(trj, bins=None, **kwargs):
+    """Plot trajectory for single animal over period.
+
+    Args:
+      trj (:class:`traja.TrajaDataFrame`): trajectory
+      n_coords (int): Number of coordinates to plot
+      show_time (bool): Show colormap as time
+      accessor (:class:`~traja.accessor.TrajaAccessor`, optional): TrajaAccessor instance
+      **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
+
+    Returns:
+        ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
+
+    """
+    from mpl_toolkits.mplot3d import Axes3D
+
+    X, Y, U, V = coords_to_flow(trj, bins)
+    Z = np.sqrt(U * U + V * V)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    ax.set_aspect("equal")
+    ax.bar3d(X[0], Y[0], np.zeros_like(Z.flatten()), 1, 1, Z.flatten(), shade=True)
+
+    plt.show()
+    return ax
+
+
 def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
     """Plot trajectory for single animal over period.
 
@@ -70,6 +98,8 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
         kwargs = self._get_plot_args(**kwargs)
     xlim = kwargs.pop("xlim", None)
     ylim = kwargs.pop("ylim", None)
+    if not xlim or not ylim:
+        xlim, ylim = traja.trajectory._get_xylim(trj)
 
     title = kwargs.pop("title", None)
     time_units = kwargs.pop("time_units", None)
@@ -136,14 +166,8 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
         xs, ys, c=colors, s=25, cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax
     )
 
-    if xlim is not None:
-        ax.set_xlim(xlim)
-    else:
-        ax.set_xlim((coords.x.min(), coords.x.max()))
-    if ylim is not None:
-        ax.set_ylim(ylim)
-    else:
-        ax.set_ylim((coords.y.min(), coords.y.max()))
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
 
     if kwargs.pop("invert_yaxis", None):
         plt.gca().invert_yaxis()
@@ -220,6 +244,7 @@ def plot_quiver(trj, bins=None, quiverplot_kws={}):
 
     qp = ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
     ax = _label_axes(trj, ax)
+    ax.set_aspect("equal")
 
     plt.show()
     return ax
@@ -253,6 +278,7 @@ def plot_contour(
 
     if filled:
         cfp = plt.contourf(X, Y, Z, **contourfplot_kws)
+        cbar = plt.colorbar(cfp, ax=ax)
     cp = plt.contour(
         X, Y, Z, colors="k", linewidths=1, linestyles="solid", **contourplot_kws
     )
@@ -260,6 +286,7 @@ def plot_contour(
         qp = ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
 
     ax = _label_axes(trj, ax)
+    ax.set_aspect("equal")
 
     plt.show()
     return ax
@@ -327,6 +354,7 @@ def plot_stream(
     sp = ax.streamplot(X, Y, U, V, color=Z, cmap=cmap, **streamplot_kws)
 
     ax = _label_axes(trj, ax)
+    ax.set_aspect("equal")
 
     plt.show()
     return ax
@@ -358,6 +386,8 @@ def plot_flow(
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
     """
     if kind is "quiver":
+        return plot_quiver(trj, *args, **quiverplot_kws)
+    elif kind is "contour":
         return plot_contour(trj, filled=False, *args, **quiverplot_kws)
     elif kind is "contourf":
         return plot_contour(trj, *args, **quiverplot_kws)
@@ -403,32 +433,45 @@ def trip_grid(
     df = trj[["x", "y"]].dropna()
 
     # Set aspect if `xlim` and `ylim` set.
-    if (
-        "xlim" in df.__dict__ and "ylim" in df.__dict__ and isinstance(df.xlim, tuple)
-    ):  # TrajaDataFrame
-        x0, x1 = df.xlim
-        y0, y1 = df.ylim
-    else:
-        x0, x1 = (df.x.min(), df.x.max())
-        y0, y1 = (df.y.min(), df.y.max())
+    xlim, ylim = traja.trajectory._get_xylim(df)
+    x0, x1 = xlim
+    y0, y1 = ylim
 
-    x_edges = np.linspace(x0, x1, num=bins[0])
-    y_edges = np.linspace(y0, y1, num=bins[1])
+    xgrid = np.linspace(x0, x1, num=bins[0])
+    ygrid = np.linspace(y0, y1, num=bins[1])
+    Xgrid, Ygrid = np.meshgrid(xgrid, ygrid)
 
     x, y = zip(*df.values)
     # FIXME: Remove redundant histogram calculation
-    hist, x_edges, y_edges = np.histogram2d(
-        x, y, bins=(x_edges, y_edges), normed=normalize
-    )
+    hist, x_edges, y_edges = np.histogram2d(x, y, bins=(xgrid, ygrid), normed=normalize)
+
     if log:
         hist = np.log(hist + np.e)
     if hist_only:  # TODO: Evaluate potential use cases or remove
-        return hist, None
+        return (hist, None)
     fig, ax = plt.subplots()
-    image = ax.imshow(hist, interpolation="bilinear", extent=[x0, x1, y0, y1])
+
+    if kde:
+        data = np.vstack([x, y])
+        kde = gaussian_kde(data)
+        Z = kde.evaluate(np.vstack([Xgrid.ravel(), Ygrid.ravel()]))
+        # Plot the result as an image
+        image = ax.imshow(
+            Z.reshape(Xgrid.shape),
+            origin="lower",
+            aspect="equal",
+            extent=[x0, x1, y0, y1],
+            cmap="Blues",
+        )
+        cb = plt.colorbar()
+        cb.set_label("density")
+    else:
+        image = ax.imshow(
+            hist, interpolation="bilinear", aspect="equal", extent=[x0, x1, y0, y1]
+        )
     # TODO: Adjust colorbar ytick_labels to correspond with time
-    label = "Frames" if not log else "$ln(Frames)$"
-    cbar = plt.colorbar(image, ax=ax, label="Frames")
+    label = "Frames" if not log else "$ln(frames)$"
+    cbar = plt.colorbar(image, ax=ax, label=label)
 
     ax = _label_axes(trj, ax)
 
@@ -439,3 +482,121 @@ def trip_grid(
     # TODO: Add method for most common locations in grid
     # peak_index = unravel_index(hist.argmax(), hist.shape)
     return hist, image
+
+
+def _polar_bar(radii: np.ndarray, theta: np.ndarray, bins: int, ax=None):
+    hist, _ = np.histogram(theta, bins=bins)
+    if not ax:
+        ax = plt.subplot(111, projection="polar")
+
+    width = np.pi / bins
+    max_radii = max(radii)
+    bars = ax.bar(theta, radii, width=width, bottom=0.0)
+    for r, bar in zip(radii, bars):
+        bar.set_facecolor(plt.cm.jet(r / max_radii))
+        bar.set_alpha(0.5)
+
+    plt.show()
+    return ax
+
+
+def polar_bar(trj, bins=24):
+    """Plot polar bar chart.
+    Args:
+        trj
+        bins (int)
+
+    Returns:
+        ax
+
+    """
+    xy = trj[["x", "y"]].values
+    radii, theta = traja.trajectory.cartesian_to_polar(xy)
+
+    ax = _polar_bar(radii, theta, bins=bins)
+    return ax
+
+
+def animate(trj, polar=False):
+    """Animate trajectory.
+
+    Args:
+
+    Returns:
+
+
+    """
+    from matplotlib.animation import FuncAnimation
+
+    displacement = traja.trajectory.calc_displacement(trj)
+    xy = trj[["x", "y"]].values
+
+    fig = plt.figure(figsize=(8, 6))
+    ax1 = plt.subplot(211)
+    ax2 = plt.subplot(212, projection="polar")
+
+    def colfunc(val, minval, maxval, startcolor, stopcolor):
+        """ Convert value in the range minval...maxval to a color in the range
+            startcolor to stopcolor. The colors passed and the one returned are
+            composed of a sequence of N component values (e.g. RGB).
+        """
+        f = float(val - minval) / (maxval - minval)
+        return tuple(f * (b - a) + a for (a, b) in zip(startcolor, stopcolor))
+
+    RED, YELLOW, GREEN = (1, 0, 0), (1, 1, 0), (0, 1, 0)
+    CYAN, BLUE, MAGENTA = (0, 1, 1), (0, 0, 1), (1, 0, 1)
+    POLAR_STEPS = XY_STEPS = 20
+    DISPLACEMENT_THRESH = 0.25
+
+    xlim, ylim = traja.trajectory._get_xylim(trj)
+
+    width = np.pi / 24
+    alphas = np.linspace(0.1, 1, XY_STEPS)
+    rgba_colors = np.zeros((XY_STEPS, 4))
+    rgba_colors[:, 0] = 1.0  # red
+    rgba_colors[:, 3] = alphas
+
+    for ind, (x, y) in enumerate(xy):
+        if not ind > 1 and not ind + 1 < len(xy):
+            continue
+
+        for ax in [ax1, ax2]:
+            ax.clear()
+
+        prev_steps = max(ind - XY_STEPS, 0)
+        color_cnt = len(xy[prev_steps:ind])
+        ax1.scatter(
+            xy[prev_steps:ind, 0],
+            xy[prev_steps:ind, 1],
+            marker="o",
+            color=rgba_colors[:color_cnt],
+        )
+        ax1.set_xlim(xlim)
+        ax1.set_ylim(ylim)
+
+        displacement_str = (
+            rf"$\bf{displacement[ind]:.2f}$"
+            if displacement[ind] >= DISPLACEMENT_THRESH
+            else f"{displacement[ind]:.2f}"
+        )
+
+        ax1.set_title(
+            f"frame {ind} - distance (cm/0.25s): {displacement_str}\n \
+            x: {x:.2f}, y: {y:.2f}"
+        )
+
+        if polar and ind > 1 and ind + 10 < len(xy):
+            radii, theta = traja.trajectory.cartesian_to_polar(
+                xy[max(ind - POLAR_STEPS, 0) : ind]
+            )
+
+            hist, _ = np.histogram(theta, bins=24)
+            max_radii = max(radii)
+            bars = ax2.bar(theta, radii, width=width, bottom=0.0)
+            for r, bar in zip(radii, bars):
+                bar.set_facecolor(plt.cm.jet(r / max_radii))
+                bar.set_alpha(0.5)
+
+        plt.tight_layout()
+        plt.pause(0.01)
+        plt.show(block=False)

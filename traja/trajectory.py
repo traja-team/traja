@@ -1,6 +1,6 @@
 import math
 from collections import OrderedDict
-from typing import Callable
+from typing import Callable, Union
 
 import traja
 import numpy as np
@@ -95,8 +95,8 @@ def cartesian_to_polar(xy: np.ndarray):
     assert xy.ndim == 2, f"Dimensions are {xy.ndim}, expecting 2"
     x, y = np.split(xy, [-1], axis=1)
     x, y = np.squeeze(x), np.squeeze(y)
-    r = math.sqrt(x * x + y * y)
-    theta = math.atan2(y, x)
+    r = np.sqrt(x * x + y * y)
+    theta = np.arctan2(y, x)
     return r, theta
 
 
@@ -255,26 +255,19 @@ def transition_matrix(grid_indices1D: np.ndarray):
     return np.array(M)
 
 
-def _bins_to_tuple(trj, bins):
+def _bins_to_tuple(trj, bins: Union[int, tuple]):
     if bins is None:
         # set default
         bins = 32
 
     if isinstance(bins, int):
         # make aspect equal
-        aspect = (trj.y.max() - trj.y.min()) / (trj.x.max() - trj.x.min())
+        xlim, ylim = _get_xylim(trj)
+        aspect = (xlim[1] - xlim[0]) / (ylim[1] - ylim[0])
         bins = (bins, int(bins * aspect))
 
     assert isinstance(bins, tuple), f"bins should be tuple but is {type(bins)}"
     return bins
-
-
-def _to_tuple(bins):
-    """Returns tuple from ``bins`` if it ``bins`` is an ``int``."""
-    if isinstance(bins, tuple):
-        return bins
-    elif isinstance(bins, int):
-        return (bins, bins)
 
 
 def calculate_flow_angles(grid_indices: np.ndarray):
@@ -335,7 +328,7 @@ def calculate_flow_angles(grid_indices: np.ndarray):
     return U.astype(float), V.astype(float)
 
 
-def _grid_coords1D(grid_indices):
+def _grid_coords1D(grid_indices: np.ndarray):
     """Convert 2D grid indices to 1D indices."""
     if isinstance(grid_indices, pd.DataFrame):
         grid_indices = grid_indices.values
@@ -380,12 +373,12 @@ def grid_coordinates(
         trj (~`traja.frame.TrajaDataFrame`): Trajectory
 
     """
-    bins = _bins_to_tuple(trj, bins)
-
     xmin = trj.x.min() if xlim is None else xlim[0]
     xmax = trj.x.max() if xlim is None else xlim[1]
     ymin = trj.y.min() if ylim is None else ylim[0]
     ymax = trj.y.max() if ylim is None else ylim[1]
+
+    bins = _bins_to_tuple(trj, bins)
 
     xbins = np.linspace(xmin, xmax, bins[0])
     ybins = np.linspace(ymin, ymax, bins[1])
@@ -1021,7 +1014,20 @@ def from_df(df: pd.DataFrame):
     return traj_df
 
 
-def coords_to_flow(trj, bins=None):
+def _get_xylim(trj):
+    if (
+        "xlim" in trj.__dict__
+        and "ylim" in trj.__dict__
+        and isinstance(trj.xlim, tuple)
+    ):
+        return trj.xlim, trj.ylim
+    else:
+        xlim = trj.x.min(), trj.x.max()
+        ylim = trj.y.min(), trj.y.max()
+        return xlim, ylim
+
+
+def coords_to_flow(trj, bins: Union[int, tuple] = None):
     """Calculate grid cell flow from trajectory.
 
     Args:
@@ -1035,6 +1041,7 @@ def coords_to_flow(trj, bins=None):
         V (:class:`~numpy.ndarray`): Y component of vector data
 
     """
+    xlim, ylim = _get_xylim(trj)
     bins = _bins_to_tuple(trj, bins)
 
     X, Y = np.meshgrid(
@@ -1043,7 +1050,7 @@ def coords_to_flow(trj, bins=None):
     )
 
     if "xbin" not in trj.columns or "ybin" not in trj.columns:
-        grid_indices = traja.grid_coordinates(trj, bins=bins)
+        grid_indices = traja.grid_coordinates(trj, bins=bins, xlim=xlim, ylim=ylim)
     else:
         grid_indices = trj[["xbin", "ybin"]]
 

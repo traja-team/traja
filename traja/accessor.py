@@ -28,6 +28,14 @@ class TrajaAccessor(object):
         if "x" not in obj.columns or "y" not in obj.columns:
             raise AttributeError("Must have 'x' and 'y'.")
 
+    def set(self, **kwargs):
+        """Convenience function for setting metadata in the `traja` accessor."""
+        for key, value in kwargs.items():
+            try:
+                self.__setattr__(key, value)
+            except Exception as e:
+                print(f"Cannot set {key} to {value}")
+
     @property
     def center(self):
         """Return the center point of this trajectory."""
@@ -35,8 +43,7 @@ class TrajaAccessor(object):
         y = self._obj.y
         return (float(x.mean()), float(y.mean()))
 
-    @property
-    def night(self, begin="19:00", end="7:00"):
+    def night(self, begin: str = "19:00", end: str = "7:00"):
         """Get nighttime data between `begin` and `end`.
 
         Args:
@@ -49,8 +56,7 @@ class TrajaAccessor(object):
         """
         return self.between(begin, end)
 
-    @property
-    def day(self, begin="7:00", end="19:00"):
+    def day(self, begin: str = "7:00", end: str = "19:00"):
         """Get daytime data between `begin` and `end`.
 
         Args:
@@ -62,14 +68,6 @@ class TrajaAccessor(object):
 
         """
         return self.between(begin, end)
-
-    def set(self, **kwargs):
-        """Convenience function for setting metadata in the `traja` accessor."""
-        for key, value in kwargs.items():
-            try:
-                self.__setattr__(key, value)
-            except Exception as e:
-                print(f"Cannot set {key} to {value}")
 
     def _get_plot_args(self, **kwargs):
         for var in self._obj._metadata:
