@@ -92,7 +92,7 @@ class TrajaAccessor(object):
         """
         return traja.trajectory._get_time_col(self._obj)
 
-    def between(self, begin, end):
+    def between(self, begin: str, end: str):
         """Returns trajectory between `begin` and end` if `time` column is `datetime64`.
 
         Args:
@@ -131,7 +131,7 @@ class TrajaAccessor(object):
         else:
             raise TypeError("Either time column or index must be datetime64")
 
-    def resample_time(self, step_time):
+    def resample_time(self, step_time: float):
         """Returns trajectory resampled with ``step_time``.
 
         Args:
@@ -177,7 +177,7 @@ class TrajaAccessor(object):
         return hist, image
 
     def plot(self, n_coords: int = None, show_time=False, **kwargs):
-        """Plot trajectory for single animal over period.
+        """Plot trajectory over period.
 
         Args:
           n_coords (int): Number of coordinates to plot
@@ -193,6 +193,20 @@ class TrajaAccessor(object):
             show_time=show_time,
             **kwargs,
         )
+        return ax
+
+    def plot_flow(self, kind="quiver", **kwargs):
+        """Plot grid cell flow.
+
+        Args:
+          kind (str): Kind of plot (eg, 'quiver','surface','contour','contourf','stream')
+          **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
+
+        Returns:
+            ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
+
+        """
+        ax = traja.plotting.plot_flow(trj=self._obj, kind=kind, **kwargs)
         return ax
 
     def _has_cols(self, cols: list):
@@ -231,7 +245,7 @@ class TrajaAccessor(object):
         if time_col is None:
             raise Exception("Missing time information in trajectory.")
 
-    def calc_derivatives(self, assign=False):
+    def calc_derivatives(self, assign: bool = False):
         """Returns derivatives `displacement` and `displacement_time` as dictionary.
 
         Args:
@@ -339,7 +353,7 @@ class TrajaAccessor(object):
             self._obj = self._obj.assign(displacement=displacement)
         return displacement
 
-    def calc_angle(self, assign=True):
+    def calc_angle(self, assign: bool = True):
         """Returns ``Series`` with angle between steps as a function of displacement w.r.t x axis.
 
         Args:
@@ -363,12 +377,12 @@ class TrajaAccessor(object):
             self._obj["angle"] = angle
         return angle
 
-    def scale(self, scale, spatial_units="m"):
+    def scale(self, scale: float, spatial_units: str = "m"):
         """Scale trajectory when converting, eg, from pixels to meters.
 
         Args:
-          spatial_units(str., optional): Spatial units (eg, 'm') (Default value = "m")
           scale(float): Scale to convert coordinates
+          spatial_units(str., optional): Spatial units (eg, 'm') (Default value = "m")
 
         .. doctest::
 
@@ -417,7 +431,7 @@ class TrajaAccessor(object):
         self._transfer_metavars(rt)
         return rt
 
-    def calc_heading(self, assign=True):
+    def calc_heading(self, assign: bool = True):
         """Calculate trajectory heading.
 
         Args:
@@ -441,7 +455,7 @@ class TrajaAccessor(object):
             self._obj["heading"] = heading
         return heading
 
-    def calc_turn_angle(self, assign=True):
+    def calc_turn_angle(self, assign: bool = True):
         """Calculate turn angle.
 
         Args:
