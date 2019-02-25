@@ -1,6 +1,6 @@
 import math
 from collections import OrderedDict
-from typing import Callable, Union
+from typing import Callable, Union, Tuple
 
 import traja
 import numpy as np
@@ -255,18 +255,29 @@ def transition_matrix(grid_indices1D: np.ndarray):
     return np.array(M)
 
 
-def _bins_to_tuple(trj, bins: Union[int, tuple]):
-    if bins is None:
-        # set default
-        bins = 32
+def _bins_to_tuple(trj, bins: Union[int, Tuple[int, int]] = 10):
+    """Returns tuple of x, y bins
 
+    Args:
+        trj: Trajectory
+        bins: The bin specification:
+            If int, the number of bins for the smallest of the two dimensions such that (min(nx,ny)=bins).
+            If [int, int], the number of bins in each dimension (nx, ny = bins).
+
+    Returns:
+        bins (Sequence[int,int]): Bins (nx, ny)
+
+    """
     if isinstance(bins, int):
         # make aspect equal
         xlim, ylim = _get_xylim(trj)
-        aspect = (xlim[1] - xlim[0]) / (ylim[1] - ylim[0])
-        bins = (bins, int(bins * aspect))
+        aspect = (ylim[1] - ylim[0]) / (xlim[1] - xlim[0])
+        if aspect >= 1:
+            bins = (bins, int(bins * aspect))
+        else:
+            bins = (int(bins / aspect), bins)
 
-    assert isinstance(bins, tuple), f"bins should be tuple but is {type(bins)}"
+    assert len(bins) == 2, f"bins should be length 2 but is {len(bins)}"
     return bins
 
 

@@ -51,24 +51,39 @@ def bar_plot(trj, bins=None, **kwargs):
 
     Args:
       trj (:class:`traja.TrajaDataFrame`): trajectory
-      n_coords (int): Number of coordinates to plot
-      show_time (bool): Show colormap as time
-      accessor (:class:`~traja.accessor.TrajaAccessor`, optional): TrajaAccessor instance
-      **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
+      bins
+      **kwargs: additional keyword arguments to :meth:`mpl_toolkits.mplot3d.Axed3D.bar3d`
 
     Returns:
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
 
     """
+    # TODO: Add time component
     from mpl_toolkits.mplot3d import Axes3D
+
+    bins = traja.trajectory._bins_to_tuple(trj, bins)
 
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
+    hist, _ = trip_grid(trj, bins, hist_only=True)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
     ax.set_aspect("equal")
-    ax.bar3d(X[0], Y[0], np.zeros_like(Z.flatten()), 1, 1, Z.flatten(), shade=True)
+    X = X.flatten("F")
+    Y = Y.flatten("F")
+    ax.bar3d(
+        X,
+        Y,
+        np.zeros_like(X),
+        1,
+        1,
+        hist.flatten(),
+        zsort="average",
+        shade=True,
+        **kwargs,
+    )
+    ax.set(xlabel="x", ylabel="y", zlabel="Frames")
 
     plt.show()
     return ax
@@ -407,7 +422,7 @@ def plot_flow(
 
 def trip_grid(
     trj,
-    bins: Union[tuple, int] = 32,
+    bins: Union[tuple, int] = 10,
     log: bool = False,
     spatial_units: str = None,
     normalize: bool = False,
@@ -417,7 +432,7 @@ def trip_grid(
     """Generate a heatmap of time spent by point-to-cell gridding.
 
     Args:
-      bins (int, optional): Number of bins (Default value = 16)
+      bins (int, optional): Number of bins (Default value = 10)
       log (bool): log scale histogram (Default value = False)
       spatial_units (str): units for plotting
       normalize (bool): normalize histogram into density plot
@@ -434,16 +449,14 @@ def trip_grid(
 
     # Set aspect if `xlim` and `ylim` set.
     xlim, ylim = traja.trajectory._get_xylim(df)
-    x0, x1 = xlim
-    y0, y1 = ylim
-
-    xgrid = np.linspace(x0, x1, num=bins[0])
-    ygrid = np.linspace(y0, y1, num=bins[1])
-    Xgrid, Ygrid = np.meshgrid(xgrid, ygrid)
+    xmin, xmax = xlim
+    ymin, ymax = ylim
 
     x, y = zip(*df.values)
     # FIXME: Remove redundant histogram calculation
-    hist, x_edges, y_edges = np.histogram2d(x, y, bins=(xgrid, ygrid), normed=normalize)
+    hist, x_edges, y_edges = np.histogram2d(
+        x, y, bins, range=((xmin, xmax), (ymin, ymax)), normed=normalize
+    )
 
     if log:
         hist = np.log(hist + np.e)
@@ -452,7 +465,7 @@ def trip_grid(
     fig, ax = plt.subplots()
 
     image = ax.imshow(
-        hist, interpolation="bilinear", aspect="equal", extent=[x0, x1, y0, y1]
+        hist, interpolation="bilinear", aspect="equal", extent=[xmin, xmax, ymin, ymax]
     )
     # TODO: Adjust colorbar ytick_labels to correspond with time
     label = "Frames" if not log else "$ln(frames)$"
