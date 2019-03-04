@@ -728,8 +728,8 @@ def calc_turn_angle(trj):
         heading = trj.heading
     turn_angle = heading.diff().rename("turn_angle")
     # Correction for 360-degree angle range
-    turn_angle[turn_angle >= 180] -= 360
-    turn_angle[turn_angle < -180] += 360
+    turn_angle.loc[turn_angle >= 180] -= 360
+    turn_angle.loc[turn_angle < -180] += 360
     return turn_angle
 
 
@@ -955,7 +955,7 @@ def get_derivatives(trj):
         trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
     Returns:
-      derivs (:class:`~collections.OrderedDict`) : Derivatives in dictionary
+      derivs (:class:`~pd.DataFrame`) : Derivatives
 
     .. doctest::
 
@@ -987,6 +987,10 @@ def get_derivatives(trj):
         d = trj.displacement
         t = trj.displacement_time
         derivs = OrderedDict(displacement=d, displacement_time=t)
+    if is_datetime_or_timedelta_dtype(t):
+        # Convert to float divisible series
+        # TODO: Add support for other time units
+        t = t.dt.total_seconds()
     v = d[1 : len(d)] / t.diff()
     v.rename("speed")
     vt = t[1 : len(t)].rename("speed_times")
@@ -996,33 +1000,6 @@ def get_derivatives(trj):
     data = OrderedDict(speed=v, speed_times=vt, acceleration=a, acceleration_times=at)
     derivs.update(data)
     return derivs
-
-
-def from_df(df: pd.DataFrame):
-    """Returns a :class:`traja.frame.TrajaDataFrame` from a :class:`pandas DataFrame<pandas.DataFrame>`.
-
-    Args:
-      df (:class:`pandas.DataFrame`): Trajectory as pandas``DataFrame``
-
-    Returns:
-      traj_df (:class:`~traja.frame.TrajaDataFrame`): Trajectory
-
-    .. doctest::
-
-        >>> df = pd.DataFrame({'x':[0,1,2],'y':[1,2,3]})
-        >>> traja.from_df(df)
-           x  y
-        0  0  1
-        1  1  2
-        2  2  3
-
-    """
-    traj_df = TrajaDataFrame(df)
-    # Initialize metadata
-    for var in traj_df._metadata:
-        if not hasattr(traj_df, var):
-            traj_df.__dict__[var] = None
-    return traj_df
 
 
 def _get_xylim(trj):

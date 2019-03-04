@@ -9,6 +9,51 @@ from pandas.core.dtypes.common import (
 from traja import TrajaDataFrame
 
 
+def from_df(df: pd.DataFrame, xcol=None, ycol=None, time_col=None, **kwargs):
+    """Returns a :class:`traja.frame.TrajaDataFrame` from a :class:`pandas DataFrame<pandas.DataFrame>`.
+
+    Args:
+      df (:class:`pandas.DataFrame`): Trajectory as pandas``DataFrame``
+      xcol (str)
+      ycol (str)
+      timecol (str)
+
+    Returns:
+      traj_df (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    .. doctest::
+
+        >>> df = pd.DataFrame({'x':[0,1,2],'y':[1,2,3]})
+        >>> traja.from_df(df)
+           x  y
+        0  0  1
+        1  1  2
+        2  2  3
+
+    """
+    traj_df = TrajaDataFrame(df)
+
+    # Identify x and y columns if defined by user
+    if xcol and ycol:
+        traj_df["x"] = pd.to_numeric(traj_df[xcol], errors="coerce")
+        traj_df["y"] = pd.to_numeric(traj_df[ycol], errors="coerce")
+    if time_col:
+        traj_df[time_col] = pd.to_timedelta(
+            traj_df[time_col], unit=kwargs.get("time_units", "s")
+        )
+        kwargs.update({"time_col": time_col})
+
+    # Initialize metadata
+    for var in traj_df._metadata:
+        if not hasattr(traj_df, var):
+            traj_df.__dict__[var] = None
+
+    # Save additional metadata
+    for key, val in kwargs.items():
+        traj_df.__dict__[key] = val
+    return traj_df
+
+
 def read_file(
     filepath: str,
     id: str = None,

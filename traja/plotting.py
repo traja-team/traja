@@ -3,6 +3,7 @@ from typing import Union
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from pandas.core.dtypes.common import (
     is_datetime_or_timedelta_dtype,
     is_datetime64_any_dtype,
@@ -94,7 +95,7 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
 
     Args:
       trj (:class:`traja.TrajaDataFrame`): trajectory
-      n_coords (int): Number of coordinates to plot
+      n_coords (int, optional): Number of coordinates to plot
       show_time (bool): Show colormap as time
       accessor (:class:`~traja.accessor.TrajaAccessor`, optional): TrajaAccessor instance
       **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
@@ -117,19 +118,18 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
         xlim, ylim = traja.trajectory._get_xylim(trj)
 
     title = kwargs.pop("title", None)
-    time_units = kwargs.pop("time_units", None)
+    time_units = kwargs.pop("time_units", "s")
     fps = kwargs.pop("fps", None)
     figsize = kwargs.pop("figsize", None)
 
     start, end = None, None
     coords = trj[["x", "y"]]
     time_col = traja.trajectory._get_time_col(trj)
+
     if time_col is "index":
         is_datetime = True
     else:
-        is_datetime = (
-            is_datetime_or_timedelta_dtype(trj[time_col]) if time_col else False
-        )
+        is_datetime = is_datetime64_any_dtype(trj[time_col]) if time_col else False
 
     if n_coords is None:
         # Plot all coords
@@ -213,7 +213,8 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
                 "Indexing on {} is not yet implemented".format(type(trj.index))
             )
     elif time_col and is_timedelta64_dtype(trj[time_col]):
-        cbar_labels = trj[time_col].iloc[indices].dt.total_seconds().values.astype(str)
+        cbar_labels = trj[time_col].iloc[indices].dt.total_seconds().values
+        cbar_labels = ["%.2f" % number for number in cbar_labels]
     elif time_col and is_datetime:
         cbar_labels = (
             trj[time_col]
@@ -420,6 +421,13 @@ def plot_flow(
         raise NotImplementedError(f"Kind {kind} is not implemented.")
 
 
+def _get_after_plot_args(**kwargs):
+    after_plot_args = dict(
+        show=kwargs.pop("show", True), filepath=kwargs.pop("save", None)
+    )
+    return after_plot_args, kwargs
+
+
 def trip_grid(
     trj,
     bins: Union[tuple, int] = 10,
@@ -427,7 +435,7 @@ def trip_grid(
     spatial_units: str = None,
     normalize: bool = False,
     hist_only: bool = False,
-    plot: bool = False,
+    **kwargs,
 ):
     """Generate a heatmap of time spent by point-to-cell gridding.
 
@@ -443,6 +451,8 @@ def trip_grid(
         image (:class:`matplotlib.collections.PathCollection`: image of histogram
 
     """
+    after_plot_args, kwargs = _get_after_plot_args(**kwargs)
+
     bins = traja.trajectory._bins_to_tuple(trj, bins)
     # TODO: Add kde-based method for line-to-cell gridding
     df = trj[["x", "y"]].dropna()
@@ -475,30 +485,54 @@ def trip_grid(
 
     plt.title("Time spent{}".format(" (Logarithmic)" if log else ""))
 
-    if plot:
-        plt.show()
+    _process_after_plot_args(**after_plot_args)
     # TODO: Add method for most common locations in grid
     # peak_index = unravel_index(hist.argmax(), hist.shape)
     return hist, image
 
 
-def _polar_bar(radii: np.ndarray, theta: np.ndarray, bins: int, ax=None):
-    hist, _ = np.histogram(theta, bins=bins)
-    if not ax:
-        ax = plt.subplot(111, projection="polar")
+def _process_after_plot_args(**after_plot_args):
+    filepath = after_plot_args.get("filepath")
+    if filepath:
+        plt.savefig(filepath)
+    if after_plot_args.get("show"):
+        plt.show()
 
-    width = np.pi / bins
-    max_radii = max(radii)
-    bars = ax.bar(theta, radii, width=width, bottom=0.0)
-    for r, bar in zip(radii, bars):
-        bar.set_facecolor(plt.cm.jet(r / max_radii))
+
+def _polar_bar(
+    radii: np.ndarray, theta: np.ndarray, bin_size=2, ax=None, overlap=True, **kwargs
+):
+    after_plot_args, kwargs = _get_after_plot_args(**kwargs)
+
+    title = kwargs.pop("title", None)
+    ax = ax or plt.subplot(111, projection="polar")
+
+    hist, bin_edges = np.histogram(
+        theta, bins=np.arange(-180, 180 + bin_size, bin_size)
+    )
+    centers = np.deg2rad(np.ediff1d(bin_edges) // 2 + bin_edges[:-1])
+
+    radians = np.deg2rad(theta)
+
+    width = np.deg2rad(bin_size)
+    angle = radians if overlap else centers
+    height = radii if overlap else hist
+    max_height = max(height)
+    bars = ax.bar(angle, height, width=width, bottom=0.0, **kwargs)
+    for h, bar in zip(height, bars):
+        bar.set_facecolor(plt.cm.jet(h / max_height))
         bar.set_alpha(0.5)
+    ax.set_theta_zero_location("N")
+    ax.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
+    if title:
+        ax.set_title(title)
+    plt.tight_layout()
+    _process_after_plot_args(**after_plot_args)
 
-    plt.show()
     return ax
 
 
-def polar_bar(trj, bins=24):
+def polar_bar(trj, feature="turn_angle", bin_size=2, overlap=True, **plot_kws):
     """Plot polar bar chart.
     Args:
         trj
@@ -508,18 +542,39 @@ def polar_bar(trj, bins=24):
         ax
 
     """
-    xy = trj[["x", "y"]].values
-    radii, theta = traja.trajectory.cartesian_to_polar(xy)
+    DIST_THRESHOLD = 0.005
+    # Get displacement
 
-    ax = _polar_bar(radii, theta, bins=bins)
+    displacement = traja.trajectory.calc_displacement(trj)
+    trj["displacement"] = displacement
+    trj = trj[trj.displacement > DIST_THRESHOLD]
+
+    if feature == "turn_angle":
+        feature_series = traja.trajectory.calc_turn_angle(trj)
+        trj["turn_angle"] = feature_series
+        trj.loc["turn_angle"] = trj.turn_angle.shift(-1)
+    elif feature == "heading":
+        feature_series = traja.trajectory.calc_heading(trj)
+        trj[feature] = feature_series
+
+    trj = trj[pd.notnull(trj[feature])]
+    trj = trj[pd.notnull(trj.displacement)]
+
+    # df = df[["x", "y"]]
+
+    # xy = df[["x", "y"]].values
+    # radii, theta = traja.trajectory.cartesian_to_polar(xy)
+    ax = _polar_bar(
+        trj.displacement, trj[feature], bin_size=bin_size, overlap=overlap, **plot_kws
+    )
     return ax
 
 
-def animate(trj, polar=False):
+def animate(trj, polar=True):
     """Animate trajectory.
 
     Args:
-
+        polar (bool):
     Returns:
 
 
@@ -527,11 +582,14 @@ def animate(trj, polar=False):
     from matplotlib.animation import FuncAnimation
 
     displacement = traja.trajectory.calc_displacement(trj)
+    # heading = traja.calc_heading(trj)
+    turn_angle = traja.trajectory.calc_turn_angle(trj)
     xy = trj[["x", "y"]].values
 
     fig = plt.figure(figsize=(8, 6))
     ax1 = plt.subplot(211)
-    ax2 = plt.subplot(212, projection="polar")
+    if polar:
+        ax2 = plt.subplot(212, polar="projection")
 
     def colfunc(val, minval, maxval, startcolor, stopcolor):
         """ Convert value in the range minval...maxval to a color in the range
@@ -541,10 +599,10 @@ def animate(trj, polar=False):
         f = float(val - minval) / (maxval - minval)
         return tuple(f * (b - a) + a for (a, b) in zip(startcolor, stopcolor))
 
-    RED, YELLOW, GREEN = (1, 0, 0), (1, 1, 0), (0, 1, 0)
-    CYAN, BLUE, MAGENTA = (0, 1, 1), (0, 0, 1), (1, 0, 1)
     POLAR_STEPS = XY_STEPS = 20
     DISPLACEMENT_THRESH = 0.25
+    bin_size = 2
+    overlap = True
 
     xlim, ylim = traja.trajectory._get_xylim(trj)
 
@@ -558,8 +616,9 @@ def animate(trj, polar=False):
         if not ind > 1 and not ind + 1 < len(xy):
             continue
 
-        for ax in [ax1, ax2]:
-            ax.clear()
+        ax1.clear()
+        if polar:
+            ax2.clear()
 
         prev_steps = max(ind - XY_STEPS, 0)
         color_cnt = len(xy[prev_steps:ind])
@@ -579,21 +638,39 @@ def animate(trj, polar=False):
         )
 
         ax1.set_title(
-            f"frame {ind} - distance (cm/0.25s): {displacement_str}\n \
-            x: {x:.2f}, y: {y:.2f}"
+            f"frame {ind} - distance (cm/0.25s): {displacement_str}\n"
+            "x: {x:.2f}, y: {y:.2f}\n"
+            "turn_angle: {turn_angle[ind]"
         )
 
-        if polar and ind > 1 and ind + 10 < len(xy):
-            radii, theta = traja.trajectory.cartesian_to_polar(
-                xy[max(ind - POLAR_STEPS, 0) : ind]
-            )
+        if polar and ind > 1:
+            start_index = max(ind - POLAR_STEPS, 0)
 
-            hist, _ = np.histogram(theta, bins=24)
-            max_radii = max(radii)
-            bars = ax2.bar(theta, radii, width=width, bottom=0.0)
-            for r, bar in zip(radii, bars):
-                bar.set_facecolor(plt.cm.jet(r / max_radii))
-                bar.set_alpha(0.5)
+            theta = turn_angle[start_index:ind]
+            radii = displacement[start_index:ind]
+
+            hist, bin_edges = np.histogram(
+                theta, bins=np.arange(-180, 180 + bin_size, bin_size)
+            )
+            centers = np.deg2rad(np.ediff1d(bin_edges) // 2 + bin_edges[:-1])
+
+            radians = np.deg2rad(theta)
+
+            width = np.deg2rad(bin_size)
+            angle = radians if overlap else centers
+            height = radii if overlap else hist
+            max_height = max(height)
+            bars = ax2.bar(angle, height, width=width, bottom=0.0)
+            for idx, (h, bar) in enumerate(zip(height, bars)):
+                bar.set_facecolor(plt.cm.jet(h / max_height))
+                bar.set_alpha(0.5 + 0.5 * (idx / POLAR_STEPS))
+            ax2.set_theta_zero_location("N")
+            ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
+            # max_radii = max(radii)
+            # bars = ax2.bar(theta, radii, width=width, bottom=0.0)
+            # for r, bar in zip(radii, bars):
+            #     bar.set_facecolor(plt.cm.jet(r / max_radii))
+            #     bar.set_alpha(0.5)
 
         plt.tight_layout()
         plt.pause(0.01)
