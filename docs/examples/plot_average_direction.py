@@ -1,6 +1,6 @@
 """
 Average direction for each grid cell
-------------------------------------
+====================================
 See the flow between grid cells.
 """
 import traja
