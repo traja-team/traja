@@ -961,22 +961,10 @@ def get_derivatives(trj):
 
         >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0.,0.2,0.4]})
         >>> df.traja.get_derivatives()
-        OrderedDict([('displacement', 0         NaN
-        1    1.414214
-        2    1.414214
-        dtype: float64), ('displacement_time', 0    0.0
-        1    0.2
-        2    0.4
-        Name: time, dtype: float64), ('speed', 0         NaN
-        1    7.071068
-        2    7.071068
-        dtype: float64), ('speed_times', 1    0.2
-        2    0.4
-        Name: speed_times, dtype: float64), ('acceleration', 0    NaN
-        1    NaN
-        2    0.0
-        dtype: float64), ('acceleration_times', 2    0.4
-        Name: accleration_times, dtype: float64)])
+           displacement  displacement_time     speed  speed_times  acceleration  acceleration_times
+        0           NaN                0.0       NaN          NaN           NaN                 NaN
+        1      1.414214                0.2  7.071068          0.2           NaN                 NaN
+        2      1.414214                0.4  7.071068          0.4           0.0                 0.4
 
     """
     if not _has_cols(trj, ["displacement", "displacement_time"]):
