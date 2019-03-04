@@ -1,6 +1,6 @@
 from traja.accessor import TrajaAccessor
 from traja.frame import TrajaDataFrame
-from traja.io import read_file
+from traja.io import read_file, from_df
 from traja.plotting import *
 from traja.trajectory import *
 from traja import models

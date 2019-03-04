@@ -211,7 +211,7 @@ class TrajaAccessor(object):
         return traja.trajectory._has_cols(self._obj, cols)
 
     @property
-    def xy(self, split: bool = False):
+    def xy(self):
         """Returns a :class:`numpy.ndarray` of x,y coordinates.
 
         Args:
@@ -231,8 +231,6 @@ class TrajaAccessor(object):
         """
         if self._has_cols(["x", "y"]):
             xy = self._obj[["x", "y"]].values
-            if split:
-                xy = np.split(xy, [-1], axis=1)
             return xy
         else:
             raise Exception("'x' and 'y' are not in the dataframe.")
@@ -274,9 +272,9 @@ class TrajaAccessor(object):
         return derivs
 
     def get_derivatives(self):
-        """Returns derivatives."""
+        """Returns derivatives as DataFrame."""
         derivs = traja.trajectory.get_derivatives(self._obj)
-        return derivs
+        return pd.DataFrame.from_dict(derivs)
 
     @property
     def speed_intervals(
