@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -11,6 +11,7 @@ from pandas.core.dtypes.common import (
 )
 
 import traja
+from traja import TrajaDataFrame
 from traja.trajectory import coords_to_flow
 
 
@@ -39,7 +40,13 @@ def sans_serif():
     plt.rc("font", family="serif")
 
 
-def predict(xy, nb_steps=10, epochs=1000, batch_size=1, model="lstm"):
+def predict(
+    xy: np.ndarray,
+    nb_steps: int = 10,
+    epochs: int = 1000,
+    batch_size: int = 1,
+    model="lstm",
+):
     """Method for training and visualizing LSTM with trajectory data."""
     if model is "lstm":
         from traja.models.nn import TrajectoryLSTM
@@ -47,7 +54,7 @@ def predict(xy, nb_steps=10, epochs=1000, batch_size=1, model="lstm"):
         TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
 
 
-def bar_plot(trj, bins=None, **kwargs):
+def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs):
     """Plot trajectory for single animal over period.
 
     Args:
@@ -90,7 +97,13 @@ def bar_plot(trj, bins=None, **kwargs):
     return ax
 
 
-def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
+def plot(
+    trj: TrajaDataFrame,
+    n_coords: Optional[int] = None,
+    show_time: bool = False,
+    accessor: Optional[traja.TrajaAccessor] = None,
+    **kwargs,
+):
     """Plot trajectory for single animal over period.
 
     Args:
@@ -235,14 +248,18 @@ def plot(trj, n_coords: int = None, show_time=False, accessor=None, **kwargs):
     return ax
 
 
-def _label_axes(trj, ax):
+def _label_axes(trj: TrajaDataFrame, ax):
     if "spatial_units" in trj.__dict__:
         ax.set_xlabel(trj.spatial_units)
         ax.set_ylabel(trj.spatial_units)
     return ax
 
 
-def plot_quiver(trj, bins=None, quiverplot_kws={}):
+def plot_quiver(
+    trj: TrajaDataFrame,
+    bins: Optional[Union[int, tuple]] = None,
+    quiverplot_kws: dict = {},
+):
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -267,13 +284,13 @@ def plot_quiver(trj, bins=None, quiverplot_kws={}):
 
 
 def plot_contour(
-    trj,
-    bins=None,
-    filled=True,
-    quiver=True,
-    contourplot_kws={},
-    contourfplot_kws={},
-    quiverplot_kws={},
+    trj: TrajaDataFrame,
+    bins: Optional[Union[int, tuple]] = None,
+    filled: bool = True,
+    quiver: bool = True,
+    contourplot_kws: dict = {},
+    contourfplot_kws: dict = {},
+    quiverplot_kws: dict = {},
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -308,7 +325,12 @@ def plot_contour(
     return ax
 
 
-def plot_surface(trj, bins=None, cmap="jet", **surfaceplot_kws):
+def plot_surface(
+    trj: TrajaDataFrame,
+    bins: Optional[Union[int, tuple]] = None,
+    cmap: str = "jet",
+    **surfaceplot_kws: dict,
+):
     """Plot surface of flow from each grid cell to neighbor in 3D.
 
     Args:
@@ -338,12 +360,12 @@ def plot_surface(trj, bins=None, cmap="jet", **surfaceplot_kws):
 
 
 def plot_stream(
-    trj,
-    bins=None,
-    cmap="jet",
-    contourfplot_kws={},
-    contourplot_kws={},
-    streamplot_kws={},
+    trj: TrajaDataFrame,
+    bins: Optional[Union[int, tuple]] = None,
+    cmap: str = "jet",
+    contourfplot_kws: dict = {},
+    contourplot_kws: dict = {},
+    streamplot_kws: dict = {},
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -377,14 +399,14 @@ def plot_stream(
 
 
 def plot_flow(
-    trj,
-    kind="quiver",
+    trj: TrajaDataFrame,
+    kind: str = "quiver",
     *args,
-    contourplot_kws={},
-    contourfplot_kws={},
-    streamplot_kws={},
-    quiverplot_kws={},
-    surfaceplot_kws={},
+    contourplot_kws: dict = {},
+    contourfplot_kws: dict = {},
+    streamplot_kws: dict = {},
+    quiverplot_kws: dict = {},
+    surfaceplot_kws: dict = {},
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -421,7 +443,7 @@ def plot_flow(
         raise NotImplementedError(f"Kind {kind} is not implemented.")
 
 
-def _get_after_plot_args(**kwargs):
+def _get_after_plot_args(**kwargs: dict):
     after_plot_args = dict(
         show=kwargs.pop("show", True), filepath=kwargs.pop("save", None)
     )
@@ -429,7 +451,7 @@ def _get_after_plot_args(**kwargs):
 
 
 def trip_grid(
-    trj,
+    trj: TrajaDataFrame,
     bins: Union[tuple, int] = 10,
     log: bool = False,
     spatial_units: str = None,
@@ -479,9 +501,9 @@ def trip_grid(
     )
     # TODO: Adjust colorbar ytick_labels to correspond with time
     label = "Frames" if not log else "$ln(frames)$"
-    cbar = plt.colorbar(image, ax=ax, label=label)
+    plt.colorbar(image, ax=ax, label=label)
 
-    ax = _label_axes(trj, ax)
+    _label_axes(trj, ax)
 
     plt.title("Time spent{}".format(" (Logarithmic)" if log else ""))
 
@@ -500,7 +522,12 @@ def _process_after_plot_args(**after_plot_args):
 
 
 def _polar_bar(
-    radii: np.ndarray, theta: np.ndarray, bin_size=2, ax=None, overlap=True, **kwargs
+    radii: np.ndarray,
+    theta: np.ndarray,
+    bin_size=2,
+    ax=None,
+    overlap=True,
+    **kwargs: str,
 ):
     after_plot_args, kwargs = _get_after_plot_args(**kwargs)
 
@@ -532,7 +559,13 @@ def _polar_bar(
     return ax
 
 
-def polar_bar(trj, feature="turn_angle", bin_size=2, overlap=True, **plot_kws):
+def polar_bar(
+    trj: TrajaDataFrame,
+    feature: str = "turn_angle",
+    bin_size: int = 2,
+    overlap: bool = True,
+    **plot_kws: str,
+):
     """Plot polar bar chart.
     Args:
         trj
@@ -570,7 +603,7 @@ def polar_bar(trj, feature="turn_angle", bin_size=2, overlap=True, **plot_kws):
     return ax
 
 
-def animate(trj, polar=True):
+def animate(trj: TrajaDataFrame, polar: bool = True):
     """Animate trajectory.
 
     Args:
@@ -666,11 +699,6 @@ def animate(trj, polar=True):
                 bar.set_alpha(0.5 + 0.5 * (idx / POLAR_STEPS))
             ax2.set_theta_zero_location("N")
             ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
-            # max_radii = max(radii)
-            # bars = ax2.bar(theta, radii, width=width, bottom=0.0)
-            # for r, bar in zip(radii, bars):
-            #     bar.set_facecolor(plt.cm.jet(r / max_radii))
-            #     bar.set_alpha(0.5)
 
         plt.tight_layout()
         plt.pause(0.01)

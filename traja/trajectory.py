@@ -40,7 +40,9 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
     return trj
 
 
-def angles(trj, lag: int = 1, compass_direction: float = None):
+def angles(trj: TrajaDataFrame, lag: int = 1):
+    if lag > 1:
+        raise NotImplementedError("Lag must be 1.")
     trj["angle"] = np.rad2deg(np.arccos(np.abs(trj["dx"]) / trj["distance"]))
     # Get heading from angle
     mask = (trj["dx"] > 0) & (trj["dy"] >= 0)
@@ -57,7 +59,7 @@ def angles(trj, lag: int = 1, compass_direction: float = None):
     trj.loc[trj.turn_angle < -180, "turn_angle"] += 360
 
 
-def step_lengths(trj):
+def step_lengths(trj: TrajaDataFrame):
     """Length of the steps of ``trj``.
 
     Args:
@@ -100,8 +102,8 @@ def cartesian_to_polar(xy: np.ndarray):
     return r, theta
 
 
-def expected_sq_displacement(trj, n=None, eqn1=True, compass_direction=None):
-    """Expected displacment.
+def expected_sq_displacement(trj: TrajaDataFrame, n: int = None, eqn1: bool = True):
+    """Expected displacement.
 
     .. note::
 
@@ -110,7 +112,7 @@ def expected_sq_displacement(trj, n=None, eqn1=True, compass_direction=None):
     """
     # TODO: Fix and test implementation
     sl = step_lengths(trj)
-    ta = angles(trj, compass_direction=compass_direction)
+    ta = angles(trj)
     l = np.mean(sl)
     l2 = np.mean(sl ^ 2)
     c = np.mean(np.cos(ta))
@@ -353,7 +355,7 @@ def _grid_coords1D(grid_indices: np.ndarray):
     return np.array(grid_indices1D, dtype=int)
 
 
-def transitions(trj, **kwargs):
+def transitions(trj: TrajaDataFrame, **kwargs):
     """Get first-order Markov model for transitions between grid cells."""
     if "xbin" not in trj.columns or "ybin" not in trj.columns:
         grid_indices = grid_coordinates(trj, **kwargs)
@@ -366,7 +368,7 @@ def transitions(trj, **kwargs):
 
 
 def grid_coordinates(
-    trj,
+    trj: TrajaDataFrame,
     bins: Union[int, tuple] = None,
     xlim: tuple = None,
     ylim: tuple = None,
@@ -502,13 +504,13 @@ def generate(
     return df
 
 
-def _resample_time(trj, step_time: Union[float, int]):
+def _resample_time(trj: TrajaDataFrame, step_time: Union[float, int]):
     if not is_datetime_or_timedelta_dtype(trj.index):
         raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
     return trj.resample(step_time).agg({"x": np.mean, "y": np.mean})
 
 
-def resample_time(trj, step_time, new_fps=None):
+def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: bool = None):
     """Returns a ``TrajaDataFrame`` resampled to consistent `step_time` intervals.
 
     Args:
@@ -560,7 +562,7 @@ def resample_time(trj, step_time, new_fps=None):
     return _trj
 
 
-def rotate(df, angle=0, origin: tuple = None):
+def rotate(df, angle: Union[float, int] = 0, origin: tuple = None):
     """Returns a ``TrajaDataFrame`` Rotate a trajectory `angle` in radians.
 
     Args:
@@ -607,7 +609,7 @@ def rotate(df, angle=0, origin: tuple = None):
     return trj
 
 
-def rediscretize_points(trj, R: Union[float, int]):
+def rediscretize_points(trj: TrajaDataFrame, R: Union[float, int]):
     """Returns a ``TrajaDataFrame`` rediscretized to a constant step length `R`.
 
     Args:
@@ -628,7 +630,7 @@ def rediscretize_points(trj, R: Union[float, int]):
     return rt
 
 
-def _rediscretize_points(trj, R: Union[float, int]):
+def _rediscretize_points(trj: TrajaDataFrame, R: Union[float, int]):
     """Helper function for :func:`traja.trajectory.rediscretize`.
 
     Args:
@@ -698,12 +700,12 @@ def _rediscretize_points(trj, R: Union[float, int]):
     return result
 
 
-def _has_cols(trj, cols: list):
+def _has_cols(trj: TrajaDataFrame, cols: list):
     """Check if `trj` has `cols`."""
     return set(cols).issubset(trj.columns)
 
 
-def calc_turn_angle(trj):
+def calc_turn_angle(trj: TrajaDataFrame):
     """Return a ``Series`` of floats with turn angles.
 
     Args:
@@ -733,7 +735,7 @@ def calc_turn_angle(trj):
     return turn_angle
 
 
-def calc_angle(trj):
+def calc_angle(trj: TrajaDataFrame):
     """Returns a ``Series`` with angle between steps as a function of displacement w.r.t x axis.
 
     Args:
@@ -752,7 +754,7 @@ def calc_angle(trj):
     return angle
 
 
-def calc_displacement(trj):
+def calc_displacement(trj: TrajaDataFrame):
     """Returns a ``Series`` of ``float`` displacement between consecutive indices.
 
     Args:
@@ -781,7 +783,7 @@ def calc_displacement(trj):
     return displacement
 
 
-def calc_derivatives(trj):
+def calc_derivatives(trj: TrajaDataFrame):
     """Returns derivatives ``displacement`` and ``displacement_time`` as dictionary.
 
     Args:
@@ -826,7 +828,7 @@ def calc_derivatives(trj):
     return derivs
 
 
-def calc_heading(trj):
+def calc_heading(trj: TrajaDataFrame):
     """Calculate trajectory heading.
 
     Args:
@@ -865,7 +867,7 @@ def calc_heading(trj):
 
 
 def speed_intervals(
-    trj,
+    trj: TrajaDataFrame,
     faster_than: float = None,
     slower_than: float = None,
     interpolate_times: bool = True,
@@ -947,7 +949,7 @@ def speed_intervals(
     return result
 
 
-def get_derivatives(trj):
+def get_derivatives(trj: TrajaDataFrame):
     """Returns derivatives ``displacement``, ``displacement_time``, ``speed``, ``speed_times``, ``acceleration``,
     ``acceleration_times`` as dictionary.
 
@@ -990,7 +992,7 @@ def get_derivatives(trj):
     return derivs
 
 
-def _get_xylim(trj):
+def _get_xylim(trj: TrajaDataFrame):
     if (
         "xlim" in trj.__dict__
         and "ylim" in trj.__dict__
@@ -1003,7 +1005,7 @@ def _get_xylim(trj):
         return xlim, ylim
 
 
-def coords_to_flow(trj, bins: Union[int, tuple] = None):
+def coords_to_flow(trj: TrajaDataFrame, bins: Union[int, tuple] = None):
     """Calculate grid cell flow from trajectory.
 
     Args:
@@ -1059,12 +1061,12 @@ def from_xy(xy: np.ndarray):
     return df
 
 
-def fill_in_traj(trj):
+def fill_in_traj(trj: TrajaDataFrame):
     # FIXME: Implement
     return trj
 
 
-def _get_time_col(trj):
+def _get_time_col(trj: TrajaDataFrame):
     # Check if saved in metadata
     time_col = trj.__dict__.get("time_col", None)
     if time_col:
