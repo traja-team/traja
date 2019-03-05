@@ -93,7 +93,7 @@ Generate random walks with
     df = traja.generate(n=1000, step_length=2)
     df.traja.plot()
 
-.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/walk_screenshot.png
+.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_with_traja_003.png
    :alt: walk\_screenshot.png
 
 Rediscretize
@@ -101,9 +101,15 @@ Rediscretize
 Rediscretize the trajectory into consistent step lengths with ``traja.trajectory.rediscretize`` where the ``R`` parameter is
 the new step length.
 
-.. note::
+.. code-block:: python
 
-    Based on the appendix in Bovet and Benhamou, (1988) and Jim McLean's
+    rt = df.traja.rediscretize(R=5000)
+    rt.traja.plot()
+
+.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_with_traja_004.png
+   :alt: rediscretized
+
+Based on the appendix in Bovet and Benhamou, (1988) and Jim McLean's
     `trajr <https://github.com/JimMcL/trajr>`_ implementation.
 
 
