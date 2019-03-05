@@ -603,14 +603,13 @@ def polar_bar(
     return ax
 
 
-def animate(trj: TrajaDataFrame, polar: bool = True, save=False):
+def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     """Animate trajectory.
 
     Args:
-        polar (bool):
-        save (bool): Saves video to file.
+        polar (bool): include polar bar chart with turn angle
+        save (bool): save video to ``trajectory.mp4``
     Returns:
-
 
     """
     from matplotlib import animation
@@ -640,9 +639,13 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save=False):
         )
 
     xlim, ylim = traja.trajectory._get_xylim(trj)
-    ax1.set_xlim(xlim)
-    ax1.set_ylim(ylim)
-    ax1.set_aspect("equal")
+    ax1.set(
+        xlim=xlim,
+        ylim=ylim,
+        ylabel=trj.spatial_units or "m",
+        xlabel=trj.spatial_units or "m",
+        aspect="equal",
+    )
 
     width = np.pi / 24
     alphas = np.linspace(0.1, 1, XY_STEPS)
@@ -699,6 +702,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save=False):
                 bar.set_alpha(0.8 * (idx / POLAR_STEPS))
             ax2.set_theta_zero_location("N")
             ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
+        plt.tight_layout()
 
     anim = FuncAnimation(fig, update, interval=10)
     if save:

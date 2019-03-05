@@ -109,8 +109,6 @@ the new step length.
 .. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_with_traja_004.png
    :alt: rediscretized
 
-Based on the appendix in Bovet and Benhamou, (1988) and Jim McLean's
-    `trajr <https://github.com/JimMcL/trajr>`_ implementation.
 
 
 Resample time
