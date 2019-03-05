@@ -1,14 +1,21 @@
 sudo: false
+
 dist: xenial
+
 language: python
+
 python:
 - '3.6'
 - '3.7'
+
 git:
   depth: false
+
 env:
 - MPLBACKEND=Agg
+  
 cache: pip
+
 install:
 - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda
@@ -22,9 +29,11 @@ install:
 - source activate test-environment
 - pip install -r docs/requirements.txt
 - pip install .
+
 script: 
 - cd docs && make doctest && cd ..
-- conda list && echo $PYTHONPATH && py.test traja
+- py.test traja
+
 deploy:
   provider: pypi
   user: jshenk
