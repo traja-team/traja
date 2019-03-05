@@ -108,3 +108,7 @@ class TrajaDataFrame(pd.DataFrame):
         if deep:
             data = data.copy()
         return TrajaDataFrame(data).__finalize__(self)
+
+    def set(self, key, value):
+        """Set metadata."""
+        self.__dict__[key] = value

@@ -1,6 +1,5 @@
 from typing import Union
 
-import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 
@@ -27,14 +26,6 @@ class TrajaAccessor(object):
     def _validate(obj):
         if "x" not in obj.columns or "y" not in obj.columns:
             raise AttributeError("Must have 'x' and 'y'.")
-
-    def set(self, **kwargs):
-        """Convenience function for setting metadata in the `traja` accessor."""
-        for key, value in kwargs.items():
-            try:
-                self.__setattr__(key, value)
-            except Exception as e:
-                print(f"Cannot set {key} to {value}")
 
     @property
     def center(self):
@@ -242,39 +233,35 @@ class TrajaAccessor(object):
             raise Exception("Missing time information in trajectory.")
 
     def calc_derivatives(self, assign: bool = False):
-        """Returns derivatives `displacement` and `displacement_time` as dictionary.
+        """Returns derivatives `displacement` and `displacement_time`.
 
         Args:
           assign (bool): Assign output to ``TrajaDataFrame`` (Default value = False)
 
         Returns:
-          derivs (:class:`~collections.OrderedDict`): Derivatives in dictionary.
+          derivs (:class:`~collections.OrderedDict`): Derivatives.
           
         .. doctest::
 
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0., 0.2, 0.4]})
             >>> df.traja.calc_derivatives()
-            OrderedDict([('displacement', 0         NaN
-            1    1.414214
-            2    1.414214
-            dtype: float64), ('displacement_time', 0    0.0
-            1    0.2
-            2    0.4
-            Name: time, dtype: float64)])
+               displacement  displacement_time
+            0           NaN                0.0
+            1      1.414214                0.2
+            2      1.414214                0.4
+
 
         """
         derivs = traja.trajectory.calc_derivatives(self._obj)
         if assign:
-            trj = self._obj.merge(
-                pd.DataFrame.from_records(derivs), left_index=True, right_index=True
-            )
+            trj = self._obj.merge(derivs, left_index=True, right_index=True)
             self._obj = trj
         return derivs
 
     def get_derivatives(self):
         """Returns derivatives as DataFrame."""
         derivs = traja.trajectory.get_derivatives(self._obj)
-        return pd.DataFrame.from_dict(derivs)
+        return derivs
 
     @property
     def speed_intervals(
