@@ -603,15 +603,17 @@ def polar_bar(
     return ax
 
 
-def animate(trj: TrajaDataFrame, polar: bool = True):
+def animate(trj: TrajaDataFrame, polar: bool = True, save=False):
     """Animate trajectory.
 
     Args:
         polar (bool):
+        save (bool): Saves video to file.
     Returns:
 
 
     """
+    from matplotlib import animation
     from matplotlib.animation import FuncAnimation
 
     displacement = traja.trajectory.calc_displacement(trj)
@@ -619,50 +621,45 @@ def animate(trj: TrajaDataFrame, polar: bool = True):
     turn_angle = traja.trajectory.calc_turn_angle(trj)
     xy = trj[["x", "y"]].values
 
-    fig = plt.figure(figsize=(8, 6))
-    ax1 = plt.subplot(211)
-    if polar:
-        ax2 = plt.subplot(212, polar="projection")
-
-    def colfunc(val, minval, maxval, startcolor, stopcolor):
-        """ Convert value in the range minval...maxval to a color in the range
-            startcolor to stopcolor. The colors passed and the one returned are
-            composed of a sequence of N component values (e.g. RGB).
-        """
-        f = float(val - minval) / (maxval - minval)
-        return tuple(f * (b - a) + a for (a, b) in zip(startcolor, stopcolor))
-
     POLAR_STEPS = XY_STEPS = 20
     DISPLACEMENT_THRESH = 0.25
     bin_size = 2
     overlap = True
 
+    fig = plt.figure(figsize=(8, 6))
+    ax1 = plt.subplot(211)
+
+    fig.add_subplot(ax1)
+    if polar:
+        ax2 = plt.subplot(212, polar="projection")
+        ax2.set_theta_zero_location("N")
+        ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
+        fig.add_subplot(ax2)
+        bars = ax2.bar(
+            np.zeros(XY_STEPS), np.zeros(XY_STEPS), width=np.zeros(XY_STEPS), bottom=0.0
+        )
+
     xlim, ylim = traja.trajectory._get_xylim(trj)
+    ax1.set_xlim(xlim)
+    ax1.set_ylim(ylim)
+    ax1.set_aspect("equal")
 
     width = np.pi / 24
     alphas = np.linspace(0.1, 1, XY_STEPS)
     rgba_colors = np.zeros((XY_STEPS, 4))
     rgba_colors[:, 0] = 1.0  # red
     rgba_colors[:, 3] = alphas
+    scat = ax1.scatter(
+        range(XY_STEPS), range(XY_STEPS), marker=".", color=rgba_colors[:XY_STEPS]
+    )
 
-    for ind, (x, y) in enumerate(xy):
-        if not ind > 1 and not ind + 1 < len(xy):
-            continue
-
-        ax1.clear()
-        if polar:
-            ax2.clear()
-
-        prev_steps = max(ind - XY_STEPS, 0)
-        color_cnt = len(xy[prev_steps:ind])
-        ax1.scatter(
-            xy[prev_steps:ind, 0],
-            xy[prev_steps:ind, 1],
-            marker="o",
-            color=rgba_colors[:color_cnt],
-        )
-        ax1.set_xlim(xlim)
-        ax1.set_ylim(ylim)
+    def update(frame_number):
+        ind = frame_number % len(xy)
+        if ind < XY_STEPS:
+            scat.set_offsets(xy[:XY_STEPS])
+        else:
+            prev_steps = max(ind - XY_STEPS, 0)
+            scat.set_offsets(xy[prev_steps:ind])
 
         displacement_str = (
             rf"$\bf{displacement[ind]:.2f}$"
@@ -670,13 +667,15 @@ def animate(trj: TrajaDataFrame, polar: bool = True):
             else f"{displacement[ind]:.2f}"
         )
 
+        x, y = xy[ind]
         ax1.set_title(
             f"frame {ind} - distance (cm/0.25s): {displacement_str}\n"
-            "x: {x:.2f}, y: {y:.2f}\n"
-            "turn_angle: {turn_angle[ind]"
+            f"x: {x:.2f}, y: {y:.2f}\n"
+            f"turn_angle: {turn_angle[ind]:.2f}"
         )
 
         if polar and ind > 1:
+            ax2.clear()
             start_index = max(ind - POLAR_STEPS, 0)
 
             theta = turn_angle[start_index:ind]
@@ -692,14 +691,17 @@ def animate(trj: TrajaDataFrame, polar: bool = True):
             width = np.deg2rad(bin_size)
             angle = radians if overlap else centers
             height = radii if overlap else hist
-            max_height = max(height)
+            max_height = displacement.max() if overlap else max(hist)
+
             bars = ax2.bar(angle, height, width=width, bottom=0.0)
             for idx, (h, bar) in enumerate(zip(height, bars)):
                 bar.set_facecolor(plt.cm.jet(h / max_height))
-                bar.set_alpha(0.5 + 0.5 * (idx / POLAR_STEPS))
+                bar.set_alpha(0.8 * (idx / POLAR_STEPS))
             ax2.set_theta_zero_location("N")
             ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
 
-        plt.tight_layout()
-        plt.pause(0.01)
-        plt.show(block=False)
+    anim = FuncAnimation(fig, update, interval=10)
+    if save:
+        anim.save("trajectory.mp4", writer=animation.FFMpegWriter(fps=10))
+    else:
+        plt.show()
