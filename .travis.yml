@@ -22,7 +22,9 @@ install:
 - source activate test-environment
 - pip install -r docs/requirements.txt
 - pip install .
-script: cd docs && make doctest && cd ..
+script: 
+- cd docs && make doctest && cd ..
+- py.test traja
 deploy:
   provider: pypi
   user: jshenk

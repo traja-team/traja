@@ -784,25 +784,22 @@ def calc_displacement(trj: TrajaDataFrame):
 
 
 def calc_derivatives(trj: TrajaDataFrame):
-    """Returns derivatives ``displacement`` and ``displacement_time`` as dictionary.
+    """Returns derivatives ``displacement`` and ``displacement_time`` as DataFrame.
 
     Args:
       trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
     Returns:
-      derivs (:class:`~collections.OrderedDict`): Derivatives in dictionary.
+      derivs (:class:`~pandas.DataFrame`): Derivatives.
 
     .. doctest::
 
         >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0., 0.2, 0.4]})
         >>> traja.calc_derivatives(df)
-        OrderedDict([('displacement', 0         NaN
-        1    1.414214
-        2    1.414214
-        dtype: float64), ('displacement_time', 0    0.0
-        1    0.2
-        2    0.4
-        Name: time, dtype: float64)])
+           displacement  displacement_time
+        0           NaN                0.0
+        1      1.414214                0.2
+        2      1.414214                0.4
 
     """
 
@@ -823,7 +820,10 @@ def calc_derivatives(trj: TrajaDataFrame):
     else:
         displacement_time = trj[time_col].diff().fillna(0).cumsum()
 
-    derivs = OrderedDict(displacement=displacement, displacement_time=displacement_time)
+    # TODO: Create DataFrame directly
+    derivs = pd.DataFrame(
+        OrderedDict(displacement=displacement, displacement_time=displacement_time)
+    )
 
     return derivs
 
@@ -897,8 +897,8 @@ def speed_intervals(
         pass
 
     # Calculate trajectory speeds
-    speed = derivs.get("speed")
-    times = derivs.get("speed_times")
+    speed = derivs["speed"]
+    times = derivs["speed_times"]
     flags = np.full(len(speed), 1)
 
     if faster_than is not None:
@@ -961,8 +961,8 @@ def get_derivatives(trj: TrajaDataFrame):
 
     .. doctest::
 
-        >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0.,0.2,0.4]})
-        >>> df.traja.get_derivatives()
+        >> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0.,0.2,0.4]})
+        >> df.traja.get_derivatives()
            displacement  displacement_time     speed  speed_times  acceleration  acceleration_times
         0           NaN                0.0       NaN          NaN           NaN                 NaN
         1      1.414214                0.2  7.071068          0.2           NaN                 NaN
@@ -987,8 +987,9 @@ def get_derivatives(trj: TrajaDataFrame):
     # Calculate linear acceleration
     a = v.diff() / vt.diff().rename("acceleration")
     at = vt[1 : len(vt)].rename("accleration_times")
-    data = OrderedDict(speed=v, speed_times=vt, acceleration=a, acceleration_times=at)
-    derivs.update(data)
+
+    data = dict(speed=v, speed_times=vt, acceleration=a, acceleration_times=at)
+    derivs = derivs.merge(pd.DataFrame(data), left_index=True, right_index=True)
     return derivs
 
 
