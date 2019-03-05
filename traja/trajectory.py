@@ -962,7 +962,7 @@ def get_derivatives(trj: TrajaDataFrame):
     .. doctest::
 
         >> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0.,0.2,0.4]})
-        >> df.traja.get_derivatives()
+        >> df.traja.get_derivatives() #doctest: +SKIP
            displacement  displacement_time     speed  speed_times  acceleration  acceleration_times
         0           NaN                0.0       NaN          NaN           NaN                 NaN
         1      1.414214                0.2  7.071068          0.2           NaN                 NaN
