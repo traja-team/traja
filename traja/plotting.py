@@ -123,8 +123,7 @@ def plot(
 
     GRAY = "#999999"
     self = accessor or {}
-    if accessor:
-        kwargs = self._get_plot_args(**kwargs)
+
     xlim = kwargs.pop("xlim", None)
     ylim = kwargs.pop("ylim", None)
     if not xlim or not ylim:
@@ -191,7 +190,7 @@ def plot(
     label = f"Time ({time_units})" if time_units else ""
 
     sc = ax.scatter(
-        xs, ys, c=colors, s=25, cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax
+        xs, ys, c=colors, s=kwargs.pop('s',5), cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax, **kwargs
     )
 
     ax.set_xlim(xlim)
@@ -354,7 +353,7 @@ def plot_surface(
     )
 
     ax = _label_axes(trj, ax)
-
+    ax.set_aspect('equal')
     plt.show()
     return ax
 
@@ -424,7 +423,7 @@ def plot_flow(
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
     """
     if kind is "quiver":
-        return plot_quiver(trj, *args, **quiverplot_kws)
+        return plot_quiver(trj, *args,cou **quiverplot_kws)
     elif kind is "contour":
         return plot_contour(trj, filled=False, *args, **quiverplot_kws)
     elif kind is "contourf":
@@ -575,8 +574,9 @@ def polar_bar(
         ax
 
     """
-    DIST_THRESHOLD = 0.005
+    DIST_THRESHOLD = 0.001
     # Get displacement
+
 
     displacement = traja.trajectory.calc_displacement(trj)
     trj["displacement"] = displacement
@@ -593,8 +593,8 @@ def polar_bar(
     trj = trj[pd.notnull(trj[feature])]
     trj = trj[pd.notnull(trj.displacement)]
 
+    assert len(trj) > 0, "Dataframe is empty after filtering, check coordinates"
     # df = df[["x", "y"]]
-
     # xy = df[["x", "y"]].values
     # radii, theta = traja.trajectory.cartesian_to_polar(xy)
     ax = _polar_bar(
@@ -615,13 +615,13 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     from matplotlib import animation
     from matplotlib.animation import FuncAnimation
 
-    displacement = traja.trajectory.calc_displacement(trj)
+    displacement = traja.trajectory.calc_displacement(trj).reset_index(drop=True)
     # heading = traja.calc_heading(trj)
-    turn_angle = traja.trajectory.calc_turn_angle(trj)
-    xy = trj[["x", "y"]].values
+    turn_angle = traja.trajectory.calc_turn_angle(trj).reset_index(drop=True)
+    xy = trj[["x", "y"]].reset_index(drop=True)
 
     POLAR_STEPS = XY_STEPS = 20
-    DISPLACEMENT_THRESH = 0.25
+    DISPLACEMENT_THRESH = 0.025
     bin_size = 2
     overlap = True
 
@@ -670,7 +670,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
             else f"{displacement[ind]:.2f}"
         )
 
-        x, y = xy[ind]
+        x, y = xy.iloc[ind]
         ax1.set_title(
             f"frame {ind} - distance (cm/0.25s): {displacement_str}\n"
             f"x: {x:.2f}, y: {y:.2f}\n"
@@ -704,8 +704,11 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
             ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
         plt.tight_layout()
 
-    anim = FuncAnimation(fig, update, interval=10)
+    anim = FuncAnimation(fig, update, interval=10, frames=range(len(xy)))
     if save:
-        anim.save("trajectory.mp4", writer=animation.FFMpegWriter(fps=10))
+        try:
+            anim.save("trajectory.mp4", writer=animation.FFMpegWriter(fps=10))
+        except FileNotFoundError:
+            raise Exception("FFmpeg not installed, please install it.")
     else:
         plt.show()

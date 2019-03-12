@@ -14,6 +14,7 @@ from pandas.core.dtypes.common import (
     is_datetime64_any_dtype,
     is_timedelta64_dtype,
 )
+from scipy import signal
 from scipy.spatial.distance import directed_hausdorff, euclidean
 
 
@@ -34,8 +35,8 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
 
     if w % 2 != 1:
         raise Exception(f"Invalid smoothing parameter w ({w}): n must be odd")
-    trj.x = scipy.signal.savgol_filter(trj.x, window_length=w, polyorder=p, axis=0)
-    trj.y = scipy.signal.savgol_filter(trj.y, window_length=w, polyorder=p, axis=0)
+    trj.x = signal.savgol_filter(trj.x, window_length=w, polyorder=p, axis=0)
+    trj.y = signal.savgol_filter(trj.y, window_length=w, polyorder=p, axis=0)
     trj = fill_in_traj(trj)
     return trj
 
@@ -68,8 +69,8 @@ def step_lengths(trj: TrajaDataFrame):
     Returns:
 
     """
-    raise NotImplementedError()
-
+    displacement = traja.trajectory.calc_displacement(trj)
+    return displacement
 
 def polar_to_z(r: float, theta: float):
     """Converts polar coordinates ``z`` and ``theta`` to complex number ``z``.
@@ -270,6 +271,8 @@ def _bins_to_tuple(trj, bins: Union[int, Tuple[int, int]] = 10):
         bins (Sequence[int,int]): Bins (nx, ny)
 
     """
+    if bins is None:
+        bins = 10
     if isinstance(bins, int):
         # make aspect equal
         xlim, ylim = _get_xylim(trj)
@@ -864,7 +867,6 @@ def calc_heading(trj: TrajaDataFrame):
     mask = (dx <= 0) & (dy > 0)
     df.loc[mask, "heading"] = 180 - angle[mask]
     return df.heading
-
 
 def speed_intervals(
     trj: TrajaDataFrame,

@@ -1,3 +1,5 @@
+from typing import Optional, Union
+
 import numpy as np
 import pandas as pd
 from pandas.core.dtypes.common import (
@@ -13,7 +15,7 @@ def from_df(df: pd.DataFrame, xcol=None, ycol=None, time_col=None, **kwargs):
     """Returns a :class:`traja.frame.TrajaDataFrame` from a :class:`pandas DataFrame<pandas.DataFrame>`.
 
     Args:
-      df (:class:`pandas.DataFrame`): Trajectory as pandas``DataFrame``
+      df (:class:`pandas.DataFrame`): Trajectory as pandas ``DataFrame``
       xcol (str)
       ycol (str)
       timecol (str)
@@ -56,18 +58,31 @@ def from_df(df: pd.DataFrame, xcol=None, ycol=None, time_col=None, **kwargs):
 
 def read_file(
     filepath: str,
-    id: str = None,
-    parse_dates=False,
-    xlim: tuple = None,
-    ylim: tuple = None,
+    id: Optional[str] = None,
+    xcol:Optional[str]=None,
+    ycol:Optional[str]=None,
+    parse_dates:Union[str,bool]=False,
+    xlim: Optional[tuple] = None,
+    ylim: Optional[tuple] = None,
     spatial_units: str = "m",
-    fps: float = None,
+    fps: Optional[float] = None,
     **kwargs,
 ):
     """Convenience method wrapping pandas `read_csv` and initializing metadata.
 
     Args:
       filepath (str): path to csv file with `x`, `y` and `time` (optional) columns
+      id (str): id for trajectory
+      xcol (str): name of column containing x coordinates
+      ycol (str): name of column containing y coordinates
+      parse_dates (Union[list,bool]): The behavior is as follows:
+                                    - boolean. if True -> try parsing the index.
+                                    - list of int or names. e.g. If [1, 2, 3] -> try parsing columns 1, 2, 3 each as a
+                                    separate date column.
+      xlim (tuple): x limits (min,max) for plotting
+      ylim (tuple): y limits (min,max) for plotting
+      spatial_units (str): for plotting (eg, 'cm')
+      fps (float): for time calculations
       **kwargs: Additional arguments for :meth:`pandas.read_csv`.
 
     Returns:
@@ -80,6 +95,10 @@ def read_file(
     df_test = pd.read_csv(
         filepath, nrows=10, parse_dates=parse_dates, infer_datetime_format=True
     )
+
+    if xcol is not None or ycol is not None:
+        if not xcol in df_test or ycol not in df_test:
+            raise Exception(f"{xcol} or {ycol} not found as headers.")
 
     # Strip whitespace
     whitespace_cols = [c for c in df_test if " " in df_test[c].name]
@@ -140,6 +159,9 @@ def read_file(
         else:
             # leave index as int frames
             pass
+        if xcol and ycol:
+            trj.rename(columns={xcol: "x",
+                                ycol: "y"})
     else:
         # TODO: Implement for HDF5 and .npy files.
         raise NotImplementedError("Non-csv's not yet implemented")

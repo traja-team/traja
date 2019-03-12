@@ -60,15 +60,6 @@ class TrajaAccessor(object):
         """
         return self.between(begin, end)
 
-    def _get_plot_args(self, **kwargs):
-        for var in self._obj._metadata:
-            # Update global meta variables
-            # TODO: Replace with elegant solution
-            if var not in kwargs:
-                # Metadata variable not specified in argument
-                if var in self._obj.__dict__:
-                    kwargs[var] = self._obj.__dict__[var]
-        return kwargs
 
     def _get_time_col(self):
         """Returns time column in trajectory.

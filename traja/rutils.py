@@ -3,7 +3,7 @@ try:
 except ImportError:
     raise ImportError(
         "Python package rpy2 is required for this. Install it with"
-        ""
+        "\n"
         "pip install rpy2"
         ""
     )
@@ -12,7 +12,10 @@ import rpy2.robjects.packages as rpackages
 try:
     import rpy2.robjects.pandas2ri as rpandas
 except ModuleNotFoundError as e:
-    raise ModuleNotFoundError(e + "\n Install tzlocal with `pip install tzlocal`.")
+    if 'tzlocal' in e.msg:
+        raise ModuleNotFoundError(e.msg + "\n Install tzlocal with `pip install tzlocal`.")
+    else:
+        raise ModuleNotFoundError(e)
 from rpy2.robjects.packages import importr
 
 rpandas.activate()
