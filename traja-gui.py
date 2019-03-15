@@ -1,10 +1,12 @@
-from PyQt5 import QtGui,QtWidgets
+from os.path import basename
 import sys
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import style
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from PyQt5 import QtGui,QtWidgets
 
 import traja
 
@@ -61,10 +63,10 @@ class PlottingWidget(QtWidgets.QMainWindow):
 
 
     def getCSV(self):
-        filePath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
-        if filePath != "":
-            print (filePath)
-            self.df = traja.read_file(str(filePath), index_col='time_stamps_vec', parse_dates=['time_stamps_vec'])
+        filepath, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        if filepath != "":
+            self.filepath = filepath
+            self.df = traja.read_file(str(filepath), index_col='time_stamps_vec', parse_dates=['time_stamps_vec'])
             self.columns = self.df.columns.tolist()
             self.plot_list = ['Actogram','Polar','Trajectory']
             self.comboBox.addItems(self.columns)
@@ -72,13 +74,14 @@ class PlottingWidget(QtWidgets.QMainWindow):
 
 
     def plot(self):
-        plt.cla()
+        plt.clf()
 
         plot_kind = self.comboBox2.currentText()
-        projection = 'polar' if plot_kind in ['Polar'] else None
+        projection = 'polar' if plot_kind in ['Polar'] else 'rectilinear'
 
         ax = self.figure.add_subplot(111, projection=projection)
 
+        title = f"{basename(self.filepath)}"
         # TODO: Move mapping to separate method
         if plot_kind == 'Actogram':
             displacement = traja.trajectory.calc_displacement(self.df)
@@ -86,7 +89,8 @@ class PlottingWidget(QtWidgets.QMainWindow):
         elif plot_kind == 'Trajectory':
             traja.plotting.plot(self.df, ax=ax, interactive=False)
         elif plot_kind == 'Polar':
-            traja.plotting.polar_bar(self.df, ax=ax, interactive=False)
+            traja.plotting.polar_bar(self.df, ax=ax, title=title, interactive=False)
+        plt.tight_layout()
         self.canvas.draw()
 
 
