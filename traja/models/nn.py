@@ -39,7 +39,7 @@ class TrajectoryLSTM:
         fig, ax = plt.subplots(2, 1)
         self.fig = fig
         self.ax = ax
-        assert (xy.shape[1] is 2, f"xy should be an N x 2 array, but is {xy.shape}")
+        assert xy.shape[1] is 2, f"xy should be an N x 2 array, but is {xy.shape}"
         self.xy = xy
         self.nb_steps = nb_steps
         self.epochs = epochs
