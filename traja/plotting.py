@@ -667,15 +667,13 @@ def polar_bar(
     DIST_THRESHOLD = 0.001
     # Get displacement
 
-
     displacement = traja.trajectory.calc_displacement(trj)
-    trj["displacement"] = displacement
-    trj = trj[trj.displacement > DIST_THRESHOLD]
-
+    trj['displacement'] = displacement
+    trj = trj.loc[trj.displacement > DIST_THRESHOLD]
     if feature == "turn_angle":
         feature_series = traja.trajectory.calc_turn_angle(trj)
-        trj["turn_angle"] = feature_series
-        trj.loc["turn_angle"] = trj.turn_angle.shift(-1)
+        trj['turn_angle'] = feature_series
+        trj.turn_angle = trj.turn_angle.shift(-1)
     elif feature == "heading":
         feature_series = traja.trajectory.calc_heading(trj)
         trj[feature] = feature_series
