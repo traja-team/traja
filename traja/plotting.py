@@ -587,7 +587,7 @@ def find_runs(x:pd.Series):
         return run_values, run_starts, run_lengths
 
 
-def plot_actogram(series:pd.Series, dark=(19,7), ax:matplotlib.axes.Axes=None, interactive=True, **kwargs):
+def plot_actogram(series:pd.Series, dark=(19,7), ax:matplotlib.axes.Axes=None, **kwargs):
     """Plot activity or displacement as an actogram.
 
     .. note::
