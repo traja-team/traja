@@ -4,7 +4,7 @@ Reading and Writing Files
 Reading trajectory data
 -----------------------
 
-traja allows reading files via :func:`traja.io.read_file`. For example a CSV file ``trajectory.csv`` with the
+traja allows reading files via :func:`traja.parsers.read_file`. For example a CSV file ``trajectory.csv`` with the
 following contents::
 
 

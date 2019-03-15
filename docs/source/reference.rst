@@ -45,7 +45,7 @@ The following methods are available via `traja.trajectory`:
 io functions
 ------------
 
-The following methods are available via `traja.io`:
+The following methods are available via `traja.parsers`:
 
 .. automodule:: traja.io
     :members:
