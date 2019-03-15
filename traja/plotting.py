@@ -587,6 +587,20 @@ def find_runs(x:pd.Series):
         return run_values, run_starts, run_lengths
 
 
+def fill_ci(series:pd.Series, window: Union[int, str]):
+    """Fill confidence interval defined by SEM over mean of `window`. Window can be interval or offset, eg, '30s'."""
+    assert is_datetime_or_timedelta_dtype(series.index), f"Series index must be datetime but is {type(series.index)}"
+    smooth_path = series.rolling(window).mean()
+    path_deviation = 2 * series.rolling(window).std()
+    fig, ax = plt.subplots()
+    plt.plot(smooth_path, linewidth=2)
+    plt.fill_between(path_deviation.index, np.clip((smooth_path - 2 * path_deviation),0,a_max=None),
+                     (smooth_path + 2 * path_deviation),
+                     color='b', alpha=.1)
+
+    return fig
+
+
 def plot_actogram(series:pd.Series, dark=(19,7), ax:matplotlib.axes.Axes=None, **kwargs):
     """Plot activity or displacement as an actogram.
 
