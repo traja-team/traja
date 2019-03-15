@@ -854,19 +854,19 @@ def calc_heading(trj: TrajaDataFrame):
         angle = calc_angle(trj)
     else:
         angle = trj.angle
-    df = trj
-    dx = df.x.diff()
-    dy = df.y.diff()
+
+    dx = trj.x.diff()
+    dy = trj.y.diff()
     # Get heading from angle
     mask = (dx > 0) & (dy >= 0)
-    df.loc[mask, "heading"] = angle[mask]
+    trj.loc[mask, "heading"] = angle[mask]
     mask = (dx >= 0) & (dy < 0)
-    df.loc[mask, "heading"] = -angle[mask]
+    trj.loc[mask, "heading"] = -angle[mask]
     mask = (dx < 0) & (dy <= 0)
-    df.loc[mask, "heading"] = -(180 - angle[mask])
+    trj.loc[mask, "heading"] = -(180 - angle[mask])
     mask = (dx <= 0) & (dy > 0)
-    df.loc[mask, "heading"] = 180 - angle[mask]
-    return df.heading
+    trj.loc[mask, "heading"] = 180 - angle[mask]
+    return trj.heading
 
 def speed_intervals(
     trj: TrajaDataFrame,
