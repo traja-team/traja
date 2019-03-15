@@ -102,6 +102,7 @@ def plot(
     n_coords: Optional[int] = None,
     show_time: bool = False,
     accessor: Optional[traja.TrajaAccessor] = None,
+    ax=None,
     **kwargs,
 ):
     """Plot trajectory for single animal over period.
@@ -111,15 +112,19 @@ def plot(
       n_coords (int, optional): Number of coordinates to plot
       show_time (bool): Show colormap as time
       accessor (:class:`~traja.accessor.TrajaAccessor`, optional): TrajaAccessor instance
+      ax (:class:`~matplotlib.axes.Axes`): axes for plotting
+      interactive (bool): show plot immediately
       **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
 
     Returns:
-        ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
+        fig (:class:`~matplotlib.figure.Figure`): Figure of plot
 
     """
     import matplotlib.patches as patches
     import matplotlib.pyplot as plt
     from matplotlib.path import Path
+
+    after_plot_args, kwargs = _get_after_plot_args(**kwargs)
 
     GRAY = "#999999"
     self = accessor or {}
@@ -157,8 +162,12 @@ def plot(
     codes = [Path.MOVETO] + [Path.LINETO] * (len(verts) - 1)
     path = Path(verts, codes)
 
-    fig, ax = plt.subplots(figsize=figsize)
-    fig.canvas.draw()
+    if not ax:
+        fig, ax = plt.subplots(figsize=figsize)
+        fig.canvas.draw()
+    else:
+        fig = plt.gcf()
+
     patch = patches.PathPatch(path, edgecolor=GRAY, facecolor="none", lw=3, alpha=0.3)
     ax.add_patch(patch)
 
@@ -243,8 +252,8 @@ def plot(
     cbar.set_ticklabels(cbar_labels)
     plt.tight_layout()
 
-    plt.show()
-    return ax
+    _process_after_plot_args(**after_plot_args)
+    return fig
 
 
 def _label_axes(trj: TrajaDataFrame, ax):
@@ -258,6 +267,7 @@ def plot_quiver(
     trj: TrajaDataFrame,
     bins: Optional[Union[int, tuple]] = None,
     quiverplot_kws: dict = {},
+        **kwargs,
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -269,6 +279,9 @@ def plot_quiver(
     Returns:
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
     """
+
+    after_plot_args, _ = _get_after_plot_args(**kwargs)
+
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
@@ -278,7 +291,7 @@ def plot_quiver(
     ax = _label_axes(trj, ax)
     ax.set_aspect("equal")
 
-    plt.show()
+    _process_after_plot_args(after_plot_args)
     return ax
 
 
@@ -290,6 +303,7 @@ def plot_contour(
     contourplot_kws: dict = {},
     contourfplot_kws: dict = {},
     quiverplot_kws: dict = {},
+        **kwargs,
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -303,6 +317,9 @@ def plot_contour(
     Returns:
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
     """
+
+    after_plot_args, _ = _get_after_plot_args(**kwargs)
+
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
@@ -320,7 +337,7 @@ def plot_contour(
     ax = _label_axes(trj, ax)
     ax.set_aspect("equal")
 
-    plt.show()
+    _process_after_plot_args(**after_plot_args)
     return ax
 
 
@@ -343,6 +360,8 @@ def plot_surface(
     """
     from mpl_toolkits.mplot3d import Axes3D
 
+    after_plot_args, surfaceplot_kws = _get_after_plot_args(**surfaceplot_kws)
+
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
@@ -354,7 +373,8 @@ def plot_surface(
 
     ax = _label_axes(trj, ax)
     ax.set_aspect('equal')
-    plt.show()
+
+    _process_after_plot_args(**after_plot_args)
     return ax
 
 
@@ -365,6 +385,7 @@ def plot_stream(
     contourfplot_kws: dict = {},
     contourplot_kws: dict = {},
     streamplot_kws: dict = {},
+        *kwargs,
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -379,6 +400,9 @@ def plot_stream(
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
 
     """
+
+    after_plot_args, _ = _get_after_plot_args(**kwargs)
+
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
@@ -393,7 +417,7 @@ def plot_stream(
     ax = _label_axes(trj, ax)
     ax.set_aspect("equal")
 
-    plt.show()
+    _process_after_plot_args(after_plot_args)
     return ax
 
 
@@ -423,7 +447,7 @@ def plot_flow(
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
     """
     if kind is "quiver":
-        return plot_quiver(trj, *args,cou **quiverplot_kws)
+        return plot_quiver(trj, *args, **quiverplot_kws)
     elif kind is "contour":
         return plot_contour(trj, filled=False, *args, **quiverplot_kws)
     elif kind is "contourf":
@@ -434,8 +458,7 @@ def plot_flow(
             *args,
             contourplot_kws=contourplot_kws,
             contourfplot_kws=contourfplot_kws,
-            streamplot_kws=streamplot_kws,
-        )
+            streamplot_kws=streamplot_kws)
     elif kind is "surface":
         return plot_surface(trj, *args, **surfaceplot_kws)
     else:
@@ -444,7 +467,7 @@ def plot_flow(
 
 def _get_after_plot_args(**kwargs: dict):
     after_plot_args = dict(
-        show=kwargs.pop("show", True), filepath=kwargs.pop("save", None)
+        interactive=kwargs.pop("interactive", True), filepath=kwargs.pop("filepath", None)
     )
     return after_plot_args, kwargs
 
@@ -516,15 +539,78 @@ def _process_after_plot_args(**after_plot_args):
     filepath = after_plot_args.get("filepath")
     if filepath:
         plt.savefig(filepath)
-    if after_plot_args.get("show"):
+    if after_plot_args.get("interactive"):
         plt.show()
+
+
+def color_dark(series:pd.Series, ax:matplotlib.axes.Axes, start:int=19, end:int=7):
+    """Color dark phase in plot."""
+    assert is_datetime_or_timedelta_dtype(series.index),f"Series must have datetime index but has {type(series.index)}"
+
+    dark_mask = (series.index.hour >= start) | (series.index.hour < end)
+    run_values, run_starts, run_lengths = find_runs(dark_mask)
+
+    for idx, is_dark in enumerate(run_values):
+        if is_dark:
+            start = run_starts[idx]
+            end = run_starts[idx] + run_lengths[idx] - 1
+            ax.axvspan(series.index[start], series.index[end], alpha=0.5, color='gray')
+
+
+def find_runs(x:pd.Series):
+    """Find runs of consecutive items in an array.
+    From https://gist.github.com/alimanfoo/c5977e87111abe8127453b21204c1065."""
+
+    # ensure array
+    x = np.asanyarray(x)
+    if x.ndim != 1:
+        raise ValueError('only 1D array supported')
+    n = x.shape[0]
+
+    # handle empty array
+    if n == 0:
+        return np.array([]), np.array([]), np.array([])
+
+    else:
+        # find run starts
+        loc_run_start = np.empty(n, dtype=bool)
+        loc_run_start[0] = True
+        np.not_equal(x[:-1], x[1:], out=loc_run_start[1:])
+        run_starts = np.nonzero(loc_run_start)[0]
+
+        # find run values
+        run_values = x[loc_run_start]
+
+        # find run lengths
+        run_lengths = np.diff(np.append(run_starts, n))
+
+        return run_values, run_starts, run_lengths
+
+
+def plot_actogram(series:pd.Series, dark=(19,7), ax:matplotlib.axes.Axes=None, interactive=True, **kwargs):
+    """Plot activity or displacement as an actogram.
+
+    .. note::
+
+       For published example see Eckel-Mahan K, Sassone-Corsi P. Phenotyping Circadian Rhythms in Mice.
+       Curr Protoc Mouse Biol. 2015;5(3):271-281. Published 2015 Sep 1. doi:10.1002/9780470942390.mo140229
+
+    """
+
+    after_plot_args, _ = _get_after_plot_args(**kwargs)
+    assert is_datetime_or_timedelta_dtype(series.index), f"Series must have datetime index but has {type(series.index)}"
+
+    ax = series.plot(ax=ax)
+    color_dark(series, ax, start=dark[0], end=dark[1])
+
+    _process_after_plot_args(**after_plot_args)
 
 
 def _polar_bar(
     radii: np.ndarray,
     theta: np.ndarray,
-    bin_size=2,
-    ax=None,
+    bin_size:int=2,
+    ax:Optional[matplotlib.axes.Axes]=None,
     overlap=True,
     **kwargs: str,
 ):
@@ -548,13 +634,14 @@ def _polar_bar(
     for h, bar in zip(height, bars):
         bar.set_facecolor(plt.cm.jet(h / max_height))
         bar.set_alpha(0.5)
-    ax.set_theta_zero_location("N")
-    ax.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
+    if isinstance(ax, matplotlib.axes.Axes):
+        ax.set_theta_zero_location("N")
+        ax.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
     if title:
         ax.set_title(title)
     plt.tight_layout()
-    _process_after_plot_args(**after_plot_args)
 
+    _process_after_plot_args(**after_plot_args)
     return ax
 
 
@@ -563,12 +650,15 @@ def polar_bar(
     feature: str = "turn_angle",
     bin_size: int = 2,
     overlap: bool = True,
+    ax:Optional[matplotlib.axes.Axes]=None,
     **plot_kws: str,
 ):
     """Plot polar bar chart.
     Args:
         trj
-        bins (int)
+        feature (str): Options: 'turn_angle', 'heading'
+        bins (int): width of bins
+        overlap (bool): Overlapping shows all values, if set to false is a histogram
 
     Returns:
         ax
@@ -594,11 +684,9 @@ def polar_bar(
     trj = trj[pd.notnull(trj.displacement)]
 
     assert len(trj) > 0, "Dataframe is empty after filtering, check coordinates"
-    # df = df[["x", "y"]]
-    # xy = df[["x", "y"]].values
-    # radii, theta = traja.trajectory.cartesian_to_polar(xy)
+
     ax = _polar_bar(
-        trj.displacement, trj[feature], bin_size=bin_size, overlap=overlap, **plot_kws
+        trj.displacement, trj[feature], bin_size=bin_size, overlap=overlap, ax=ax, **plot_kws
     )
     return ax
 
