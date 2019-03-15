@@ -6,9 +6,7 @@ import traja
 import numpy as np
 import pandas as pd
 import scipy
-from shapely.geometry import shape
 
-from traja import TrajaDataFrame
 from pandas.core.dtypes.common import (
     is_datetime_or_timedelta_dtype,
     is_datetime64_any_dtype,
@@ -16,6 +14,8 @@ from pandas.core.dtypes.common import (
 )
 from scipy import signal
 from scipy.spatial.distance import directed_hausdorff, euclidean
+
+from traja import TrajaDataFrame
 
 
 def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
@@ -227,6 +227,8 @@ def to_shapely(trj):
         False
 
     """
+    from shapely.geometry import shape
+
     coords = trj[["x", "y"]].values
     tracks_obj = {"type": "LineString", "coordinates": coords}
     tracks_shape = shape(tracks_obj)
