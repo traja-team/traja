@@ -47,7 +47,7 @@ io functions
 
 The following methods are available via `traja.parsers`:
 
-.. automodule:: traja.io
+.. automodule:: traja.parsers
     :members:
     :undoc-members:
     :show-inheritance:
