@@ -307,7 +307,7 @@ class TrajaAccessor(object):
         """Returns ``Series`` of `float` with displacement between consecutive indices.
 
         Args:
-          assign (bool, optional): Assign displacement to TrajaDataFrame (Default value = True)
+          assign (bool, optional): Assign displacement to TrajaAccessor (Default value = True)
 
         Returns:
           displacement (:class:`pandas.Series`): Displacement series.
@@ -331,7 +331,7 @@ class TrajaAccessor(object):
         """Returns ``Series`` with angle between steps as a function of displacement w.r.t x axis.
 
         Args:
-          assign (bool, optional): Assign displacement to TrajaDataFrame (Default value = True)
+          assign (bool, optional): Assign turn angle to TrajaAccessor (Default value = True)
 
         Returns:
           angle (:class:`pandas.Series`): Angle series.
