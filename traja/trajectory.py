@@ -72,6 +72,7 @@ def step_lengths(trj: TrajaDataFrame):
     displacement = traja.trajectory.calc_displacement(trj)
     return displacement
 
+
 def polar_to_z(r: float, theta: float):
     """Converts polar coordinates ``z`` and ``theta`` to complex number ``z``.
 
@@ -781,7 +782,7 @@ def calc_displacement(trj: TrajaDataFrame):
     displacement = np.sqrt(
         np.power(trj.x.shift() - trj.x, 2) + np.power(trj.y.shift() - trj.y, 2)
     )
-
+    displacement.name = "displacement"
     # dx = self._obj.x.diff()
     # dy = self._obj.y.diff()
 
@@ -869,6 +870,7 @@ def calc_heading(trj: TrajaDataFrame):
     mask = (dx <= 0) & (dy > 0)
     trj.loc[mask, "heading"] = 180 - angle[mask]
     return trj.heading
+
 
 def speed_intervals(
     trj: TrajaDataFrame,
