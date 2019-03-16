@@ -783,8 +783,6 @@ def calc_displacement(trj: TrajaDataFrame):
         np.power(trj.x.shift() - trj.x, 2) + np.power(trj.y.shift() - trj.y, 2)
     )
     displacement.name = "displacement"
-    # dx = self._obj.x.diff()
-    # dy = self._obj.y.diff()
 
     return displacement
 
