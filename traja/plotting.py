@@ -285,7 +285,7 @@ def plot_quiver(
         quiverplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.quiver`
 
     Returns:
-        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+        fig (:class:`~matplotlib.figure.Figure`): Axes of quiver plot
     """
 
     after_plot_args, _ = _get_after_plot_args(**kwargs)
@@ -300,7 +300,7 @@ def plot_quiver(
     ax.set_aspect("equal")
 
     _process_after_plot_args(**after_plot_args)
-    return ax
+    return fig
 
 
 def plot_contour(
@@ -323,7 +323,7 @@ def plot_contour(
         quiverplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.quiver`
 
     Returns:
-        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+        fig (:class:`~matplotlib.figure.Figure`): Figure of quiver plot
     """
 
     after_plot_args, _ = _get_after_plot_args(**kwargs)
@@ -346,7 +346,7 @@ def plot_contour(
     ax.set_aspect("equal")
 
     _process_after_plot_args(**after_plot_args)
-    return ax
+    return fig
 
 
 def plot_surface(
@@ -364,7 +364,7 @@ def plot_surface(
         surfaceplot_kws: Additional keyword arguments for :meth:`~mpl_toolkits.mplot3D.Axes3D.plot_surface`
 
     Returns:
-        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+        fig (:class:`~matplotlib.figure.Figure`): Figure of quiver plot
     """
     from mpl_toolkits.mplot3d import Axes3D
 
@@ -383,7 +383,7 @@ def plot_surface(
     ax.set_aspect("equal")
 
     _process_after_plot_args(**after_plot_args)
-    return ax
+    return fig
 
 
 def plot_stream(
@@ -405,7 +405,7 @@ def plot_stream(
         streamplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.streamplot`
 
     Returns:
-        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+        fig (:class:`~matplotlib.figure.Figure`): Figure of stream plot
 
     """
 
@@ -426,7 +426,7 @@ def plot_stream(
     ax.set_aspect("equal")
 
     _process_after_plot_args(**after_plot_args)
-    return ax
+    return fig
 
 
 def plot_flow(
@@ -452,7 +452,7 @@ def plot_flow(
         surfaceplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.plot_surface`
 
     Returns:
-        ax (:class:`~matplotlib.collections.PathCollection`): Axes of quiver plot
+        fig (:class:`~matplotlib.figure.Figure`): Figure of plot
     """
     if kind is "quiver":
         return plot_quiver(trj, *args, **quiverplot_kws)
@@ -635,7 +635,6 @@ def plot_actogram(
        Curr Protoc Mouse Biol. 2015;5(3):271-281. Published 2015 Sep 1. doi:10.1002/9780470942390.mo140229
 
     """
-
     after_plot_args, _ = _get_after_plot_args(**kwargs)
     assert is_datetime_or_timedelta_dtype(
         series.index
