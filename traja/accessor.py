@@ -60,7 +60,6 @@ class TrajaAccessor(object):
         """
         return self.between(begin, end)
 
-
     def _get_time_col(self):
         """Returns time column in trajectory.
 
@@ -319,7 +318,7 @@ class TrajaAccessor(object):
             0         NaN
             1    1.414214
             2    1.414214
-            dtype: float64
+            Name: displacement, dtype: float64
 
         """
         displacement = traja.trajectory.calc_displacement(self._obj)

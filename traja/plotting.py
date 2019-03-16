@@ -393,7 +393,7 @@ def plot_stream(
     contourfplot_kws: dict = {},
     contourplot_kws: dict = {},
     streamplot_kws: dict = {},
-    *kwargs,
+    **kwargs,
 ):
     """Plot average flow from each grid cell to neighbor.
 
