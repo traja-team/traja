@@ -199,7 +199,15 @@ def plot(
     label = f"Time ({time_units})" if time_units else ""
 
     sc = ax.scatter(
-        xs, ys, c=colors, s=kwargs.pop('s',5), cmap=plt.cm.viridis, alpha=0.7, vmin=vmin, vmax=vmax, **kwargs
+        xs,
+        ys,
+        c=colors,
+        s=kwargs.pop("s", 5),
+        cmap=plt.cm.viridis,
+        alpha=0.7,
+        vmin=vmin,
+        vmax=vmax,
+        **kwargs,
     )
 
     ax.set_xlim(xlim)
@@ -267,7 +275,7 @@ def plot_quiver(
     trj: TrajaDataFrame,
     bins: Optional[Union[int, tuple]] = None,
     quiverplot_kws: dict = {},
-        **kwargs,
+    **kwargs,
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -291,7 +299,7 @@ def plot_quiver(
     ax = _label_axes(trj, ax)
     ax.set_aspect("equal")
 
-    _process_after_plot_args(after_plot_args)
+    _process_after_plot_args(**after_plot_args)
     return ax
 
 
@@ -303,7 +311,7 @@ def plot_contour(
     contourplot_kws: dict = {},
     contourfplot_kws: dict = {},
     quiverplot_kws: dict = {},
-        **kwargs,
+    **kwargs,
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -372,7 +380,7 @@ def plot_surface(
     )
 
     ax = _label_axes(trj, ax)
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
 
     _process_after_plot_args(**after_plot_args)
     return ax
@@ -385,7 +393,7 @@ def plot_stream(
     contourfplot_kws: dict = {},
     contourplot_kws: dict = {},
     streamplot_kws: dict = {},
-        *kwargs,
+    *kwargs,
 ):
     """Plot average flow from each grid cell to neighbor.
 
@@ -417,7 +425,7 @@ def plot_stream(
     ax = _label_axes(trj, ax)
     ax.set_aspect("equal")
 
-    _process_after_plot_args(after_plot_args)
+    _process_after_plot_args(**after_plot_args)
     return ax
 
 
@@ -458,7 +466,8 @@ def plot_flow(
             *args,
             contourplot_kws=contourplot_kws,
             contourfplot_kws=contourfplot_kws,
-            streamplot_kws=streamplot_kws)
+            streamplot_kws=streamplot_kws,
+        )
     elif kind is "surface":
         return plot_surface(trj, *args, **surfaceplot_kws)
     else:
@@ -467,7 +476,8 @@ def plot_flow(
 
 def _get_after_plot_args(**kwargs: dict):
     after_plot_args = dict(
-        interactive=kwargs.pop("interactive", True), filepath=kwargs.pop("filepath", None)
+        interactive=kwargs.pop("interactive", True),
+        filepath=kwargs.pop("filepath", None),
     )
     return after_plot_args, kwargs
 
@@ -543,9 +553,13 @@ def _process_after_plot_args(**after_plot_args):
         plt.show()
 
 
-def color_dark(series:pd.Series, ax:matplotlib.axes.Axes, start:int=19, end:int=7):
+def color_dark(
+    series: pd.Series, ax: matplotlib.axes.Axes, start: int = 19, end: int = 7
+):
     """Color dark phase in plot."""
-    assert is_datetime_or_timedelta_dtype(series.index),f"Series must have datetime index but has {type(series.index)}"
+    assert is_datetime_or_timedelta_dtype(
+        series.index
+    ), f"Series must have datetime index but has {type(series.index)}"
 
     dark_mask = (series.index.hour >= start) | (series.index.hour < end)
     run_values, run_starts, run_lengths = find_runs(dark_mask)
@@ -554,17 +568,17 @@ def color_dark(series:pd.Series, ax:matplotlib.axes.Axes, start:int=19, end:int=
         if is_dark:
             start = run_starts[idx]
             end = run_starts[idx] + run_lengths[idx] - 1
-            ax.axvspan(series.index[start], series.index[end], alpha=0.5, color='gray')
+            ax.axvspan(series.index[start], series.index[end], alpha=0.5, color="gray")
 
 
-def find_runs(x:pd.Series):
+def find_runs(x: pd.Series):
     """Find runs of consecutive items in an array.
     From https://gist.github.com/alimanfoo/c5977e87111abe8127453b21204c1065."""
 
     # ensure array
     x = np.asanyarray(x)
     if x.ndim != 1:
-        raise ValueError('only 1D array supported')
+        raise ValueError("only 1D array supported")
     n = x.shape[0]
 
     # handle empty array
@@ -587,21 +601,32 @@ def find_runs(x:pd.Series):
         return run_values, run_starts, run_lengths
 
 
-def fill_ci(series:pd.Series, window: Union[int, str]):
+def fill_ci(series: pd.Series, window: Union[int, str]):
     """Fill confidence interval defined by SEM over mean of `window`. Window can be interval or offset, eg, '30s'."""
-    assert is_datetime_or_timedelta_dtype(series.index), f"Series index must be datetime but is {type(series.index)}"
+    assert is_datetime_or_timedelta_dtype(
+        series.index
+    ), f"Series index must be datetime but is {type(series.index)}"
     smooth_path = series.rolling(window).mean()
-    path_deviation = 2 * series.rolling(window).std()
-    fig, ax = plt.subplots()
-    plt.plot(smooth_path, linewidth=2)
-    plt.fill_between(path_deviation.index, np.clip((smooth_path - 2 * path_deviation),0,a_max=None),
-                     (smooth_path + 2 * path_deviation),
-                     color='b', alpha=.1)
+    path_deviation = series.rolling(window).std()
 
+    fig, ax = plt.subplots()
+
+    plt.plot(smooth_path.index, smooth_path, "b")
+    plt.fill_between(
+        path_deviation.index,
+        (smooth_path - 2 * path_deviation),
+        (smooth_path + 2 * path_deviation),
+        color="b",
+        alpha=0.2,
+    )
+
+    plt.gcf().autofmt_xdate()
     return fig
 
 
-def plot_actogram(series:pd.Series, dark=(19,7), ax:matplotlib.axes.Axes=None, **kwargs):
+def plot_actogram(
+    series: pd.Series, dark=(19, 7), ax: matplotlib.axes.Axes = None, **kwargs
+):
     """Plot activity or displacement as an actogram.
 
     .. note::
@@ -612,9 +637,13 @@ def plot_actogram(series:pd.Series, dark=(19,7), ax:matplotlib.axes.Axes=None, *
     """
 
     after_plot_args, _ = _get_after_plot_args(**kwargs)
-    assert is_datetime_or_timedelta_dtype(series.index), f"Series must have datetime index but has {type(series.index)}"
+    assert is_datetime_or_timedelta_dtype(
+        series.index
+    ), f"Series must have datetime index but has {type(series.index)}"
 
     ax = series.plot(ax=ax)
+    ax.set_ylabel(series.name)
+
     color_dark(series, ax, start=dark[0], end=dark[1])
 
     _process_after_plot_args(**after_plot_args)
@@ -623,8 +652,8 @@ def plot_actogram(series:pd.Series, dark=(19,7), ax:matplotlib.axes.Axes=None, *
 def _polar_bar(
     radii: np.ndarray,
     theta: np.ndarray,
-    bin_size:int=2,
-    ax:Optional[matplotlib.axes.Axes]=None,
+    bin_size: int = 2,
+    ax: Optional[matplotlib.axes.Axes] = None,
     overlap=True,
     **kwargs: str,
 ):
@@ -652,7 +681,7 @@ def _polar_bar(
         ax.set_theta_zero_location("N")
         ax.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
     if title:
-        ax.set_title(title)
+        plt.title(title + "\n", y=1.08)
     plt.tight_layout()
 
     _process_after_plot_args(**after_plot_args)
@@ -664,7 +693,7 @@ def polar_bar(
     feature: str = "turn_angle",
     bin_size: int = 2,
     overlap: bool = True,
-    ax:Optional[matplotlib.axes.Axes]=None,
+    ax: Optional[matplotlib.axes.Axes] = None,
     **plot_kws: str,
 ):
     """Plot polar bar chart.
@@ -682,11 +711,11 @@ def polar_bar(
     # Get displacement
 
     displacement = traja.trajectory.calc_displacement(trj)
-    trj['displacement'] = displacement
+    trj["displacement"] = displacement
     trj = trj.loc[trj.displacement > DIST_THRESHOLD]
     if feature == "turn_angle":
         feature_series = traja.trajectory.calc_turn_angle(trj)
-        trj['turn_angle'] = feature_series
+        trj["turn_angle"] = feature_series
         trj.turn_angle = trj.turn_angle.shift(-1)
     elif feature == "heading":
         feature_series = traja.trajectory.calc_heading(trj)
@@ -698,7 +727,12 @@ def polar_bar(
     assert len(trj) > 0, "Dataframe is empty after filtering, check coordinates"
 
     ax = _polar_bar(
-        trj.displacement, trj[feature], bin_size=bin_size, overlap=overlap, ax=ax, **plot_kws
+        trj.displacement,
+        trj[feature],
+        bin_size=bin_size,
+        overlap=overlap,
+        ax=ax,
+        **plot_kws,
     )
     return ax
 

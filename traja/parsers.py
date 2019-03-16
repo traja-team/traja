@@ -59,9 +59,9 @@ def from_df(df: pd.DataFrame, xcol=None, ycol=None, time_col=None, **kwargs):
 def read_file(
     filepath: str,
     id: Optional[str] = None,
-    xcol:Optional[str]=None,
-    ycol:Optional[str]=None,
-    parse_dates:Union[str,bool]=False,
+    xcol: Optional[str] = None,
+    ycol: Optional[str] = None,
+    parse_dates: Union[str, bool] = False,
     xlim: Optional[tuple] = None,
     ylim: Optional[tuple] = None,
     spatial_units: str = "m",
@@ -150,6 +150,7 @@ def read_file(
             dtype=dtype,
             **kwargs,
         )
+
         # TODO: Replace default column renaming with user option if needed
         if time_col:
             trj.rename(columns={time_col: "time"})
@@ -160,8 +161,7 @@ def read_file(
             # leave index as int frames
             pass
         if xcol and ycol:
-            trj.rename(columns={xcol: "x",
-                                ycol: "y"})
+            trj.rename(columns={xcol: "x", ycol: "y"})
     else:
         # TODO: Implement for HDF5 and .npy files.
         raise NotImplementedError("Non-csv's not yet implemented")
