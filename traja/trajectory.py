@@ -776,7 +776,7 @@ def calc_displacement(trj: TrajaDataFrame):
         0         NaN
         1    1.414214
         2    1.414214
-        dtype: float64
+        Name: displacement, dtype: float64
 
     """
     displacement = np.sqrt(
