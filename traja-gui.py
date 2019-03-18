@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
     QApplication,
     QMenu,
     QAction,
+    QStatusBar,
 )
 
 import traja
@@ -112,10 +113,9 @@ class PlottingWidget(QtWidgets.QMainWindow):
         for window_str in ["None", "s", "30s", "H", "D"]:
             windowAction = QAction(window_str, self, checkable=True)
             if window_str is TIME_WINDOW:
-                windowAction.setCheckable(True)
+                windowAction.setChecked(True)
             windowAction.triggered.connect(partial(self.set_time_window, window_str))
             self.setTimeWindowMenu.addAction(windowAction)
-        self.set_time_window(TIME_WINDOW)
 
         # Grid Layout
         grid = QtWidgets.QGridLayout()
@@ -160,11 +160,13 @@ class PlottingWidget(QtWidgets.QMainWindow):
         # self.progress.setRange(0, 1)
         grid.addWidget(self.progress, 3, 0, 1, 2)
 
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
         self.show()
 
     def set_style(self, style_name: str):
         global CUR_STYLE
-        self.statusBar().showMessage(f"Style set to {style_name}")
+        self.statusBar.showMessage(f"Style set to {style_name}")
         actions = self.setStyleMenu.actions()
         CUR_STYLE = style_name
         for action in actions:
@@ -190,17 +192,17 @@ class PlottingWidget(QtWidgets.QMainWindow):
     def update_progress_bar(self, i: int):
         self.progress.setValue(i)
         max = self.progress.maximum()
-        self.statusBar().showMessage(f"Loading ... {100*i/max:.0f}%")
+        self.statusBar.showMessage(f"Loading ... {100*i/max:.0f}%")
 
     def set_progress_bar_max(self, max: int):
         self.progress.setMaximum(max)
 
     def clear_progress_bar(self):
         self.progress.hide()
-        self.statusBar().showMessage("Completed.")
+        self.statusBar.showMessage("Completed.")
 
     def getCSV(self):
-        self.statusBar().showMessage("Loading CSV...")
+        self.statusBar.showMessage("Loading CSV...")
         filepath, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Open CSV", (QtCore.QDir.homePath()), "CSV (*.csv *.tsv)"
         )
@@ -229,7 +231,7 @@ class PlottingWidget(QtWidgets.QMainWindow):
         self.comboBox.addItems(self.columns)
         self.comboBox2.clear()
         self.comboBox2.addItems(self.plot_list)
-        self.statusBar().showMessage("")
+        self.statusBar.clearMessage()
 
     def mousePressEvent(self, QMouseEvent):
         if QMouseEvent.button() == Qt.RightButton:
@@ -259,7 +261,7 @@ class PlottingWidget(QtWidgets.QMainWindow):
     def set_time_window(self, window: str):
         global TIME_WINDOW
         TIME_WINDOW = window
-        self.statusBar().showMessage(f"Time window set to {window}")
+        self.statusBar.showMessage(f"Time window set to {window}")
         actions = self.setTimeWindowMenu.actions()
         for action in actions:
             if action.text() == TIME_WINDOW:
@@ -272,7 +274,7 @@ class PlottingWidget(QtWidgets.QMainWindow):
         plt.clf()
 
         plot_kind = self.comboBox2.currentText()
-        print(f"Plotting {plot_kind}")
+        self.statusBar.showMessage(f"Plotting {plot_kind}")
         projection = (
             "polar" if plot_kind in ["Polar Bar", "Polar Histogram"] else "rectilinear"
         )
@@ -286,6 +288,7 @@ class PlottingWidget(QtWidgets.QMainWindow):
             displacement = traja.trajectory.calc_displacement(self.df)
             if TIME_WINDOW is not "None":
                 displacement = displacement.rolling(TIME_WINDOW).mean()
+                # from pyqtgraph.Qt import QtGui, QtCore
             traja.plotting.plot_actogram(displacement, ax=ax, interactive=False)
         elif plot_kind == "Trajectory":
             traja.plotting.plot(self.df, ax=ax, interactive=False)
@@ -299,6 +302,7 @@ class PlottingWidget(QtWidgets.QMainWindow):
             )
         plt.tight_layout()
         self.canvas.draw()
+        self.statusBar.clearMessage()
 
     def center(self):
         qr = self.frameGeometry()
