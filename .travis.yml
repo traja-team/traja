@@ -12,8 +12,7 @@ git:
   depth: false
 
 env:
- - MPLBACKEND=Agg
- - CODECOV_TOKEN="287389e5-8f99-42e1-8844-17acef7c454f"
+ - MPLBACKEND=Agg CODECOV_TOKEN="287389e5-8f99-42e1-8844-17acef7c454f"
   
 cache: pip
 
