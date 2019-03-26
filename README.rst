@@ -1,4 +1,5 @@
 traja |Python-ver| |Travis| |PyPI| |RTD| |Black| |License|
+=====
 
 .. |Python-ver| image:: https://img.shields.io/badge/python-3.6+-blue.svg
     :target: https://www.python.org/downloads/release/python-360/
