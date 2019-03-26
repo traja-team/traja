@@ -1,4 +1,4 @@
-traja |Python-ver| |Travis| |PyPI| |RTD| |Black| |License|
+traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License|
 =====
 
 .. |Python-ver| image:: https://img.shields.io/badge/python-3.6+-blue.svg
@@ -11,6 +11,9 @@ traja |Python-ver| |Travis| |PyPI| |RTD| |Black| |License|
 .. |PyPI| image:: https://badge.fury.io/py/traja.svg
     :target: https://badge.fury.io/py/traja
 
+.. |Gitter| image:: https://badges.gitter.im/traja-chat/community.svg
+    :target: https://gitter.im/traja-chat/community
+    
 .. |RTD| image:: https://readthedocs.org/projects/traja/badge/?version=latest
     :target: https://traja.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
