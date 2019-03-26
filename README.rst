@@ -3,6 +3,11 @@ traja
 
 Trajectory Analysis in Python
 
+
+.. image:: https://img.shields.io/badge/python-3.6-blue.svg
+    :target: https://www.python.org/downloads/release/python-360/
+    :alt: Python 3.6+
+    
 .. image:: https://travis-ci.org/justinshenk/traja.svg?branch=master
     :target: https://travis-ci.org/justinshenk/traja
 
