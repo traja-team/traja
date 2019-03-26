@@ -22,8 +22,6 @@ traja |Python-ver| |Travis| |PyPI| |RTD| |Black| |License|
     :target: https://opensource.org/licenses/MIT
     :alt: License: MIT
 
-=====
-
 Trajectory Analysis in Python
     
 traja extends the capability of pandas DataFrame specific for animal
