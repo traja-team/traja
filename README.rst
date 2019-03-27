@@ -1,25 +1,29 @@
-traja
+traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License|
 =====
 
-.. image:: https://travis-ci.org/justinshenk/traja.svg?branch=master
+.. |Python-ver| image:: https://img.shields.io/badge/python-3.6+-blue.svg
+    :target: https://www.python.org/downloads/release/python-360/
+    :alt: Python 3.6+
+
+.. |Travis| image:: https://travis-ci.org/justinshenk/traja.svg?branch=master
     :target: https://travis-ci.org/justinshenk/traja
 
-.. image:: https://badge.fury.io/py/traja.svg
+.. |PyPI| image:: https://badge.fury.io/py/traja.svg
     :target: https://badge.fury.io/py/traja
 
-.. image:: https://readthedocs.org/projects/traja/badge/?version=latest
+.. |Gitter| image:: https://badges.gitter.im/traja-chat/community.svg
+    :target: https://gitter.im/traja-chat/community
+
+.. |RTD| image:: https://readthedocs.org/projects/traja/badge/?version=latest
     :target: https://traja.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+.. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
 
-.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+.. |License| image:: https://img.shields.io/badge/License-MIT-blue.svg
     :target: https://opensource.org/licenses/MIT
     :alt: License: MIT
-
-.. image:: https://pepy.tech/badge/traja
-    :target: https://pepy.tech/project/traja
 
 traja is a Python library for trajectory analysis. It extends the capability of
 pandas DataFrame specific for animal trajectory analysis in 2D, and provides
