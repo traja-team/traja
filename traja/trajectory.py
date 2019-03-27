@@ -42,22 +42,16 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
 
 
 def angles(trj: TrajaDataFrame, lag: int = 1):
+    """Returns angles w.r.t. x-axis."""
     if lag > 1:
         raise NotImplementedError("Lag must be 1.")
-    trj["angle"] = np.rad2deg(np.arccos(np.abs(trj["dx"]) / trj["distance"]))
-    # Get heading from angle
-    mask = (trj["dx"] > 0) & (trj["dy"] >= 0)
-    trj.loc[mask, "heading"] = trj["angle"][mask]
-    mask = (trj["dx"] >= 0) & (trj["dy"] < 0)
-    trj.loc[mask, "heading"] = -trj["angle"][mask]
-    mask = (trj["dx"] < 0) & (trj["dy"] <= 0)
-    trj.loc[mask, "heading"] = -(180 - trj["angle"][mask])
-    mask = (trj["dx"] <= 0) & (trj["dy"] > 0)
-    trj.loc[mask, "heading"] = (180 - trj["angle"])[mask]
-    trj["turn_angle"] = trj["heading"].diff()
+    dx = trj.x.diff(lag)
+    distance = calc_displacement(trj)
+    angles = np.rad2deg(np.arccos(np.abs(dx) / distance))
     # Correction for 360-degree angle range
-    trj.loc[trj.turn_angle >= 180, "turn_angle"] -= 360
-    trj.loc[trj.turn_angle < -180, "turn_angle"] += 360
+    angles[angles >= 180] -= 360
+    angles[angles < -180] += 360
+    return angles
 
 
 def step_lengths(trj: TrajaDataFrame):
@@ -776,13 +770,15 @@ def calc_displacement(trj: TrajaDataFrame):
         0         NaN
         1    1.414214
         2    1.414214
-        Name: displacement, dtype: float64
+        dtype: float64
 
     """
     displacement = np.sqrt(
         np.power(trj.x.shift() - trj.x, 2) + np.power(trj.y.shift() - trj.y, 2)
     )
-    displacement.name = "displacement"
+
+    # dx = self._obj.x.diff()
+    # dy = self._obj.y.diff()
 
     return displacement
 

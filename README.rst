@@ -1,8 +1,6 @@
 traja
 =====
 
-Trajectory Analysis in Python
-
 .. image:: https://travis-ci.org/justinshenk/traja.svg?branch=master
     :target: https://travis-ci.org/justinshenk/traja
 
@@ -19,23 +17,23 @@ Trajectory Analysis in Python
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
     :target: https://opensource.org/licenses/MIT
     :alt: License: MIT
-    
+
 .. image:: https://pepy.tech/badge/traja
-    :target: https://pepy.tech/project/traja    
-    
-traja extends the capability of pandas DataFrame specific for animal
-trajectory analysis in 2D, and provides convenient interfaces to other
-geometric analysis packages (eg, shapely).
+    :target: https://pepy.tech/project/traja
+
+traja is a Python library for trajectory analysis. It extends the capability of
+pandas DataFrame specific for animal trajectory analysis in 2D, and provides
+convenient interfaces to other geometric analysis packages (eg, R and shapely).
 
 Introduction
 ------------
 
-The traja Python package is a toolkit for the numerical characterisation
+The traja Python package is a toolkit for the numerical characterization
 and analysis of the trajectories of moving animals. Trajectory analysis
 is applicable in fields as diverse as optimal foraging theory,
-migration, and behavioural mimicry (e.g. for verifying similarities in
+migration, and behavioral mimicry (e.g. for verifying similarities in
 locomotion). A trajectory is simply a record of the path followed by a
-moving animal. Trajr operates on trajectories in the form of a series of
+moving animal. Traja operates on trajectories in the form of a series of
 locations (as x, y coordinates) with times. Trajectories may be obtained
 by any method which provides this information, including manual
 tracking, radio telemetry, GPS tracking, and motion tracking from
@@ -43,7 +41,7 @@ videos.
 
 The goal of this package (and this document) is to aid biological
 researchers, who may not have extensive experience with Python, to
-analyse trajectories without being handicapped by a limited knowledge of
+analyze trajectories without being handicapped by a limited knowledge of
 Python or programming. However, a basic understanding of Python is
 useful.
 
@@ -83,8 +81,25 @@ visualization and analysis methods:
 
     df.traja.plot(title='Cage trajectory')
 
-.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/dvc_screenshot.png
-   :alt: dvc\_screenshot
+
+Analyze Trajectory
+------------------
+
+The following functions are available via ``traja.trajectory.[method]``:
+
+| Function | Description |
+|-|-|
+| ``calc_derivatives`` | Calculate derivatives of x, y values |
+|-|-|
+| ``calc_turn_angles`` | Calculate turn angles w.r.t. x-axis |
+|-|-|
+| ``transitions`` | Calculate first-order Markov model for transitions between grid bins |
+|-|-|
+| ``generate`` | Generate random walk |
+|-|-|
+| ``resample_time`` | Resample to consistent ``step_time`` intervals |
+|-|-|
+| ``rediscretize_points`` | Rediscretize points to given step length |
 
 
 Random walk
@@ -112,7 +127,6 @@ the new step length.
 
 .. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_with_traja_004.png
    :alt: rediscretized
-
 
 
 Resample time
