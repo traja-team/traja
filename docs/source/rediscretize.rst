@@ -16,3 +16,36 @@ Resample time
 -------------
 :meth:`~traja.trajectory.resample_time` allows resampling trajectories by a ``step_time``.
 
+Ramer–Douglas–Peucker algorithm
+-------------------------------
+
+.. note::
+
+    Graciously yanked from Fabian Hirschmann's PyPI package ``rdp``.
+
+:func:`~traja.contrib.rdp` reduces the number of points in a line using the Ramer–Douglas–Peucker algorithm::
+
+    from traja.contrib import rdp
+
+    # Create dataframe of 1000 x, y coordinates
+    df = traja.generate(n=1000)
+
+    # Extract xy coordinates
+    xy = df.traja.xy
+
+    # Reduce points with epsilon between 0 and 1:
+    xy_ = rdp(xy, epsilon=0.8)
+
+
+    len(xy_)
+
+    Output:
+    319
+
+Plotting, we can now see the many fewer points are needed to cover a similar area.::
+
+    df = traja.from_xy(xy_)
+    df.traja.plot()
+
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/after_rdp.png
+
