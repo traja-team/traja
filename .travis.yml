@@ -33,7 +33,7 @@ install:
 
 script: 
  - cd docs && make doctest && cd ..
- - py.test traja --cov-report term --cov=traja
+ - py.test . --cov-report term --cov=traja
 
 after_success:
  - codecov
