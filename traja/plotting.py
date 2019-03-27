@@ -624,6 +624,19 @@ def fill_ci(series: pd.Series, window: Union[int, str]):
     return fig
 
 
+def plot_xy(xy: np.ndarray, *args: Optional, **kwargs: Optional):
+    """Plot trajectory from xy values.
+
+    Args:
+
+        xy (np.ndarray) : xy values of dimensions N x 2
+        *args           : Plot args
+        **kwargs        : Plot kwargs
+    """
+    trj = traja.from_xy(xy)
+    trj.traja.plot(*args, **kwargs)
+
+
 def plot_actogram(
     series: pd.Series, dark=(19, 7), ax: matplotlib.axes.Axes = None, **kwargs
 ):
