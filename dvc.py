@@ -126,7 +126,7 @@ class DVCExperiment:
         self,
         daily: pd.DataFrame,
         days: list = [3, 7, 35],
-        metric="distance",
+        metric: str = "distance",
         day_pairs: list = [],
     ):
         # Get 35-day daily velocity
