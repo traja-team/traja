@@ -8,12 +8,19 @@ python:
  - '3.6'
  - '3.7'
 
+addons:
+  apt:
+    sources:
+    - r-packages-precise
+    packages:
+    - r-base
+
 git:
   depth: false
 
 env:
  - MPLBACKEND=Agg CODECOV_TOKEN="287389e5-8f99-42e1-8844-17acef7c454f"
-  
+
 cache: pip
 
 install:
@@ -31,7 +38,7 @@ install:
  - pip install -r docs/requirements.txt
  - pip install .
 
-script: 
+script:
  - cd docs && make doctest && cd ..
  - py.test . --cov-report term --cov=traja
 
