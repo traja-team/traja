@@ -1,5 +1,4 @@
 sudo: false
-rpy2
 
 dist: xenial
 
