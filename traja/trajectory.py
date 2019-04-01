@@ -174,7 +174,7 @@ def traj_from_coords(
                 )
             )
         # Assign times to each frame, starting at 0
-        trj["time"] = pd.Series(np.arange(0, len(trj) - 1) / fps)
+        trj["time"] = pd.Series(np.arange(0, len(trj)) / fps)
 
     # Get displacement time for each coordinate, with the first point at time 0
     trj["dt"] = trj.time - trj.time.iloc[0]
