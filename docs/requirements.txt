@@ -13,4 +13,5 @@ sphinx_rtd_theme
 pytest
 pytest-cov
 codecov
+readline
 rpy2
