@@ -12,8 +12,10 @@ import rpy2.robjects.packages as rpackages
 try:
     import rpy2.robjects.pandas2ri as rpandas
 except ModuleNotFoundError as e:
-    if 'tzlocal' in e.msg:
-        raise ModuleNotFoundError(e.msg + "\n Install tzlocal with `pip install tzlocal`.")
+    if "tzlocal" in e.msg:
+        raise ModuleNotFoundError(
+            e.msg + "\n Install tzlocal with `pip install tzlocal`."
+        )
     else:
         raise ModuleNotFoundError(e)
 from rpy2.robjects.packages import importr

@@ -110,51 +110,60 @@ def expected_sq_displacement(trj: TrajaDataFrame, n: int = None, eqn1: bool = Tr
     sl = step_lengths(trj)
     ta = angles(trj)
     l = np.mean(sl)
-    l2 = np.mean(sl ^ 2)
+    l2 = np.mean(sl ** 2)
     c = np.mean(np.cos(ta))
     s = np.mean(np.sin(ta))
-    s2 = s ^ 2
+    s2 = s ** 2
 
     if eqn1:
         # Eqn 1
         alpha = np.arctan2(s, c)
-        gamma = ((1 - c) ^ 2 - s2) * np.cos((n + 1) * alpha) - 2 * s * (1 - c) * np.sin(
-            (n + 1) * alpha
-        )
+        gamma = ((1 - c) ** 2 - s2) * np.cos((n + 1) * alpha) - 2 * s * (
+            1 - c
+        ) * np.sin((n + 1) * alpha)
         esd = (
-            n * l2 + 2 * l
-            ^ 2 * ((c - c ^ 2 - s2) * n - c) / ((1 - c) ^ 2 + s2) + 2 * l
-            ^ 2 * ((2 * s2 + (c + s2) ^ ((n + 1) / 2)) / ((1 - c) ^ 2 + s2) ^ 2) * gamma
+            n * l2
+            + 2 * l ** 2 * ((c - c ** 2 - s2) * n - c) / ((1 - c) ** 2 + s2)
+            + 2
+            * l ** 2
+            * ((2 * s2 + (c + s2) ** ((n + 1) / 2)) / ((1 - c) ** 2 + s2) ** 2)
+            * gamma
         )
         return abs(esd)
     else:
         # Eqn 2
-        esd = n * l2 + 2 * l ^ 2 * c / (1 - c) * (n - (1 - c ^ n) / (1 - c))
+        esd = n * l2 + 2 * l ** 2 * c / (1 - c) * (n - (1 - c ** n) / (1 - c))
         return esd
 
 
 def traj_from_coords(
     track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units="m", time_units="s"
 ):
-    # TODO: Convert to DataFrame if not already
-    trj = track
+    """Create TrajaDataFrame from coordinates."""
+    if not isinstance(track, traja.TrajaDataFrame):
+        if isinstance(track, np.ndarray) and track.shape[1] == 2:
+            trj = traja.from_xy(track)
+        elif isinstance(track, pd.DataFrame):
+            trj = traja.TrajaDataFrame(track)
+    else:
+        trj = track
     trj.traja.spatial_units = spatial_units
     trj.traja.time_units = time_units
 
-    def rename(col, name):
-        global trj
+    def rename(col, name, trj):
         if isinstance(col, int):
             trj.rename(columns={col: name})
         else:
             if col not in trj:
                 raise Exception(f"Missing column {col}")
             trj.rename(columns={col: name})
+        return trj
 
     # Ensure column names are as expected
-    rename(x_col, "x")
-    rename(y_col, "y")
+    trj = rename(x_col, "x", trj)
+    trj = rename(y_col, "y", trj)
     if time_col is not None:
-        rename(time_col, "time")
+        trj = rename(time_col, "time", trj)
 
     # Allocate times if they aren't already known
     if "time" not in trj:
