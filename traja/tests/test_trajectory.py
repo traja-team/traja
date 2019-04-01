@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.testing as npt
-from pandas.util.testing import assert_frame_equal
+from pandas.util.testing import assert_frame_equal, assert_series_equal
 
 import traja
 
@@ -68,10 +68,12 @@ def test_expected_sq_displacement():
 
 
 def test_traj_from_coords():
-    df_copy = df.copy()
-    coords = df_copy.traja.xy
-    trj = traja.traj_from_coords(coords)
-    assert_frame_equal(trj, df)
+    coords = df.traja.xy
+    trj = traja.traj_from_coords(coords, fps=50)
+    assert "dt" in trj
+    assert_series_equal(trj.x, df.x)
+    assert_series_equal(trj.y, df.y)
+    assert_series_equal(trj.time, df.time)
 
 
 def test_distance():
