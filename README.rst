@@ -54,12 +54,15 @@ If you use traja in your publications, please cite [add citation].
 Installation and setup
 ----------------------
 
-To install traja onto your system, run
+To install traja with conda, run
 
-``pip install traja``
+``conda install -c conda-forge traja``
 
-or download the zip file and run the graphical user interface [coming
-soon].
+or with pip
+
+``pip install traja``.
+
+Run the graphical user interface with ``python traja-gui.py``.
 
 Import traja into your Python script or via the Python command-line with
 ``import traja``.
