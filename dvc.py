@@ -4,7 +4,7 @@ import logging
 import multiprocessing as mp
 import os
 
-from scipy.stats import ttest_ind, f_oneway
+from scipy.stats import ttest_ind, ttest_rel, f_oneway
 
 import traja
 from traja.plotting import *
@@ -122,6 +122,83 @@ class DVCExperiment:
         weekly = pd.concat(weekly_list)
         return weekly
 
+    def ttests(
+        self, daily: pd.DataFrame, days: List[int], day_pairs: List[tuple]
+    ) -> list:
+        """Returns pvalues for intra and interday variances."""
+        pvalues = []
+        # Paired Student's t-Test, between days for each group
+        for day1, day2 in day_pairs:
+            diets = sorted(daily.diet.unique())
+            for period in ["Light", "Dark"]:
+                day1_control = daily.loc[
+                    (daily["diet"] == diets[0])
+                    & (daily["days_from_surgery"] == day1)
+                    & (daily.period == period),
+                    "displacement",
+                ]
+                day2_control = daily.loc[
+                    (daily["diet"] == diets[0])
+                    & (daily["days_from_surgery"] == day2)
+                    & (daily.period == period),
+                    "displacement",
+                ]
+                day1_fortasyn = daily.loc[
+                    (daily["diet"] == diets[1])
+                    & (daily["days_from_surgery"] == day1)
+                    & (daily.period == period),
+                    "displacement",
+                ]
+                day2_fortasyn = daily.loc[
+                    (daily["diet"] == diets[1])
+                    & (daily["days_from_surgery"] == day2)
+                    & (daily.period == period),
+                    "displacement",
+                ]
+
+                if day1_control.shape == day2_control.shape:
+                    control_test = (
+                        ttest_rel(day1_control, day2_control).pvalue,
+                        (day1, day2, "Control"),
+                        period,
+                    )
+                    pvalues.append(control_test)
+                else:
+                    print(
+                        f"Control ({period}) - Skipping stats - Day {day1} shape is {len(day1_control)} and day {day2} shape is {len(day2_control)}"
+                    )
+                if day1_fortasyn.shape == day2_fortasyn.shape:
+                    fortasyn_test = (
+                        ttest_rel(day1_fortasyn, day2_fortasyn).pvalue,
+                        (day1, day2, "Fortasyn"),
+                        period,
+                    )
+                    pvalues.append(fortasyn_test)
+                else:
+                    print(
+                        f"Fortasyn ({period}) - Skipping stats - Day {day1} shape is {len(day1_fortasyn)} and day {day2} shape is {len(day2_fortasyn)}"
+                    )
+
+        # Get intraday significance
+        for day in range(max(days)):
+            diets = sorted(daily.diet.unique())
+            # Student's t-Test, between groups for given day
+            for period in ["Light", "Dark"]:
+                control = daily.loc[
+                    (daily["diet"] == diets[0])
+                    & (daily["days_from_surgery"] == day)
+                    & (daily.period == period),
+                    "displacement",
+                ]
+                fortasyn = daily.loc[
+                    (daily["diet"] == diets[1])
+                    & (daily["days_from_surgery"] == day)
+                    & (daily.period == period),
+                    "displacement",
+                ]
+                pvalues.append((ttest_ind(control, fortasyn).pvalue, day, period))
+        return pvalues
+
     def plot_daily_distance(
         self,
         daily: pd.DataFrame,
@@ -129,6 +206,9 @@ class DVCExperiment:
         metric: str = "distance",
         day_pairs: list = [],
     ):
+        daily = daily.copy()
+        pvalues = []
+
         # Get 35-day daily velocity
         cages = sorted(daily.cage.unique())
         if not "days_from_surgery" in daily:  # days_from_stroke provided
@@ -140,116 +220,97 @@ class DVCExperiment:
                 daily["diet"] = daily.diet.replace(diet, diet_names[ind])
                 print(f"Renamed diet column value {diet} to {diet_names[ind]}")
 
+        # Save original name for diet column
+        daily_diet_orig = daily.diet
+
+        pvalues = self.ttests(daily, days, day_pairs)
+
         # Calculate and mark significant difference
         for max_days in days:
             fig, ax = plt.subplots(figsize=(14, 8))
             plt.title(f"Average daily {metric} {max_days} days after stroke")
 
-            pvalues = []
-            for day in range(max_days):
-                diets = sorted(daily.diet.unique())
-                for period in ["Light", "Dark"]:
-                    control = daily[
-                        (daily["diet"] == diets[0])
-                        & (daily["days_from_surgery"] == day)
-                        & (daily.period == period)
-                    ]
-                    fortasyn = daily[
-                        (daily["diet"] == diets[1])
-                        & (daily["days_from_surgery"] == day)
-                        & (daily.period == period)
-                    ]
-                    pvalues.append(
-                        (
-                            ttest_ind(
-                                control["displacement"], fortasyn["displacement"]
-                            ).pvalue,
-                            day,
-                            period,
-                        )
-                    )
-
-                # Interday difference
-                for day1, day2 in day_pairs:
-                    diets = sorted(daily.diet.unique())
-                    for period in ["Light", "Dark"]:
-                        day1_control = daily[
-                            (daily["diet"] == diets[0])
-                            & (daily["days_from_surgery"] == day1)
-                            & (daily.period == period)
-                        ]
-                        day1_fortasyn = daily[
-                            (daily["diet"] == diets[1])
-                            & (daily["days_from_surgery"] == day1)
-                            & (daily.period == period)
-                        ]
-                        day2_control = daily[
-                            (daily["diet"] == diets[0])
-                            & (daily["days_from_surgery"] == day2)
-                            & (daily.period == period)
-                        ]
-                        day2_fortasyn = daily[
-                            (daily["diet"] == diets[1])
-                            & (daily["days_from_surgery"] == day2)
-                            & (daily.period == period)
-                        ]
-                        control_test = (
-                            ttest_ind(
-                                day1_control["displacement"],
-                                day2_control["displacement"],
-                            ).pvalue,
-                            (day1, day2),
-                            period,
-                        )
-                        fortasyn_test = (
-                            ttest_ind(
-                                day1_fortasyn["displacement"],
-                                day2_fortasyn["displacement"],
-                            ).pvalue,
-                            (day1, day2),
-                            period,
-                        )
-                        pvalues.extend([control_test, fortasyn_test])
-
-            for ind, (pval, day, period) in enumerate(pvalues):
-                if pval < 0.05:
-                    day_text = (
-                        f"{day[0]} - Day {day[1]}" if isinstance(day, tuple) else day
-                    )
-                    print(f"Day {day_text} ({period}): {pval:.3f}")
-
-            for i, (pval, day, period) in enumerate(pvalues):
+            # Plot asterisk for significance
+            for idx, (pval, day, period) in enumerate(pvalues):
                 if pval >= 0.05:
                     continue
-                if isinstance(day, tuple):
-                    print(
-                        f"Interday significance plotting not implemented: {pval:.3f},{day[0]},{day[1]},{period}"
+                if pval < 0.05:
+                    day_text = (
+                        f"Day {day[0]} - Day {day[1]} - {day[2]}"
+                        if isinstance(day, tuple)
+                        else f"Day {day}"
                     )
-                    continue
-                else:
-                    x1, x2 = day, day
+                    print(f"{day_text} ({period}): {pval:.3f}")
+
+                y_factor = (
+                    6
+                    if daily.loc[(daily.period == "Dark"), "displacement"].quantile(0.7)
+                    > 100
+                    else 2
+                )
+
                 y, h, col = (
-                    daily.loc[(daily.period == period), "displacement"].max(),
-                    0.05,
+                    daily.loc[
+                        (daily["days_from_surgery"] <= max_days)
+                        & (daily.period == period)
+                    ].displacement.quantile(0.75)
+                    + y_factor * idx,
+                    2,
                     "k",
                 )
+
                 text = "*" if pval < 0.05 else ""
                 text = "**" if pval < 0.01 else text
                 text = "***" if pval < 0.001 else text
-                plt.text(
-                    x1, y + h, text, ha="center", va="bottom", color=col, fontsize=14
-                )
 
-            daily.diet.str.cat(" - " + daily.period)
+                if isinstance(day, tuple):
+                    # Prevent plotting pvalues that won't fit on plot
+                    if day[1] > max_days:
+                        continue
+                    # Annotate interday signfificance
+                    x1, x2 = (
+                        day[0],
+                        day[1],
+                    )  # columns 'Sat' and 'Sun' (first column: 0, see plt.xticks())
+                    diet = f"{day[2]} {period} p <= {pval:.3f}"
+                    plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col)
+                    plt.text(
+                        (x1 + x2) * 0.5,
+                        y + h,
+                        text + diet,
+                        ha="center",
+                        va="bottom",
+                        color=col,
+                        fontsize=14,
+                    )
+                else:
+                    x1 = day
+                    plt.text(
+                        x1,
+                        y + h,
+                        text + f" p <= {pval:.3f}",
+                        ha="center",
+                        va="bottom",
+                        color=col,
+                        fontsize=14,
+                    )
+
+            daily.diet = daily.diet.str.cat(" - " + daily.period)
             sns.pointplot(
                 x="days_from_surgery",
                 y="displacement",
-                data=daily[daily["days_from_surgery"] <= max_days],
+                data=daily.loc[(daily["days_from_surgery"] <= max_days)],
                 markers=["d", "s", "^", "x"],
                 linestyles=["--", "--", "-", "-"],
-                palette=["b", "r", "b", "r"],
+                palette=["b", "b", "r", "r"],
                 hue="diet",
+                hue_order=sorted(daily.diet.unique()),
+                dodge=True,
+                ci=68,  # SEM
             )
+
+            # Revert to original column
+            daily.diet = daily_diet_orig
 
             plt.xlabel("Days from Surgery")
             if metric == "velocity":
