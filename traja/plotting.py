@@ -483,7 +483,7 @@ def trip_grid(
     normalize: bool = False,
     hist_only: bool = False,
     **kwargs,
-) -> (np.ndarray, PathCollection):
+) -> Tuple[np.ndarray, PathCollection]:
     """Generate a heatmap of time spent by point-to-cell gridding.
 
     Args:
