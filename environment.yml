@@ -2,6 +2,7 @@ name: traja
 channels:
   - conda-forge
   - pytorch
+  - r
 dependencies:
   - ipython
   - pytorch-cpu
@@ -17,3 +18,5 @@ dependencies:
   - scipy
   - sphinx
   - pillow
+  - r-essentials
+  - r-base
