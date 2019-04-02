@@ -13,7 +13,7 @@ addons:
     packages:
     - libblas-dev
     - liblapack-dev
-    - gfortran-8
+    - gfortran
 git:
   depth: false
 
@@ -25,9 +25,6 @@ cache: pip
 before_install:
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -q
-  - sudo mkdir -p /usr/local/lib/R/site-library
-  - echo 'R_LIBS=/usr/local/lib/R/library:/usr/local/lib/R/site-library/' > ~/.Renviron
-  - sudo chmod 2777 /usr/local/lib/R/site-library
 
 install:
  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
