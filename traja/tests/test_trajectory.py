@@ -104,7 +104,7 @@ def test_calculate_flow_angles():
     grid_indices = traja.grid_coordinates(df)
     U, V = traja.calculate_flow_angles(grid_indices.values)
     expected = -0.707_106_781_186_548_1
-    npt.assert_equal(U.sum(), expected)
+    npt.assert_approx_equal(U.sum(), expected)
 
 
 def test_transitions():

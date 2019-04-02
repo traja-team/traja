@@ -659,7 +659,7 @@ def _polar_bar(
     theta: np.ndarray,
     bin_size: int = 2,
     ax: Optional[matplotlib.axes.Axes] = None,
-    overlap=True,
+    overlap: bool = True,
     **kwargs: str,
 ) -> Axes:
     after_plot_args, kwargs = _get_after_plot_args(**kwargs)
