@@ -14,6 +14,9 @@ addons:
     - r-packages-precise
     packages:
     - r-base
+    - libblas-dev
+    - liblapack-dev
+    - libgfortran-8-dev
 
 git:
   depth: false
