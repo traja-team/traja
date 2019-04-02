@@ -3,7 +3,6 @@ import warnings
 import numpy as np
 import numpy.testing as npt
 import matplotlib
-import pytest
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -52,7 +51,7 @@ def test_plot_stream():
 
 
 def test_trip_grid():
-    fig = traja.plotting.trip_grid(df)
+    traja.plotting.trip_grid(df)
 
 
 def test_plot_actogram():
