@@ -999,7 +999,7 @@ def get_derivatives(trj: TrajaDataFrame):
     return derivs
 
 
-def _get_xylim(trj: TrajaDataFrame):
+def _get_xylim(trj: TrajaDataFrame) -> Tuple[Tuple, Tuple]:
     if (
         "xlim" in trj.__dict__
         and "ylim" in trj.__dict__
