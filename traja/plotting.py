@@ -1,7 +1,10 @@
-from typing import Union, Optional
+from typing import Union, Optional, Tuple, List
 
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.collections import PathCollection
+from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
 from pandas.core.dtypes.common import (
@@ -24,15 +27,6 @@ def stylize_axes(ax):
     ax.yaxis.set_tick_params(right="off", direction="out", width=1)
 
 
-def shift_xtick_labels(xtick_labels, first_index=None):
-    for idx, x in enumerate(xtick_labels):
-        label = x.get_text()
-        xtick_labels[idx].set_text(str(int(label) + 1))
-        if first_index is not None:
-            xtick_labels[0] = first_index
-    return xtick_labels
-
-
 def sans_serif():
     """Convenience function for changing plot text to serif font."""
     import matplotlib.pyplot as plt
@@ -46,7 +40,7 @@ def predict(
     epochs: int = 1000,
     batch_size: int = 1,
     model="lstm",
-):
+):  # pragma: no cover
     """Method for training and visualizing LSTM with trajectory data."""
     if model is "lstm":
         from traja.models.nn import TrajectoryLSTM
@@ -54,7 +48,7 @@ def predict(
         TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
 
 
-def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs):
+def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> Axes:
     """Plot trajectory for single animal over period.
 
     Args:
@@ -104,7 +98,7 @@ def plot(
     accessor: Optional[traja.TrajaAccessor] = None,
     ax=None,
     **kwargs,
-):
+) -> Figure:
     """Plot trajectory for single animal over period.
 
     Args:
@@ -127,7 +121,6 @@ def plot(
     after_plot_args, kwargs = _get_after_plot_args(**kwargs)
 
     GRAY = "#999999"
-    self = accessor or {}
 
     xlim = kwargs.pop("xlim", None)
     ylim = kwargs.pop("ylim", None)
@@ -139,7 +132,6 @@ def plot(
     fps = kwargs.pop("fps", None)
     figsize = kwargs.pop("figsize", None)
 
-    start, end = None, None
     coords = trj[["x", "y"]]
     time_col = traja.trajectory._get_time_col(trj)
 
@@ -151,10 +143,9 @@ def plot(
     if n_coords is None:
         # Plot all coords
         start, end = 0, len(coords)
-        verts = coords.iloc[:end].values
+        verts = coords.iloc[start:end].values
     else:
         # Plot first `n_coords`
-        start, end = 0, n_coords
         verts = coords.iloc[:n_coords].values
 
     n_coords = len(verts)
@@ -221,12 +212,13 @@ def plot(
     ax.set_aspect("equal")
 
     # Number of color bar ticks
-    # FIXME: Implement customizable
     CBAR_TICKS = 10 if n_coords > 20 else n_coords
     indices = np.linspace(0, n_coords - 1, CBAR_TICKS, endpoint=True, dtype=int)
     cbar = plt.colorbar(
         sc, fraction=0.046, pad=0.04, orientation="vertical", label=label
     )
+
+    # Get colorbar labels from time
     if time_col is "index":
         if is_datetime64_any_dtype(trj.index):
             cbar_labels = (
@@ -256,6 +248,7 @@ def plot(
         cbar_labels = trj.index[indices].values
         if fps is not None and fps > 0 and fps is not 1 and show_time:
             cbar_labels = cbar_labels / fps
+
     cbar.set_ticks(indices)
     cbar.set_ticklabels(cbar_labels)
     plt.tight_layout()
@@ -264,7 +257,7 @@ def plot(
     return fig
 
 
-def _label_axes(trj: TrajaDataFrame, ax):
+def _label_axes(trj: TrajaDataFrame, ax) -> Axes:
     if "spatial_units" in trj.__dict__:
         ax.set_xlabel(trj.spatial_units)
         ax.set_ylabel(trj.spatial_units)
@@ -276,7 +269,7 @@ def plot_quiver(
     bins: Optional[Union[int, tuple]] = None,
     quiverplot_kws: dict = {},
     **kwargs,
-):
+) -> Figure:
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -312,7 +305,7 @@ def plot_contour(
     contourfplot_kws: dict = {},
     quiverplot_kws: dict = {},
     **kwargs,
-):
+) -> Figure:
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -354,7 +347,7 @@ def plot_surface(
     bins: Optional[Union[int, tuple]] = None,
     cmap: str = "jet",
     **surfaceplot_kws: dict,
-):
+) -> Figure:
     """Plot surface of flow from each grid cell to neighbor in 3D.
 
     Args:
@@ -394,7 +387,7 @@ def plot_stream(
     contourplot_kws: dict = {},
     streamplot_kws: dict = {},
     **kwargs,
-):
+) -> Figure:
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -438,7 +431,7 @@ def plot_flow(
     streamplot_kws: dict = {},
     quiverplot_kws: dict = {},
     surfaceplot_kws: dict = {},
-):
+) -> Figure:
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -474,7 +467,7 @@ def plot_flow(
         raise NotImplementedError(f"Kind {kind} is not implemented.")
 
 
-def _get_after_plot_args(**kwargs: dict):
+def _get_after_plot_args(**kwargs: dict) -> (dict, dict):
     after_plot_args = dict(
         interactive=kwargs.pop("interactive", True),
         filepath=kwargs.pop("filepath", None),
@@ -490,7 +483,7 @@ def trip_grid(
     normalize: bool = False,
     hist_only: bool = False,
     **kwargs,
-):
+) -> (np.ndarray, PathCollection):
     """Generate a heatmap of time spent by point-to-cell gridding.
 
     Args:
@@ -571,7 +564,7 @@ def color_dark(
             ax.axvspan(series.index[start], series.index[end], alpha=0.5, color="gray")
 
 
-def find_runs(x: pd.Series):
+def find_runs(x: pd.Series) -> (np.ndarray, np.ndarray, np.ndarray):
     """Find runs of consecutive items in an array.
     From https://gist.github.com/alimanfoo/c5977e87111abe8127453b21204c1065."""
 
@@ -601,7 +594,7 @@ def find_runs(x: pd.Series):
         return run_values, run_starts, run_lengths
 
 
-def fill_ci(series: pd.Series, window: Union[int, str]):
+def fill_ci(series: pd.Series, window: Union[int, str]) -> Figure:
     """Fill confidence interval defined by SEM over mean of `window`. Window can be interval or offset, eg, '30s'."""
     assert is_datetime_or_timedelta_dtype(
         series.index
@@ -668,7 +661,7 @@ def _polar_bar(
     ax: Optional[matplotlib.axes.Axes] = None,
     overlap=True,
     **kwargs: str,
-):
+) -> Axes:
     after_plot_args, kwargs = _get_after_plot_args(**kwargs)
 
     title = kwargs.pop("title", None)
@@ -707,7 +700,7 @@ def polar_bar(
     overlap: bool = True,
     ax: Optional[matplotlib.axes.Axes] = None,
     **plot_kws: str,
-):
+) -> Axes:
     """Plot polar bar chart.
     Args:
         trj
