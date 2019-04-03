@@ -1,14 +1,18 @@
 #! /usr/local/env python3
+import argparse
 import glob
 import logging
 import multiprocessing as mp
 import os
 
-from scipy.stats import ttest_ind, ttest_rel, f_oneway
+from scipy.stats import ttest_ind, ttest_rel
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
 
 import traja
 from traja.plotting import *
 
+import matplotlib.style as style
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
@@ -25,6 +29,53 @@ except ImportError:
         "\n"
         "##########################"
     )
+
+
+def glm(
+    daily: pd.DataFrame,
+    response_var: str = "displacement",
+    cov_struct: Optional[str] = None,
+):
+    """Generalized linear model for daily response."""
+
+    kwargs = {}
+
+    if cov_struct == "auto":
+        cov_struct = sm.cov_struct.Autoregressive()
+        kwargs["cov_struct"] = cov_struct
+    elif cov_struct == "exchangable":
+        cov_struct = sm.cov_struct.Exchangeable()
+        kwargs["cov_struct"] = cov_struct
+    day_range = f"{daily.days_from_surgery.min()}-{daily.days_from_surgery.max()}"
+    print(
+        f"Fitting generalized linear model on daily data. Days {day_range}'\n"
+        f"Model: {response_var} ~ days_from_surgery * diet."
+        + f" Covariance structure ({cov_struct})"
+        if cov_struct
+        else ""
+    )
+
+    sig_pvalues = []
+
+    for period in ["Dark", "Light", "Overall"]:
+        subset = daily[daily.period == period] if period != "Overall" else daily
+        md = smf.gee(
+            f" {response_var} ~ days_from_surgery * diet",
+            data=subset,
+            groups="cage",
+            **kwargs,
+        )
+        mdf = md.fit()
+        pvalues = mdf.pvalues
+        for factor, pvalue in pvalues.items():
+            if pvalue < 0.05 and factor != "Intercept":
+                print(
+                    f"{factor} effect on {response_var} ({period}) - p-value: {pvalue:.4f}"
+                )
+                sig_pvalues.append((factor, pvalue))
+    if not sig_pvalues:
+        print("No significant effect found.")
+    return sig_pvalues
 
 
 class DVCExperiment:
@@ -44,29 +95,21 @@ class DVCExperiment:
     def __init__(
         self,
         experiment_name,
-        centroids_dir,
+        centroids_dir: Optional[str] = None,
         # meta_filepath="/Users/justinshenk/neurodata/data/Stroke_olive_oil/DVC cageids HT Maximilian Wiesmann updated.xlsx",
         meta_filepath="/Users/justinshenk/neurodata/data/mouse_ref.csv",
         cage_xmax=0.058 * 2,
         cage_ymax=0.125 * 2,
     ):
         # TODO: Fix in prod version
-        self._init()
         self.basedir = "/Users/justinshenk/neurodata/"
         self._cpu_count = mp.cpu_count()
         self.centroids_dir = centroids_dir
-        search_path = glob.glob(os.path.join(centroids_dir, "*"))
-        self.centroid_files = sorted(
-            [
-                x.split("/")[-1]
-                for x in search_path
-                if "csv" in x and "filelist" not in x
-            ]
-        )
         self.mouse_lookup = self.load_meta(meta_filepath)
         self.cage_xmax = cage_xmax
         self.cage_ymax = cage_ymax
         self.experiment_name = experiment_name
+        self._init()
         self.outdir = os.path.join(
             self.basedir, "output", self._str2filename(experiment_name)
         )
@@ -74,7 +117,21 @@ class DVCExperiment:
 
     def _init(self):
         """ """
-        plt.rc("font", family="serif")
+        if self.centroids_dir:
+            search_path = glob.glob(os.path.join(self.centroids_dir, "*"))
+            self.centroid_files = sorted(
+                [
+                    x.split("/")[-1]
+                    for x in search_path
+                    if "csv" in x and "filelist" not in x
+                ]
+            )
+        else:
+            self.centroid_files = None
+
+        # plt.rc("font", family="serif")
+        style.use("ggplot")
+        sns.set_context("paper")
 
     @staticmethod
     def _str2filename(string):
@@ -127,10 +184,11 @@ class DVCExperiment:
     ) -> list:
         """Returns pvalues for intra and interday variances."""
         pvalues = []
+
         # Paired Student's t-Test, between days for each group
         for day1, day2 in day_pairs:
             diets = sorted(daily.diet.unique())
-            for period in ["Light", "Dark"]:
+            for period in daily.period.unique():
                 day1_control = daily.loc[
                     (daily["diet"] == diets[0])
                     & (daily["days_from_surgery"] == day1)
@@ -157,22 +215,30 @@ class DVCExperiment:
                 ]
 
                 if day1_control.shape == day2_control.shape:
-                    control_test = (
-                        ttest_rel(day1_control, day2_control).pvalue,
-                        (day1, day2, "Control"),
-                        period,
-                    )
+                    try:
+                        control_test = (
+                            ttest_rel(day1_control, day2_control).pvalue,
+                            (day1, day2, "Control"),
+                            period,
+                        )
+                    except AttributeError:
+                        print(f"Error: Empty data, skipping Days: {day1}, {day2}")
+                        continue
                     pvalues.append(control_test)
                 else:
                     print(
                         f"Control ({period}) - Skipping stats - Day {day1} shape is {len(day1_control)} and day {day2} shape is {len(day2_control)}"
                     )
                 if day1_fortasyn.shape == day2_fortasyn.shape:
-                    fortasyn_test = (
-                        ttest_rel(day1_fortasyn, day2_fortasyn).pvalue,
-                        (day1, day2, "Fortasyn"),
-                        period,
-                    )
+                    try:
+                        fortasyn_test = (
+                            ttest_rel(day1_fortasyn, day2_fortasyn).pvalue,
+                            (day1, day2, "Fortasyn"),
+                            period,
+                        )
+                    except AttributeError:
+                        print("Error: Empty data, skipping Days: {day1}, {day2}")
+                        continue
                     pvalues.append(fortasyn_test)
                 else:
                     print(
@@ -180,10 +246,11 @@ class DVCExperiment:
                     )
 
         # Get intraday significance
-        for day in range(max(days)):
+        for day in daily.days_from_surgery.unique():
             diets = sorted(daily.diet.unique())
+
             # Student's t-Test, between groups for given day
-            for period in ["Light", "Dark"]:
+            for period in daily.period.unique():
                 control = daily.loc[
                     (daily["diet"] == diets[0])
                     & (daily["days_from_surgery"] == day)
@@ -201,13 +268,23 @@ class DVCExperiment:
 
     def plot_daily_distance(
         self,
-        daily: pd.DataFrame,
-        days: list = [3, 7, 35],
+        daily: Optional[pd.DataFrame] = None,
+        days: list = [3],
         metric: str = "distance",
         day_pairs: list = [],
     ):
+        """Plot daily distance.
+
+        Args:
+
+           daily:   dataframe with daily data
+           days:    cutoff for plots, eg [3,7] plots with maximum 3 days and 7 days.
+
+        """
+        if daily is None:
+            daily = self.get_distance(time="D")
+
         daily = daily.copy()
-        pvalues = []
 
         # Get 35-day daily velocity
         cages = sorted(daily.cage.unique())
@@ -222,7 +299,6 @@ class DVCExperiment:
 
         # Save original name for diet column
         daily_diet_orig = daily.diet
-
         pvalues = self.ttests(daily, days, day_pairs)
 
         # Calculate and mark significant difference
@@ -255,7 +331,7 @@ class DVCExperiment:
                         & (daily.period == period)
                     ].displacement.quantile(0.75)
                     + y_factor * idx,
-                    2,
+                    1.5,
                     "k",
                 )
 
@@ -263,15 +339,19 @@ class DVCExperiment:
                 text = "**" if pval < 0.01 else text
                 text = "***" if pval < 0.001 else text
 
+                day_range = range(daily.days_from_surgery.min(), max_days + 1)
+
                 if isinstance(day, tuple):
                     # Prevent plotting pvalues that won't fit on plot
                     if day[1] > max_days:
                         continue
+
                     # Annotate interday signfificance
                     x1, x2 = (
-                        day[0],
-                        day[1],
-                    )  # columns 'Sat' and 'Sun' (first column: 0, see plt.xticks())
+                        np.searchsorted(day_range, day[0]),
+                        np.searchsorted(day_range, day[1]),
+                    )
+
                     diet = f"{day[2]} {period} p <= {pval:.3f}"
                     plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col)
                     plt.text(
@@ -284,7 +364,7 @@ class DVCExperiment:
                         fontsize=14,
                     )
                 else:
-                    x1 = day
+                    x1 = np.searchsorted(day_range, day)
                     plt.text(
                         x1,
                         y + h,
@@ -296,7 +376,7 @@ class DVCExperiment:
                     )
 
             daily.diet = daily.diet.str.cat(" - " + daily.period)
-            sns.pointplot(
+            ax = sns.pointplot(
                 x="days_from_surgery",
                 y="displacement",
                 data=daily.loc[(daily["days_from_surgery"] <= max_days)],
@@ -306,8 +386,11 @@ class DVCExperiment:
                 hue="diet",
                 hue_order=sorted(daily.diet.unique()),
                 dodge=True,
+                conf_lw=0.8,
                 ci=68,  # SEM
             )
+
+            plt.legend(loc="upper left")
 
             # Revert to original column
             daily.diet = daily_diet_orig
@@ -353,7 +436,7 @@ class DVCExperiment:
                 *sorted(zip(labels[:2], handles[:2]), key=lambda t: t[0])
             )
             ax.legend(handles, labels)
-            plt.tight_layout()
+            # plt.tight_layout()
         plt.show()
 
     def get_presurgery_average_weekly_activity(self):
@@ -779,6 +862,7 @@ class DVCExperiment:
             day["diet"] = diet
             day["days_from_surgery"] = days_from_surgery
             day["period"] = "Light"
+
             # Night
             night = (
                 displacement.between_time("19:00", "7:00", include_end=False)
@@ -789,7 +873,14 @@ class DVCExperiment:
             night["diet"] = diet
             night["days_from_surgery"] = days_from_surgery
             night["period"] = "Dark"
-            return [day, night]
+
+            # Overall
+            overall = displacement.resample(time).agg({"displacement": "sum"})
+            overall["cage"] = cage
+            overall["diet"] = diet
+            overall["days_from_surgery"] = days_from_surgery
+            overall["period"] = "Overall"
+            return [day, night, overall]
         except Exception as e:
             print(e, file)
 
@@ -808,6 +899,7 @@ class DVCExperiment:
         if time is "d" and hasattr(self, "daily_distance"):
             return self.daily_distance
         elif time == "d" and not hasattr(self, "daily_distance"):
+            print(f"Calculating daily distance for {self.cages}")
             self.distance_files_processed = 0
             for cage in sorted(self.cages):
                 cage_files = sorted([x for x in self.centroid_files if cage in x])
@@ -837,7 +929,7 @@ class DVCExperiment:
                             except Exception as e:
                                 print(e)
                     print(
-                        f"[{len(df_list)//2}/{len(self.centroid_files)}] - Calculated distance for {cage}"
+                        f"[{len(df_list)//3}/{len(self.centroid_files)}] - Calculated distance for {cage}"
                     )
                 else:
                     print(f"Results are None for {cage}")
@@ -1212,11 +1304,6 @@ def get_plot(file, axes, col=0):
             show=False,
         )
 
-    import seaborn as sns
-
-    # x, y = df.traja.xy.T
-    # sns.jointplot(x, y, kind="hex", color="#4CB391")
-
 
 def debug():
     F4 = [
@@ -1235,6 +1322,123 @@ def debug():
         file = os.path.join("~/neurodata/data/raw_centroids_rev2", file)
         get_plot(file, axes, col)
     plt.show()
-    # for file in F6:
-    #     file = os.path.join("~/neurodata/data/raw_centroids_rev2", file)
-    #     get_plot(file)
+
+
+def pair(s: str):
+    try:
+        day_range = s.split("-")
+        day_range = (int(day_range[0]), int(day_range[1]))
+        if len(day_range) > 2:
+            raise argparse.ArgumentTypeError(
+                f"Day range length can only be 2, but it is {len(day_range)}"
+            )
+        return day_range
+    except:
+        raise argparse.ArgumentTypeError(
+            "Day range must be hyphen separated, eg: --day-range=1-7"
+        )
+
+
+def pairs(s: str):
+    try:
+        day_pairs = s.split(",")
+        day_pairs = [x.split("-") for x in day_pairs]
+        day_pairs = [(int(x[0]), int(x[1])) for x in day_pairs]
+        return day_pairs
+    except:
+        raise argparse.ArgumentTypeError(
+            "Day pairs must be comma separated with hyphens for range, eg: --day-pairs=1-7,1-21"
+        )
+
+
+def days(s: str):
+    try:
+        days = [int(x) for x in s.split(",")]
+        return days
+    except:
+        raise argparse.ArgumentTypeError(
+            "Days must be comma separated, eg: --days=1,7,21"
+        )
+
+
+def main(args):
+    daily_filename = f"daily_distance_{args.experiment_name}.csv"
+    if os.path.exists(daily_filename):
+        daily = pd.read_csv(daily_filename, dtype={"diet": "category"})
+        print(f"Loaded {daily_filename}")
+        experiment = DVCExperiment(experiment_name="fortasyn")
+    elif args.centroids_dir and args.centroids_dir:
+        centroids_dir = os.path.abspath(args.centroids_dir)
+        if not os.path.exists(centroids_dir):
+            raise Exception(f"Error: {centroids_dir} does not exist.")
+        experiment = DVCExperiment(
+            experiment_name="fortasyn", centroids_dir=centroids_dir
+        )
+        print(f"Computing daily distance.")
+        daily = experiment.get_distance()
+    else:
+        raise Exception(
+            f"Must provide centroids_dir or experiment_name, {daily_filename} not found"
+        )
+    if args.day_range:
+        d1, d2 = args.day_range
+        daily = daily.loc[
+            (daily["days_from_surgery"] >= d1) & (daily["days_from_surgery"] <= d2)
+        ]
+    if args.day_pairs or args.days:
+        print("Plotting daily distance")
+        experiment.plot_daily_distance(daily, days=args.days, day_pairs=args.day_pairs)
+    if "glm" in args:
+        glm(daily)
+
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(description="Run DVC Experiment")
+    parser.add_argument(
+        "-c", "--centroids_dir", help="path to directory with centroids CSVs"
+    )
+    parser.add_argument(
+        "-n",
+        "--name",
+        dest="experiment_name",
+        type=str,
+        help="name of experiment, eg, fortasyn",
+    )
+    parser.add_argument(
+        "-d",
+        "--days",
+        help="number of days per plot, comma-separated, eg: 3,7,35",
+        type=days,
+        default=[],
+    )
+    parser.add_argument(
+        "-p",
+        "--day_pairs",
+        help="day pairs for statistical comparison, comma-separated, eg: 1-7,1-21",
+        type=pairs,
+        default=[],
+    )
+    parser.add_argument(
+        "-g",
+        "--glm",
+        help="Estimate with generalized linear model",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-r", "--day-range", help="Restrict day range, eg: 1-7", type=pair
+    )
+
+    args = parser.parse_args()
+
+    max_days = max(max(args.days), max(max(t) for t in args.day_pairs))
+    if args.day_range and args.days and args.day_range[-1] < max_days:
+        raise Exception(
+            f"Invalid options for day range: Day range {args.day_range}, Days {args.days}"
+        )
+    return args
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    main(args)
