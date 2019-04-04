@@ -1,7 +1,7 @@
 import warnings
 
 import traja
-import traja.rutils
+from traja import rutils
 
 warnings.filterwarnings("ignore", category=UserWarning, module="rpy2")
 
@@ -9,15 +9,11 @@ df = traja.generate(n=20)
 
 
 def test_import_adehabitat():
-    from traja.rutils import import_adehabitat
-
-    adehabitat = import_adehabitat()
+    traja.rutils.import_adehabitat()
 
 
 def test_import_trajr():
-    from traja.rutils import import_trajr
-
-    trajr = import_trajr()
+    traja.rutils.import_trajr()
 
 
 def test_to_trajr():
@@ -30,7 +26,7 @@ def test_to_trajr():
 
 def test_to_ltraj():
     ltraj = traja.rutils.to_ltraj(df)
-    vals = ltraj[0][0]
-    actual = vals.r_repr()[:24]
-    expected = "c(0, 0.946646340454933, "
-    assert actual == expected
+    rdataframe = ltraj[0]
+    assert "x" in rdataframe
+    assert "y" in rdataframe
+    assert len(rdataframe) == 21
