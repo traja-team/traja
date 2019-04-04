@@ -852,6 +852,7 @@ class DVCExperiment:
             displacement["cage"] = cage
             displacement["diet"] = diet
             displacement["days_from_surgery"] = days_from_surgery
+
             # Day
             day = (
                 displacement.between_time("7:00", "19:00")
@@ -1376,6 +1377,9 @@ def main(args):
         )
         print(f"Computing daily distance.")
         daily = experiment.get_distance()
+        daily = daily.drop_duplicates(
+            daily, subset=["diet", "period", "cage", "days_from_surgery"]
+        )
     else:
         raise Exception(
             f"Must provide centroids_dir or experiment_name, {daily_filename} not found"
@@ -1388,7 +1392,8 @@ def main(args):
     if args.day_pairs or args.days:
         print("Plotting daily distance")
         experiment.plot_daily_distance(daily, days=args.days, day_pairs=args.day_pairs)
-    if "glm" in args:
+    if args.glm:
+        print("GLM:")
         glm(daily)
 
 
