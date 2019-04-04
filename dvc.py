@@ -4,6 +4,7 @@ import glob
 import logging
 import multiprocessing as mp
 import os
+import re
 
 from scipy.stats import ttest_ind, ttest_rel
 import statsmodels.api as sm
@@ -30,6 +31,9 @@ except ImportError:
         "##########################"
     )
 
+DARK = "Dark"
+LIGHT = "Light"
+
 
 def glm(
     daily: pd.DataFrame,
@@ -48,16 +52,14 @@ def glm(
         kwargs["cov_struct"] = cov_struct
     day_range = f"{daily.days_from_surgery.min()}-{daily.days_from_surgery.max()}"
     print(
-        f"Fitting generalized linear model on daily data. Days {day_range}'\n"
+        f"Fitting generalized linear model on daily data. Days {day_range}\n"
         f"Model: {response_var} ~ days_from_surgery * diet."
-        + f" Covariance structure ({cov_struct})"
-        if cov_struct
-        else ""
+        + (f" Covariance structure ({cov_struct})" if cov_struct else "")
     )
 
     sig_pvalues = []
 
-    for period in ["Dark", "Light", "Overall"]:
+    for period in [DARK, LIGHT, "Overall"]:
         subset = daily[daily.period == period] if period != "Overall" else daily
         md = smf.gee(
             f" {response_var} ~ days_from_surgery * diet",
@@ -150,12 +152,12 @@ class DVCExperiment:
 
     def get_weekly_activity(self):
         """ """
-        activity = self.get_daily_activity()
+        activity = self.get_daily_activity(days=33)
         weekly_list = []
 
         for week in range(-3, 5):
             for group in activity["Group+Diet"].unique():
-                for period in ["Daytime", "Nighttime"]:
+                for period in [LIGHT, DARK]:
                     df = (
                         activity[
                             (
@@ -272,6 +274,7 @@ class DVCExperiment:
         days: list = [3],
         metric: str = "distance",
         day_pairs: list = [],
+        **kwargs,
     ):
         """Plot daily distance.
 
@@ -306,74 +309,8 @@ class DVCExperiment:
             fig, ax = plt.subplots(figsize=(14, 8))
             plt.title(f"Average daily {metric} {max_days} days after stroke")
 
-            # Plot asterisk for significance
-            for idx, (pval, day, period) in enumerate(pvalues):
-                if pval >= 0.05:
-                    continue
-                if pval < 0.05:
-                    day_text = (
-                        f"Day {day[0]} - Day {day[1]} - {day[2]}"
-                        if isinstance(day, tuple)
-                        else f"Day {day}"
-                    )
-                    print(f"{day_text} ({period}): {pval:.3f}")
-
-                y_factor = (
-                    6
-                    if daily.loc[(daily.period == "Dark"), "displacement"].quantile(0.7)
-                    > 100
-                    else 2
-                )
-
-                y, h, col = (
-                    daily.loc[
-                        (daily["days_from_surgery"] <= max_days)
-                        & (daily.period == period)
-                    ].displacement.quantile(0.75)
-                    + y_factor * idx,
-                    1.5,
-                    "k",
-                )
-
-                text = "*" if pval < 0.05 else ""
-                text = "**" if pval < 0.01 else text
-                text = "***" if pval < 0.001 else text
-
-                day_range = range(daily.days_from_surgery.min(), max_days + 1)
-
-                if isinstance(day, tuple):
-                    # Prevent plotting pvalues that won't fit on plot
-                    if day[1] > max_days:
-                        continue
-
-                    # Annotate interday signfificance
-                    x1, x2 = (
-                        np.searchsorted(day_range, day[0]),
-                        np.searchsorted(day_range, day[1]),
-                    )
-
-                    diet = f"{day[2]} {period} p <= {pval:.3f}"
-                    plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col)
-                    plt.text(
-                        (x1 + x2) * 0.5,
-                        y + h,
-                        text + diet,
-                        ha="center",
-                        va="bottom",
-                        color=col,
-                        fontsize=14,
-                    )
-                else:
-                    x1 = np.searchsorted(day_range, day)
-                    plt.text(
-                        x1,
-                        y + h,
-                        text + f" p <= {pval:.3f}",
-                        ha="center",
-                        va="bottom",
-                        color=col,
-                        fontsize=14,
-                    )
+            if kwargs.get("t_test"):
+                self.plot_t_test(daily, pvalues, max_days)
 
             daily.diet = daily.diet.str.cat(" - " + daily.period)
             ax = sns.pointplot(
@@ -416,7 +353,7 @@ class DVCExperiment:
         """
         for group in groups:
             fig, ax = plt.subplots(figsize=(4, 3))
-            for period in ["Daytime", "Nighttime"]:
+            for period in [LIGHT, DARK]:
                 sns.pointplot(
                     x="Week",
                     y="Activity",
@@ -444,7 +381,7 @@ class DVCExperiment:
         pre_average_weekly_act = os.path.join(self.outdir, "pre_average_weekly_act.csv")
         if not os.path.exists(pre_average_weekly_act):
             weekly = self.get_weekly_activity()
-            for period in ["Daytime", "Nighttime"]:
+            for period in [LIGHT, DARK]:
                 for cage in self.get_cages():
                     mean = weekly[
                         (weekly.index == cage)
@@ -472,12 +409,12 @@ class DVCExperiment:
         """
         # Normalize activity
         weekly["Normed_Activity"] = 0
-        for period in ["Daytime", "Nighttime"]:
+        for period in [LIGHT, DARK]:
             for cage in self.get_cages():
                 df_night = weekly[
                     (weekly["Week"] >= -1)
                     & (weekly.index == cage)
-                    & (weekly.Period == "Nighttime")
+                    & (weekly.Period == DARK)
                 ]
                 df = weekly[
                     (weekly["Week"] >= -1)
@@ -536,40 +473,39 @@ class DVCExperiment:
 
         """
         norm_daily_activity_csv = os.path.join(self.outdir, "norm_daily_activity.csv")
+
         if not os.path.exists(norm_daily_activity_csv):
             activity["Normed_Activity"] = 0
-            for period in ["Daytime", "Nighttime"]:
+            for period in [LIGHT, DARK]:
                 for cage in self.get_cages():
                     # Get prestroke
                     prestroke_night_average = activity[
-                        (activity.Days_from_surgery <= -1)
-                        & (activity.Cage == cage)
-                        & (activity.Period == "Nighttime")
+                        (activity.Days <= -1)
+                        & (activity.cage == cage)
+                        & (activity.Period == DARK)
                     ].Activity.mean()
                     df = activity[
-                        (activity.Days_from_surgery >= -1)
-                        & (activity.Cage == cage)
+                        (activity.Days >= -1)
+                        & (activity.cage == cage)
                         & (activity.Period == period)
                     ]
                     assert (
                         df.Days_from_surgery.is_monotonic_increasing == True
                     ), "Not monotonic"
                     mean = activity[
-                        (activity.Days_from_surgery <= -1)
-                        & (activity.Cage == cage)
+                        (activity.Days <= -1)
+                        & (activity.cage == cage)
                         & (activity.Period == period)
                     ].Activity.mean()
                     df.loc[
-                        (df.Cage == cage)
-                        & (df.Period == period)
-                        & (df.Days_from_surgery == -1),
+                        (df.Cage == cage) & (df.Period == period) & (df.Days == -1),
                         "Activity",
                     ] = mean
                     normed = [x / prestroke_night_average for x in df.Activity.values]
                     activity.loc[
                         (activity.Cage == cage)
                         & (activity.Period == period)
-                        & (activity.Days_from_surgery >= -1),
+                        & (activity.Days >= -1),
                         "Normed_Activity",
                     ] = normed
             activity.to_csv(norm_daily_activity_csv)
@@ -579,8 +515,9 @@ class DVCExperiment:
 
     def plot_daily_normed_activity(self):
         """ """
-        activity = self.get_daily_activity()
-        activity = self._norm_daily_activity(activity)
+        activity = self.get_daily_activity(days=33)
+        normed_activity = self._norm_daily_activity(activity)
+        ...
 
     def plot_weekly_normed_activity(self, presurgery_average=True):
         """Plot weekly normed activity. Optionally, average presurgery points.
@@ -597,9 +534,9 @@ class DVCExperiment:
             fig, ax = plt.subplots(figsize=(6.25, 3.8))
             hue_order = weekly["Group+Diet"].unique()
             group_cnt = len(hue_order)
-            for period in ["Daytime", "Nighttime"]:
+            for period in [LIGHT, DARK]:
                 linestyles = (
-                    ["--"] * group_cnt if period is "Daytime" else ["-"] * group_cnt
+                    ["--"] * group_cnt if period is LIGHT else ["-"] * group_cnt
                 )
                 sns.pointplot(
                     x="Week",
@@ -862,7 +799,7 @@ class DVCExperiment:
             day["cage"] = cage
             day["diet"] = diet
             day["days_from_surgery"] = days_from_surgery
-            day["period"] = "Light"
+            day["period"] = LIGHT
 
             # Night
             night = (
@@ -873,7 +810,7 @@ class DVCExperiment:
             night["cage"] = cage
             night["diet"] = diet
             night["days_from_surgery"] = days_from_surgery
-            night["period"] = "Dark"
+            night["period"] = DARK
 
             # Overall
             overall = displacement.resample(time).agg({"displacement": "sum"})
@@ -1078,72 +1015,186 @@ class DVCExperiment:
         ax2.legend()
         plt.show()
 
-    def get_daily_activity(self):
-        """ """
-        activity_csv = os.path.join(self.outdir, "daily_activity.csv")
-        if not os.path.exists(activity_csv):
-            print(f"Path {activity_csv} does not exist, creating dataframe")
-            activity_list = []
-            col_list = [f"e{i:02}" for i in range(1, 12 + 1)]  # electrode columns
-            # Iterate over minute activations
-            search_path = os.path.join(
-                self.basedir, "data", self.experiment_name, "dvc_activation", "*.csv"
-            )
-            minute_activity_files = sorted(glob.glob(search_path))
-            for cage in minute_activity_files:
-                cage_id = os.path.split(cage)[-1].split(".")[0]
-                # TODO: Fix in final
-                assert len(cage_id) == 3, logging.error(f"{cage_id} length != 3")
-                # Read csv
-                cage_df = pd.read_csv(
-                    cage,
-                    index_col="time_stamp_start",
-                    date_parser=lambda x: pd.datetime.strptime(
-                        x, "%Y-%m-%d %H:%M:%S:%f"
-                    ),
-                )
-                # Make csv with columns for cage+activity+day+diet+surgery
-                cage_df["Activity"] = cage_df[col_list].sum(axis=1)
-                day = (
-                    cage_df.traja.day.groupby(pd.Grouper(key="time", freq="D"))[
-                        "Activity"
-                    ]
-                    .sum()
-                    .to_frame()
-                )
-                day["Cage"] = cage_id
-                day["Period"] = "Daytime"
-                day["Surgery"] = self.get_stroke(cage_id)
-                day["Diet"] = self.get_diet(cage_id)
-                day["Group"] = self.get_group(cage_id)
-                day["Days"] = [int(x) for x in range(len(day.index))]
-                activity_list.append(day)
+    def get_minute_activity_files(
+        self, excel_path="data/DVC_Activity_20180702.xlsx", day_limit=37
+    ):
+        minute_activity_paths = []
 
-                night = (
-                    cage_df.traja.night.groupby(pd.Grouper(key="time", freq="D"))[
-                        "Activity"
-                    ]
-                    .sum()
-                    .to_frame()
-                )
-                night["Cage"] = cage_id
-                night["Period"] = "Nighttime"
-                night["Surgery"] = self.get_stroke(cage_id)
-                night["Diet"] = self.get_diet(cage_id)
-                night["Group"] = self.get_group(cage_id)
-                night["Days"] = [int(x) for x in range(len(night.index))]
-                activity_list.append(night)
-
-            activity = pd.concat(activity_list)
-            activity.to_csv(activity_csv)
-        else:
-            activity = traja.read_file(
-                activity_csv,
-                index_col="time_stamp_start",
-                parse_dates=["Surgery", "time_stamp_start"],
-                infer_datetime_format=True,
+        # Look for preexisting files
+        for cage in self.cages:
+            cage_filepath = os.path.join(
+                self.basedir,
+                "data",
+                self.experiment_name,
+                cage.replace(" ", "_") + ".csv",
             )
-        return activity
+            if os.path.exists(cage_filepath):
+                minute_activity_paths.append(cage_filepath)
+            else:
+                print(f"Skipping {cage} because {cage_filepath} does not exist.")
+
+        # If found, return
+        if len(minute_activity_paths):
+            return minute_activity_paths
+
+        # Create [cage].csv files with activity resampled to minutes
+        if not os.path.exists(excel_path):
+            raise FileNotFoundError(f"{excel_path} not found.")
+        xl = pd.ExcelFile(excel_path)
+        r = re.compile("[A-Z]\d")
+        activity_sheets = list(filter(r.match, xl.sheet_names))
+
+        for sheet_name in activity_sheets:
+            df = xl.parse(sheet_name)
+            df = df.iloc[1:day_limit]  # remove post-37-day data
+            df = df[df.columns[1:-76]]  # remove non activity columns
+            cage_filepath = os.path.join(
+                "data", self.experiment_name, sheet_name.replace(" ", "_") + ".csv"
+            )
+            minute_activity_paths.append(cage_filepath)
+            df.to_csv(cage_filepath, index=False)
+            print(f"Saving to {cage_filepath}")
+
+        return minute_activity_paths
+
+    def get_daily_activity(self, days: int) -> pd.DataFrame:
+        """Returns daily activity."""
+        minute_activity_files = self.get_minute_activity_files()
+
+        # initialize
+        activity = pd.DataFrame(columns=["cage", "activity", "Diet", "Days"])
+
+        # get minute activity files
+        sorted_cages = self.get_minute_activity_files()
+
+        def csv_to_series(cage_file, fill_nan=True):
+            cage = pd.read_csv(cage_file)
+            if cage.shape[1] != 1439:
+                print(
+                    "Warning: Cage {cage} has {cage.shape[1]} columns instead of 1439"
+                )
+            nan_count = cage.isna().sum().sum()  # about 1440 * 8 NaNs
+            if fill_nan:
+                cage.fillna(0, inplace=True)
+            flat = cage.values.flatten()
+            cage_name = cage_file.split("/")[-1].split(".")[0]
+            diet = self.mouse_lookup[cage_name]
+            return flat, cage_name, diet
+
+        for f in sorted_cages:
+            flat, cage_name, diet = csv_to_series(f)
+            day_indices = np.arange(390, 1110)
+            mask = np.ones(1440, np.bool)
+            mask[day_indices] = 0
+            night_indices = np.arange(1440)[mask]
+            for day in range(days):
+                group = "Control" if int(diet) is 1 else "Fortasyn"
+                overall_data = np.nanmean(flat[np.arange(1440) + day * 1440])
+                day_data = np.nanmean(flat[day_indices + day * 1440])
+                night_data = np.nanmean(flat[night_indices + day * 1440])
+                activity = activity.append(
+                    {
+                        "activity": day_data,
+                        "cage": cage_name,
+                        "period": LIGHT,
+                        "diet": group,
+                        "Diet": group + f" - {LIGHT}",
+                        "days": day + 1,
+                    },
+                    ignore_index=True,
+                )
+                activity = activity.append(
+                    {
+                        "activity": night_data,
+                        "cage": cage_name,
+                        "period": DARK,
+                        "diet": group,
+                        "Diet": group + f" - {DARK}",
+                        "days": day + 1,
+                    },
+                    ignore_index=True,
+                )
+                activity = activity.append(
+                    {
+                        "activity": overall_data,
+                        "cage": cage_name,
+                        "period": "Overall",
+                        "diet": group,
+                        "Diet": group + " - Overall",
+                        "days": day + 1,
+                    },
+                    ignore_index=True,
+                )
+
+            return activity
+
+    # def get_daily_activity(self):
+    #     """ """
+    #     activity_csv = os.path.join(self.outdir, "daily_activity.csv")
+    #     if not os.path.exists(activity_csv):
+    #         print(f"Path {activity_csv} does not exist, creating dataframe")
+    #         activity_list = []
+    #         col_list = [f"e{i:02}" for i in range(1, 12 + 1)]  # electrode columns
+    #
+    #         # Iterate over minute activations
+    #         search_path = os.path.join(
+    #             self.basedir, "data", self.experiment_name, "dvc_activation", "*.csv"
+    #         )
+    #         minute_activity_files = sorted(glob.glob(search_path))
+    #         for cage in minute_activity_files:
+    #             cage_id = os.path.split(cage)[-1].split(".")[0]
+    #             # TODO: Fix in final
+    #             assert len(cage_id) == 3, logging.error(f"{cage_id} length != 3")
+    #             # Read csv
+    #             cage_df = pd.read_csv(
+    #                 cage,
+    #                 index_col="time_stamp_start",
+    #                 date_parser=lambda x: pd.datetime.strptime(
+    #                     x, "%Y-%m-%d %H:%M:%S:%f"
+    #                 ),
+    #             )
+    #             # Make csv with columns for cage+activity+day+diet+surgery
+    #             cage_df["Activity"] = cage_df[col_list].sum(axis=1)
+    #             day = (
+    #                 cage_df.traja.day.groupby(pd.Grouper(key="time", freq="D"))[
+    #                     "Activity"
+    #                 ]
+    #                 .sum()
+    #                 .to_frame()
+    #             )
+    #             day["Cage"] = cage_id
+    #             day["Period"] = "LIGHT"
+    #             day["Surgery"] = self.get_stroke(cage_id)
+    #             day["Diet"] = self.get_diet(cage_id)
+    #             day["Group"] = self.get_group(cage_id)
+    #             day["Days"] = [int(x) for x in range(len(day.index))]
+    #             activity_list.append(day)
+    #
+    #             night = (
+    #                 cage_df.traja.night.groupby(pd.Grouper(key="time", freq="D"))[
+    #                     "Activity"
+    #                 ]
+    #                 .sum()
+    #                 .to_frame()
+    #             )
+    #             night["Cage"] = cage_id
+    #             night["Period"] = "DARK"
+    #             night["Surgery"] = self.get_stroke(cage_id)
+    #             night["Diet"] = self.get_diet(cage_id)
+    #             night["Group"] = self.get_group(cage_id)
+    #             night["Days"] = [int(x) for x in range(len(night.index))]
+    #             activity_list.append(night)
+    #
+    #         activity = pd.concat(activity_list)
+    #         activity.to_csv(activity_csv)
+    #     else:
+    #         activity = traja.read_file(
+    #             activity_csv,
+    #             index_col="time_stamp_start",
+    #             parse_dates=["Surgery", "time_stamp_start"],
+    #             infer_datetime_format=True,
+    #         )
+    #     return activity
 
     def animate(self, trajectory, timesteps=None):
         """Animate trajectory over time with statistical information about turn angle, etc.
@@ -1286,6 +1337,74 @@ class DVCExperiment:
             fig.tight_layout()
             plt.pause(0.01)
 
+    def plot_t_test(self, daily, pvalues, max_days):
+        # Plot asterisk for significance
+        for idx, (pval, day, period) in enumerate(pvalues):
+            if pval >= 0.05:
+                continue
+            if pval < 0.05:
+                day_text = (
+                    f"Day {day[0]} - Day {day[1]} - {day[2]}"
+                    if isinstance(day, tuple)
+                    else f"Day {day}"
+                )
+                print(f"{day_text} ({period}): {pval:.3f}")
+
+            y_factor = (
+                6
+                if daily.loc[(daily.period == DARK), "displacement"].quantile(0.7) > 100
+                else 2
+            )
+
+            y, h, col = (
+                daily.loc[
+                    (daily["days_from_surgery"] <= max_days) & (daily.period == period)
+                ].displacement.quantile(0.75)
+                + y_factor * idx,
+                1.5,
+                "k",
+            )
+
+            text = "*" if pval < 0.05 else ""
+            text = "**" if pval < 0.01 else text
+            text = "***" if pval < 0.001 else text
+
+            day_range = range(daily.days_from_surgery.min(), max_days + 1)
+
+            if isinstance(day, tuple):
+                # Prevent plotting pvalues that won't fit on plot
+                if day[1] > max_days:
+                    continue
+
+                # Annotate interday signfificance
+                x1, x2 = (
+                    np.searchsorted(day_range, day[0]),
+                    np.searchsorted(day_range, day[1]),
+                )
+
+                diet = f"{day[2]} {period} p <= {pval:.3f}"
+                plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col)
+                plt.text(
+                    (x1 + x2) * 0.5,
+                    y + h,
+                    text + diet,
+                    ha="center",
+                    va="bottom",
+                    color=col,
+                    fontsize=14,
+                )
+            else:
+                x1 = np.searchsorted(day_range, day)
+                plt.text(
+                    x1,
+                    y + h,
+                    text + f" p <= {pval:.3f}",
+                    ha="center",
+                    va="bottom",
+                    color=col,
+                    fontsize=14,
+                )
+
 
 def get_plot(file, axes, col=0):
     import traja
@@ -1391,7 +1510,11 @@ def main(args):
         ]
     if args.day_pairs or args.days:
         print("Plotting daily distance")
-        experiment.plot_daily_distance(daily, days=args.days, day_pairs=args.day_pairs)
+        experiment.plot_daily_distance(daily, **args.__dict__)
+    if args.activity:
+        print("Plotting daily activity")
+        activity = experiment.get_daily_activity(33)
+        experiment.plot_daily_activity(activity)
     if args.glm:
         print("GLM:")
         glm(daily)
@@ -1433,10 +1556,19 @@ def parse_args():
     parser.add_argument(
         "-r", "--day-range", help="Restrict day range, eg: 1-7", type=pair
     )
-
+    parser.add_argument(
+        "-t", "--t-test", help="Plot t-Test results", action="store_true"
+    )
+    parser.add_argument(
+        "-a", "--activity", help="Plot daily activity", action="store_true"
+    )
     args = parser.parse_args()
 
-    max_days = max(max(args.days), max(max(t) for t in args.day_pairs))
+    max_days = 0
+    if args.day_pairs:
+        max_days = max(max(t) for t in args.day_pairs)
+    if args.days:
+        max_days = max(max_days, max(args.days))
     if args.day_range and args.days and args.day_range[-1] < max_days:
         raise Exception(
             f"Invalid options for day range: Day range {args.day_range}, Days {args.days}"
