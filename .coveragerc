@@ -8,3 +8,4 @@ exclude_lines =
 omit =
     traja/tests/*
     traja/contrib/*
+    traja/models/*
