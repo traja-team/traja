@@ -1,5 +1,8 @@
 import warnings
 
+import numpy as np
+import numpy.testing as npt
+
 import traja
 from traja import rutils
 
@@ -18,15 +21,20 @@ def test_import_trajr():
 
 def test_to_trajr():
     trjr = traja.rutils.to_trajr(df)
-    vals = trjr[0]
-    actual = vals.r_repr()
-    expected = "c(0, 0.946646340454933, 1.94695932892542, 1.94548732303614, 0.277985344978653, \n"
-    assert expected in actual
+    assert "x" in trjr
+    assert "y" in trjr
+    assert "time" in trjr
+    assert "polar" in trjr
+    assert "displacement" in trjr
+    actual = trjr.x[:3].values
+    expected = np.array([0.0, 0.946_646_34, 1.946_959_33])
+
+    npt.assert_allclose(actual, expected)
 
 
 def test_to_ltraj():
     ltraj = traja.rutils.to_ltraj(df)
-    rdataframe = ltraj[0]
+    rdataframe = ltraj
     assert "x" in rdataframe
     assert "y" in rdataframe
     assert len(rdataframe) == 21

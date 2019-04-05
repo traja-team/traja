@@ -47,7 +47,7 @@ Data frame is stored in first index.
 
 .. code-block:: python
 
-    print(ltraj[0].head())
+    print(ltraj.head())
 
 Out::
 
