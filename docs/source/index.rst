@@ -10,10 +10,6 @@ Trajectory Analysis in Python
 
 Traja allows analyzing trajectory datasets using a wide range of tools, including pandas and R. traja extends the capability of pandas :class:`~pandas.DataFrame` specific for animal or object trajectory analysis in 2D, and provides convenient interfaces to other geometric analysis packages (eg, shapely).
 
-.. warning::
-
-   The traja API is expected to undergo breaking changes until version ``0.1``.
-
 Description
 -----------
 
