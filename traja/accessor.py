@@ -248,7 +248,7 @@ class TrajaAccessor(object):
             self._obj = trj
         return derivs
 
-    def get_derivatives(self):
+    def get_derivatives(self) -> pd.DataFrame:
         """Returns derivatives as DataFrame."""
         derivs = traja.trajectory.get_derivatives(self._obj)
         return derivs
@@ -302,7 +302,7 @@ class TrajaAccessor(object):
         tracks_shape = traja.trajectory.to_shapely(trj)
         return tracks_shape
 
-    def calc_displacement(self, assign: bool = True):
+    def calc_displacement(self, assign: bool = True) -> pd.Series:
         """Returns ``Series`` of `float` with displacement between consecutive indices.
 
         Args:
@@ -326,7 +326,7 @@ class TrajaAccessor(object):
             self._obj = self._obj.assign(displacement=displacement)
         return displacement
 
-    def calc_angle(self, assign: bool = True):
+    def calc_angle(self, assign: bool = True) -> pd.Series:
         """Returns ``Series`` with angle between steps as a function of displacement w.r.t x axis.
 
         Args:
@@ -376,14 +376,14 @@ class TrajaAccessor(object):
             df.__dict__[attr] = getattr(self._obj, attr, None)
         return df
 
-    def rediscretize(self, R):
+    def rediscretize(self, R: float):
         """Resample a trajectory to a constant step length. R is rediscretized step length.
 
         Args:
           R (float): Rediscretized step length (eg, 0.02)
 
         Returns:
-          rt (:class:`numpy.ndarray`): rediscretized trajectory
+          rt (:class:`traja.TrajaDataFrame`): rediscretized trajectory
           
         .. note::
           
