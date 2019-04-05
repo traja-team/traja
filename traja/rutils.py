@@ -90,7 +90,8 @@ def to_trajr(trj):
     fps = trj.fps
     spatial_units = trj.spatial_units or "m"
     time_units = trj.time_units or "s"
-    trj_rdf = rpandas.py2ri_pandasdataframe(trj)
+
+    trj_rdf = rpandas.py2rpy(trj)
 
     trajr_trj = trajr.TrajFromCoords(
         trj_rdf,
@@ -101,6 +102,7 @@ def to_trajr(trj):
         spatialUnits=spatial_units,
         timeUnits=time_units,
     )
+
     return trajr_trj
 
 
@@ -146,5 +148,5 @@ def to_ltraj(trj, id=1, typeII=False):
         # date = None
         ltraj = adehabitat.as_ltraj(df, id=id, date=date, typeII=True)  # Doesn't work
     else:
-        ltraj = adehabitat.as_ltraj(df, id=id, typeII=False)
+        ltraj = adehabitat.as_ltraj(df, id=id, typeII=False)[0]
     return ltraj

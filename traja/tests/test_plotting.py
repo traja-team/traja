@@ -54,6 +54,12 @@ def test_trip_grid():
     traja.plotting.trip_grid(df)
 
 
+def test_label_axes():
+    df.traja.plot()
+    ax = plt.gca()
+    traja.plotting._label_axes(df, ax)
+
+
 def test_plot_actogram():
     df = traja.generate(n=10)
     index = pd.DatetimeIndex(range(11))
