@@ -167,7 +167,7 @@ class DVCExperiment:
                                 activity.Days_from_surgery < (week + 1) * 7 + 1
                             )  # ...1, 8, 15, 21...
                             & (activity["Group+Diet"] == group)
-                            & (activity.Period == period)
+                            & (activity.period == period)
                         ]
                         .groupby(["Cage"])
                         .Activity.mean()
