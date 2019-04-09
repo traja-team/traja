@@ -1,7 +1,7 @@
 from typing import Union, Optional, Tuple
 
 import matplotlib
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
@@ -14,7 +14,7 @@ from pandas.core.dtypes.common import (
 )
 
 import traja
-from traja import TrajaDataFrame
+from traja.frame import TrajaDataFrame
 from traja.trajectory import coords_to_flow
 
 
@@ -26,7 +26,6 @@ __all__ = [
     "animate",
     "bar_plot",
     "color_dark",
-    "coords_to_flow",
     "fill_ci",
     "find_runs",
     "plot",
