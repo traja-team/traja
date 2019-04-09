@@ -146,7 +146,7 @@ def to_ltraj(trj, id=1, typeII=False):
         )
         # FIXME: Add date converted from rpy2.robjects.POSIXct
         # date = None
-        ltraj = adehabitat.as_ltraj(df, id=id, date=date, typeII=True)  # Doesn't work
+        # ltraj = adehabitat.as_ltraj(df, id=id, date=date, typeII=True)  # Doesn't work
     else:
         ltraj = adehabitat.as_ltraj(df, id=id, typeII=False)[0]
     return ltraj

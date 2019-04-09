@@ -1,17 +1,18 @@
 #! /usr/local/env python3
 """Pytorch visualization code modified from Chad Jensen's implementation
 (https://discuss.pytorch.org/t/lstm-for-sequence-prediction/22021/3)."""
+import logging
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 try:
     import torch
 except ImportError:
     raise ImportError("pytorch is not installed. Install it via pytorch.org")
-import traja
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
-import numpy as np
-import matplotlib.pyplot as plt
-import logging
+
 
 nb_steps = 10
 
@@ -104,7 +105,7 @@ class TrajectoryLSTM:
     def plot(self, interactive=True):
         if interactive and (plt.get_backend() == "agg"):
             logging.ERROR("Not able to use interactive plotting in mpl `agg` mode.")
-            interactive = False
+            # interactive = False
         elif interactive:
             while True:
                 for a in self.ax:

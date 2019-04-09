@@ -23,7 +23,6 @@ from functools import partial
 from typing import Union, Callable
 
 import numpy as np
-import sys
 
 
 def pldist(point: np.ndarray, start: np.ndarray, end: np.ndarray):

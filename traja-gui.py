@@ -4,27 +4,17 @@ from functools import partial
 import sys
 
 import matplotlib
-from PyQt5.QtGui import QIcon
 
 matplotlib.use("Qt5Agg")
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 plt.ioff()
-from matplotlib import style
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.style as style
+import matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg as FigureCanvas
 from PyQt5 import QtGui, QtWidgets, QtCore
-from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal, pyqtSlot, QEvent
-from PyQt5.QtWidgets import (
-    QWidget,
-    QProgressBar,
-    QPushButton,
-    QApplication,
-    QMenu,
-    QAction,
-    QStatusBar,
-)
+from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtWidgets import QProgressBar, QMenu, QAction, QStatusBar
 
 import traja
 
@@ -245,7 +235,6 @@ class PlottingWidget(QtWidgets.QMainWindow):
         :param tree:
         :return:
         """
-        import os
         from PyQt5.QtWidgets import QTreeWidgetItem
         from PyQt5.QtGui import QIcon
 
@@ -253,7 +242,7 @@ class PlottingWidget(QtWidgets.QMainWindow):
             path_info = startpath + "/" + element
             parent_itm = QTreeWidgetItem(tree, [os.path.basename(element)])
             if os.path.isdir(path_info):
-                load_project_structure(path_info, parent_itm)
+                self.load_project_structure(path_info, parent_itm)
                 parent_itm.setIcon(0, QIcon("assets/folder.ico"))
             else:
                 parent_itm.setIcon(0, QIcon("assets/file.ico"))
