@@ -5,7 +5,6 @@ from typing import Callable, Union, Tuple
 import traja
 import numpy as np
 import pandas as pd
-import scipy
 
 from pandas.core.dtypes.common import (
     is_datetime_or_timedelta_dtype,
@@ -16,6 +15,46 @@ from scipy import signal
 from scipy.spatial.distance import directed_hausdorff, euclidean
 
 from traja import TrajaDataFrame
+
+
+__all__ = [
+    "_bins_to_tuple",
+    "_get_time_col",
+    "_get_xylim",
+    "_grid_coords1D",
+    "_has_cols",
+    "_rediscretize_points",
+    "_resample_time",
+    "angles",
+    "calc_angle",
+    "calc_derivatives",
+    "calc_displacement",
+    "calc_heading",
+    "calc_turn_angle",
+    "calculate_flow_angles",
+    "cartesian_to_polar",
+    "coords_to_flow",
+    "directed_hausdorff",
+    "distance",
+    "euclidean",
+    "expected_sq_displacement",
+    "fill_in_traj",
+    "from_xy",
+    "generate",
+    "get_derivatives",
+    "grid_coordinates",
+    "polar_to_z",
+    "rediscretize_points",
+    "resample_time",
+    "rotate",
+    "smooth_sg",
+    "speed_intervals",
+    "step_lengths",
+    "to_shapely",
+    "traj_from_coords",
+    "transition_matrix",
+    "transitions",
+]
 
 
 def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
@@ -194,12 +233,12 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
     Returns:
         distance (float): Distance
     """
-    if method is "hausdorff":
+    if method == "hausdorff":
         dist0 = directed_hausdorff(A, B)[0]
         dist1 = directed_hausdorff(B, A)[0]
         symmetric_dist = max(dist0, dist1)
         return symmetric_dist
-    elif method is "dtw":
+    elif method == "dtw":
         try:
             from fastdtw import fastdtw
         except ImportError:
@@ -296,7 +335,6 @@ def calculate_flow_angles(grid_indices: np.ndarray):
     """Calculate average flow between grid indices."""
 
     bins = (grid_indices[:, 0].max(), grid_indices[:, 1].max())
-    n = bins[0] * bins[1]  # number of states
 
     M = np.empty((bins[1], bins[0]), dtype=np.ndarray)
 
@@ -333,7 +371,7 @@ def calculate_flow_angles(grid_indices: np.ndarray):
     for i, row in enumerate(M):
         for j, angles in enumerate(row):
             x = y = 0
-            average_angle = None
+            # average_angle = None
             if angles is not None and len(angles) > 1:
                 for angle in angles:
                     if angle is None:
@@ -547,9 +585,9 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: bool = None):
 
     """
     time_col = _get_time_col(trj)
-    if time_col is "index" and is_datetime64_any_dtype(trj.index):
+    if time_col == "index" and is_datetime64_any_dtype(trj.index):
         _trj = _resample_time(trj, step_time)
-    elif time_col is "index" and is_timedelta64_dtype(trj.index):
+    elif time_col == "index" and is_timedelta64_dtype(trj.index):
         _trj = _resample_time(trj, step_time)
     elif time_col:
         if isinstance(step_time, str):
@@ -936,11 +974,11 @@ def speed_intervals(
     if interpolate_times and len(start_frames) > 0:
         # TODO: Implement
         raise NotImplementedError()
-        r = linear_interp_times(
-            slower_than, faster_than, speed, times, start_frames, start_times
-        )
-        start_times = r[:, 0]
-        stop_times = r[:, 1]
+        # r = linear_interp_times(
+        #     slower_than, faster_than, speed, times, start_frames, start_times
+        # )
+        # start_times = r[:, 0]
+        # stop_times = r[:, 1]
 
     durations = stop_times - start_times
     result = traja.TrajaDataFrame(

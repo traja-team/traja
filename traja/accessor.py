@@ -1,7 +1,7 @@
 from typing import Union
 
 import pandas as pd
-from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
+from pandas.api.types import is_datetime64_any_dtype
 
 import traja
 
@@ -91,7 +91,7 @@ class TrajaAccessor(object):
 
         """
         time_col = self._get_time_col()
-        if time_col is "index":
+        if time_col == "index":
             return self._obj.between_time(begin, end)
         elif time_col and is_datetime64_any_dtype(self._obj[time_col]):
             # Backup index

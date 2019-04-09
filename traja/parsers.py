@@ -2,11 +2,7 @@ from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
-from pandas.core.dtypes.common import (
-    is_datetime_or_timedelta_dtype,
-    is_datetime64_any_dtype,
-    is_timedelta64_dtype,
-)
+from pandas.core.dtypes.common import is_datetime64_any_dtype, is_timedelta64_dtype
 
 from traja import TrajaDataFrame
 

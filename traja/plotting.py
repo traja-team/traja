@@ -1,4 +1,4 @@
-from typing import Union, Optional, Tuple, List
+from typing import Union, Optional, Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -18,6 +18,33 @@ from traja import TrajaDataFrame
 from traja.trajectory import coords_to_flow
 
 
+__all__ = [
+    "_get_after_plot_args",
+    "_label_axes",
+    "_polar_bar",
+    "_process_after_plot_args",
+    "animate",
+    "bar_plot",
+    "color_dark",
+    "coords_to_flow",
+    "fill_ci",
+    "find_runs",
+    "plot",
+    "plot_actogram",
+    "plot_contour",
+    "plot_flow",
+    "plot_quiver",
+    "plot_stream",
+    "plot_surface",
+    "plot_xy",
+    "polar_bar",
+    "predict",
+    "sans_serif",
+    "stylize_axes",
+    "trip_grid",
+]
+
+
 def stylize_axes(ax):
     """Add top and right border to plot, set ticks."""
     ax.spines["top"].set_visible(False)
@@ -29,8 +56,6 @@ def stylize_axes(ax):
 
 def sans_serif():
     """Convenience function for changing plot text to serif font."""
-    import matplotlib.pyplot as plt
-
     plt.rc("font", family="serif")
 
 
@@ -66,7 +91,6 @@ def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> A
     bins = traja.trajectory._bins_to_tuple(trj, bins)
 
     X, Y, U, V = coords_to_flow(trj, bins)
-    Z = np.sqrt(U * U + V * V)
 
     hist, _ = trip_grid(trj, bins, hist_only=True)
     fig = plt.figure()
@@ -115,7 +139,6 @@ def plot(
 
     """
     import matplotlib.patches as patches
-    import matplotlib.pyplot as plt
     from matplotlib.path import Path
 
     after_plot_args, kwargs = _get_after_plot_args(**kwargs)
@@ -135,7 +158,7 @@ def plot(
     coords = trj[["x", "y"]]
     time_col = traja.trajectory._get_time_col(trj)
 
-    if time_col is "index":
+    if time_col == "index":
         is_datetime = True
     else:
         is_datetime = is_datetime64_any_dtype(trj[time_col]) if time_col else False
@@ -164,10 +187,10 @@ def plot(
 
     xs, ys = zip(*verts)
 
-    if time_col is "index":
+    if time_col == "index":
         # DatetimeIndex determines color
         colors = [ind for ind, x in enumerate(trj.index[:n_coords])]
-    elif time_col and time_col is not "index":
+    elif time_col and time_col != "index":
         # `time_col` determines color
         colors = [ind for ind, x in enumerate(trj[time_col].iloc[:n_coords])]
     else:
@@ -219,7 +242,7 @@ def plot(
     )
 
     # Get colorbar labels from time
-    if time_col is "index":
+    if time_col == "index":
         if is_datetime64_any_dtype(trj.index):
             cbar_labels = (
                 trj.index[indices].strftime("%Y-%m-%d %H:%M:%S").values.astype(str)
@@ -288,7 +311,7 @@ def plot_quiver(
 
     fig, ax = plt.subplots()
 
-    qp = ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
+    ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
     ax = _label_axes(trj, ax)
     ax.set_aspect("equal")
 
@@ -328,12 +351,12 @@ def plot_contour(
 
     if filled:
         cfp = plt.contourf(X, Y, Z, **contourfplot_kws)
-        cbar = plt.colorbar(cfp, ax=ax)
-    cp = plt.contour(
+        plt.colorbar(cfp, ax=ax)
+    plt.contour(
         X, Y, Z, colors="k", linewidths=1, linestyles="solid", **contourplot_kws
     )
     if quiver:
-        qp = ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
+        ax.quiver(X, Y, U, V, units="width", **quiverplot_kws)
 
     ax = _label_axes(trj, ax)
     ax.set_aspect("equal")
@@ -409,11 +432,11 @@ def plot_stream(
 
     fig, ax = plt.subplots()
 
-    cfp = plt.contourf(X, Y, Z, **contourfplot_kws)
-    cp = plt.contour(
+    plt.contourf(X, Y, Z, **contourfplot_kws)
+    plt.contour(
         X, Y, Z, colors="k", linewidths=1, linestyles="solid", **contourplot_kws
     )
-    sp = ax.streamplot(X, Y, U, V, color=Z, cmap=cmap, **streamplot_kws)
+    ax.streamplot(X, Y, U, V, color=Z, cmap=cmap, **streamplot_kws)
 
     ax = _label_axes(trj, ax)
     ax.set_aspect("equal")
@@ -447,13 +470,13 @@ def plot_flow(
     Returns:
         fig (:class:`~matplotlib.figure.Figure`): Figure of plot
     """
-    if kind is "quiver":
+    if kind == "quiver":
         return plot_quiver(trj, *args, **quiverplot_kws)
-    elif kind is "contour":
+    elif kind == "contour":
         return plot_contour(trj, filled=False, *args, **quiverplot_kws)
-    elif kind is "contourf":
+    elif kind == "contourf":
         return plot_contour(trj, *args, **quiverplot_kws)
-    elif kind is "stream":
+    elif kind == "stream":
         return plot_stream(
             trj,
             *args,
@@ -461,7 +484,7 @@ def plot_flow(
             contourfplot_kws=contourfplot_kws,
             streamplot_kws=streamplot_kws,
         )
-    elif kind is "surface":
+    elif kind == "surface":
         return plot_surface(trj, *args, **surfaceplot_kws)
     else:
         raise NotImplementedError(f"Kind {kind} is not implemented.")
@@ -773,7 +796,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
         ax2.set_theta_zero_location("N")
         ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
         fig.add_subplot(ax2)
-        bars = ax2.bar(
+        ax2.bar(
             np.zeros(XY_STEPS), np.zeros(XY_STEPS), width=np.zeros(XY_STEPS), bottom=0.0
         )
 
@@ -786,7 +809,6 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
         aspect="equal",
     )
 
-    width = np.pi / 24
     alphas = np.linspace(0.1, 1, XY_STEPS)
     rgba_colors = np.zeros((XY_STEPS, 4))
     rgba_colors[:, 0] = 1.0  # red

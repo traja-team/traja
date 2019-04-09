@@ -4,7 +4,6 @@
 from setuptools import setup, find_packages
 
 import os
-from os import path
 import re
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -28,7 +27,7 @@ requirements = ["matplotlib", "pandas", "numpy", "shapely", "scipy", "scipy", "p
 
 extras_requirements = {"all": ["torch", "rpy2", "tzlocal"]}
 
-this_dir = path.abspath(path.dirname(__file__))
+this_dir = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(this_dir, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
