@@ -1,7 +1,7 @@
 from typing import Union, Optional, Tuple
 
 import matplotlib
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
