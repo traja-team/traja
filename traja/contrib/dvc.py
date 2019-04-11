@@ -5,13 +5,14 @@ import logging
 import multiprocessing as mp
 import os
 import re
+from typing import Optional, List
 
 from scipy.stats import ttest_ind, ttest_rel
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
 import traja
-from traja.plotting import *
+from traja import TrajaDataFrame
 
 import matplotlib.style as style
 import matplotlib.pyplot as plt
@@ -33,12 +34,14 @@ except ImportError:
 
 DARK = "Dark"
 LIGHT = "Light"
+DAYS_COL = "days_from_surgery"
 
 
 def glm(
     daily: pd.DataFrame,
     response_var: str = "displacement",
     cov_struct: Optional[str] = None,
+    verbose=False,
 ):
     """Generalized linear model for daily response."""
 
@@ -50,33 +53,49 @@ def glm(
     elif cov_struct == "exchangable":
         cov_struct = sm.cov_struct.Exchangeable()
         kwargs["cov_struct"] = cov_struct
-    day_range = f"{daily.days_from_surgery.min()}-{daily.days_from_surgery.max()}"
+    day_range = f"{daily[DAYS_COL].min()}-{daily[DAYS_COL].max()}"
     print(
         f"Fitting generalized linear model on daily data. Days {day_range}\n"
-        f"Model: {response_var} ~ days_from_surgery * diet."
+        f"Model: {response_var} ~ days_from_surgery + diet."
         + (f" Covariance structure ({cov_struct})" if cov_struct else "")
     )
 
+    if "1" in daily.diet.unique():
+        daily.diet = daily.diet.map({"1": "Control", "2": "Fortasyn"})
+
     sig_pvalues = []
 
+    if not "Overall" in daily.period.unique():
+        # Sum Light and Dark to 'Overall' column
+        daily_overall = daily.groupby(
+            ["days_from_surgery", "cage"], as_index=False
+        ).agg({response_var: "sum", "diet": "first"})
+    else:
+        daily_overall = daily[daily.period == "Overall"]
+
     for period in [DARK, LIGHT, "Overall"]:
-        subset = daily[daily.period == period] if period != "Overall" else daily
+        subset = daily[daily.period == period] if period != "Overall" else daily_overall
+
         md = smf.gee(
-            f" {response_var} ~ days_from_surgery * diet",
+            f" {response_var} ~ days_from_surgery + diet",
             data=subset,
             groups="cage",
             **kwargs,
         )
         mdf = md.fit()
+        if verbose:
+            print(period + " GLM RESULTS:\n", mdf.summary())
         pvalues = mdf.pvalues
         for factor, pvalue in pvalues.items():
             if pvalue < 0.05 and factor != "Intercept":
                 print(
                     f"{factor} effect on {response_var} ({period}) - p-value: {pvalue:.4f}"
                 )
-                sig_pvalues.append((factor, pvalue))
+                sig_pvalues.append((pvalue, factor, period))
+        if verbose:
+            print(f"END {period} GLM RESULTS\n")
     if not sig_pvalues:
-        print("No significant effect found.")
+        print("No significant effect found.\n")
     return sig_pvalues
 
 
@@ -160,11 +179,9 @@ class DVCExperiment:
                 for period in [LIGHT, DARK]:
                     df = (
                         activity[
-                            (
-                                activity.Days_from_surgery >= week * 7 + 1
-                            )  # ...-6, 1, 8, 15...
+                            (activity[DAYS_COL] >= week * 7 + 1)  # ...-6, 1, 8, 15...
                             & (
-                                activity.Days_from_surgery < (week + 1) * 7 + 1
+                                activity[DAYS_COL] < (week + 1) * 7 + 1
                             )  # ...1, 8, 15, 21...
                             & (activity["Group+Diet"] == group)
                             & (activity.period == period)
@@ -182,7 +199,11 @@ class DVCExperiment:
         return weekly
 
     def ttests(
-        self, daily: pd.DataFrame, days: List[int], day_pairs: List[tuple]
+        self,
+        daily: pd.DataFrame,
+        days: List[int],
+        day_pairs: List[tuple],
+        response_var: str,
     ) -> list:
         """Returns pvalues for intra and interday variances."""
         pvalues = []
@@ -193,27 +214,27 @@ class DVCExperiment:
             for period in daily.period.unique():
                 day1_control = daily.loc[
                     (daily["diet"] == diets[0])
-                    & (daily["days_from_surgery"] == day1)
+                    & (daily[DAYS_COL] == day1)
                     & (daily.period == period),
-                    "displacement",
+                    response_var,
                 ]
                 day2_control = daily.loc[
                     (daily["diet"] == diets[0])
-                    & (daily["days_from_surgery"] == day2)
+                    & (daily[DAYS_COL] == day2)
                     & (daily.period == period),
-                    "displacement",
+                    response_var,
                 ]
                 day1_fortasyn = daily.loc[
                     (daily["diet"] == diets[1])
-                    & (daily["days_from_surgery"] == day1)
+                    & (daily[DAYS_COL] == day1)
                     & (daily.period == period),
-                    "displacement",
+                    response_var,
                 ]
                 day2_fortasyn = daily.loc[
                     (daily["diet"] == diets[1])
-                    & (daily["days_from_surgery"] == day2)
+                    & (daily[DAYS_COL] == day2)
                     & (daily.period == period),
-                    "displacement",
+                    response_var,
                 ]
 
                 if day1_control.shape == day2_control.shape:
@@ -248,22 +269,22 @@ class DVCExperiment:
                     )
 
         # Get intraday significance
-        for day in daily.days_from_surgery.unique():
+        for day in daily[DAYS_COL].unique():
             diets = sorted(daily.diet.unique())
 
             # Student's t-Test, between groups for given day
             for period in daily.period.unique():
                 control = daily.loc[
                     (daily["diet"] == diets[0])
-                    & (daily["days_from_surgery"] == day)
+                    & (daily[DAYS_COL] == day)
                     & (daily.period == period),
-                    "displacement",
+                    response_var,
                 ]
                 fortasyn = daily.loc[
                     (daily["diet"] == diets[1])
-                    & (daily["days_from_surgery"] == day)
+                    & (daily[DAYS_COL] == day)
                     & (daily.period == period),
-                    "displacement",
+                    response_var,
                 ]
                 pvalues.append((ttest_ind(control, fortasyn).pvalue, day, period))
         return pvalues
@@ -289,7 +310,6 @@ class DVCExperiment:
 
         daily = daily.copy()
 
-        # Get 35-day daily velocity
         cages = sorted(daily.cage.unique())
         if not "days_from_surgery" in daily:  # days_from_stroke provided
             raise Exception("`days_from_surgery` not in dataframe")
@@ -302,7 +322,7 @@ class DVCExperiment:
 
         # Save original name for diet column
         daily_diet_orig = daily.diet
-        pvalues = self.ttests(daily, days, day_pairs)
+        pvalues = self.ttests(daily, days, day_pairs, response_var="displacement")
 
         # Calculate and mark significant difference
         for max_days in days:
@@ -310,7 +330,7 @@ class DVCExperiment:
             plt.title(f"Average daily {metric} {max_days} days after stroke")
 
             if kwargs.get("t_test"):
-                self.plot_t_test(daily, pvalues, max_days)
+                self.plot_t_test(daily, pvalues, max_days, response_var="displacement")
 
             daily.diet = daily.diet.str.cat(" - " + daily.period)
             ax = sns.pointplot(
@@ -480,32 +500,32 @@ class DVCExperiment:
                 for cage in self.get_cages():
                     # Get prestroke
                     prestroke_night_average = activity[
-                        (activity.Days <= -1)
+                        (activity[DAYS_COL] <= -1)
                         & (activity.cage == cage)
                         & (activity.Period == DARK)
                     ].Activity.mean()
                     df = activity[
-                        (activity.Days >= -1)
+                        (activity[DAYS_COL] >= -1)
                         & (activity.cage == cage)
                         & (activity.Period == period)
                     ]
-                    assert (
-                        df.Days_from_surgery.is_monotonic_increasing == True
-                    ), "Not monotonic"
+                    assert df[DAYS_COL].is_monotonic_increasing == True, "Not monotonic"
                     mean = activity[
-                        (activity.Days <= -1)
+                        (activity[DAYS_COL] <= -1)
                         & (activity.cage == cage)
                         & (activity.Period == period)
                     ].Activity.mean()
                     df.loc[
-                        (df.Cage == cage) & (df.Period == period) & (df.Days == -1),
+                        (df.Cage == cage)
+                        & (df.Period == period)
+                        & (df[DAYS_COL] == -1),
                         "Activity",
                     ] = mean
                     normed = [x / prestroke_night_average for x in df.Activity.values]
                     activity.loc[
                         (activity.Cage == cage)
                         & (activity.Period == period)
-                        & (activity.Days >= -1),
+                        & (activity[DAYS_COL] >= -1),
                         "Normed_Activity",
                     ] = normed
             activity.to_csv(norm_daily_activity_csv)
@@ -1057,12 +1077,170 @@ class DVCExperiment:
 
         return minute_activity_paths
 
+    def plot_glm(self, daily, pvalues, max_days, period_group, response_var, **kwargs):
+        # Plot asterisk for significance
+        for idx, (pval, variable, period) in enumerate(pvalues):
+            if period not in daily.period.unique():
+                continue
+            day = (daily[DAYS_COL].min(), max_days)
+            if pval >= 0.05:
+                continue
+            if pval < 0.05:
+                if DAYS_COL in variable:
+                    day_text = f"Day {day[0]} - Day {day[1]} - {period}"
+                elif response_var in variable:
+                    day_text = (
+                        f"Day {day[0]} - Day {day[1]} - {response_var}"
+                        if isinstance(day, tuple)
+                        else f"Day {day}"
+                    )
+                print(f"PLOT GLM: {day_text} ({period}): {pval:.3f}")
+
+            # y_factor = (
+            #     2
+            #     if daily.loc[(daily.period == DARK), response_var].quantile(0.7) > 100
+            #     else 1
+            # )
+            y_factor = 1
+
+            y, h, col = (
+                daily.loc[
+                    (daily[DAYS_COL] <= max_days) & (daily.period == period),
+                    response_var,
+                ].quantile(0.75)
+                + y_factor * idx,
+                0.1,
+                "k",
+            )
+
+            text = "*" if pval < 0.05 else ""
+            text = "**" if pval < 0.01 else text
+            text = "***" if pval < 0.001 else text
+
+            day_range = range(daily[DAYS_COL].min(), max_days + 1)
+
+            if isinstance(day, tuple):
+                # Prevent plotting pvalues that won't fit on plot
+                if day[1] > max_days:
+                    continue
+
+                # Annotate interday signfificance
+                x1, x2 = (
+                    np.searchsorted(day_range, day[0]),
+                    np.searchsorted(day_range, day[1]),
+                )
+
+                diet = f"{period} p <= {pval:.3f}"
+                plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col)
+                plt.text(
+                    (x1 + x2) * 0.5,
+                    y + h,
+                    text + diet,
+                    ha="center",
+                    va="bottom",
+                    color=col,
+                    fontsize=14,
+                )
+            else:
+                x1 = np.searchsorted(day_range, day)
+                plt.text(
+                    x1,
+                    y + h,
+                    text + f" p <= {pval:.3f}",
+                    ha="center",
+                    va="bottom",
+                    color=col,
+                    fontsize=14,
+                )
+
+    def plot_daily_activity(
+        self,
+        daily: Optional[pd.DataFrame] = None,
+        days: list = [3],
+        metric: str = "activity",
+        day_pairs: list = [],
+        **kwargs,
+    ):
+        if daily is None:
+            daily = self.get_daily_activity(days)
+
+        days = days or [daily[DAYS_COL].max()]
+
+        assert DAYS_COL in daily, f"{DAYS_COL} not in dataframe"
+
+        # For replacing numeric diet encoding
+        diet_names = ["Control", "Fortasyn"]
+        if sorted(daily.diet.unique().tolist()) != sorted(diet_names):
+            for ind, diet in enumerate(sorted(daily.diet.unique())):
+                daily["diet"] = daily.diet.replace(diet, diet_names[ind])
+                print(f"Renamed diet column value {diet} to {diet_names[ind]}")
+
+        # # Statistical analysis
+        # pvalues = self.ttests(daily, days, day_pairs, response_var="activity")
+
+        for max_days in days:
+            fig, ax = plt.subplots(figsize=(14, 8))
+            plt.title(f"Average daily {metric} {max_days} days after stroke")
+
+            # if kwargs.get("t_test"):
+            #     self.plot_t_test(daily, pvalues, max_days, response_var="activity")
+
+            daily.diet = daily.diet.str.cat(" - " + daily.period)
+
+            if kwargs.get("glm"):
+                pvalues = glm(daily, response_var="activity")
+
+            for period_group in ["Overall", "Phases"]:
+                if period_group == "Overall":
+                    subset = daily.loc[
+                        (daily[DAYS_COL] <= max_days)
+                        & (daily.Diet.str.contains("Overall"))
+                    ]
+                    markers = ["d", "s"]
+                    linestyles = ["-", "-"]
+                    palette = ["b", "r"]
+                elif period_group == "Phases":
+                    subset = daily.loc[
+                        (daily[DAYS_COL] <= max_days)
+                        & (~daily.Diet.str.contains("Overall"))
+                    ]
+                    markers = ["d", "s", "^", "x"]
+                    linestyles = ["-", "--", "-", "--"]
+                    palette = ["b", "b", "r", "r"]
+
+                # self.plot_glm(
+                #     daily, pvalues, max_days, period_group, response_var="activity"
+                # )
+
+                ax = sns.pointplot(
+                    x=DAYS_COL,
+                    y="activity",
+                    data=subset,
+                    markers=markers,
+                    linestyles=linestyles,
+                    palette=palette,
+                    hue="Diet",
+                    hue_order=sorted(subset.Diet.unique()),
+                    dodge=True,
+                    conf_lw=0.8,
+                    ci=68,  # SEM
+                )
+
+                plt.legend(loc="upper left")
+
+                plt.xlabel("Days from Surgery")
+                ylabel = "Activity (a.u.)"
+                plt.ylabel(ylabel)
+
+                plt.show()
+        ...
+
     def get_daily_activity(self, days: int) -> pd.DataFrame:
         """Returns daily activity."""
         minute_activity_files = self.get_minute_activity_files()
 
         # initialize
-        activity = pd.DataFrame(columns=["cage", "activity", "Diet", "Days"])
+        activity = pd.DataFrame(columns=["cage", "activity", "Diet", DAYS_COL])
 
         # get minute activity files
         sorted_cages = self.get_minute_activity_files()
@@ -1073,7 +1251,7 @@ class DVCExperiment:
                 print(
                     "Warning: Cage {cage} has {cage.shape[1]} columns instead of 1439"
                 )
-            nan_count = cage.isna().sum().sum()  # about 1440 * 8 NaNs
+            # nan_count = cage.isna().sum().sum()  # about 1440 * 8 NaNs
             if fill_nan:
                 cage.fillna(0, inplace=True)
             flat = cage.values.flatten()
@@ -1099,7 +1277,7 @@ class DVCExperiment:
                         "period": LIGHT,
                         "diet": group,
                         "Diet": group + f" - {LIGHT}",
-                        "days": day + 1,
+                        DAYS_COL: int(day + 1),
                     },
                     ignore_index=True,
                 )
@@ -1110,7 +1288,7 @@ class DVCExperiment:
                         "period": DARK,
                         "diet": group,
                         "Diet": group + f" - {DARK}",
-                        "days": day + 1,
+                        DAYS_COL: int(day + 1),
                     },
                     ignore_index=True,
                 )
@@ -1121,12 +1299,14 @@ class DVCExperiment:
                         "period": "Overall",
                         "diet": group,
                         "Diet": group + " - Overall",
-                        "days": day + 1,
+                        DAYS_COL: int(day + 1),
                     },
                     ignore_index=True,
                 )
 
-            return activity
+        activity[DAYS_COL] = activity[DAYS_COL].astype(int)
+
+        return activity
 
     # def get_daily_activity(self):
     #     """ """
@@ -1243,9 +1423,9 @@ class DVCExperiment:
             Args:
               val: param minval:
               maxval: param startcolor:
-              stopcolor: 
-              minval: 
-              startcolor: 
+              stopcolor:
+              minval:
+              startcolor:
 
             Returns:
 
@@ -1337,7 +1517,7 @@ class DVCExperiment:
             fig.tight_layout()
             plt.pause(0.01)
 
-    def plot_t_test(self, daily, pvalues, max_days):
+    def plot_t_test(self, daily, pvalues, max_days, response_var):
         # Plot asterisk for significance
         for idx, (pval, day, period) in enumerate(pvalues):
             if pval >= 0.05:
@@ -1352,14 +1532,15 @@ class DVCExperiment:
 
             y_factor = (
                 6
-                if daily.loc[(daily.period == DARK), "displacement"].quantile(0.7) > 100
+                if daily.loc[(daily.period == DARK), response_var].quantile(0.7) > 100
                 else 2
             )
 
             y, h, col = (
                 daily.loc[
-                    (daily["days_from_surgery"] <= max_days) & (daily.period == period)
-                ].displacement.quantile(0.75)
+                    (daily[DAYS_COL] <= max_days) & (daily.period == period),
+                    response_var,
+                ].quantile(0.75)
                 + y_factor * idx,
                 1.5,
                 "k",
@@ -1369,7 +1550,7 @@ class DVCExperiment:
             text = "**" if pval < 0.01 else text
             text = "***" if pval < 0.001 else text
 
-            day_range = range(daily.days_from_surgery.min(), max_days + 1)
+            day_range = range(daily[DAYS_COL].min(), max_days + 1)
 
             if isinstance(day, tuple):
                 # Prevent plotting pvalues that won't fit on plot
@@ -1482,42 +1663,52 @@ def days(s: str):
 
 
 def main(args):
-    daily_filename = f"daily_distance_{args.experiment_name}.csv"
-    if os.path.exists(daily_filename):
-        daily = pd.read_csv(daily_filename, dtype={"diet": "category"})
-        print(f"Loaded {daily_filename}")
-        experiment = DVCExperiment(experiment_name="fortasyn")
-    elif args.centroids_dir and args.centroids_dir:
-        centroids_dir = os.path.abspath(args.centroids_dir)
-        if not os.path.exists(centroids_dir):
-            raise Exception(f"Error: {centroids_dir} does not exist.")
-        experiment = DVCExperiment(
-            experiment_name="fortasyn", centroids_dir=centroids_dir
-        )
-        print(f"Computing daily distance.")
-        daily = experiment.get_distance()
-        daily = daily.drop_duplicates(
-            daily, subset=["diet", "period", "cage", "days_from_surgery"]
-        )
+    if not args.activity:
+        daily_filename = f"daily_distance_{args.experiment_name}.csv"
+        if os.path.exists(daily_filename):
+            daily = pd.read_csv(daily_filename, dtype={"diet": "category"})
+            print(f"Loaded {daily_filename}")
+            experiment = DVCExperiment(experiment_name=args.experiment_name)
+        elif args.centroids_dir and args.centroids_dir:
+            centroids_dir = os.path.abspath(args.centroids_dir)
+            if not os.path.exists(centroids_dir):
+                raise Exception(f"Error: {centroids_dir} does not exist.")
+            experiment = DVCExperiment(
+                experiment_name=args.experiment_name, centroids_dir=centroids_dir
+            )
+            print(f"Computing daily distance.")
+            daily = experiment.get_distance()
+            daily = daily.drop_duplicates(
+                daily, subset=["diet", "period", "cage", "days_from_surgery"]
+            )
+        else:
+            raise Exception(
+                f"Must provide centroids_dir and/or experiment_name, {daily_filename} not found"
+            )
+        if args.day_range:
+            d1, d2 = args.day_range
+            daily = daily.loc[
+                (daily["days_from_surgery"] >= d1) & (daily["days_from_surgery"] <= d2)
+            ]
+        if args.day_pairs or args.days:
+            print("Plotting daily distance")
+            experiment.plot_daily_distance(daily, **args.__dict__)
+
+        # Statistical analysis
+        if args.glm:
+            glm(daily, response_var="displacment", verbose=args.verbose)
     else:
-        raise Exception(
-            f"Must provide centroids_dir or experiment_name, {daily_filename} not found"
-        )
-    if args.day_range:
-        d1, d2 = args.day_range
-        daily = daily.loc[
-            (daily["days_from_surgery"] >= d1) & (daily["days_from_surgery"] <= d2)
-        ]
-    if args.day_pairs or args.days:
-        print("Plotting daily distance")
-        experiment.plot_daily_distance(daily, **args.__dict__)
-    if args.activity:
-        print("Plotting daily activity")
+        # Activity-only
+        experiment = DVCExperiment(experiment_name=args.experiment_name)
         activity = experiment.get_daily_activity(33)
-        experiment.plot_daily_activity(activity)
+        d1, d2 = args.day_range
+        activity = activity[(activity[DAYS_COL] >= d1) & (activity[DAYS_COL] <= d2)]
+        print("Plotting daily activity")
+        experiment.plot_daily_activity(activity, **args.__dict__)
+
+    # Statistical analysis
     if args.glm:
-        print("GLM:")
-        glm(daily)
+        glm(activity, response_var="activity", verbose=args.verbose)
 
 
 def parse_args():
@@ -1561,6 +1752,9 @@ def parse_args():
     )
     parser.add_argument(
         "-a", "--activity", help="Plot daily activity", action="store_true"
+    )
+    parser.add_argument(
+        "-v", "--verbose", help="print all stats details", action="store_true"
     )
     args = parser.parse_args()
 
