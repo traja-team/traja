@@ -11,6 +11,7 @@ from scipy.stats import ttest_ind, ttest_rel
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
+
 import traja
 from traja import TrajaDataFrame
 
@@ -41,10 +42,10 @@ def glm(
     daily: pd.DataFrame,
     response_var: str = "displacement",
     cov_struct: Optional[str] = None,
+    rmAnova=False,
     verbose=False,
 ):
     """Generalized linear model for daily response."""
-
     kwargs = {}
 
     if cov_struct == "auto":
@@ -625,7 +626,12 @@ class DVCExperiment:
         Returns:
 
         """
-        return self.mouse_lookup[cage]["Diet"]
+
+        diet = self.mouse_lookup[cage]
+        if isinstance(diet, dict):
+            return diet["Diet"]
+        else:
+            return diet
 
     def get_group(self, cage):
         """
@@ -990,7 +996,8 @@ class DVCExperiment:
 
         """
         npy_path = os.path.join(
-            self.outdir, "ratios_angle-{angle}_distance-{distance}_period_turnangle.npy"
+            self.outdir,
+            f"ratios_angle-{angle}_distance-{distance}_period_turnangle.npy",
         )
         r = np.load(npy_path)
         ratio_dict = r.item(0)
@@ -1007,30 +1014,37 @@ class DVCExperiment:
         """
         ratio_dict = self._get_ratio_dict()
         ratios = ratio_dict[cage]
-        ratios = [x for x in ratios if (x[1] + x[2] > 0)]
-        days = [day for day, _, _, nighttime in ratios if nighttime]
 
-        laterality = [
-            right_turns / (left_turns + right_turns)
-            for day, right_turns, left_turns, nighttime in ratios
-            if nighttime
-        ]
+        df = pd.DataFrame(ratios).stack().reset_index()
+        df = df.drop(df.columns[[0, 1]], axis=1)
+
+        df[["days", "right", "left", "Night"]] = pd.DataFrame(
+            df[0].tolist(), index=df.index
+        )
+        df.drop(df.columns[[0]], axis=1, inplace=True)
+        # ratios = [x for x in ratios if len(x) == 2 and (x[1] + x[2] > 0)]
+        # days = [day for day, _, _, nighttime in ratios if nighttime]
+        df["Laterality"] = df.right / (df.right + df.left)
+        df["Turns"] = df.right + df.left
+
         fig, ax = plt.subplots()
-        ax.plot(days, laterality, label="Laterality")
+
+        night = df.query("Night == True")
+        ax = night.plot(x="days", y="Laterality", label="Laterality", ax=ax)
+        thresh = 20
         ax.set(
-            title=f"{cage} laterality index (right/right+left)\nDistance threshold: 0.25 cm\nAngle threshold: {thresh}\nRight turn is > 0.5\n{self.get_diet(cage)}",
+            title=f"{cage} laterality index (right/right+left)\nDistance threshold: 0.25 cm\nAngle threshold: {thresh}\n"
+            f"Right turn is > 0.5\n{self.get_diet(cage)}",
             xlabel="Days from surgery",
             ylabel="Laterality index",
         )
         ax.legend()
         ax.set_ylim((0, 1.0))
         ax2 = ax.twinx()
-        ax2.plot(
-            days,
-            [right + left for _, right, left, nighttime in ratios if nighttime],
-            color="C1",
-            label="Number of turns",
+        ax2 = night.plot(
+            x="days", y="Turns", label="Number of turns", ax=ax2, color="C1"
         )
+
         ax2.set_ylabel("Number of turns")
         ax2.legend()
         plt.show()
