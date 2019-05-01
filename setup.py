@@ -54,7 +54,7 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: Libraries",
     ],
-    python_requires="!= 3.0.*, != 3.1.*",
+    python_requires=">= 3.7",
     packages=find_packages(),
     include_package_data=True,
     license="MIT",
