@@ -25,6 +25,9 @@ traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License|
     :target: https://opensource.org/licenses/MIT
     :alt: License: MIT
 
+.. |Binder| image:: https://mybinder.org/badge_logo.svg
+    :target: https://mybinder.org/v2/gh/justinshenk/traja/master?filepath=demo.ipynb
+
 traja is a Python library for trajectory analysis. It extends the capability of
 pandas DataFrame specific for animal trajectory analysis in 2D, and provides
 convenient interfaces to other geometric analysis packages (eg, R and shapely).

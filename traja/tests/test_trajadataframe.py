@@ -2,18 +2,11 @@ import os
 import shutil
 import tempfile
 
-import numpy as np
 import pandas as pd
+import pytest
 
 import traja
 from traja import TrajaDataFrame, read_file
-
-import pytest
-from pandas.util.testing import (
-    assert_frame_equal,
-    assert_index_equal,
-    assert_series_equal,
-)
 
 
 class TestDataFrame:
@@ -28,11 +21,11 @@ class TestDataFrame:
         shutil.rmtree(self.tempdir)
 
     def test_df_init(self):
-        assert type(self.df) is TrajaDataFrame
+        assert isinstance(self.df, TrajaDataFrame)
 
     def test_copy(self):
         df2 = self.df.copy()
-        assert type(df2) is TrajaDataFrame
+        assert (df2, TrajaDataFrame)
         assert df2.xlim == self.df.xlim
 
     def test_dataframe_to_trajadataframe(self):
@@ -43,3 +36,36 @@ class TestDataFrame:
         tf = TrajaDataFrame(df)
         assert isinstance(df, pd.DataFrame)
         assert isinstance(tf, TrajaDataFrame)
+
+    @pytest.mark.parameterize("method", ["merge", "concat", None])
+    def test_construct_dataframe(self, method):
+        df = traja.TrajaDataFrame(
+            {"x": range(len(self.df)), "y": range(len(self.df))},
+            index=self.df.index,
+            xlim=(0, 2),
+            ylim=(0, 2),
+            spatial_units="m",
+            title="Serious title",
+            fps=2.0,
+            time_units="s",
+            id=42,
+        )
+
+        assert df.title == "Serious title"
+
+        # Test 'merge'
+        df2 = df.copy()
+        assert df2.title == "Serious title"
+
+        assert df._get_time_col() == None
+        assert self.df._get_time_col() == "Time"
+
+        # Modify metavar
+        df.set("title", "New title")
+        assert df.title == "New title"
+
+        # Test __finalize__
+        df_copy = df.copy()
+        df2_copy = df2.copy()
+        df_copy.__finalize__(df2_copy, method=method)
+        assert isinstance(df_copy, traja.TrajaDataFrame)
