@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.testing as npt
+import pytest
 from pandas.util.testing import assert_series_equal
 
 import traja
@@ -66,8 +67,29 @@ def test_cartesian_to_polar():
     npt.assert_allclose(theta_actual[:10], theta_expected)
 
 
-def test_expected_sq_displacement():
-    ...
+@pytest.mark.parametrize("eqn1", [True, False])
+def test_expected_sq_displacement(eqn1):
+    disp = traja.expected_sq_displacement(df, eqn1=eqn1)
+
+
+def test_step_lengths():
+    step_lengths = traja.step_lengths(df)
+    assert len(step_lengths == len(df))
+
+
+@pytest.mark.parametrize("w", [None, 2, 3])
+def test_smooth_sg(w):
+    if w == 2:
+        with pytest.raises(Exception):
+            _ = traja.trajectory.smooth_sg(df, w=w)
+    else:
+        trj = traja.trajectory.smooth_sg(df, w=w)
+        assert trj.shape == df.shape
+
+
+@pytest.mark.parametrize("lag", [1, 2])
+def test_angles(lag):
+    angles = traja.angles(df, lag=lag)
 
 
 def test_traj_from_coords():
@@ -79,10 +101,21 @@ def test_traj_from_coords():
     assert_series_equal(trj.time, df.time)
 
 
-def test_distance():
+@pytest.mark.parametrize("method", ["dtw", "hausdorff"])
+def test_distance(method):
     rotated = traja.trajectory.rotate(df, 10).traja.xy[:10]
-    distance = traja.distance(rotated, df.traja.xy)
-    npt.assert_almost_equal(distance, 523.103_701_021_348_1)
+    distance = traja.distance(rotated, df.traja.xy, method=method)
+
+
+@pytest.mark.parametrize("ndarray_type", [True, False])
+def test_grid_coords1D(ndarray_type):
+    xlim, ylim = traja.trajectory._get_xylim(df)
+    bins = traja.trajectory._bins_to_tuple(df, None)
+    grid_indices = traja.grid_coordinates(df, bins=bins, xlim=xlim, ylim=ylim)
+    if ndarray_type:
+        grid_indices = grid_indices.values
+    grid_indices1D = traja._grid_coords1D(grid_indices)
+    assert isinstance(grid_indices, np.ndarray)
 
 
 def test_to_shapely():
@@ -97,7 +130,10 @@ def test_to_shapely():
 
 
 def test_transition_matrix():
-    ...
+    grid_indices = traja.grid_coordinates(df)
+    assert grid_indices.shape[1] == 2
+    grid_indices1D = traja._grid_coords1D(grid_indices)
+    transitions_matrix = traja.transition_matrix(grid_indices1D)
 
 
 def test_calculate_flow_angles():
@@ -107,8 +143,30 @@ def test_calculate_flow_angles():
     npt.assert_approx_equal(U.sum(), expected)
 
 
+def test_resample_time():
+    trj = traja.resample_time(df, "3s")
+    assert isinstance(trj, traja.TrajaDataFrame)
+
+
 def test_transitions():
-    ...
+    transitions = traja.transitions(df)
+    assert isinstance(transitions, np.ndarray)
+
+    # Check when bins set
+    bins = traja._bins_to_tuple(df, bins=None)
+    xmin = df.x.min()
+    xmax = df.x.max()
+    ymin = df.y.min()
+    ymax = df.y.max()
+    xbins = np.linspace(xmin, xmax, bins[0])
+    ybins = np.linspace(ymin, ymax, bins[1])
+    xbin = np.digitize(df.x, xbins)
+    ybin = np.digitize(df.y, ybins)
+
+    df.set("xbin", xbin)
+    df.set("ybin", ybin)
+    transitions = traja.transitions(df)
+    assert isinstance(transitions, np.ndarray)
 
 
 def test_grid_coordinates():

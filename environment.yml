@@ -8,8 +8,6 @@ dependencies:
   - pytorch-cpu
   - pip:
     - fastdtw
-    - sphinx-gallery
-    - sphinx_rtd_theme
     - tzlocal
   - pandas
   - numpy

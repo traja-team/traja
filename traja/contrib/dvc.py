@@ -7,19 +7,17 @@ import os
 import re
 from typing import Optional, List
 
-from scipy.stats import ttest_ind, ttest_rel
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-
-
-import traja
-from traja import TrajaDataFrame
-
 import matplotlib.style as style
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
+from scipy.stats import ttest_ind, ttest_rel
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+
+import traja
+from traja import TrajaDataFrame
 
 try:
     import seaborn as sns
@@ -57,7 +55,7 @@ def glm(
     day_range = f"{daily[DAYS_COL].min()}-{daily[DAYS_COL].max()}"
     print(
         f"Fitting generalized linear model on daily data. Days {day_range}\n"
-        f"Model: {response_var} ~ days_from_surgery + diet."
+        f"Model: {response_var} ~ days_from_surgery * diet."
         + (f" Covariance structure ({cov_struct})" if cov_struct else "")
     )
 
@@ -78,7 +76,7 @@ def glm(
         subset = daily[daily.period == period] if period != "Overall" else daily_overall
 
         md = smf.gee(
-            f" {response_var} ~ days_from_surgery + diet",
+            f" {response_var} ~ days_from_surgery * diet",
             data=subset,
             groups="cage",
             **kwargs,
@@ -95,6 +93,34 @@ def glm(
                 sig_pvalues.append((pvalue, factor, period))
         if verbose:
             print(f"END {period} GLM RESULTS\n")
+
+    for diet in ["Control", "Fortasyn"]:
+        for period in [DARK, LIGHT, "Overall"]:
+            subset = (
+                daily.loc[(daily.period == period) & (daily.diet.str.contains(diet))]
+                if period != "Overall"
+                else daily_overall
+            )
+            if subset.empty:
+                import ipdb
+
+                ipdb.set_trace()
+            md = smf.gee(
+                f" {response_var} ~ days_from_surgery",
+                data=subset,
+                groups="cage",
+                **kwargs,
+            )
+            mdf = md.fit()
+            if verbose:
+                print(f"{diet}-only, {period} GLM RESULTS:\n", mdf.summary())
+            pvalues = mdf.pvalues
+            for factor, pvalue in pvalues.items():
+                if pvalue < 0.05 and factor != "Intercept":
+                    print(
+                        f"{factor} effect on {response_var} ({period}) - p-value: {pvalue:.4f}"
+                    )
+                    sig_pvalues.append((pvalue, factor, period))
     if not sig_pvalues:
         print("No significant effect found.\n")
     return sig_pvalues
@@ -1710,7 +1736,7 @@ def main(args):
 
         # Statistical analysis
         if args.glm:
-            glm(daily, response_var="displacment", verbose=args.verbose)
+            glm(daily, response_var="displacement", verbose=args.verbose)
     else:
         # Activity-only
         experiment = DVCExperiment(experiment_name=args.experiment_name)
@@ -1721,12 +1747,11 @@ def main(args):
         experiment.plot_daily_activity(activity, **args.__dict__)
 
     # Statistical analysis
-    if args.glm:
+    if args.glm and args.activity:
         glm(activity, response_var="activity", verbose=args.verbose)
 
 
 def parse_args():
-
     parser = argparse.ArgumentParser(description="Run DVC Experiment")
     parser.add_argument(
         "-c", "--centroids_dir", help="path to directory with centroids CSVs"

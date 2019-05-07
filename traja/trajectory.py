@@ -81,10 +81,8 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
 
 def angles(trj: TrajaDataFrame, lag: int = 1):
     """Returns angles w.r.t. x-axis."""
-    if lag > 1:
-        raise NotImplementedError("Lag must be 1.")
     dx = trj.x.diff(lag)
-    distance = calc_displacement(trj)
+    distance = calc_displacement(trj, lag=lag)
     angles = np.rad2deg(np.arccos(np.abs(dx) / distance))
     # Correction for 360-degree angle range
     angles[angles >= 180] -= 360
@@ -136,7 +134,7 @@ def cartesian_to_polar(xy: np.ndarray):
     return r, theta
 
 
-def expected_sq_displacement(trj: TrajaDataFrame, n: int = None, eqn1: bool = True):
+def expected_sq_displacement(trj: TrajaDataFrame, n: int = 0, eqn1: bool = True):
     """Expected displacement.
 
     .. note::
@@ -144,9 +142,8 @@ def expected_sq_displacement(trj: TrajaDataFrame, n: int = None, eqn1: bool = Tr
         This method is experimental and needs testing.
 
     """
-    # TODO: Fix and test implementation
-    sl = step_lengths(trj)
-    ta = angles(trj)
+    sl = traja.step_lengths(trj)
+    ta = traja.angles(trj)
     l = np.mean(sl)
     l2 = np.mean(sl ** 2)
     c = np.mean(np.cos(ta))
@@ -553,7 +550,8 @@ def generate(
 def _resample_time(trj: TrajaDataFrame, step_time: Union[float, int]):
     if not is_datetime_or_timedelta_dtype(trj.index):
         raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
-    return trj.resample(step_time).agg({"x": np.mean, "y": np.mean})
+    df = trj.resample(step_time).agg({"x": np.mean, "y": np.mean})
+    return traja.TrajaDataFrame(df)
 
 
 def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: bool = None):
@@ -800,11 +798,12 @@ def calc_angle(trj: TrajaDataFrame):
     return angle
 
 
-def calc_displacement(trj: TrajaDataFrame):
+def calc_displacement(trj: TrajaDataFrame, lag=1):
     """Returns a ``Series`` of ``float`` displacement between consecutive indices.
 
     Args:
         trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+        lag (int) : time steps between displacement calculation
 
     Returns:
       displacement (:class:`pandas.Series`): Displacement series.
@@ -820,7 +819,7 @@ def calc_displacement(trj: TrajaDataFrame):
 
     """
     displacement = np.sqrt(
-        np.power(trj.x.shift() - trj.x, 2) + np.power(trj.y.shift() - trj.y, 2)
+        np.power(trj.x.shift(lag) - trj.x, 2) + np.power(trj.y.shift(lag) - trj.y, 2)
     )
     displacement.name = "displacement"
     return displacement
