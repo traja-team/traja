@@ -37,7 +37,7 @@ class TestDataFrame:
         assert isinstance(df, pd.DataFrame)
         assert isinstance(tf, TrajaDataFrame)
 
-    @pytest.mark.parameterize("method", ["merge", "concat", None])
+    @pytest.mark.parametrize("method", ["merge", "concat", None])
     def test_construct_dataframe(self, method):
         df = traja.TrajaDataFrame(
             {"x": range(len(self.df)), "y": range(len(self.df))},
