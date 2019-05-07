@@ -1,5 +1,5 @@
-traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License|
-=====
+traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Codecov|
+======================================================================================
 
 .. |Python-ver| image:: https://img.shields.io/badge/python-3.6+-blue.svg
     :target: https://www.python.org/downloads/release/python-360/
@@ -27,6 +27,10 @@ traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License|
 
 .. |Binder| image:: https://mybinder.org/badge_logo.svg
     :target: https://mybinder.org/v2/gh/justinshenk/traja/master?filepath=demo.ipynb
+
+.. |Codecov| image:: https://codecov.io/gh/justinshenk/traja/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/justinshenk/traja
+
 
 traja is a Python library for trajectory analysis. It extends the capability of
 pandas DataFrame specific for animal trajectory analysis in 2D, and provides
