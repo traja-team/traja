@@ -513,6 +513,7 @@ def generate(
     angular_errors = angular_error_dist
     linear_errors = linear_error_dist
     step_lengths = step_length + linear_errors
+
     # Don't allow negative lengths
     step_lengths[step_lengths < 0] = 0
     steps = polar_to_z(step_lengths, angular_errors)
@@ -532,14 +533,18 @@ def generate(
     y = coords.imag
 
     df = traja.TrajaDataFrame(data={"x": x, "y": y})
+
     if fps in (0, None):
         raise Exception("fps must be greater than 0")
+
     df.fps = fps
     time = df.index / fps
     df["time"] = time
     df.spatial_units = spatial_units
+
     for key, value in kwargs.items():
         df.__dict__[key] = value
+
     # Update metavars
     metavars = dict(angular_error_sd=angular_error_sd, linear_error_sd=linear_error_sd)
     df.__dict__.update(metavars)
