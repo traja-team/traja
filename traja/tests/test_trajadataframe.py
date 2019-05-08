@@ -3,7 +3,6 @@ import shutil
 import tempfile
 
 import pandas as pd
-import pytest
 
 import traja
 from traja import TrajaDataFrame, read_file
@@ -37,8 +36,7 @@ class TestDataFrame:
         assert isinstance(df, pd.DataFrame)
         assert isinstance(tf, TrajaDataFrame)
 
-    @pytest.mark.parametrize("method", ["merge", "concat", None])
-    def test_construct_dataframe(self, method):
+    def test_construct_dataframe(self):
         df = traja.TrajaDataFrame(
             {"x": range(len(self.df)), "y": range(len(self.df))},
             index=self.df.index,
@@ -67,5 +65,4 @@ class TestDataFrame:
         # Test __finalize__
         df_copy = df.copy()
         df2_copy = df2.copy()
-        df_copy.__finalize__(df2_copy, method=method)
         assert isinstance(df_copy, traja.TrajaDataFrame)
