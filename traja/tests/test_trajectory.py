@@ -115,7 +115,7 @@ def test_grid_coords1D(ndarray_type):
     if ndarray_type:
         grid_indices = grid_indices.values
     grid_indices1D = traja._grid_coords1D(grid_indices)
-    assert isinstance(grid_indices, np.ndarray)
+    assert isinstance(grid_indices1D, np.ndarray)
 
 
 def test_to_shapely():
