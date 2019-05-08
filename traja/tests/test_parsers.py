@@ -1,14 +1,10 @@
 import os
 
+import numpy as np
 import pandas as pd
 
 import traja
 
-from pandas.util.testing import (
-    assert_frame_equal,
-    assert_index_equal,
-    assert_series_equal,
-)
 
 df = traja.generate(n=20)
 
@@ -16,7 +12,7 @@ df = traja.generate(n=20)
 def test_from_df():
     df = pd.DataFrame({"x": [1, 2, 3], "y": [2, 3, 4]})
     trj = traja.parsers.from_df(df)
-    assert_frame_equal(df, trj)
+    np.testing.assert_allclose(df, trj)
     assert isinstance(trj, traja.TrajaDataFrame)
 
 

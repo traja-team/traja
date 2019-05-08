@@ -77,9 +77,9 @@ def test_step_lengths():
     assert len(step_lengths == len(df))
 
 
-@pytest.mark.parametrize("w", [None, 2, 3])
+@pytest.mark.parametrize("w", [None, 5, 6])
 def test_smooth_sg(w):
-    if w == 2:
+    if w == 6:
         with pytest.raises(Exception):
             _ = traja.trajectory.smooth_sg(df, w=w)
     else:
@@ -552,19 +552,6 @@ def test_coords_to_flow():
 
 
 def test_from_xy():
-    expected = traja.from_xy(df.traja.xy).values[:10]
-    actual = np.array(
-        [
-            [0.0, 0.0],
-            [0.946_646_34, 1.149_860_48],
-            [1.946_959_33, 3.031_178_5],
-            [1.945_487_32, 5.204_065_25],
-            [0.277_985_34, 6.008_886_65],
-            [-1.893_984_67, 4.866_773_96],
-            [-3.603_093_98, 4.874_520_09],
-            [-5.393_923_83, 3.963_685_85],
-            [-7.205_488_76, 3.208_777_29],
-            [-9.377_513_86, 2.432_564_17],
-        ]
-    )
+    expected = traja.from_xy(df.traja.xy).values
+    actual = df.traja.xy
     npt.assert_allclose(expected, actual)
