@@ -395,7 +395,11 @@ def plot_surface(
     )
 
     ax = _label_axes(trj, ax)
-    ax.set_aspect("equal")
+    try:
+        ax.set_aspect("equal")
+    except NotImplementedError:
+        # 3D
+        pass
 
     _process_after_plot_args(**after_plot_args)
     return fig
