@@ -6,4 +6,4 @@ from traja.trajectory import *
 from traja import models
 
 __author__ = "justinshenk"
-__version__ = "0.1.1.dev1"
+__version__ = "0.1.1.post0"
