@@ -20,7 +20,7 @@ Resample time
 
 For milliseconds/microseconds/nanoseconds use:
 
-    L - milliseonds
+    L - milliseconds
 
     U - microseconds
 
