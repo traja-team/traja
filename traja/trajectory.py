@@ -1,6 +1,6 @@
 import math
 from collections import OrderedDict
-from typing import Callable, Union, Tuple
+from typing import Callable, Optional, Union, Tuple
 
 import traja
 import numpy as np
@@ -552,19 +552,24 @@ def generate(
     return df
 
 
-def _resample_time(trj: TrajaDataFrame, step_time: Union[float, int]):
+def _resample_time(trj: TrajaDataFrame, step_time: Union[float, int, str]):
     if not is_datetime_or_timedelta_dtype(trj.index):
         raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
     df = trj.resample(step_time).agg({"x": np.mean, "y": np.mean})
     return traja.TrajaDataFrame(df)
 
 
-def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: bool = None):
+def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] = None):
     """Returns a ``TrajaDataFrame`` resampled to consistent `step_time` intervals.
 
     Args:
         trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
         step_time (str): step time interval (eg, '1s')
+            For milliseconds/microseconds/nanoseconds use:
+                L       milliseonds
+                U       microseconds
+                N       nanoseconds
+                eg, step_time='2100L'
         new_fps (bool, optional): new fps
 
     Results:
@@ -595,7 +600,14 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: bool = None):
         if isinstance(step_time, str):
             try:
                 if "." in step_time:
-                    raise NotImplementedError("Fractional step time not implemented.")
+                    raise NotImplementedError(
+                        """Fractional step time not implemented.
+                          For milliseconds/microseconds/nanoseconds use:
+                            L       milliseonds
+                            U       microseconds
+                            N       nanoseconds
+                            eg, step_time='2100L'"""
+                    )
             except Exception:
                 raise NotImplementedError(
                     f"Inferring from time format {step_time} not yet implemented."
