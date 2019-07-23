@@ -28,6 +28,25 @@ Could be read in like:
 
 Any keyword arguments passed to `read_file` will be passed to :meth:`pandas.read_csv`.
 
+Data frames can also be read with pandas :func:`pandas.read_csv` and then converted to TrajaDataFrames
+with:
+
+.. code-blcok:: python
+
+    import traja
+    import pandas as pd
+
+    df = pd.read_csv('data.csv')
+
+    # If x and y columns named different than "x" and "y", rename them, eg:
+    df.rename(columns={"x_col":"x", "y_col"}, inplace=True) # original column names x_col, y_col
+
+    # If time column doesn't include "time" in the name, similarly rename it to "time"
+
+    trj = traja.TrajaDataFrame(df)
+
+
+
 Writing trajectory data
 -----------------------
 
