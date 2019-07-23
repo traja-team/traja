@@ -31,7 +31,7 @@ Any keyword arguments passed to `read_file` will be passed to :meth:`pandas.read
 Data frames can also be read with pandas :func:`pandas.read_csv` and then converted to TrajaDataFrames
 with:
 
-.. code-blcok:: python
+.. code-block:: python
 
     import traja
     import pandas as pd
