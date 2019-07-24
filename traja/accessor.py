@@ -253,33 +253,28 @@ class TrajaAccessor(object):
         derivs = traja.trajectory.get_derivatives(self._obj)
         return derivs
 
-    @property
     def speed_intervals(
         self,
         faster_than: Union[float, int] = None,
         slower_than: Union[float, int] = None,
-        interpolate_times: bool = True,
     ):
         """Returns ``TrajaDataFrame`` with speed time intervals.
 
-        Returns a dictionary of time intervals where speed is slower and/or faster than specified values.
+        Returns a dataframe of time intervals where speed is slower and/or faster than specified values.
 
         Args:
           faster_than (float, optional): Minimum speed threshold. (Default value = None)
           slower_than (float or int, optional): Maximum speed threshold. (Default value = None)
-          interpolate_times (bool, optional): Interpolate times between steps. (Default value = True)
 
         Returns:
-          result (:class:`~collections.OrderedDict`) -- time intervals as dictionary.
+          result (:class:`~pandas.DataFrame`) -- time intervals as dataframe
 
         .. note::
 
             Implementation ported to Python, heavily inspired by Jim McLean's trajr package.
 
         """
-        result = traja.trajectory.speed_intervals(
-            self._obj, faster_than, slower_than, interpolate_times
-        )
+        result = traja.trajectory.speed_intervals(self._obj, faster_than, slower_than)
         return result
 
     def to_shapely(self):

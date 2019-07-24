@@ -42,7 +42,7 @@ def test_get_derivatives():
 
 
 def test_speed_intervals():
-    si = df.traja.speed_intervals
+    si = df.traja.speed_intervals(faster_than=100)
     assert isinstance(si, traja.TrajaDataFrame)
 
 
