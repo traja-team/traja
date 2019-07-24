@@ -20,11 +20,29 @@ Resample time
 
 For milliseconds/microseconds/nanoseconds use:
 
-    L - milliseconds
+- L - milliseconds
+- U - microseconds
+- N - nanoseconds
 
-    U - microseconds
+For example:
 
-    N - nanoseconds
+.. ipython:: python :okwarning:
+
+    import traja
+
+    # Generate a random walk
+    df = traja.generate(n=1000) # Time is in 0.02-second intervals
+    df.head()
+
+.. ipython:: python :okwarning:
+
+    resampled = traja.resample_time(df, "50L") # 50 milliseconds
+    resampled.head()
+
+    fig = resampled.traja.plot()
+
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/images/resampled.png
+
 
 Ramer–Douglas–Peucker algorithm
 -------------------------------
