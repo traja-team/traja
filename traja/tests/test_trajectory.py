@@ -112,7 +112,7 @@ def test_traj_from_coords():
 def test_distance(method):
     df_copy = df.copy()
     rotated = traja.trajectory.rotate(df_copy, 10).traja.xy[:10]
-    distance = traja.distance(rotated, df_copy.traja.xy, method=method)
+    distance = traja.distance_between(rotated, df_copy.traja.xy, method=method)
 
 
 @pytest.mark.parametrize("ndarray_type", [True, False])

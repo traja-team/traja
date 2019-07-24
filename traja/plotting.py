@@ -77,7 +77,7 @@ def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> A
 
     Args:
       trj (:class:`traja.TrajaDataFrame`): trajectory
-      bins
+      bins (int or tuple): number of bins for x and y
       **kwargs: additional keyword arguments to :meth:`mpl_toolkits.mplot3d.Axed3D.bar3d`
 
     Returns:
@@ -732,14 +732,15 @@ def polar_bar(
     **plot_kws: str,
 ) -> Axes:
     """Plot polar bar chart.
+
     Args:
-        trj
+        trj (:class:`traja.TrajaDataFrame`): trajectory
         feature (str): Options: 'turn_angle', 'heading'
         bins (int): width of bins
         overlap (bool): Overlapping shows all values, if set to false is a histogram
 
     Returns:
-        ax
+        ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
 
     """
     DIST_THRESHOLD = 0.001
@@ -778,7 +779,6 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     Args:
         polar (bool): include polar bar chart with turn angle
         save (bool): save video to ``trajectory.mp4``
-    Returns:
 
     """
     from matplotlib import animation

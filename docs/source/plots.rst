@@ -15,6 +15,11 @@ Plotting Paths
 
 Making plots of trajectories is easy using the :meth:`~traja.accessor.TrajaAccessor.plot` method.
 
+See the :ref:`gallery<sphx_glr_gallery>` for more examples.
+
+.. automodule:: traja.plotting
+    :members: bar_plot, plot, plot_quiver, plot_contour, plot_surface, plot_stream, plot_flow, plot_actogram, polar_bar
+
 Trip Grid
 ---------
 
@@ -54,3 +59,8 @@ The plot can also be normalized into a density function with `normalize`:
 
     @savefig trip_grid_normalized.png
     hist, _ = trip_grid(df, normalize=True);
+
+Animate
+-------
+
+.. autofunction:: traja.plotting.animate

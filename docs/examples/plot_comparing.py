@@ -22,6 +22,6 @@ rotated.traja.plot()
 ###############################################################################
 # Compare trajectories point-wise
 # ===============================
-dist = traja.distance(df.traja.xy, rotated.traja.xy)
+dist = traja.distance_between(df.traja.xy, rotated.traja.xy)
 
 print(f"Distance between the two trajectories is {dist}")
