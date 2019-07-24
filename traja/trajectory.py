@@ -1011,10 +1011,7 @@ def calc_heading(trj: TrajaDataFrame):
 
 
 def speed_intervals(
-    trj: TrajaDataFrame,
-    faster_than: float = None,
-    slower_than: float = None,
-    interpolate_times: bool = False,
+    trj: TrajaDataFrame, faster_than: float = None, slower_than: float = None
 ) -> pd.DataFrame:
     """Calculate speed time intervals.
 
@@ -1023,7 +1020,6 @@ def speed_intervals(
     Args:
       faster_than (float, optional): Minimum speed threshold. (Default value = None)
       slower_than (float or int, optional): Maximum speed threshold. (Default value = None)
-      interpolate_times (bool, optional): Interpolate times between steps. (Default value = True)
 
     Returns:
       result (:class:`~pd.DataFrame`) -- time intervals as dataframe
@@ -1083,15 +1079,6 @@ def speed_intervals(
 
     stop_times = times[stop_frames]
     start_times = times[start_frames]
-
-    if interpolate_times and len(start_frames) > 0:
-        # TODO: Implement
-        raise NotImplementedError()
-        # r = linear_interp_times(
-        #     slower_than, faster_than, speed, times, start_frames, start_times
-        # )
-        # start_times = r[:, 0]
-        # stop_times = r[:, 1]
 
     durations = stop_times - start_times
     result = traja.TrajaDataFrame(
