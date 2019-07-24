@@ -34,6 +34,8 @@ If you use traja in your publications, please cite "`traja: A Python Trajectory 
    Reading and Writing Files <reading>
    Pandas Indexing and Resampling <pandas>
    Generate Random Walk <generate>
+   Distance Calculations <calculations>
+   Turns <turns>
    Plotting Paths <plots>
    Plotting Grid Cell Flow <grid_cell>
    Rediscretizing Trajectories <rediscretize>

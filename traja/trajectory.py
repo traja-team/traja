@@ -34,6 +34,7 @@ __all__ = [
     "cartesian_to_polar",
     "coords_to_flow",
     "directed_hausdorff",
+    "distance_between",
     "distance",
     "euclidean",
     "expected_sq_displacement",
@@ -42,6 +43,7 @@ __all__ = [
     "generate",
     "get_derivatives",
     "grid_coordinates",
+    "length",
     "polar_to_z",
     "rediscretize_points",
     "resample_time",
@@ -57,7 +59,7 @@ __all__ = [
 
 
 def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
-    """Returns``DataFrame`` of trajectory after Savitzky-Golay filtering.
+    """Returns ``DataFrame`` of trajectory after Savitzky-Golay filtering.
 
     Args:
       trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
@@ -67,16 +69,29 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
     Returns:
       trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
+    .. doctest::
+
+        >> df = traja.generate()
+        >> traja.smooth_sg(df, w=101).traja.plot()
+                   x          y  time
+        0 -11.204522  12.277630  0.00
+        1 -10.233653  10.587368  0.02
+        2  -9.294466   8.937147  0.04
+        3  -8.386226   7.326461  0.06
+        4  -7.508197   5.754808  0.08
+
+
     """
     if w is None:
         w = p + 3 - p % 2
 
     if w % 2 != 1:
         raise Exception(f"Invalid smoothing parameter w ({w}): n must be odd")
-    trj.x = signal.savgol_filter(trj.x, window_length=w, polyorder=p, axis=0)
-    trj.y = signal.savgol_filter(trj.y, window_length=w, polyorder=p, axis=0)
-    trj = fill_in_traj(trj)
-    return trj
+    _trj = trj.copy()
+    _trj.x = signal.savgol_filter(_trj.x, window_length=w, polyorder=p, axis=0)
+    _trj.y = signal.savgol_filter(_trj.y, window_length=w, polyorder=p, axis=0)
+    _trj = fill_in_traj(_trj)
+    return _trj
 
 
 def angles(trj: TrajaDataFrame, lag: int = 1):
@@ -96,27 +111,26 @@ def step_lengths(trj: TrajaDataFrame):
     Args:
       trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
-    Returns:
-
     """
     displacement = traja.trajectory.calc_displacement(trj)
     return displacement
 
 
-def polar_to_z(r: float, theta: float):
-    """Converts polar coordinates ``z`` and ``theta`` to complex number ``z``.
+def polar_to_z(r: float, theta: float) -> complex:
+    """Converts polar coordinates ``r`` and ``theta`` to complex number ``z``.
 
     Args:
       r (float): step size
       theta (float): angle
 
     Returns:
+        z (complex): complex number z
 
     """
     return r * np.exp(1j * theta)
 
 
-def cartesian_to_polar(xy: np.ndarray):
+def cartesian_to_polar(xy: np.ndarray) -> (float, float):
     """Convert :class:`numpy.ndarray` ``xy`` to polar coordinates ``r`` and ``theta``.
 
     Args:
@@ -134,7 +148,51 @@ def cartesian_to_polar(xy: np.ndarray):
     return r, theta
 
 
-def expected_sq_displacement(trj: TrajaDataFrame, n: int = 0, eqn1: bool = True):
+def distance(trj: TrajaDataFrame) -> float:
+    """Calculates the distance from start to end of trajectory, also called net distance, displacement, or bee-line
+    from start to finish.
+
+    Args:
+        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+        distance (float)
+
+    .. doctest::
+
+        >> df = traja.generate()
+        >> traja.distance(df)
+        0.8968455373110531
+
+    """
+    start = trj.iloc[0][["x", "y"]].values
+    end = trj.iloc[-1][["x", "y"]].values
+    return np.linalg.norm(end - start)
+
+
+def length(trj: TrajaDataFrame) -> float:
+    """Calculates the cumulative length of a trajectory.
+
+    Args:
+        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+        length (float)
+
+    .. doctest::
+
+        >> df = traja.generate()
+        >> traja.length(df)
+        2002.7233880632327
+
+    """
+    displacement = trj.traja.calc_displacement()
+    return displacement.sum()
+
+
+def expected_sq_displacement(
+    trj: TrajaDataFrame, n: int = 0, eqn1: bool = True
+) -> float:
     """Expected displacement.
 
     .. note::
@@ -172,9 +230,35 @@ def expected_sq_displacement(trj: TrajaDataFrame, n: int = 0, eqn1: bool = True)
 
 
 def traj_from_coords(
-    track, x_col=1, y_col=2, time_col=None, fps=4, spatial_units="m", time_units="s"
-):
-    """Create TrajaDataFrame from coordinates."""
+    track: Union[np.ndarray, pd.DataFrame],
+    x_col=1,
+    y_col=2,
+    time_col: Optional[str] = None,
+    fps: Union[float, int] = 4,
+    spatial_units: str = "m",
+    time_units: str = "s",
+) -> TrajaDataFrame:
+    """Create TrajaDataFrame from coordinates.
+
+    Args:
+        track:  N x 2 numpy array or pandas DataFrame with x and y columns
+        x_col: column index or x column name
+        y_col: column index or y column name
+        time_col: name of time column
+        fps: Frames per seconds
+        spatial_units: default m, optional
+        time_units: default s, optional
+
+    Returns:
+        trj: TrajaDataFrame
+
+    .. doctest::
+
+        >> xy = np.random.random((1000, 2))
+        >> trj = traja.traj_from_coord(xy)
+        >> assert trj.shape == (1000,4) # columns x, y, time, dt
+
+    """
     if not isinstance(track, traja.TrajaDataFrame):
         if isinstance(track, np.ndarray) and track.shape[1] == 2:
             trj = traja.from_xy(track)
@@ -214,11 +298,10 @@ def traj_from_coords(
     # Get displacement time for each coordinate, with the first point at time 0
     trj["dt"] = trj.time - trj.time.iloc[0]
 
-    ...
     return trj
 
 
-def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
+def distance_between(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
     """Returns distance between two trajectories.
 
     Args:
@@ -228,6 +311,7 @@ def distance(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="dtw"):
 
     Returns:
         distance (float): Distance
+
     """
     if method == "hausdorff":
         dist0 = directed_hausdorff(A, B)[0]
@@ -562,14 +646,11 @@ def _resample_time(trj: TrajaDataFrame, step_time: Union[float, int, str]):
 def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] = None):
     """Returns a ``TrajaDataFrame`` resampled to consistent `step_time` intervals.
 
+    ``step_time`` should be expressed as a number-time unit combination, eg "2S" for 2 seconds and “2100L” for 2100 milliseconds.
+
     Args:
         trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
-        step_time (str): step time interval (eg, '1s')
-            For milliseconds/microseconds/nanoseconds use:
-                L       milliseonds
-                U       microseconds
-                N       nanoseconds
-                eg, step_time='2100L'
+        step_time (str): step time interval / offset string (eg, '2S' (seconds), '50L' (milliseconds), '50N' (nanoseconds))
         new_fps (bool, optional): new fps
 
     Results:
@@ -589,11 +670,8 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
         3  0.15  -4.792063  4.817204
         4  0.20 -10.318576  2.081890
 
-
-
     """
     time_col = _get_time_col(trj)
-    time_col_dtype = None
     if time_col == "index" and is_datetime64_any_dtype(trj.index):
         _trj = _resample_time(trj, step_time)
     elif time_col == "index" and is_timedelta64_dtype(trj.index):
@@ -898,7 +976,7 @@ def calc_heading(trj: TrajaDataFrame):
     """Calculate trajectory heading.
 
     Args:
-      assign (bool): (Default value = True)
+      trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
     Returns:
         heading (:class:`pandas.Series`): heading as a ``Series``
@@ -936,8 +1014,8 @@ def speed_intervals(
     trj: TrajaDataFrame,
     faster_than: float = None,
     slower_than: float = None,
-    interpolate_times: bool = True,
-):
+    interpolate_times: bool = False,
+) -> pd.DataFrame:
     """Calculate speed time intervals.
 
     Returns a dictionary of time intervals where speed is slower and/or faster than specified values.
@@ -948,23 +1026,36 @@ def speed_intervals(
       interpolate_times (bool, optional): Interpolate times between steps. (Default value = True)
 
     Returns:
-      result (:class:`~collections.OrderedDict`) -- time intervals as dictionary.
+      result (:class:`~pd.DataFrame`) -- time intervals as dataframe
 
     .. note::
 
         Implementation ported to Python, heavily inspired by Jim McLean's trajr package.
 
+    .. doctest::
+
+        >> df = traja.generate()
+        >> intervals = traja.speed_intervals(df, faster_than=100)
+        >> intervals.head()
+           start_frame  start_time  stop_frame  stop_time  duration
+        0            0        0.00           2       0.04      0.04
+        1            3        0.06           7       0.14      0.08
+        2            9        0.18          10       0.20      0.02
+        3           11        0.22          14       0.28      0.06
+        4           16        0.32          17       0.34      0.02
+
     """
     derivs = get_derivatives(trj)
 
-    if faster_than is not None:
-        pass
-    if slower_than is not None:
-        pass
+    if faster_than is None and slower_than is None:
+        raise Exception(
+            "Parameters faster_than and slower_than are both None, at least one must be provided."
+        )
 
     # Calculate trajectory speeds
-    speed = derivs["speed"]
-    times = derivs["speed_times"]
+    speed = derivs["speed"].values
+    times = derivs["speed_times"].values
+    times[0] = 0.0
     flags = np.full(len(speed), 1)
 
     if faster_than is not None:
@@ -988,7 +1079,7 @@ def speed_intervals(
             len(stop_frames) == 0
             or start_frames[len(start_frames) - 1] > stop_frames[len(stop_frames) - 1]
         ):
-            stop_frames = np.append(stop_frames, len(speed))
+            stop_frames = np.append(stop_frames, len(speed) - 1)
 
     stop_times = times[stop_frames]
     start_times = times[start_frames]

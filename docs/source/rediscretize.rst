@@ -16,13 +16,8 @@ Resample time
 -------------
 :meth:`~traja.trajectory.resample_time` allows resampling trajectories by a ``step_time``.
 
-`step_time` should be expressed as a number-time unit combination, eg ``"2S"`` for 2 seconds and "2100L" for 2100 milliseconds.
+.. autofunction:: traja.trajectory.resample_time
 
-For milliseconds/microseconds/nanoseconds use:
-
-- L - milliseconds
-- U - microseconds
-- N - nanoseconds
 
 For example:
 
