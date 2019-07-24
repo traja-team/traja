@@ -267,7 +267,8 @@ def plot(
         )
     else:
         # Convert frames to time
-        cbar_labels = trj.index[indices].values
+        cbar_labels = trj[time_col][indices].values
+        cbar_labels = np.round(cbar_labels, 6)
         if fps is not None and fps > 0 and fps is not 1 and show_time:
             cbar_labels = cbar_labels / fps
 
