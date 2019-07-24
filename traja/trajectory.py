@@ -578,17 +578,18 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
 
     .. doctest::
 
-        >>> from traja import generate
-        >>> from traja.trajectory import resample_time
+        >>> from traja import generate, resample_time
         >>> df = generate()
-        >>> resampled = resample_time(df, '2s')
+        >>> resampled = resample_time(df, '50L') # 50 milliseconds
         >>> resampled.head()
-              time          x          y
-        0 00:00:00  14.555071 -26.482614
-        1 00:00:02  -3.582797  -6.491297
-        2 00:00:04  -4.299709  26.937443
-        3 00:00:06 -25.337042  42.131848
-        4 00:00:08  33.069915  32.780830
+           time          x         y
+        0  0.00   0.000000  0.000000
+        1  0.05   0.534492  4.222683
+        2  0.10  -1.267300  5.395315
+        3  0.15  -4.792063  4.817204
+        4  0.20 -10.318576  2.081890
+
+
 
     """
     time_col = _get_time_col(trj)
