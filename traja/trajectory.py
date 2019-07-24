@@ -555,7 +555,7 @@ def generate(
 def _resample_time(trj: TrajaDataFrame, step_time: Union[float, int, str]):
     if not is_datetime_or_timedelta_dtype(trj.index):
         raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
-    df = trj.resample(step_time).agg({"x": np.mean, "y": np.mean})
+    df = trj.resample(step_time).interpolate(method="spline", order=2)
     return traja.TrajaDataFrame(df)
 
 
@@ -592,10 +592,13 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
 
     """
     time_col = _get_time_col(trj)
+    time_col_dtype = None
     if time_col == "index" and is_datetime64_any_dtype(trj.index):
         _trj = _resample_time(trj, step_time)
     elif time_col == "index" and is_timedelta64_dtype(trj.index):
+        trj.index = pd.to_datetime(trj.index)
         _trj = _resample_time(trj, step_time)
+        _trj.index = pd.to_timedelta(_trj.index)
     elif time_col:
         if isinstance(step_time, str):
             try:
@@ -613,9 +616,12 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
                     f"Inferring from time format {step_time} not yet implemented."
                 )
         _trj = trj.set_index(time_col)
-        _trj.index = pd.to_timedelta(_trj.index, unit="s")
+        time_units = _trj.__dict__.get("time_units", "s")
+        _trj.index = pd.to_datetime(_trj.index, unit=time_units)
         _trj = _resample_time(_trj, step_time)
         _trj.reset_index(inplace=True)
+        # Reset time_col to float dtype
+        _trj[time_col] = pd.to_timedelta(_trj[time_col]).dt.total_seconds()
     else:
         raise NotImplementedError(
             f"Time column ({time_col}) not of expected data type."
