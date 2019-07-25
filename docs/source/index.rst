@@ -17,8 +17,9 @@ The traja Python package is a toolkit for the numerical characterisation and ana
 
 The goal of this package (and this document) is to aid biological researchers, who may not have extensive experience with Python, to analyse trajectories without being handicapped by a limited knowledge of Python or programming. However, a basic understanding of Python is useful.
 
-If you use traja in your publications, please cite "`traja: A Python Trajectory Analysis Library. https://github.com/justinshenk/traja <https://github.com/justinshenk/traja>`_."
+If you use traja in your publications, please cite:
 
+“Shenk, J. Traja. (2019). A Python Trajectory Analysis Library. https://github.com/justinshenk/traja.”
 
 .. toctree::
    :maxdepth: 1
