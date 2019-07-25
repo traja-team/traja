@@ -1217,7 +1217,7 @@ def _get_time_col(trj: TrajaDataFrame):
     if time_col:
         return time_col
     # Check if index is datetime
-    if is_datetime_or_timedelta_dtype(trj.index):
+    if is_datetime64_any_dtype(trj.index) or is_datetime_or_timedelta_dtype(trj.index):
         return "index"
     # Check if any column contains 'time'
     time_cols = [col for col in trj if "time" in col.lower()]
