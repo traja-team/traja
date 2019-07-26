@@ -20,6 +20,19 @@ rotated = traja.rotate(df, angle=np.pi / 10)
 rotated.traja.plot()
 
 ###############################################################################
+# Compare trajectories hiearchically
+# ==================================
+#
+
+# Generate random trajectories
+trjs = [traja.generate(seed=i) for i in range(20)]
+
+# Calculate displacement
+displacements = [trj.traja.calc_displacement() for trj in trjs]
+
+traja.plot_clustermap(displacements)
+
+###############################################################################
 # Compare trajectories point-wise
 # ===============================
 dist = traja.distance_between(df.traja.xy, rotated.traja.xy)

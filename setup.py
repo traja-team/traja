@@ -29,7 +29,6 @@ requirements = [
     "numpy",
     "shapely",
     "scipy",
-    "scipy",
     "psutil",
     "tzlocal",
 ]

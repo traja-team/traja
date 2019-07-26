@@ -590,6 +590,8 @@ def generate(
     """
     if seed is None:
         np.random.seed(0)
+    else:
+        np.random.seed(seed)
     if angular_error_dist is None:
         angular_error_dist = np.random.normal(loc=0.0, scale=angular_error_sd, size=n)
     if linear_error_dist is None:
