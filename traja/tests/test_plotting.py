@@ -102,6 +102,15 @@ def test_find_runs():
         npt.assert_allclose(actual[i], expected[i])
 
 
+def test_plot_clustermap():
+    trjs = [traja.generate(seed=i) for i in range(20)]
+
+    # Calculate displacement
+    displacements = [trj.traja.calc_displacement() for trj in trjs]
+
+    traja.plot_clustermap(displacements)
+
+
 def test_plot():
     fig = traja.plotting.plot(df)
     ax = fig.axes[1]

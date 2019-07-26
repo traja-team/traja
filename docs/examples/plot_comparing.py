@@ -20,9 +20,11 @@ rotated = traja.rotate(df, angle=np.pi / 10)
 rotated.traja.plot()
 
 ###############################################################################
-# Compare trajectories hiearchically
-# ==================================
-#
+# Compare trajectories hierarchically
+# ===================================
+# Hierarchical agglomerative clustering allows comparing trajectories as actograms
+# and finding nearest neighbors. This is useful for comparing circadian rhythms,
+# for example.
 
 # Generate random trajectories
 trjs = [traja.generate(seed=i) for i in range(20)]

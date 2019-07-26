@@ -792,7 +792,11 @@ def plot_clustermap(
         cg: a ClusterGrid instance
 
     """
-    import seaborn as sns
+    try:
+        import seaborn as sns
+    except ImportError:
+        print("seaborn is not installed. Install it with 'pip install seaborn'")
+        return
 
     series_lst = []
     for disp in displacements:
