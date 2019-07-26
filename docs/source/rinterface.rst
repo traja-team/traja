@@ -1,7 +1,7 @@
 R interface
 ===========
 
-`ryp2` allows connecting R packages to Python. Install rpy2 with ``pip install rpy2``.
+`rpy2` allows connecting R packages to Python. Install rpy2 with ``pip install rpy2`` or ``conda install -c r rpy2``.
 
 .. code-block:: python
 

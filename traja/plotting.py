@@ -1,4 +1,4 @@
-from typing import Union, Optional, Tuple
+from typing import Union, Optional, Tuple, List
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -31,6 +31,7 @@ __all__ = [
     "plot",
     "plot_actogram",
     "plot_contour",
+    "plot_clustermap",
     "plot_flow",
     "plot_quiver",
     "plot_stream",
@@ -771,6 +772,52 @@ def polar_bar(
         **plot_kws,
     )
     return ax
+
+
+def plot_clustermap(
+    displacements: List[pd.Series],
+    rule: Optional[str] = None,
+    nr_steps=None,
+    colors: Optional[List[Union[int, str]]] = None,
+):
+    """Plot cluster map / dendrogram of trajectories with DatetimeIndex.
+
+    Args:
+        displacements: list of pd.Series, outputs of :func:`traja.calc_displacement()`
+        rule:   how to resample series, eg '30s' for 30-seconds
+        nr_steps: select first N samples for clustering
+        colors: list of colors (eg, 'b','r') to map to each trajectory
+
+    Returns:
+        cg: a ClusterGrid instance
+
+    """
+    import seaborn as sns
+
+    series_lst = []
+    for disp in displacements:
+        if rule:
+            disp = disp.resample(rule).sum()
+        series_lst.append(disp)
+
+    df = pd.DataFrame(series_lst)
+    df.columns = range(len(df.columns))
+    df.reset_index(drop=True, inplace=True)
+
+    if not nr_steps:
+        nr_steps = df.shape[1]
+
+    cg = sns.clustermap(
+        df.fillna(0).iloc[:, :nr_steps],
+        xticklabels=False,
+        col_cluster=False,
+        figsize=(16, 6),
+        cmap="Greys",
+        row_colors=colors,
+    )
+    plt.setp(cg.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
+    plt.show()
+    return cg
 
 
 def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
