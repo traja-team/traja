@@ -779,6 +779,7 @@ def plot_clustermap(
     rule: Optional[str] = None,
     nr_steps=None,
     colors: Optional[List[Union[int, str]]] = None,
+    **kwargs,
 ):
     """Plot cluster map / dendrogram of trajectories with DatetimeIndex.
 
@@ -787,9 +788,14 @@ def plot_clustermap(
         rule:   how to resample series, eg '30s' for 30-seconds
         nr_steps: select first N samples for clustering
         colors: list of colors (eg, 'b','r') to map to each trajectory
+        kwargs: keyword arguments for :func:`seaborn.clustermap`
 
     Returns:
         cg: a ClusterGrid instance
+
+    .. note::
+
+        Requires seaborn to be installed. Install it with 'pip install seaborn'.
 
     """
     try:
@@ -818,6 +824,7 @@ def plot_clustermap(
         figsize=(16, 6),
         cmap="Greys",
         row_colors=colors,
+        **kwargs,
     )
     plt.setp(cg.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
     plt.show()
