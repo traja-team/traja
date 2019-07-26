@@ -791,7 +791,7 @@ def plot_clustermap(
         kwargs: keyword arguments for :func:`seaborn.clustermap`
 
     Returns:
-        cg: a ClusterGrid instance
+        cg: a :func:`seaborn.matrix.ClusterGrid` instance
 
     .. note::
 
