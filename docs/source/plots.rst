@@ -63,7 +63,7 @@ The plot can also be normalized into a density function with `normalize`:
 Clustering Trajectories
 -----------------------
 
-Trajectories can be clustered using :func:`traja.plot_clustermap`.
+Trajectories can be clustered using :func:`traja.plotting.plot_clustermap`.
 
 Colors corresponding to each trajectory can be specified with the ``colors`` argument.
 
