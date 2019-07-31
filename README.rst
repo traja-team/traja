@@ -118,13 +118,13 @@ Analyze Trajectory
    :header: "Function", "Description"
    :widths: 30, 80
    
-   ``calc_derivatives``, Calculate derivatives of x, y values 
-   ``calc_turn_angles``, Calculate turn angles w.r.t. x-axis 
-   ``transitions``, Calculate first-order Markov model for transitions between grid bins
-   ``generate``, Generate random walk
-   ``resample_time``, Resample to consistent step_time intervals
-   ``rediscretize_points``, Rediscretize points to given step length
-
+   "``calc_derivatives``", "Calculate derivatives of x, y values "
+   "``calc_turn_angles``", "Calculate turn angles w.r.t. x-axis "
+   "``transitions``", "Calculate first-order Markov model for transitions between grid bins"
+   "``generate``", "Generate random walk"
+   "``resample_time``", "Resample to consistent step_time intervals"
+   "``rediscretize_points``", "Rediscretize points to given step length"
+   
 Random walk
 -----------
 
