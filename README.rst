@@ -58,7 +58,19 @@ analyze trajectories without being handicapped by a limited knowledge of
 Python or programming. However, a basic understanding of Python is
 useful.
 
-If you use traja in your publications, please cite [add citation].
+If you use traja in your publications, please cite
+
+```
+@misc{justin_shenk_2019_3237827,
+  author       = {Justin Shenk and
+                  Rüdiger Busche},
+  title        = {justinshenk/traja: v0.1.1},
+  month        = jun,
+  year         = 2019,
+  doi          = {10.5281/zenodo.3237827},
+  url          = {https://doi.org/10.5281/zenodo.3237827}
+}.
+```
 
 Installation and setup
 ----------------------
