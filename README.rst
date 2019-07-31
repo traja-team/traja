@@ -60,18 +60,18 @@ useful.
 
 If you use traja in your publications, please cite the repo 
 
-```
+.. code-block:
 
-@misc{justin_shenk_2019_3237827,
-  author       = {Justin Shenk and
-                  Rüdiger Busche},
-  title        = {justinshenk/traja: v0.1.1},
-  month        = jun,
-  year         = 2019,
-  doi          = {10.5281/zenodo.3237827},
-  url          = {https://doi.org/10.5281/zenodo.3237827}
-}
-```
+    @misc{justin_shenk_2019_3237827,
+      author       = {Justin Shenk and
+                      Rüdiger Busche},
+      title        = {justinshenk/traja: v0.1.1},
+      month        = jun,
+      year         = 2019,
+      doi          = {10.5281/zenodo.3237827},
+      url          = {https://doi.org/10.5281/zenodo.3237827}
+    }
+
 
 Installation and setup
 ----------------------
