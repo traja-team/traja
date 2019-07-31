@@ -4,13 +4,14 @@ Installation
 Installing traja
 ----------------
 
-traja requires Python 3.6+ to be installed. For installing on Windows, it is recommend to download and install Conda.
+traja requires Python 3.6+ to be installed. For installing on Windows,
+it is recommend to download and install via conda_.
 
-Install via conda with::
+To install via conda::
 
     conda install -c conda-forge traja
 
-To install with pip::
+To install via pip::
 
    pip install traja
 
@@ -25,12 +26,12 @@ Dependencies
 
 Installation with pip should also include all dependencies, but a complete list is
 
-- `numpy`
-- `matplotlib`
-- `scipy`
-- `pandas`
+- numpy_
+- matplotlib_
+- scipy_
+- pandas_
 
-To install optional dependencies run::
+To install all optional dependencies run::
 
   pip install 'traja[all]'
 
@@ -41,6 +42,10 @@ To install optional dependencies run::
 
 .. _pandas: http://pandas.pydata.org
 
+.. _scipy: https://docs.scipy.org/doc/scipy/reference/
+
 .. _shapely: http://toblerity.github.io/shapely
 
 .. _matplotlib: http://matplotlib.org
+
+.. _conda: https://docs.conda.io/en/latest/

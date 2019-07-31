@@ -38,10 +38,10 @@ with:
 
     df = pd.read_csv('data.csv')
 
-    # If x and y columns named different than "x" and "y", rename them, eg:
-    df.rename(columns={"x_col":"x", "y_col"}, inplace=True) # original column names x_col, y_col
-
-    # If time column doesn't include "time" in the name, similarly rename it to "time"
+    # If x and y columns are named different than "x" and "y", rename them, eg:
+    df = df.rename(columns={"x_col": "x", "y_col": "y"}) # original column names x_col, y_col
+    
+    # If the time column doesn't include "time" in the name, similarly rename it to "time"
 
     trj = traja.TrajaDataFrame(df)
 
