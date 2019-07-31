@@ -60,7 +60,7 @@ useful.
 
 If you use traja in your publications, please cite the repo 
 
-.. code-block:
+.. code-block::
 
     @misc{justin_shenk_2019_3237827,
       author       = {Justin Shenk and
@@ -114,22 +114,16 @@ visualization and analysis methods:
 Analyze Trajectory
 ------------------
 
-The following functions are available via ``traja.trajectory.[method]``:
-
-| Function | Description |
-|-|-|
-| ``calc_derivatives`` | Calculate derivatives of x, y values |
-|-|-|
-| ``calc_turn_angles`` | Calculate turn angles w.r.t. x-axis |
-|-|-|
-| ``transitions`` | Calculate first-order Markov model for transitions between grid bins |
-|-|-|
-| ``generate`` | Generate random walk |
-|-|-|
-| ``resample_time`` | Resample to consistent ``step_time`` intervals |
-|-|-|
-| ``rediscretize_points`` | Rediscretize points to given step length |
-
+.. csv-table:: The following functions are available via ``traja.trajectory.[method]``
+   :header: "Function", "Description"
+   :widths: 30, 80
+   
+   ``calc_derivatives``, Calculate derivatives of x, y values 
+   ``calc_turn_angles``, Calculate turn angles w.r.t. x-axis 
+   ``transitions``, Calculate first-order Markov model for transitions between grid bins
+   ``generate``, Generate random walk
+   ``resample_time``, Resample to consistent step_time intervals
+   ``rediscretize_points``, Rediscretize points to given step length
 
 Random walk
 -----------
