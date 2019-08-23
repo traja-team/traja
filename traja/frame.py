@@ -1,5 +1,7 @@
 import logging
+from typing import Optional, List, Union, Tuple
 
+import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
@@ -94,11 +96,35 @@ class TrajaDataFrame(pd.DataFrame):
         else:
             return None
 
+    @classmethod
+    def from_xy(cls, xy: np.ndarray):
+        """Convenience function for initializing :class:`~traja.frame.TrajaDataFrame` with x,y coordinates.
+
+        Args:
+            xy (:class:`numpy.ndarray`): x,y coordinates
+
+        Returns:
+            traj_df (:class:`~traja.frame.TrajaDataFrame`): Trajectory as dataframe
+
+        .. doctest::
+
+            >>> import numpy as np
+            >>> xy = np.array([[0,1],[1,2],[2,3]])
+            >>> traja.from_xy(xy)
+               x  y
+            0  0  1
+            1  1  2
+            2  2  3
+
+        """
+        df = cls.from_records(xy, columns=["x", "y"])
+        return df
+
     def copy(self, deep=True):
         """Make a copy of this TrajaDataFrame object
 
         Args:
-          deep(bool, optional): Make a deep copy, i.e. also copy data (Default value = True)
+          deep(bool, optional): Make a deep copy, i.e. also copy datasets (Default value = True)
 
         Returns:
           TrajaDataFrame -- copy
@@ -112,3 +138,27 @@ class TrajaDataFrame(pd.DataFrame):
     def set(self, key, value):
         """Set metadata."""
         self.__dict__[key] = value
+
+
+class TrajectoryCollection(object):
+    """Collection of trajectories."""
+
+    def __init__(self, trjs: Union[TrajaDataFrame, pd.DataFrame], id_col: str):
+        # Initialize with trajectories with x, y, and time columns.
+        self.trjs = trjs
+
+        self._id_col = id_col
+
+    def plot(self, **kwargs):
+        return traja.plotting.plot_collection(self.trjs, self._id_col, **kwargs)
+
+
+class StaticObject(object):
+    def __init__(
+        self,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        bounding_box: Tuple[float] = None,
+    ):
+        ...
+        pass

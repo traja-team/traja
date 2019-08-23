@@ -54,7 +54,7 @@ def glm(
         kwargs["cov_struct"] = cov_struct
     day_range = f"{daily[DAYS_COL].min()}-{daily[DAYS_COL].max()}"
     print(
-        f"Fitting generalized linear model on daily data. Days {day_range}\n"
+        f"Fitting generalized linear model on daily datasets. Days {day_range}\n"
         f"Model: {response_var} ~ days_from_surgery * diet."
         + (f" Covariance structure ({cov_struct})" if cov_struct else "")
     )

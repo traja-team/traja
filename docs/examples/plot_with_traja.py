@@ -5,7 +5,7 @@ Plotting with traja
 library providing a selection of easy-to-use spatial visualizations. It is
 built on top of pandas and is designed to work with a range of libraries.
 For more details on the library refer to its documentation.
-First we'll load in data using traja.
+First we'll load in datasets using traja.
 """
 import traja
 
@@ -23,12 +23,12 @@ df.traja.plot()
 # Generate Random Walks
 # =====================
 #
-# Also, random walks can be generated using :meth:`~traja.utils.generate`.
+# Also, random walks can be generated using :meth:`~traja.datasets.generate`.
 df = traja.generate(n=1000, fps=30)
 df.traja.plot()
 
 ###############################################################################
-# Traja can re-scale data with any units
+# Traja can re-scale datasets with any units
 
 df.traja.scale(100)
 df.spatial_units = "cm"
@@ -38,11 +38,11 @@ df.traja.plot()
 # Rediscretize step lengths
 # =========================
 #
-# :meth:`~traja.utils.rediscretize` method allows resampling the trajectory
+# :meth:`~traja.datasets.rediscretize` method allows resampling the trajectory
 # into an arbitrary step length ``R``.
 # .. note::
 #
-#   This can also be achieved using `traja.utils.rediscretize(trj, step_length)`
+#   This can also be achieved using `traja.datasets.rediscretize(trj, step_length)`
 rt = df.traja.rediscretize(R=5000)
 rt.traja.plot()
 
@@ -50,11 +50,11 @@ rt.traja.plot()
 # Resample step time
 # =========================
 #
-# :meth:`~traja.utils.resample_time` method allows resampling the trajectory by
+# :meth:`~traja.datasets.resample_time` method allows resampling the trajectory by
 # time into `step_time`.
 # .. note::
 #
-#   This can also be achieved using `traja.utils.resample_time(trj, step_time)`
+#   This can also be achieved using `traja.datasets.resample_time(trj, step_time)`
 resampled = df.traja.resample_time(step_time="2s")
 resampled.traja.plot()
 

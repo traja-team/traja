@@ -35,7 +35,7 @@ class QtFileLoader(QObject):
 
     @pyqtSlot()
     def read_in_chunks(self):
-        """ load data in parts and update the progess par """
+        """ load datasets in parts and update the progess par """
         chunksize = 10 ** 3
         lines_number = sum(1 for line in open(self.filepath))
         self.progressMaximum.emit(lines_number // chunksize)

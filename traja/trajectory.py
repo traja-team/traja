@@ -705,7 +705,7 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
         _trj[time_col] = pd.to_timedelta(_trj[time_col]).dt.total_seconds()
     else:
         raise NotImplementedError(
-            f"Time column ({time_col}) not of expected data type."
+            f"Time column ({time_col}) not of expected datasets type."
         )
     return _trj
 
@@ -1162,8 +1162,8 @@ def coords_to_flow(trj: TrajaDataFrame, bins: Union[int, tuple] = None):
     Returns:
         X (:class:`~numpy.ndarray`): X coordinates of arrow locations
         Y (:class:`~numpy.ndarray`): Y coordinates of arrow locations
-        U (:class:`~numpy.ndarray`): X component of vector data
-        V (:class:`~numpy.ndarray`): Y component of vector data
+        U (:class:`~numpy.ndarray`): X component of vector datasets
+        V (:class:`~numpy.ndarray`): Y component of vector datasets
 
     """
     xlim, ylim = _get_xylim(trj)

@@ -35,7 +35,7 @@ class TrajaAccessor(object):
         return (float(x.mean()), float(y.mean()))
 
     def night(self, begin: str = "19:00", end: str = "7:00"):
-        """Get nighttime data between `begin` and `end`.
+        """Get nighttime datasets between `begin` and `end`.
 
         Args:
           begin (str):  (Default value = '19:00')
@@ -48,7 +48,7 @@ class TrajaAccessor(object):
         return self.between(begin, end)
 
     def day(self, begin: str = "7:00", end: str = "19:00"):
-        """Get daytime data between `begin` and `end`.
+        """Get daytime datasets between `begin` and `end`.
 
         Args:
           begin (str):  (Default value = '7:00')
