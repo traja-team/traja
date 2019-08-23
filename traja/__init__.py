@@ -1,9 +1,11 @@
-from traja.accessor import TrajaAccessor
-from traja.frame import TrajaDataFrame
-from traja.parsers import read_file, from_df
-from traja.plotting import *
-from traja.trajectory import *
-from traja import models
+from . import models
+from . import datasets
+
+from .accessor import TrajaAccessor
+from .frame import TrajaDataFrame, TrajectoryCollection
+from .parsers import read_file, from_df
+from .plotting import *
+from .trajectory import *
 
 __author__ = "justinshenk"
-__version__ = "0.1.2.post4"
+__version__ = "0.1.3.dev0"

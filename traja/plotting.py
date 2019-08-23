@@ -66,7 +66,7 @@ def predict(
     batch_size: int = 1,
     model="lstm",
 ):  # pragma: no cover
-    """Method for training and visualizing LSTM with trajectory data."""
+    """Method for training and visualizing LSTM with trajectory datasets."""
     if model is "lstm":
         from traja.models.nn import TrajectoryLSTM
 
@@ -282,6 +282,46 @@ def plot(
 
     _process_after_plot_args(**after_plot_args)
     return fig
+
+
+def plot_collection(
+    trjs: Union[pd.DataFrame, traja.TrajaDataFrame], id_col: str = "id", **kwargs
+):
+    """Plot trajectories of multiple subjects identified by `id`.
+
+    Args:
+        trjs: dataframe with multiple trajectories
+        id_col: name of id_col, default is "id"
+
+    Returns:
+        fig - matplotlib Figure
+        ax - matplotlib Axes
+    """
+    ids = trjs[id_col].unique()
+
+    # Get plot keyword args
+    colormap = kwargs.pop("cmap", "hsv")
+    alpha = kwargs.pop("alpha", 0.2)
+    linestyle = kwargs.pop("linestyle", "-")
+    marker = kwargs.pop("marker", "o")
+
+    cmap = plt.cm.get_cmap(colormap, len(ids))
+
+    fig, ax = plt.subplots()
+    for idx, id in enumerate(ids):
+        trj = trjs[trjs[id_col] == id]
+        ax.plot(
+            trj.x,
+            trj.y,
+            linestyle=linestyle,
+            marker=marker,
+            c=cmap(idx),
+            alpha=alpha,
+            **kwargs,
+        )
+
+    plt.show()
+    return fig, ax
 
 
 def _label_axes(trj: TrajaDataFrame, ax) -> Axes:
