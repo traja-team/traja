@@ -140,17 +140,39 @@ class TrajaDataFrame(pd.DataFrame):
         self.__dict__[key] = value
 
 
-class TrajectoryCollection(object):
+class TrajaCollection(object):
     """Collection of trajectories."""
 
-    def __init__(self, trjs: Union[TrajaDataFrame, pd.DataFrame], id_col: str):
-        # Initialize with trajectories with x, y, and time columns.
+    def __init__(
+        self, trjs: Union[TrajaDataFrame, pd.DataFrame, dict], id_col: Optional[str]
+    ):
+        """Initialize with trajectories with x, y, and time columns.
+
+        Args:
+            trjs
+            id_col
+
+        """
+
+        if isinstance(trjs, dict):
+            trjs = []
+            for name, df in trjs:
+                df["id"] = name
+                trjs.append(df)
+            trjs = pd.concat(trjs)
+        elif not id_col:
+            raise Exception("id_col must be provided if trjs is not a dict")
+
         self.trjs = trjs
 
         self._id_col = id_col
 
     def plot(self, **kwargs):
         return traja.plotting.plot_collection(self.trjs, self._id_col, **kwargs)
+
+    def apply_all(self, method, by="id", **kwargs):
+        """Applies method to all trajectories"""
+        return self.trjs.groupby(by=by).apply(method)
 
 
 class StaticObject(object):

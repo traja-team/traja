@@ -14,23 +14,23 @@ def test_center():
 
 
 def test_night():
-    df["time"] = pd.DatetimeIndex(range(21))
+    df["time"] = pd.DatetimeIndex(range(20))
     df.traja.night()
 
 
 def test_between():
-    df["time"] = pd.DatetimeIndex(range(21))
+    df["time"] = pd.DatetimeIndex(range(20))
     df.traja.between("8:00", "10:00")
 
 
 def test_day():
-    df["time"] = pd.DatetimeIndex(range(21))
+    df["time"] = pd.DatetimeIndex(range(20))
     df.traja.day()
 
 
 def test_xy():
     xy = df.traja.xy
-    assert xy.shape == (21, 2)
+    assert xy.shape == (20, 2)
 
 
 def test_calc_derivatives():
@@ -62,14 +62,16 @@ def test_calc_angle():
 
 
 def test_scale():
-    df.traja.scale(0.1)
-    assert isinstance(df, traja.TrajaDataFrame)
+    df_copy = df.copy()
+    df_copy.traja.scale(0.1)
+    assert isinstance(df_copy, traja.TrajaDataFrame)
 
 
 def test_rediscretize(R=0.1):
-    r_df = df.traja.rediscretize(R)
+    df_copy = df.copy()
+    r_df = df_copy.traja.rediscretize(R)
     assert isinstance(r_df, traja.TrajaDataFrame)
-    assert r_df.shape == (40, 2)
+    assert r_df.shape == (382, 2)
 
 
 def test_calc_heading():

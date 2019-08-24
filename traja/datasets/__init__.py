@@ -1,11 +1,12 @@
 import subprocess
 import glob
 import os
+from typing import List
 
 import pandas as pd
 
 
-def load_ped_datasets() -> list[str]:
+def load_ped_datasets() -> List[str]:
     """Returns paths after downloading pedestrian datasets."""
     if not os.path.exists("datasets"):
         subprocess.call(

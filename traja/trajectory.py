@@ -224,6 +224,7 @@ def expected_sq_displacement(
         )
         return abs(esd)
     else:
+        print("This method is experimental and requires testing.")
         # Eqn 2
         esd = n * l2 + 2 * l ** 2 * c / (1 - c) * (n - (1 - c ** n) / (1 - c))
         return esd
@@ -593,9 +594,11 @@ def generate(
     else:
         np.random.seed(seed)
     if angular_error_dist is None:
-        angular_error_dist = np.random.normal(loc=0.0, scale=angular_error_sd, size=n)
+        angular_error_dist = np.random.normal(
+            loc=0.0, scale=angular_error_sd, size=n - 1
+        )
     if linear_error_dist is None:
-        linear_error_dist = np.random.normal(loc=0.0, scale=linear_error_sd, size=n)
+        linear_error_dist = np.random.normal(loc=0.0, scale=linear_error_sd, size=n - 1)
     angular_errors = angular_error_dist
     linear_errors = linear_error_dist
     step_lengths = step_length + linear_errors
@@ -606,9 +609,9 @@ def generate(
 
     if random:
         # Accumulate angular errors
-        coords = np.zeros(n + 1, dtype=np.complex)
+        coords = np.zeros(n, dtype=np.complex)
         angle = 0
-        for i in range(n):
+        for i in range(n - 1):
             angle += angular_errors[i]
             length = step_length + linear_errors[i]
             coords[i + 1] = coords[i] + polar_to_z(r=length, theta=angle)

@@ -502,6 +502,7 @@ def plot_flow(
     streamplot_kws: dict = {},
     quiverplot_kws: dict = {},
     surfaceplot_kws: dict = {},
+    **kwargs,
 ) -> Figure:
     """Plot average flow from each grid cell to neighbor.
 
@@ -519,11 +520,11 @@ def plot_flow(
         fig (:class:`~matplotlib.figure.Figure`): Figure of plot
     """
     if kind == "quiver":
-        return plot_quiver(trj, *args, **quiverplot_kws)
+        return plot_quiver(trj, *args, **quiverplot_kws, **kwargs)
     elif kind == "contour":
-        return plot_contour(trj, filled=False, *args, **quiverplot_kws)
+        return plot_contour(trj, filled=False, *args, **quiverplot_kws, **kwargs)
     elif kind == "contourf":
-        return plot_contour(trj, *args, **quiverplot_kws)
+        return plot_contour(trj, *args, **quiverplot_kws, **kwargs)
     elif kind == "stream":
         return plot_stream(
             trj,
@@ -531,9 +532,10 @@ def plot_flow(
             contourplot_kws=contourplot_kws,
             contourfplot_kws=contourfplot_kws,
             streamplot_kws=streamplot_kws,
+            **kwargs,
         )
     elif kind == "surface":
-        return plot_surface(trj, *args, **surfaceplot_kws)
+        return plot_surface(trj, *args, **surfaceplot_kws, **kwargs)
     else:
         raise NotImplementedError(f"Kind {kind} is not implemented.")
 
@@ -844,6 +846,8 @@ def plot_clustermap(
         print("seaborn is not installed. Install it with 'pip install seaborn'")
         return
 
+    after_plot_args, _ = _get_after_plot_args(**kwargs)
+
     series_lst = []
     for disp in displacements:
         if rule:
@@ -867,7 +871,8 @@ def plot_clustermap(
         **kwargs,
     )
     plt.setp(cg.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
-    plt.show()
+
+    _process_after_plot_args(**after_plot_args)
     return cg
 
 
