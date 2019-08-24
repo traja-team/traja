@@ -27,7 +27,7 @@ def test_to_trajr():
     assert "polar" in trjr
     assert "displacement" in trjr
     actual = trjr.x[:3].values
-    expected = np.array([0.0, 0.946_646_34, 1.946_959_33])
+    expected = np.array([0.0, 1.16260574, 1.8618368])
 
     npt.assert_allclose(actual, expected)
 
@@ -37,4 +37,4 @@ def test_to_ltraj():
     rdataframe = ltraj
     assert "x" in rdataframe
     assert "y" in rdataframe
-    assert len(rdataframe) == 21
+    assert len(rdataframe) == 20
