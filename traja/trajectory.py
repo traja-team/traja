@@ -72,14 +72,13 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
     .. doctest::
 
         >> df = traja.generate()
-        >> traja.smooth_sg(df, w=101).traja.plot()
+        >> traja.smooth_sg(df, w=101).head()
                    x          y  time
-        0 -11.204522  12.277630  0.00
-        1 -10.233653  10.587368  0.02
-        2  -9.294466   8.937147  0.04
-        3  -8.386226   7.326461  0.06
-        4  -7.508197   5.754808  0.08
-
+        0 -11.194803  12.312742  0.00
+        1 -10.236337  10.613720  0.02
+        2  -9.309282   8.954952  0.04
+        3  -8.412910   7.335925  0.06
+        4  -7.546492   5.756128  0.08
 
     """
     if w is None:
@@ -167,7 +166,7 @@ def distance(trj: TrajaDataFrame) -> float:
 
         >> df = traja.generate()
         >> traja.distance(df)
-        0.8968455373110531
+        117.01507823153617
 
     """
     start = trj.iloc[0][["x", "y"]].values
@@ -188,7 +187,7 @@ def length(trj: TrajaDataFrame) -> float:
 
         >> df = traja.generate()
         >> traja.length(df)
-        2002.7233880632327
+        2001.142339606066
 
     """
     displacement = trj.traja.calc_displacement()
@@ -675,10 +674,10 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
         >>> resampled.head()
            time          x         y
         0  0.00   0.000000  0.000000
-        1  0.05   0.534492  4.222683
-        2  0.10  -1.267300  5.395315
-        3  0.15  -4.792063  4.817204
-        4  0.20 -10.318576  2.081890
+        1  0.05   0.999571  4.293384
+        2  0.10  -1.298510  5.423373
+        3  0.15  -6.056916  4.874502
+        4  0.20 -10.347759  2.108385
 
     """
     time_col = _get_time_col(trj)
@@ -1044,11 +1043,11 @@ def speed_intervals(
         >> intervals = traja.speed_intervals(df, faster_than=100)
         >> intervals.head()
            start_frame  start_time  stop_frame  stop_time  duration
-        0            0        0.00           2       0.04      0.04
-        1            3        0.06           7       0.14      0.08
-        2            9        0.18          10       0.20      0.02
-        3           11        0.22          14       0.28      0.06
-        4           16        0.32          17       0.34      0.02
+        0            1        0.02           3       0.06      0.04
+        1            4        0.08           8       0.16      0.08
+        2           10        0.20          11       0.22      0.02
+        3           12        0.24          15       0.30      0.06
+        4           17        0.34          18       0.36      0.02
 
     """
     derivs = get_derivatives(trj)
