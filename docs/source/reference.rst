@@ -25,7 +25,7 @@ The following methods are available via :mod:`traja.plotting`:
 R functions
 ------------------
 
-The following methods are available via `traja.rutils`:
+The following methods are available via :mod:`traja.rutils`:
 
 .. automodule:: traja.rutils
     :members:
@@ -35,7 +35,7 @@ The following methods are available via `traja.rutils`:
 Trajectory functions
 --------------------
 
-The following methods are available via `traja.trajectory`:
+The following methods are available via :mod:`traja.trajectory`:
 
 .. automodule:: traja.trajectory
     :members:
@@ -45,7 +45,7 @@ The following methods are available via `traja.trajectory`:
 io functions
 ------------
 
-The following methods are available via `traja.parsers`:
+The following methods are available via :mod:`traja.parsers`:
 
 .. automodule:: traja.parsers
     :members:
