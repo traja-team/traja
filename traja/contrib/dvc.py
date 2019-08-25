@@ -127,7 +127,7 @@ def glm(
 
 
 class DVCExperiment:
-    """Mouse tracking data analysis.
+    """Mouse tracking datasets analysis.
     experiment_name
     centriods_dir
     meta_filepath

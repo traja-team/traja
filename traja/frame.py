@@ -1,8 +1,10 @@
+import copy
 import logging
 from typing import Optional, List, Union, Tuple
 
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 from pandas.api.types import is_numeric_dtype
 
 import traja
@@ -50,6 +52,7 @@ class TrajaDataFrame(pd.DataFrame):
                 if key == name:
                     traja_kwargs[key] = kwargs.pop(key)
         super(TrajaDataFrame, self).__init__(*args, **kwargs)
+
         if len(args) == 1 and isinstance(args[0], TrajaDataFrame):
             args[0]._copy_attrs(self)
         for name, value in traja_kwargs.items():
@@ -80,6 +83,18 @@ class TrajaDataFrame(pd.DataFrame):
             for name in self._metadata:
                 object.__setattr__(self, name, getattr(other, name, None))
         return self
+
+    # def __getitem__(self, key):
+    #     """
+    #       If result is a DataFrame with a x or X column, return a
+    #       TrajaDataFrame.
+    #       """
+    #     result = super(TrajaDataFrame, self).__getitem__(key)
+    #     if isinstance(result, DataFrame) and "x" == result or "X" == result:
+    #         result.__class__ = TrajaDataFrame
+    #     elif isinstance(result, DataFrame):
+    #         result.__class__ = DataFrame
+    #     return result
 
     def _init_metadata(self):
         defaults = dict(fps=None, spatial_units="m", time_units="s")
@@ -120,59 +135,93 @@ class TrajaDataFrame(pd.DataFrame):
         df = cls.from_records(xy, columns=["x", "y"])
         return df
 
-    def copy(self, deep=True):
-        """Make a copy of this TrajaDataFrame object
-
-        Args:
-          deep(bool, optional): Make a deep copy, i.e. also copy datasets (Default value = True)
-
-        Returns:
-          TrajaDataFrame -- copy
-
-        """
-        data = self._data
-        if deep:
-            data = data.copy()
-        return TrajaDataFrame(data).__finalize__(self)
-
     def set(self, key, value):
         """Set metadata."""
         self.__dict__[key] = value
 
 
-class TrajaCollection(object):
+def tocontainer(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        return TrajaCollection(result)
+
+    return wrapper
+
+
+class TrajaCollection(TrajaDataFrame):
     """Collection of trajectories."""
 
+    _metadata = [
+        "xlim",
+        "ylim",
+        "spatial_units",
+        "xlabel",
+        "ylabel",
+        "title",
+        "fps",
+        "time_units",
+        "time_col",
+        "_id_col",
+    ]
+
     def __init__(
-        self, trjs: Union[TrajaDataFrame, pd.DataFrame, dict], id_col: Optional[str]
+        self,
+        trjs: Union[TrajaDataFrame, pd.DataFrame, dict],
+        id_col: Optional[str] = None,
+        **kwargs,
     ):
         """Initialize with trajectories with x, y, and time columns.
 
-        Args:
+        Args:self.
             trjs
-            id_col
+            id_col (str) - Default is "id"
 
         """
-
+        # Add id column
         if isinstance(trjs, dict):
-            trjs = []
-            for name, df in trjs:
+            _trjs = []
+            for name, df in trjs.items():
                 df["id"] = name
-                trjs.append(df)
-            trjs = pd.concat(trjs)
-        elif not id_col:
-            raise Exception("id_col must be provided if trjs is not a dict")
+                _trjs.append(df)
+            super(TrajaCollection, self).__init__(pd.concat(_trjs), **kwargs)
+        elif isinstance(trjs, (TrajaDataFrame, DataFrame)):
+            super(TrajaCollection, self).__init__(trjs, **kwargs)
+        else:
+            super(TrajaCollection, self).__init__(trjs, **kwargs)
 
-        self.trjs = trjs
+        if id_col:
+            self._id_col = id_col
+        elif hasattr(self, "_id_col"):
+            self._id_col = self._id_col
+        else:
+            self._id_col = "id"  # default
 
-        self._id_col = id_col
+    @property
+    def _constructor(self):
+        return TrajaCollection
 
-    def plot(self, **kwargs):
-        return traja.plotting.plot_collection(self.trjs, self._id_col, **kwargs)
+    def _copy_attrs(self, df):
+        for attr in self._metadata:
+            df.__dict__[attr] = getattr(self, attr, None)
 
-    def apply_all(self, method, by="id", **kwargs):
+    # def __copy__(self):
+    #     return TrajaCollection(self.trjs).__dict__.update(self.__dict__)
+
+    def __repr__(self):
+        return "TrajaCollection:\n" + super(TrajaCollection, self).__repr__()
+
+    # def __add__(self, other):
+    #     trjs = self.trjs.append(other, ignore_index=True)
+    #     return TrajaCollection(trjs, id_col=self._id_col)
+
+    def plot(self, colors=None, **kwargs):
+        return traja.plotting.plot_collection(
+            self, self._id_col, colors=colors, **kwargs
+        )
+
+    def apply_all(self, method, **kwargs):
         """Applies method to all trajectories"""
-        return self.trjs.groupby(by=by).apply(method)
+        return self.groupby(by=self._id_col).apply(method)
 
 
 class StaticObject(object):

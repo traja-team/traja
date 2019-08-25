@@ -105,6 +105,11 @@ def angles(trj: TrajaDataFrame, lag: int = 1):
     return angles
 
 
+def apply_all(trj: TrajaDataFrame, method: Callable, id_col: str, **kwargs):
+    """Applies method to all trajectories"""
+    return trj.groupby(by=id_col).apply(method, **kwargs)
+
+
 def step_lengths(trj: TrajaDataFrame):
     """Length of the steps of ``trj``.
 

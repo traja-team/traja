@@ -188,6 +188,16 @@ class TrajaAccessor(object):
         fig = traja.plotting.plot_flow(trj=self._obj, kind=kind, **kwargs)
         return fig
 
+    def plot_collection(self, colors=None, **kwargs):
+        return traja.plotting.plot_collection(
+            self._obj, id_col=self._id_col, colors=colors, **kwargs
+        )
+
+    def apply_all(self, method, id_col=None, **kwargs):
+        """Applies method to all trajectories and returns grouped dataframes or series"""
+        id_col = id_col or getattr(self, "_id_col", "id")
+        return self._obj.groupby(by=id_col).apply(method, **kwargs)
+
     def _has_cols(self, cols: list):
         return traja.trajectory._has_cols(self._obj, cols)
 

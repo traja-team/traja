@@ -26,22 +26,22 @@ ADEHABITAT_INSTALLED = False
 TRAJR_INSTALLED = False
 
 
-def import_adehabitat():
+def import_adehabitat(suppress_messages=False):
     global ADEHABITAT_INSTALLED
     if not ADEHABITAT_INSTALLED:
-        utils = rpackages.importr("utils")
+        utils = rpackages.importr("utils", suppress_messages=suppress_messages)
         print("Importing adehabitat")
         utils.chooseCRANmirror(ind=1)
         utils.install_packages("adehabitatLT")
         ADEHABITAT_INSTALLED = True
-    adehabitat = importr("adehabitatLT")
+    adehabitat = importr("adehabitatLT", suppress_messages=suppress_messages)
     return adehabitat
 
 
-def import_trajr():
+def import_trajr(suppress_messages=False):
     global TRAJR_INSTALLED
     if not TRAJR_INSTALLED:
-        utils = rpackages.importr("utils")
+        utils = rpackages.importr("utils", suppress_messages=suppress_messages)
         print("Importing trajr")
         utils.chooseCRANmirror(ind=1)
         utils.install_packages("trajr")
