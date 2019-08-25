@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import Union, Optional, Tuple, List
 
 import matplotlib
@@ -285,13 +286,20 @@ def plot(
 
 
 def plot_collection(
-    trjs: Union[pd.DataFrame, traja.TrajaDataFrame], id_col: str = "id", **kwargs
+    trjs: Union[pd.DataFrame, traja.TrajaDataFrame],
+    id_col: str = "id",
+    colors: Optional[Union[dict, List[str]]] = None,
+    **kwargs,
 ):
     """Plot trajectories of multiple subjects identified by `id`.
 
     Args:
         trjs: dataframe with multiple trajectories
         id_col: name of id_col, default is "id"
+        colors (Optional): color lookup matching substrings to discreet colors. Possible values are, eg:
+                                - {"car0":"red","car1":"blue"}
+                                - {"car":"red","person":blue"}
+                                - ["car", "person"]
 
     Returns:
         fig - matplotlib Figure
@@ -305,7 +313,27 @@ def plot_collection(
     linestyle = kwargs.pop("linestyle", "-")
     marker = kwargs.pop("marker", "o")
 
-    cmap = plt.cm.get_cmap(colormap, len(ids))
+    labels = [None] * len(ids)
+
+    if not colors:
+        cmap = plt.cm.get_cmap(colormap, lut=len(ids) if len(ids) > 1 else None)
+        colors = [cmap(idx) for idx in range(len(ids))]
+    elif isinstance(colors, list):
+        cmap = plt.cm.get_cmap(colormap, len(colors))
+        color_lookup = []
+        for ind, id in enumerate(ids):
+            for idx, substring in enumerate(colors):
+                if substring in id:
+                    color_lookup.append(cmap(idx))
+                    labels[ind] = substring
+                    break
+            else:
+                raise Exception(f"No substring matching {id} in {colors}.")
+        colors = color_lookup
+    elif isinstance(colors, dict):
+        color_lookup = [colors.get(id) for id in ids]
+        colors = color_lookup
+        labels = ids
 
     fig, ax = plt.subplots()
     for idx, id in enumerate(ids):
@@ -315,11 +343,21 @@ def plot_collection(
             trj.y,
             linestyle=linestyle,
             marker=marker,
-            c=cmap(idx),
+            c=colors[idx],
             alpha=alpha,
+            label=labels[idx],
             **kwargs,
         )
 
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    plt.legend(
+        by_label.values(),
+        by_label.keys(),
+        bbox_to_anchor=(1.05, 1),
+        loc=2,
+        borderaxespad=0.0,
+    )
     plt.show()
     return fig, ax
 
