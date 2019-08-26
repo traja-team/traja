@@ -8,13 +8,6 @@ python:
  - '3.6'
  - '3.7'
 
-addons:
-  apt:
-    packages:
-    - libblas-dev
-    - liblapack-dev
-    - gfortran
-
 git:
   depth: false
 
