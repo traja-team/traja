@@ -31,6 +31,7 @@ __all__ = [
     "find_runs",
     "plot",
     "plot_actogram",
+    "plot_collection",
     "plot_contour",
     "plot_clustermap",
     "plot_flow",

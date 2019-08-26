@@ -41,20 +41,14 @@ Grouped Operations
 
 Operations can be applied to each trajectory with :func:`~traja.frame.TrajaCollection.apply_all`.
 
-.. autofunction:: traja.frame.TrajaCollection.apply_all
-
-.. ipython::
-
-    angles = trjs.apply_all(traja.calc_angles)
-    print(angles)
-
+.. automethod:: traja.frame.TrajaCollection.apply_all
 
 Plottting Multiple Trajectories
 -------------------------------
 
 Plotting multiple trajectories can be achieved with :func:`~traja.frame.TrajaCollection.plot`.
 
-.. autofunction:: traja.frame.TrajaCollection.plot
+.. automethod:: traja.frame.TrajaCollection.plot
 
 Colors can be specified for ids by supplying ``colors`` with a lookup dictionary:
 

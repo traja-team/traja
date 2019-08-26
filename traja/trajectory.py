@@ -2,7 +2,6 @@ import math
 from collections import OrderedDict
 from typing import Callable, Optional, Union, Tuple
 
-import traja
 import numpy as np
 import pandas as pd
 from pandas.core.dtypes.common import (
@@ -13,6 +12,7 @@ from pandas.core.dtypes.common import (
 from scipy import signal
 from scipy.spatial.distance import directed_hausdorff, euclidean
 
+import traja
 from traja import TrajaDataFrame
 
 
@@ -33,7 +33,6 @@ __all__ = [
     "calculate_flow_angles",
     "cartesian_to_polar",
     "coords_to_flow",
-    "directed_hausdorff",
     "distance_between",
     "distance",
     "euclidean",
@@ -1242,3 +1241,9 @@ def _get_time_col(trj: TrajaDataFrame):
     else:
         # No time column found
         return None
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()

@@ -1,5 +1,6 @@
 from . import models
 from . import datasets
+from . import rutils
 
 from .accessor import TrajaAccessor
 from .frame import TrajaDataFrame, TrajaCollection
@@ -8,4 +9,4 @@ from .plotting import *
 from .trajectory import *
 
 __author__ = "justinshenk"
-__version__ = "0.1.3.dev3"
+__version__ = "0.1.3.dev4"
