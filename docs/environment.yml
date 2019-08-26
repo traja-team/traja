@@ -6,3 +6,8 @@ dependencies:
   - r-base
   - pip:
     - rpy2
+    - sphinx-gallery
+    - sphinx
+    - fastdtw
+    - tzlocal
+    - seaborn
