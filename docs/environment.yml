@@ -1,0 +1,20 @@
+name: traja
+channels:
+  - conda-forge
+  - r
+dependencies:
+  - ipython
+  - pip:
+    - fastdtw
+    - tzlocal
+    - seaborn
+    - rpy2
+  - pandas
+  - numpy
+  - matplotlib
+  - shapely
+  - scipy
+  - sphinx
+  - pillow
+  - r-essentials
+  - r-base
