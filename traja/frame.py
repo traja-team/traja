@@ -21,13 +21,11 @@ class TrajaDataFrame(pd.DataFrame):
     Returns:
       traja.TrajaDataFrame -- TrajaDataFrame constructor.
       
-      .. doctest::
-
-      >>> traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
-         x  y
-      0  0  1
-      1  1  2
-      2  2  3
+        >>> traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]}) # doctest: +SKIP
+           x  y
+        0  0  1
+        1  1  2
+        2  2  3
 
     """
 
@@ -215,12 +213,31 @@ class TrajaCollection(TrajaDataFrame):
     #     return TrajaCollection(trjs, id_col=self._id_col)
 
     def plot(self, colors=None, **kwargs):
+        """Plot collection of trajectories with colors assigned to each id.
+
+            >>> trjs = {ind: traja.generate(seed=ind) for ind in range(3)} # doctest: +SKIP
+            >>> coll = traja.TrajaCollection(trjs) # doctest: +SKIP
+            >>> coll.plot() # doctest: +SKIP
+
+        """
         return traja.plotting.plot_collection(
             self, self._id_col, colors=colors, **kwargs
         )
 
     def apply_all(self, method, **kwargs):
-        """Applies method to all trajectories"""
+        """Applies method to all trajectories
+
+        Args:
+            method
+
+        Returns:
+            dataframe or series
+
+            >>> trjs = {ind: traja.generate(seed=ind) for ind in range(3)} # doctest: +SKIP
+            >>> coll = traja.TrajaCollection(trjs) # doctest: +SKIP
+            >>> angles = coll.apply_all(traja.calc_angles) # doctest: +SKIP
+
+        """
         return self.groupby(by=self._id_col).apply(method)
 
 

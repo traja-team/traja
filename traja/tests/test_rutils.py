@@ -32,7 +32,7 @@ def test_to_trajr():
     assert "polar" in trjr
     assert "displacement" in trjr
     actual = trjr.x[:3].values
-    expected = np.array([0.0, 1.16260574, 1.8618368])
+    expected = np.array([0.0, 1.162_605_74, 1.861_836_8])
 
     npt.assert_allclose(actual, expected)
 
