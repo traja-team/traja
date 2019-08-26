@@ -52,6 +52,7 @@ If you use traja in your publications, please cite:
    Plotting Paths <plots>
    Plotting Grid Cell Flow <grid_cell>
    Rediscretizing Trajectories <rediscretize>
+   Collections / Scenes <collections>
    Predicting Trajectories <predictions>
    R interface <rinterface>
 

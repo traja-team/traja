@@ -57,15 +57,24 @@ The following methods are available via :mod:`traja.plotting`:
 
 
 R functions
-------------------
+-----------
 
 The following methods are available via :mod:`traja.rutils`:
 
 .. automethod:: traja.rutils.to_trajr
 
+.. automethod:: traja.rutils.to_ltraj
 
-Trajectory functions
---------------------
+.. automethod:: traja.rutils.import_adehabitat
+
+.. automethod:: traja.rutils.import_trajr
+
+.. automethod:: traja.rutils.plot_ltraj
+
+
+
+Analysis
+--------
 
 The following methods are available via :mod:`traja.trajectory`:
 
@@ -156,6 +165,8 @@ TrajaCollection
 
 A ``TrajaCollection`` holds multiple trajectories for analyzing and comparing trajectories.
 It has limited accessibility to lower-level methods.
+
+.. autoclass:: traja.frame.TrajaCollection
 
 .. automethod:: traja.frame.TrajaCollection.apply_all
 
