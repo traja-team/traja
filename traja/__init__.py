@@ -9,4 +9,4 @@ from .plotting import *
 from .trajectory import *
 
 __author__ = "justinshenk"
-__version__ = "0.1.3.dev4"
+__version__ = "0.1.3.dev5"
