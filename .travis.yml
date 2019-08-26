@@ -23,14 +23,6 @@ env:
 
 cache: pip
 
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - gcc-4.8
-    - g++-4.8
-
 before_install:
   - sudo apt-get update
   - sudo mkdir -p /usr/local/lib/R/site-library
