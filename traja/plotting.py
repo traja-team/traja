@@ -113,7 +113,6 @@ def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> A
     )
     ax.set(xlabel="x", ylabel="y", zlabel="Frames")
 
-    plt.show()
     return ax
 
 
@@ -181,8 +180,6 @@ def plot(
     if not ax:
         fig, ax = plt.subplots(figsize=figsize)
         fig.canvas.draw()
-    else:
-        fig = plt.gcf()
 
     patch = patches.PathPatch(path, edgecolor=GRAY, facecolor="none", lw=3, alpha=0.3)
     ax.add_patch(patch)
@@ -657,8 +654,6 @@ def _process_after_plot_args(**after_plot_args):
     filepath = after_plot_args.get("filepath")
     if filepath:
         plt.savefig(filepath)
-    if after_plot_args.get("interactive"):
-        plt.show()
 
 
 def color_dark(
