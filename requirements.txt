@@ -2,6 +2,5 @@ pandas
 numpy
 matplotlib
 shapely
-psutil
 scipy
 fastdtw
