@@ -23,15 +23,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-requirements = [
-    "matplotlib",
-    "pandas",
-    "numpy",
-    "shapely",
-    "scipy",
-    "psutil",
-    "tzlocal",
-]
+requirements = ["matplotlib", "pandas", "numpy", "shapely", "scipy", "tzlocal"]
 
 extras_requirements = {"all": ["torch", "rpy2", "tzlocal", "fastdtw"]}
 
