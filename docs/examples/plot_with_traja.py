@@ -91,6 +91,6 @@ trjs = TrajaCollection(dfs)
 # eg, TrajaCollection(df, id_col="id")
 
 # ``colors`` also allows substring matching, eg, {"car":"red", "person":"blue"}
-fig, ax = trjs.plot(
+lines = trjs.plot(
     colors={10: "red", 11: "blue", 12: "blue", 13: "orange", 14: "purple"}
 )

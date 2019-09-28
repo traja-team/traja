@@ -163,16 +163,16 @@ class TrajaAccessor(object):
           **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
 
         Returns:
-            fig (:class:`~matplotlib.figure.Figure`): Axes of plot
+            ax (:class:`~matplotlib.axes.Axes`): Axes of plot
         """
-        fig = traja.plotting.plot(
+        ax = traja.plotting.plot(
             trj=self._obj,
             accessor=self,
             n_coords=n_coords,
             show_time=show_time,
             **kwargs,
         )
-        return fig
+        return ax
 
     def plot_flow(self, kind="quiver", **kwargs):
         """Plot grid cell flow.
@@ -182,11 +182,11 @@ class TrajaAccessor(object):
           **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
 
         Returns:
-            fig (:class:`~matplotlib.figure.Figure`): Axes of plot
+            ax (:class:`~matplotlib.axes.Axes`): Axes of plot
 
         """
-        fig = traja.plotting.plot_flow(trj=self._obj, kind=kind, **kwargs)
-        return fig
+        ax = traja.plotting.plot_flow(trj=self._obj, kind=kind, **kwargs)
+        return ax
 
     def plot_collection(self, colors=None, **kwargs):
         return traja.plotting.plot_collection(

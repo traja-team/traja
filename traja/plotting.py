@@ -137,7 +137,7 @@ def plot(
       **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
 
     Returns:
-        fig (:class:`~matplotlib.figure.Figure`): Figure of plot
+        collection (:class:`~matplotlib.collection.PathCollection`): collection that was plotted
 
     """
     import matplotlib.patches as patches
@@ -214,7 +214,7 @@ def plot(
             time_units = ""
     label = f"Time ({time_units})" if time_units else ""
 
-    sc = ax.scatter(
+    collection = ax.scatter(
         xs,
         ys,
         c=colors,
@@ -240,7 +240,7 @@ def plot(
     CBAR_TICKS = 10 if n_coords > 20 else n_coords
     indices = np.linspace(0, n_coords - 1, CBAR_TICKS, endpoint=True, dtype=int)
     cbar = plt.colorbar(
-        sc, fraction=0.046, pad=0.04, orientation="vertical", label=label
+        collection, fraction=0.046, pad=0.04, orientation="vertical", label=label
     )
 
     # Get colorbar labels from time
@@ -283,7 +283,7 @@ def plot(
     plt.tight_layout()
 
     _process_after_plot_args(**after_plot_args)
-    return fig
+    return collection
 
 
 def plot_collection(
@@ -301,10 +301,11 @@ def plot_collection(
                                 - {"car0":"red","car1":"blue"}
                                 - {"car":"red","person":blue"}
                                 - ["car", "person"]
+        kwargs: kwargs to :meth:`matplotlib.axes.Axes.plot`
 
     Returns:
-        fig - matplotlib Figure
-        ax - matplotlib Axes
+        lines (list of `~matplotlib.lines.Line2D` objects): lines of plot
+
     """
     ids = trjs[id_col].unique()
 
@@ -337,9 +338,10 @@ def plot_collection(
         labels = ids
 
     fig, ax = plt.subplots()
+    lines = []
     for idx, id in enumerate(ids):
         trj = trjs[trjs[id_col] == id]
-        ax.plot(
+        l = ax.plot(
             trj.x,
             trj.y,
             linestyle=linestyle,
@@ -349,6 +351,7 @@ def plot_collection(
             label=labels[idx],
             **kwargs,
         )
+        lines.extend(l)
 
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
@@ -359,8 +362,8 @@ def plot_collection(
         loc=2,
         borderaxespad=0.0,
     )
-    plt.show()
-    return fig, ax
+    plt.tight_layout()
+    return lines
 
 
 def _label_axes(trj: TrajaDataFrame, ax) -> Axes:
@@ -384,7 +387,7 @@ def plot_quiver(
         quiverplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.quiver`
 
     Returns:
-        fig (:class:`~matplotlib.figure.Figure`): Axes of quiver plot
+        ax (:class:`~matplotlib.axes.Axes`): Axes of quiver plot
     """
 
     after_plot_args, _ = _get_after_plot_args(**kwargs)
@@ -399,7 +402,7 @@ def plot_quiver(
     ax.set_aspect("equal")
 
     _process_after_plot_args(**after_plot_args)
-    return fig
+    return ax
 
 
 def plot_contour(
@@ -422,7 +425,7 @@ def plot_contour(
         quiverplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.quiver`
 
     Returns:
-        fig (:class:`~matplotlib.figure.Figure`): Figure of quiver plot
+        ax (:class:`~matplotlib.axes.Axes`): Axes of quiver plot
     """
 
     after_plot_args, _ = _get_after_plot_args(**kwargs)
@@ -445,7 +448,7 @@ def plot_contour(
     ax.set_aspect("equal")
 
     _process_after_plot_args(**after_plot_args)
-    return fig
+    return ax
 
 
 def plot_surface(
@@ -463,7 +466,7 @@ def plot_surface(
         surfaceplot_kws: Additional keyword arguments for :meth:`~mpl_toolkits.mplot3D.Axes3D.plot_surface`
 
     Returns:
-        fig (:class:`~matplotlib.figure.Figure`): Figure of quiver plot
+        ax (:class:`~matplotlib.axes.Axes`): Axes of quiver plot
     """
     from mpl_toolkits.mplot3d import Axes3D
 
@@ -486,7 +489,7 @@ def plot_surface(
         pass
 
     _process_after_plot_args(**after_plot_args)
-    return fig
+    return ax
 
 
 def plot_stream(
@@ -508,7 +511,7 @@ def plot_stream(
         streamplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.streamplot`
 
     Returns:
-        fig (:class:`~matplotlib.figure.Figure`): Figure of stream plot
+        ax (:class:`~matplotlib.axes.Axes`): Axes of stream plot
 
     """
 
@@ -529,7 +532,7 @@ def plot_stream(
     ax.set_aspect("equal")
 
     _process_after_plot_args(**after_plot_args)
-    return fig
+    return ax
 
 
 def plot_flow(
@@ -556,7 +559,7 @@ def plot_flow(
         surfaceplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.plot_surface`
 
     Returns:
-        fig (:class:`~matplotlib.figure.Figure`): Figure of plot
+        ax (:class:`~matplotlib.axes.Axes`): Axes of plot
     """
     if kind == "quiver":
         return plot_quiver(trj, *args, **quiverplot_kws, **kwargs)
@@ -726,7 +729,7 @@ def fill_ci(series: pd.Series, window: Union[int, str]) -> Figure:
     )
 
     plt.gcf().autofmt_xdate()
-    return fig
+    return ax
 
 
 def plot_xy(xy: np.ndarray, *args: Optional, **kwargs: Optional):
