@@ -16,9 +16,8 @@ df = traja.generate(n=10)
 
 
 def test_stylize_axes():
-    fig = traja.plot(df, interactive=False)
-    ax = fig.axes[1]
-    traja.plotting.stylize_axes(ax)
+    collection = traja.plot(df, interactive=False)
+    traja.plotting.stylize_axes(collection.axes)
 
 
 def test_color_dark():
@@ -39,15 +38,15 @@ def test_plot_flow():
 
 
 def test_plot_contour():
-    fig = traja.plot_contour(df, interactive=False)
+    ax = traja.plot_contour(df, interactive=False)
 
 
 def test_plot_surface():
-    fig = traja.plot_surface(df, interactive=False)
+    ax = traja.plot_surface(df, interactive=False)
 
 
 def test_plot_stream():
-    fig = traja.plot_stream(df, interactive=False)
+    ax = traja.plot_stream(df, interactive=False)
 
 
 def test_trip_grid():
@@ -111,19 +110,17 @@ def test_plot_clustermap():
 
 
 def test_plot():
-    fig = traja.plotting.plot(df, interactive=False)
-    ax = fig.axes[1]
-    coll = ax.collections[0]
-    path = coll.get_paths()[0]
+    ax = traja.plotting.plot(df, interactive=False)
+    path = ax.get_paths()[0]
     npt.assert_allclose(
-        path._vertices,
+        path._vertices[:5],
         np.array(
             [
-                [0.0, 0.0],
-                [9.0, 0.0],
-                [9.0, 0.035_156_25],
-                [0.0, 0.035_156_25],
-                [0.0, 0.0],
+                [0.0, -0.5],
+                [0.13260155, -0.5],
+                [0.25978994, -0.44731685],
+                [0.35355339, -0.35355339],
+                [0.44731685, -0.25978994],
             ]
         ),
     )
