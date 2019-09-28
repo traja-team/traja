@@ -9,9 +9,10 @@ import numpy as np
 try:
     import torch
 except ImportError:
-    raise ImportError("pytorch is not installed. Install it via pytorch.org")
+    raise ImportError(
+        "Missing optional dependency 'pytorch'. Install it via pytorch.org"
+    )
 import torch.nn as nn
-from torch.autograd import Variable
 import torch.optim as optim
 
 
