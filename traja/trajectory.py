@@ -328,9 +328,8 @@ def distance_between(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="d
         except ImportError:
             raise ImportError(
                 """            
-            fastdtw is not installed. Install it with: 
-            pip install fastdtw.
-
+            Missing optional dependency 'fastdtw'. Install fastdtw for dynamic time warping distance with pip install 
+            fastdtw.
             """
             )
         distance, path = fastdtw(A, B, dist=euclidean)
