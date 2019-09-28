@@ -30,7 +30,7 @@ ADEHABITAT_INSTALLED = False
 TRAJR_INSTALLED = False
 
 
-def import_adehabitat(suppress_messages=False):
+def import_adehabitat(suppress_messages=True):
     global ADEHABITAT_INSTALLED
     if not ADEHABITAT_INSTALLED:
         utils = rpackages.importr("utils", suppress_messages=suppress_messages)
@@ -42,7 +42,7 @@ def import_adehabitat(suppress_messages=False):
     return adehabitat
 
 
-def import_trajr(suppress_messages=False):
+def import_trajr(suppress_messages=True):
     global TRAJR_INSTALLED
     if not TRAJR_INSTALLED:
         utils = rpackages.importr("utils", suppress_messages=suppress_messages)
