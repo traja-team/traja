@@ -30,6 +30,7 @@ __all__ = [
     "fill_ci",
     "find_runs",
     "plot",
+    "plot_3d",
     "plot_actogram",
     "plot_collection",
     "plot_contour",
@@ -38,6 +39,7 @@ __all__ = [
     "plot_quiver",
     "plot_stream",
     "plot_surface",
+    "plot_transition_matrix",
     "plot_xy",
     "polar_bar",
     "predict",
@@ -81,7 +83,7 @@ def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> A
     Args:
       trj (:class:`traja.TrajaDataFrame`): trajectory
       bins (int or tuple): number of bins for x and y
-      **kwargs: additional keyword arguments to :meth:`mpl_toolkits.mplot3d.Axed3D.bar3d`
+      **kwargs: additional keyword arguments to :meth:`mpl_toolkits.mplot3d.Axed3D.plot`
 
     Returns:
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
@@ -116,6 +118,53 @@ def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> A
     return ax
 
 
+def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollection:
+    """Plot 3D trajectory for single identity over period.
+
+    Args:
+      trj (:class:`traja.TrajaDataFrame`): trajectory
+      n_coords (int, optional): Number of coordinates to plot
+      **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
+
+    Returns:
+        ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
+
+    .. note::
+        Takes a while to plot large trajectories. Consider using first::
+        
+            rt = trj.traja.rediscretize(R=1.) # Replace R with appropriate step length
+            rt.traja.plot_3d()
+
+    """
+    from mpl_toolkits.mplot3d import Axes3D
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    ax.set_xlabel("x", fontsize=15)
+    ax.set_zlabel("time", fontsize=15)
+    ax.set_ylabel("y", fontsize=15)
+    title = kwargs.pop("title", "Trajectory")
+    ax.set_title(f"{title}", fontsize=20)
+    ax.plot(trj.x, trj.y, trj.index)
+    cmap = kwargs.pop("cmap", "winter")
+    cm = plt.get_cmap(cmap)
+    NPOINTS = len(trj)
+    ax.set_prop_cycle(color=[cm(1.0 * i / (NPOINTS - 1)) for i in range(NPOINTS - 1)])
+    for i in range(NPOINTS - 1):
+        ax.plot(trj.x[i : i + 2], trj.y[i : i + 2], trj.index[i : i + 2])
+
+    dist = kwargs.pop("dist", None)
+    if dist:
+        ax.dist = dist
+    labelpad = kwargs.pop("labelpad", None)
+    if labelpad:
+        from matplotlib import rcParams
+
+        rcParams["axes.labelpad"] = labelpad
+
+    return ax
+
+
 def plot(
     trj: TrajaDataFrame,
     n_coords: Optional[int] = None,
@@ -123,7 +172,7 @@ def plot(
     accessor: Optional[traja.TrajaAccessor] = None,
     ax=None,
     **kwargs,
-) -> Figure:
+) -> matplotlib.collections.PathCollection:
     """Plot trajectory for single animal over period.
 
     Args:
@@ -136,7 +185,7 @@ def plot(
       **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
 
     Returns:
-        collection (:class:`~matplotlib.collection.PathCollection`): collection that was plotted
+        collection (:class:`~matplotlib.collections.PathCollection`): collection that was plotted
 
     """
     import matplotlib.patches as patches
@@ -375,7 +424,7 @@ def plot_quiver(
     bins: Optional[Union[int, tuple]] = None,
     quiverplot_kws: dict = {},
     **kwargs,
-) -> Figure:
+) -> Axes:
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -411,7 +460,7 @@ def plot_contour(
     contourfplot_kws: dict = {},
     quiverplot_kws: dict = {},
     **kwargs,
-) -> Figure:
+) -> Axes:
     """Plot average flow from each grid cell to neighbor.
 
     Args:
@@ -513,7 +562,6 @@ def plot_stream(
     """
 
     after_plot_args, _ = _get_after_plot_args(**kwargs)
-
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
@@ -617,7 +665,10 @@ def trip_grid(
     df = trj[["x", "y"]].dropna()
 
     # Set aspect if `xlim` and `ylim` set.
-    xlim, ylim = traja.trajectory._get_xylim(df)
+    if "xlim" in kwargs and "ylim" in kwargs:
+        xlim, ylim = kwargs.pop("xlim"), kwargs.pop("ylim")
+    else:
+        xlim, ylim = traja.trajectory._get_xylim(df)
     xmin, xmax = xlim
     ymin, ymax = ylim
 
@@ -911,6 +962,103 @@ def plot_clustermap(
 
     _process_after_plot_args(**after_plot_args)
     return cg
+
+
+def _get_markov_edges(Q: pd.DataFrame, greater_than=0.1):
+    """Select edges greater than a threshold of weight."""
+    edges = {}
+    for col in Q.columns:
+        for idx in Q.index:
+            if greater_than and Q.loc[idx, col] > greater_than:
+                edges[(idx, col)] = Q.loc[idx, col]
+    return edges
+
+
+def plot_transition_graph(
+    data: Union[pd.DataFrame, traja.TrajaDataFrame, np.ndarray],
+    outpath="markov.dot",
+    interactive=True,
+):
+    """Plot transition graph with networkx.
+
+    Args:
+        data (trajectory or transition_matrix)
+    
+    .. note::        
+        Modified from http://www.blackarbs.com/blog/introduction-hidden-markov-models-python-networkx-sklearn/2/9/2017
+    
+    """
+    try:
+        import networkx as nx
+        import pydot
+        import graphviz
+    except ImportError as e:
+        raise ImportError(f"{e} - please install it with pip")
+
+    if (
+        isinstance(data, (traja.DataFrame))
+        or isinstance(data, pd.DataFrame)
+        and "x" in data
+    ):
+        transition_matrix = traja.transitions(data)
+        edges_wts = _get_markov_edges(pd.DataFrame(transition_matrix))
+        states_ = list(range(transition_matrix.shape[0]))
+
+    # create graph object
+    G = nx.MultiDiGraph()
+
+    # nodes correspond to states
+    G.add_nodes_from(states_)
+
+    # edges represent transition probabilities
+    for k, v in edges_wts.items():
+        tmp_origin, tmp_destination = k[0], k[1]
+        G.add_edge(tmp_origin, tmp_destination, weight=v.round(4), label=v.round(4))
+
+    pos = nx.drawing.nx_pydot.graphviz_layout(G, prog="dot")
+    nx.draw_networkx(G, pos)
+
+    # create edge labels for jupyter plot but is not necessary
+    edge_labels = {(n1, n2): d["label"] for n1, n2, d in G.edges(data=True)}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    nx.drawing.nx_pydot.write_dot(G, outpath)
+
+    if interactive:
+        # Plot
+        from graphviz import Source
+
+        s = Source.from_file(outpath)
+        s.view()
+
+
+def plot_transition_matrix(
+    data: Union[pd.DataFrame, traja.TrajaDataFrame, np.ndarray],
+    interactive=True,
+    **kwargs,
+) -> matplotlib.image.AxesImage:
+    """Plot transition matrix.
+    
+    Args:
+        data (trajectory or square transition matrix)
+        interactive (bool): show plot
+        kwargs: kwargs to :func:`traja.grid_coordinates`
+
+    Returns:
+        axesimage (matplotlib.image.AxesImage)
+    
+    """
+    if isinstance(data, np.ndarray):
+        if data.shape[0] != data.shape[1]:
+            raise ValueException(
+                f"Ndarray input must be square transition matrix, shape is {data.shape}"
+            )
+        transition_matrix = data
+    elif isinstance(data, (pd.DataFrame, traja.TrajaDataFrame)):
+        transition_matrix = traja.transitions(data, **kwargs)
+    img = plt.imshow(transition_matrix)
+    if interactive:
+        plt.show()
+    return img
 
 
 def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
