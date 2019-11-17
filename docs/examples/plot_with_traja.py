@@ -1,6 +1,6 @@
 """
-Plotting with traja
--------------------
+Basic plotting with traja
+-------------------------
 `traja  <https://traja.readthedocs.io>`_ is a Python
 library providing a selection of easy-to-use spatial visualizations. It is
 built on top of pandas and is designed to work with a range of libraries.
@@ -74,35 +74,3 @@ speed.hist()
 # examples, refer to the
 # `Gallery <https://traja.readthedocs.io/en/latest/gallery/index.html>`_ in the
 # traja  documentation.
-
-#################################
-# Plotting Multiple Trajectories
-# ==============================
-# Plotting multiple trajectories is easy with :meth:`~traja.frame.TrajaCollection.plot`.
-from traja import TrajaCollection
-
-# Create a dictionary of DataFrames, with ``id`` as key.
-dfs = {idx: traja.generate(idx, seed=idx) for idx in range(10, 15)}
-
-# Create a TrajaCollection.
-trjs = TrajaCollection(dfs)
-
-# Note: A TrajaCollection can also be instantiated with a DataFrame, containing and id column,
-# eg, TrajaCollection(df, id_col="id")
-
-# ``colors`` also allows substring matching, eg, {"car":"red", "person":"blue"}
-lines = trjs.plot(
-    colors={10: "red", 11: "blue", 12: "blue", 13: "orange", 14: "purple"}
-)
-
-##################################
-# Plot 3D
-# =======
-# Plot trajectories with time in the vertical axis.
-# Note: Adjust matplotlib args ``dist``, ``labelpad``, ``aspect`` and ``adjustable```
-# as needed.
-trj = traja.generate()
-ax = trj.traja.plot_3d(dist=15, labelpad=32, title="Traja 3D Plot")
-
-# `Matplotlib cmaps<https://matplotlib.org/examples/color/colormaps_reference.html>`_ are available
-trj.traja.plot_3d(dist=15, labelpad=32, title="Traja 3D Plot", cmap="jet")

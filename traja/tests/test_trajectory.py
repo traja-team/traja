@@ -226,7 +226,7 @@ def test_calculate_flow_angles():
     grid_indices = traja.grid_coordinates(df_copy)
     U, V = traja.calculate_flow_angles(grid_indices.values)
     actual = U.sum()
-    expected = -2.7071067811865483
+    expected = -2.707_106_781_186_548_3
     npt.assert_allclose(actual, expected)
 
 
