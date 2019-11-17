@@ -94,3 +94,15 @@ trjs = TrajaCollection(dfs)
 lines = trjs.plot(
     colors={10: "red", 11: "blue", 12: "blue", 13: "orange", 14: "purple"}
 )
+
+##################################
+# Plot 3D
+# =======
+# Plot trajectories with time in the vertical axis.
+# Note: Adjust matplotlib args ``dist``, ``labelpad``, ``aspect`` and ``adjustable```
+# as needed.
+trj = traja.generate()
+ax = trj.traja.plot_3d(dist=15, labelpad=32, title="Traja 3D Plot")
+
+# `Matplotlib cmaps<https://matplotlib.org/examples/color/colormaps_reference.html>`_ are available
+trj.traja.plot_3d(dist=15, labelpad=32, title="Traja 3D Plot", cmap="jet")

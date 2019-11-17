@@ -226,7 +226,7 @@ def test_calculate_flow_angles():
     grid_indices = traja.grid_coordinates(df_copy)
     U, V = traja.calculate_flow_angles(grid_indices.values)
     actual = U.sum()
-    expected = -2.121_320_343_559_644
+    expected = -2.7071067811865483
     npt.assert_allclose(actual, expected)
 
 
@@ -264,22 +264,11 @@ def test_grid_coordinates():
     assert "xbin" in grid_indices
     assert "ybin" in grid_indices
     actual = grid_indices.xbin.mean()
-    npt.assert_allclose(actual, 4.55)
+    npt.assert_allclose(actual, 3.95)
 
     actual = grid_indices[:10].to_numpy()
     expected = np.array(
-        [
-            [8, 6],
-            [9, 7],
-            [10, 8],
-            [9, 9],
-            [8, 10],
-            [7, 9],
-            [6, 9],
-            [5, 9],
-            [4, 8],
-            [3, 8],
-        ]
+        [[8, 6], [9, 7], [9, 8], [9, 9], [8, 9], [7, 9], [6, 9], [5, 8], [3, 8], [2, 8]]
     )
     npt.assert_equal(actual, expected)
 

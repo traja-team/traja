@@ -9,3 +9,4 @@ omit =
     traja/tests/*
     traja/contrib/*
     traja/models/*
+    traja/rutils.py

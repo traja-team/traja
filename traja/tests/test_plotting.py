@@ -33,6 +33,10 @@ def test_sans_serif():
     traja.plotting.sans_serif()
 
 
+def test_plot_3d():
+    traja.plot_3d(df, interactive=False)
+
+
 def test_plot_flow():
     traja.plot_flow(df, interactive=False)
 
