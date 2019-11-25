@@ -494,7 +494,7 @@ def transitions(trj: TrajaDataFrame, **kwargs):
 
     grid_indices1D = _grid_coords1D(grid_indices)
     transitions_matrix = transition_matrix(grid_indices1D)
-    return transitions_matrix.astype(int)
+    return transitions_matrix
 
 
 def grid_coordinates(
