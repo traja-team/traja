@@ -33,6 +33,10 @@ def test_sans_serif():
     traja.plotting.sans_serif()
 
 
+def test_plot_3d():
+    traja.plot_3d(df, interactive=False)
+
+
 def test_plot_flow():
     traja.plot_flow(df, interactive=False)
 
@@ -117,10 +121,10 @@ def test_plot():
         np.array(
             [
                 [0.0, -0.5],
-                [0.13260155, -0.5],
-                [0.25978994, -0.44731685],
-                [0.35355339, -0.35355339],
-                [0.44731685, -0.25978994],
+                [0.132_601_55, -0.5],
+                [0.259_789_94, -0.447_316_85],
+                [0.353_553_39, -0.353_553_39],
+                [0.447_316_85, -0.259_789_94],
             ]
         ),
     )

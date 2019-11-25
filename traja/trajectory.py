@@ -365,12 +365,15 @@ def transition_matrix(grid_indices1D: np.ndarray):
     """Returns ``np.ndarray`` of Markov transition probability matrix for grid cell transitions.
 
     Args:
-        grid_indices1D
+        grid_indices1D (:class:`np.ndarray`)
 
     Returns:
         M (:class:`numpy.ndarray`)
 
     """
+    if not isinstance(grid_indices1D, np.ndarray):
+        raise TypeError(f"Expected np.ndarray, got {type(grid_indices1D)}")
+
     n = 1 + max(grid_indices1D.flatten())  # number of states
 
     M = [[0] * n for _ in range(n)]
@@ -417,11 +420,10 @@ def _bins_to_tuple(trj, bins: Union[int, Tuple[int, int]] = 10):
 def calculate_flow_angles(grid_indices: np.ndarray):
     """Calculate average flow between grid indices."""
 
-    bins = (grid_indices[:, 0].max(), grid_indices[:, 1].max())
+    bins = (grid_indices[:, 0].max() + 1, grid_indices[:, 1].max() + 1)
 
     M = np.empty((bins[1], bins[0]), dtype=np.ndarray)
 
-    grid_indices -= 1  # zero-indexing
     for (i, j) in zip(grid_indices, grid_indices[1:]):
         ix = i[0]
         iy = i[1]
@@ -476,7 +478,7 @@ def _grid_coords1D(grid_indices: np.ndarray):
     if isinstance(grid_indices, pd.DataFrame):
         grid_indices = grid_indices.values
     grid_indices1D = []
-    nr_cols = int(grid_indices[:, 0].max())
+    nr_cols = int(grid_indices[:, 0].max()) + 1
     for coord in grid_indices:
         grid_indices1D.append(
             coord[1] * nr_cols + coord[0]
@@ -486,12 +488,20 @@ def _grid_coords1D(grid_indices: np.ndarray):
 
 
 def transitions(trj: TrajaDataFrame, **kwargs):
-    """Get first-order Markov model for transitions between grid cells."""
+    """Get first-order Markov model for transitions between grid cells.
+    
+    Args:
+        trj (trajectory)
+        kwargs: kwargs to :func:`traja.grid_coordinates`
+    
+    """
     if "xbin" not in trj.columns or "ybin" not in trj.columns:
         grid_indices = grid_coordinates(trj, **kwargs)
     else:
         grid_indices = trj[["xbin", "ybin"]]
 
+    # Drop nan for converting to int
+    grid_indices.dropna(subset=["xbin", "ybin"], inplace=True)
     grid_indices1D = _grid_coords1D(grid_indices)
     transitions_matrix = transition_matrix(grid_indices1D)
     return transitions_matrix
@@ -513,9 +523,12 @@ def grid_coordinates(
         assign (bool): Return updated original dataframe
 
     Returns:
-        trj (~`traja.frame.TrajaDataFrame`): Trajectory
+        trj (~`traja.frame.TrajaDataFrame`): Trajectory is assign=True otherwise pd.DataFrame
 
     """
+    # Drop nan for converting to int
+    trj.dropna(subset=["x", "y"], inplace=True)
+
     xmin = trj.x.min() if xlim is None else xlim[0]
     xmax = trj.x.max() if xlim is None else xlim[1]
     ymin = trj.y.min() if ylim is None else ylim[0]
@@ -523,17 +536,14 @@ def grid_coordinates(
 
     bins = _bins_to_tuple(trj, bins)
 
-    xbins = np.linspace(xmin, xmax, bins[0])
-    ybins = np.linspace(ymin, ymax, bins[1])
-
-    xbin = np.digitize(trj.x, xbins)
-    ybin = np.digitize(trj.y, ybins)
+    xbin = pd.cut(trj.x, bins[0], labels=False)
+    ybin = pd.cut(trj.y, bins[1], labels=False)
 
     if assign:
         trj["xbin"] = xbin
         trj["ybin"] = ybin
         return trj
-    return pd.DataFrame({"xbin": xbin, "ybin": ybin}, dtype=int)
+    return pd.DataFrame({"xbin": xbin, "ybin": ybin})
 
 
 def generate(
@@ -762,28 +772,36 @@ def rotate(df, angle: Union[float, int] = 0, origin: tuple = None):
     return trj
 
 
-def rediscretize_points(trj: TrajaDataFrame, R: Union[float, int]):
+def rediscretize_points(trj: TrajaDataFrame, R: Union[float, int], time_out=False):
     """Returns a ``TrajaDataFrame`` rediscretized to a constant step length `R`.
 
     Args:
       trj (:class:`traja.frame.TrajaDataFrame`): Trajectory
       R (float): Rediscretized step length (eg, 0.02)
+      time_out (bool): Include time corresponding to time intervals in output
 
     Returns:
       rt (:class:`numpy.ndarray`): rediscretized trajectory
 
     """
-    rt = _rediscretize_points(trj, R)
+    if not isinstance(R, (float, int)):
+        raise TypeError(f"R should be float or int, but is {type(R)}")
 
+    results = _rediscretize_points(trj, R, time_out)
+    rt = results["rt"]
     if len(rt) < 2:
         raise RuntimeError(
-            f"Step length {R} is too large for path (path length {len(self._trj)})"
+            f"Step length {R} is too large for path (path length {len(trj)})"
         )
     rt = traja.from_xy(rt)
+    if time_out:
+        rt["time"] = results["time"]
     return rt
 
 
-def _rediscretize_points(trj: TrajaDataFrame, R: Union[float, int]):
+def _rediscretize_points(
+    trj: TrajaDataFrame, R: Union[float, int], time_out=False
+) -> dict:
     """Helper function for :func:`traja.trajectory.rediscretize`.
 
     Args:
@@ -791,7 +809,9 @@ def _rediscretize_points(trj: TrajaDataFrame, R: Union[float, int]):
       R (float): Rediscretized step length (eg, 0.02)
 
     Returns:
-      result (:class:`numpy.ndarray`): Rediscretized coordinates
+      output (dict): Containing:
+        result (:class:`numpy.ndarray`): Rediscretized coordinates
+        time_vals (optional, list of floats or datetimes): Time points corresponding to result
 
     """
     # TODO: Implement with complex numbers
@@ -803,6 +823,12 @@ def _rediscretize_points(trj: TrajaDataFrame, R: Union[float, int]):
     step_nr = 0
     candidate_start = 1  # running index of candidate
 
+    time_vals = []
+    if time_out:
+        time_col = _get_time_col(trj)
+        time = trj[time_col][0]
+        time_vals.append(time)
+
     while candidate_start <= n_points:
         # Find the first point `curr_ind` for which |points[curr_ind] - p_0| >= R
         curr_ind = np.NaN
@@ -812,6 +838,9 @@ def _rediscretize_points(trj: TrajaDataFrame, R: Union[float, int]):
             d = np.linalg.norm(points[i] - result[step_nr])
             if d >= R:
                 curr_ind = i  # curr_ind is in [candidate, n_points)
+                if time_out:
+                    time = trj[time_col][i]
+                    time_vals.append(time)
                 break
         if np.isnan(curr_ind):
             # End of path
@@ -850,7 +879,10 @@ def _rediscretize_points(trj: TrajaDataFrame, R: Union[float, int]):
 
     # Truncate result
     result = result[: step_nr + 1]
-    return result
+    output = {"rt": result}
+    if time_out:
+        output["time"] = time_vals
+    return output
 
 
 def _has_cols(trj: TrajaDataFrame, cols: list):
@@ -1148,7 +1180,7 @@ def _get_xylim(trj: TrajaDataFrame) -> Tuple[Tuple, Tuple]:
     if (
         "xlim" in trj.__dict__
         and "ylim" in trj.__dict__
-        and isinstance(trj.xlim, tuple)
+        and isinstance(trj.xlim, (list, tuple))
     ):
         return trj.xlim, trj.ylim
     else:

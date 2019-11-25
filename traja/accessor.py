@@ -34,6 +34,13 @@ class TrajaAccessor(object):
         y = self._obj.y
         return (float(x.mean()), float(y.mean()))
 
+    @property
+    def bounds(self):
+        """Return limits of x and y dimensions (``(xmin, xmax), (ymin, ymax)``)."""
+        xlim = self._obj.x.min(), self._obj.x.max()
+        ylim = self._obj.y.min(), self._obj.y.max()
+        return (xlim, ylim)
+
     def night(self, begin: str = "19:00", end: str = "7:00"):
         """Get nighttime datasets between `begin` and `end`.
 
@@ -123,7 +130,7 @@ class TrajaAccessor(object):
 
     def trip_grid(
         self,
-        bins: Union[int, tuple] = 16,
+        bins: Union[int, tuple] = 10,
         log: bool = False,
         spatial_units=None,
         normalize: bool = False,
@@ -172,6 +179,27 @@ class TrajaAccessor(object):
             show_time=show_time,
             **kwargs,
         )
+        return ax
+
+    def plot_3d(self, **kwargs):
+        """Plot 3D trajectory for single identity over period.
+
+        Args:
+        trj (:class:`traja.TrajaDataFrame`): trajectory
+        n_coords (int, optional): Number of coordinates to plot
+        **kwargs: additional keyword arguments to :meth:`matplotlib.axes.Axes.scatter`
+
+        Returns:
+            collection (:class:`~matplotlib.collections.PathCollection`): collection that was plotted
+
+        .. note::
+            Takes a while to plot large trajectories. Consider using first::
+            
+                rt = trj.traja.rediscretize(R=1.) # Replace R with appropriate step length
+                rt.traja.plot_3d()
+
+        """
+        ax = traja.plotting.plot_3d(trj=self._obj, **kwargs)
         return ax
 
     def plot_flow(self, kind="quiver", **kwargs):
@@ -405,6 +433,8 @@ class TrajaAccessor(object):
             2  1.414214  2.414214
 
         """
+        if not isinstance(R, (int, float)):
+            raise ValueError(f"R must be provided as float or int")
         rt = traja.trajectory.rediscretize_points(self._obj, R)
         self._transfer_metavars(rt)
         return rt
