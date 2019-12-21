@@ -136,6 +136,7 @@ class TrajaAccessor(object):
         normalize: bool = False,
         hist_only: bool = False,
         plot: bool = True,
+        **kwargs,
     ):
         """Returns a 2D histogram of trip.
 
@@ -155,10 +156,11 @@ class TrajaAccessor(object):
             self._obj,
             bins=bins,
             log=log,
-            spatial_units=self._obj.spatial_units,
+            spatial_units=self._obj.get("spatial_units", "m"),
             normalize=normalize,
             hist_only=hist_only,
             plot=plot,
+            **kwargs,
         )
         return hist, image
 
@@ -259,6 +261,10 @@ class TrajaAccessor(object):
         time_col = self._get_time_col()
         if time_col is None:
             raise Exception("Missing time information in trajectory.")
+
+    def transitions(self, *args, **kwargs):
+        """Calculate transition matrix"""
+        return traja.transitions(self._obj, *args, **kwargs)
 
     def calc_derivatives(self, assign: bool = False):
         """Returns derivatives `displacement` and `displacement_time`.
@@ -438,6 +444,9 @@ class TrajaAccessor(object):
         rt = traja.trajectory.rediscretize_points(self._obj, R)
         self._transfer_metavars(rt)
         return rt
+
+    def grid_coordinates(self, **kwargs):
+        return traja.grid_coordinates(self._obj, **kwargs)
 
     def calc_heading(self, assign: bool = True):
         """Calculate trajectory heading.

@@ -1,10 +1,12 @@
 from collections import OrderedDict
+from datetime import timedelta
 from typing import Union, Optional, Tuple, List
 
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
+from matplotlib import dates as md
 from matplotlib.figure import Figure
 import numpy as np
 import pandas as pd
@@ -39,6 +41,7 @@ __all__ = [
     "plot_quiver",
     "plot_stream",
     "plot_surface",
+    "plot_transition_graph",
     "plot_transition_matrix",
     "plot_xy",
     "polar_bar",
@@ -61,6 +64,14 @@ def stylize_axes(ax):
 def sans_serif():
     """Convenience function for changing plot text to serif font."""
     plt.rc("font", family="serif")
+
+
+def _rolling(df, window, step):
+    count = 0
+    df_length = len(df)
+    while count < (df_length - window):
+        yield count, df[count : window + count]
+        count += step
 
 
 def predict(
@@ -116,6 +127,114 @@ def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> A
     ax.set(xlabel="x", ylabel="y", zlabel="Frames")
 
     return ax
+
+
+def plot_rolling_hull(trj: TrajaDataFrame, window=100, step=20, areas=False, **kwargs):
+    """Plot rolling convex hull of trajectory. If `areas` is True, only
+    areas over time is plotted.
+    
+    """
+    hulls = []
+
+    for offset, window in _rolling(trj, window=window, step=step):
+        if window.dropna().empty:
+            continue
+        shape = window.traja.to_shapely()
+        hull = shape.convex_hull
+        hulls.append(hull)
+
+    if areas:
+        hull_areas = []
+        for idx, hull in enumerate(hulls):
+            hull_areas.append(hull.area)
+        plt.plot(hull_areas, **kwargs)
+        plt.title(f"Rolling Trajectory Convex Hull Area\nWindow={window},Step={step}")
+        plt.ylabel(f"Area {trj.__dict__.get('spatial_units','m')}")
+        plt.xlabel("Frame")
+    else:
+        xlim, ylim = traja.trajectory._get_xylim(trj)
+        plt.xlim = xlim
+        plt.ylim = ylim
+        for idx, hull in enumerate(hulls):
+            if hasattr(
+                hull, "exterior"
+            ):  # Occassionally a Point object without it reaches
+                plt.plot(*hull.exterior.xy, alpha=idx / len(hulls), c="k", **kwargs)
+        ax = plt.gca()
+        ax.set_aspect("equal")
+        ax.set(
+            xlabel=f"x ({trj.__dict__.get('spatial_units','m')})",
+            ylabel=f"y ({trj.__dict__.get('spatial_units','m')})",
+            title="Rolling Trajectory Convex Hull\nWindow={window},Step={step}",
+        )
+
+
+def plot_period(trj: traja.TrajaDataFrame, col="x", dark=(7, 19), **kwargs):
+    time_col = traja._get_time_col(trj)
+    _trj = trj.set_index(time_col)
+    if not col in _trj:
+        raise ValueError(f"{col} not a column in dataframe")
+    series = _trj[col]
+    fig, ax = plt.subplots()
+    series.plot(ax=ax)
+
+    dates = np.unique(series.index.date)
+
+    nights = []
+    nights.append([(date, date + timedelta(hours=dark[0])) for date in dates])
+    nights.append(
+        [(date + timedelta(hours=dark[1]), date + timedelta(days=1)) for date in dates]
+    )
+    for interval in nights:
+        t0, t1 = interval
+        ax.axvspan(t0, t1, color="gray", alpha=0.2)
+
+    # Format date displayed on the x axis
+    xfmt = md.DateFormatter("%H:%M\n%m-%d-%y")
+    ax.xaxis.set_major_formatter(xfmt)
+
+    if kwargs.get("interactive"):
+        plt.show()
+
+
+def plot_rolling_hull_3d(trj: TrajaDataFrame, window=100, step=20, **kwargs):
+    from mpl_toolkits.mplot3d import Axes3D
+
+    hulls = []
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    for offset, wind in _rolling(trj, window=window, step=step):
+        if wind.dropna().empty:
+            continue
+        shape = wind.traja.to_shapely()
+        hull = shape.convex_hull
+        hulls.append(hull)
+
+    xlim, ylim = traja.trajectory._get_xylim(trj)
+    plt.xlim = xlim
+    plt.ylim = ylim
+    outlines = []
+    for idx, hull in enumerate(hulls):
+        if hasattr(hull, "exterior"):  # Occassionally a Point object without it reaches
+            outlines.append(np.array(hull.exterior.xy))
+
+    # Add plots to axes
+    NLINES = len(outlines)
+    cm = plt.get_cmap(kwargs.get("cmap", "plasma"))
+    ax.set_prop_cycle(color=[cm(1.0 * i / (NLINES)) for i in range(NLINES)])
+    for z, xy in enumerate(outlines):
+        ax.plot(*xy, z)
+
+    ax.set(
+        xlabel=f"{trj.__dict__.get('spatial_units','m')}",
+        ylabel=f"{trj.__dict__.get('spatial_units','m')}",
+        title=f"Rolling Trajectory Convex Hull\nWindow={window},Step={step}",
+    )
+
+    if kwargs.get("interactive"):
+        plt.show()
 
 
 def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollection:
@@ -996,7 +1115,7 @@ def plot_transition_graph(
         raise ImportError(f"{e} - please install it with pip")
 
     if (
-        isinstance(data, (traja.DataFrame))
+        isinstance(data, (traja.TrajaDataFrame))
         or isinstance(data, pd.DataFrame)
         and "x" in data
     ):
@@ -1021,6 +1140,8 @@ def plot_transition_graph(
     # create edge labels for jupyter plot but is not necessary
     edge_labels = {(n1, n2): d["label"] for n1, n2, d in G.edges(data=True)}
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    if os.exists(outpath):
+        print(f"Overwriting {outpath}")
     nx.drawing.nx_pydot.write_dot(G, outpath)
 
     if interactive:
