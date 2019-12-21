@@ -424,15 +424,16 @@ def calc_laterality(trj:TrajaDataFrame, angle_thresh:tuple, dist_thresh:float):
 def calculate_flow_angles(grid_indices: np.ndarray):
     """Calculate average flow between grid indices."""
 
-    bins = (grid_indices[:, 0].max() + 1, grid_indices[:, 1].max() + 1)
+    bins = (grid_indices[:, 0].max(), grid_indices[:, 1].max())
 
     M = np.empty((bins[1], bins[0]), dtype=np.ndarray)
 
     for (i, j) in zip(grid_indices, grid_indices[1:]):
-        ix = i[0]
-        iy = i[1]
-        jx = j[0]
-        jy = j[1]
+        # Account for fact that grid indices uses 1-base indexing
+        ix = i[0] - 1
+        iy = i[1] - 1
+        jx = j[0] - 1
+        jy = j[1] - 1
 
         if np.array_equal(i, j):
             angle = None
@@ -540,8 +541,18 @@ def grid_coordinates(
 
     bins = _bins_to_tuple(trj, bins)
 
-    xbin = pd.cut(trj.x, bins[0], labels=False)
-    ybin = pd.cut(trj.y, bins[1], labels=False)
+    if not xlim:
+        xbin = pd.cut(trj.x, bins[0], labels=False)
+    else:
+        xmin, xmax = xlim
+        xbinarray = np.linspace(xmin, xmax, bins[0])
+        xbin = np.digitize(trj.x, xbinarray)
+    if not ylim:
+        ybin = pd.cut(trj.y, bins[1], labels=False)
+    else:
+        ymin, ymax = ylim
+        ybinarray = np.linspace(ymin, ymax, bins[1])
+        ybin = np.digitize(trj.y, ybinarray)
 
     if assign:
         trj["xbin"] = xbin
@@ -657,11 +668,27 @@ def generate(
     return df
 
 
-def _resample_time(trj: TrajaDataFrame, step_time: Union[float, int, str]):
+def _resample_time(
+    trj: TrajaDataFrame, step_time: Union[float, int, str], errors="coerce"
+):
     if not is_datetime_or_timedelta_dtype(trj.index):
         raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
-    df = trj.resample(step_time).interpolate(method="spline", order=2)
-    return traja.TrajaDataFrame(df)
+    try:
+        df = trj.resample(step_time).interpolate(method="spline", order=2)
+    except ValueError as e:
+        if len(e.args) > 0 and "cannot reindex from a duplicate axis" in e.args[0]:
+            if errors == "coerce":
+                print("Error: duplicate time indices, keeping first")
+                trj = trj.loc[~trj.index.duplicated(keep="first")]
+                df = (
+                    trj.resample(step_time)
+                    .bfill(limit=1)
+                    .interpolate(method="spline", order=2)
+                )
+            else:
+                print("Error: duplicate time indices")
+                raise ValueError("Duplicate values in indices")
+    return df
 
 
 def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] = None):
@@ -719,9 +746,6 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
         time_units = _trj.__dict__.get("time_units", "s")
         _trj.index = pd.to_datetime(_trj.index, unit=time_units)
         _trj = _resample_time(_trj, step_time)
-        _trj.reset_index(inplace=True)
-        # Reset time_col to float dtype
-        _trj[time_col] = pd.to_timedelta(_trj[time_col]).dt.total_seconds()
     else:
         raise NotImplementedError(
             f"Time column ({time_col}) not of expected datasets type."
@@ -1005,7 +1029,12 @@ def calc_derivatives(trj: TrajaDataFrame):
             trj[time_col].astype(int).div(10 ** 9).diff().fillna(0).cumsum()
         )
     else:
-        displacement_time = trj[time_col].diff().fillna(0).cumsum()
+        try:
+            displacement_time = trj[time_col].diff().fillna(0).cumsum()
+        except TypeError:
+            raise Exception(
+                f"Format (example {trj[time_col][0]}) not recognized as datetime"
+            )
 
     # TODO: Create DataFrame directly
     derivs = pd.DataFrame(
@@ -1177,6 +1206,9 @@ def get_derivatives(trj: TrajaDataFrame):
 
     data = dict(speed=v, speed_times=vt, acceleration=a, acceleration_times=at)
     derivs = derivs.merge(pd.DataFrame(data), left_index=True, right_index=True)
+
+    # Replace infinite values
+    derivs.replace([np.inf, -np.inf], np.nan)
     return derivs
 
 
