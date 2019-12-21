@@ -13,4 +13,5 @@ trj = traja.generate()
 ax = trj.traja.plot_3d(dist=15, labelpad=32, title="Traja 3D Plot")
 
 # `Matplotlib cmaps<https://matplotlib.org/examples/color/colormaps_reference.html>`_ are available
+
 trj.traja.plot_3d(dist=15, labelpad=32, title="Traja 3D Plot", cmap="jet")
