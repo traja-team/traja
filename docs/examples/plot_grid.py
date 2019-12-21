@@ -16,13 +16,13 @@ df.traja.trip_grid()
 ###############################################################################
 # Increase the grid resolution
 # ============================
-# Number of bins can be specified with the `bins` parameter.
+# Number of bins can be specified with the ``bins`` parameter.
 df.traja.trip_grid(bins=40)
 
 ###############################################################################
 # Convert coordinates to grid indices
 # ===================================
-# Number of x and y bins can be specified with the `bins` parameter.
+# Number of x and y bins can be specified with the ``bins``` parameter.
 
 from traja.trajectory import grid_coordinates
 

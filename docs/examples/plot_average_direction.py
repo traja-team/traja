@@ -43,8 +43,8 @@ traja.plotting.plot_contour(df, bins=32, contourfplot_kws={"cmap": "coolwarm"})
 ###############################################################################
 # Stream
 # ------
-# `cmap` can be specified, eg, 'coolwarm', 'viridis', etc.
-# Additional arguments can be specified as a dictionary to `streamplot_kws`.
+# 'cmap' can be specified, eg, 'coolwarm', 'viridis', etc.
+# Additional arguments can be specified as a dictionary to 'streamplot_kws'.
 
 traja.plotting.plot_stream(df, cmap="jet", bins=32)
 
