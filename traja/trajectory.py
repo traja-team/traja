@@ -417,6 +417,10 @@ def _bins_to_tuple(trj, bins: Union[int, Tuple[int, int]] = 10):
     return bins
 
 
+def calc_laterality(trj:TrajaDataFrame, angle_thresh:tuple, dist_thresh:float):
+    """Calculate laterality of trajectory"""
+    ...
+
 def calculate_flow_angles(grid_indices: np.ndarray):
     """Calculate average flow between grid indices."""
 
