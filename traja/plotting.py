@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import timedelta
+import logging
 from typing import Union, Optional, Tuple, List
 
 import matplotlib
@@ -50,6 +51,8 @@ __all__ = [
     "stylize_axes",
     "trip_grid",
 ]
+
+logger = logging.getLogger("traja")
 
 
 def stylize_axes(ax):
@@ -418,7 +421,7 @@ def plot(
             if time_units in ("s", "", None):
                 cbar_labels = [round(x, 2) for x in trj.index[indices].total_seconds()]
             else:
-                print("Time unit {} not yet implemented".format(time_units))
+                logger.error("Time unit {} not yet implemented".format(time_units))
         else:
             raise NotImplementedError(
                 "Indexing on {} is not yet implemented".format(type(trj.index))
@@ -1050,7 +1053,7 @@ def plot_clustermap(
     try:
         import seaborn as sns
     except ImportError:
-        print("seaborn is not installed. Install it with 'pip install seaborn'")
+        logging.error("seaborn is not installed. Install it with 'pip install seaborn'")
         return
 
     after_plot_args, _ = _get_after_plot_args(**kwargs)
@@ -1141,7 +1144,7 @@ def plot_transition_graph(
     edge_labels = {(n1, n2): d["label"] for n1, n2, d in G.edges(data=True)}
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
     if os.exists(outpath):
-        print(f"Overwriting {outpath}")
+        logging.info(f"Overwriting {outpath}")
     nx.drawing.nx_pydot.write_dot(G, outpath)
 
     if interactive:
