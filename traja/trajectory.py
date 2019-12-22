@@ -1,3 +1,4 @@
+import logging
 import math
 from collections import OrderedDict
 from typing import Callable, Optional, Union, Tuple
@@ -55,6 +56,8 @@ __all__ = [
     "transition_matrix",
     "transitions",
 ]
+
+logger = logging.getLogger("traja")
 
 
 def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
@@ -227,7 +230,7 @@ def expected_sq_displacement(
         )
         return abs(esd)
     else:
-        print("This method is experimental and requires testing.")
+        logger.info("This method is experimental and requires testing.")
         # Eqn 2
         esd = n * l2 + 2 * l ** 2 * c / (1 - c) * (n - (1 - c ** n) / (1 - c))
         return esd
@@ -674,7 +677,7 @@ def _resample_time(
     except ValueError as e:
         if len(e.args) > 0 and "cannot reindex from a duplicate axis" in e.args[0]:
             if errors == "coerce":
-                print("Error: duplicate time indices, keeping first")
+                logger.warning("Duplicate time indices, keeping first")
                 trj = trj.loc[~trj.index.duplicated(keep="first")]
                 df = (
                     trj.resample(step_time)
@@ -682,7 +685,7 @@ def _resample_time(
                     .interpolate(method="spline", order=2)
                 )
             else:
-                print("Error: duplicate time indices")
+                logger.error("Error: duplicate time indices")
                 raise ValueError("Duplicate values in indices")
     return df
 

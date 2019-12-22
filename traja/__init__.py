@@ -7,5 +7,9 @@ from .parsers import read_file, from_df
 from .plotting import *
 from .trajectory import *
 
+import logging
+
 __author__ = "justinshenk"
-__version__ = "0.1.7"
+__version__ = "0.1.8"
+
+logging.basicConfig(level=logging.INFO)
