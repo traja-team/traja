@@ -19,45 +19,57 @@ except ModuleNotFoundError as e:
     else:
         raise ModuleNotFoundError(e)
 from rpy2.robjects.packages import importr
-
+import rpy2.robjects as ro
 
 __all__ = ["import_adehabitat", "import_trajr", "plot_ltraj", "to_trajr", "to_ltraj"]
 
 
 rpandas.activate()
 
+installed_rpackages = []
 ADEHABITAT_INSTALLED = False
 TRAJR_INSTALLED = False
 
 
 def import_adehabitat(suppress_messages=True):
-    global ADEHABITAT_INSTALLED
-    if not ADEHABITAT_INSTALLED:
+    global installed_rpackages
+    if not 'adehabitat' in installed_rpackages:
         utils = rpackages.importr("utils", suppress_messages=suppress_messages)
         print("Importing adehabitat")
         utils.chooseCRANmirror(ind=1)
         utils.install_packages("adehabitatLT")
-        ADEHABITAT_INSTALLED = True
+        installed_rpackages.append('adehabitat')
     adehabitat = importr("adehabitatLT", suppress_messages=suppress_messages)
     return adehabitat
 
 
 def import_trajr(suppress_messages=True):
-    global TRAJR_INSTALLED
-    if not TRAJR_INSTALLED:
+    global installed_rpackages
+    if not 'trajr' in installed_rpackages:
         utils = rpackages.importr("utils", suppress_messages=suppress_messages)
         print("Importing trajr")
         utils.chooseCRANmirror(ind=1)
         utils.install_packages("trajr")
-        TRAJR_INSTALLED = True
+        installed_rpackages.append('trajr')
     trajr = importr("trajr")
     return trajr
+
+def import_moveHMM(suppress_messages=True):
+    global installed_rpackages
+    if not 'moveHMM' in installed_rpackages:
+        utils = rpackages.importr("utils", suppress_messages=suppress_messages)
+        print("Importing moveHMM")
+        utils.chooseCRANmirror(ind=1)
+        utils.install_packages("moveHMM")
+        installed_rpackages.append('moveHMM')
+    moveHMM = importr("moveHMM")
+    return moveHMM
 
 
 def plot_ltraj(ltraj, id=1):
     """Plot `ltraj` using R method."""
     adehabitat = import_adehabitat()
-    adehabitat.plot_ltraj(ltraj, id=1)
+    adehabitat.plot_ltraj(ltraj, id=id)
 
 
 def to_trajr(trj):
@@ -154,3 +166,43 @@ def to_ltraj(trj, id=1, typeII=False):
     else:
         ltraj = adehabitat.as_ltraj(df, id=id, typeII=False)[0]
     return ltraj
+
+def prep_moveData(trj, id='ID', type="UTM", coord_names=("x","y")):
+    """Convert trajectory to R moveHMM package moveData format."""
+    moveHMM = import_moveHMM()
+    df = trj[['x','y']]
+    moveData = moveHMM.prep_data(df, type=type, coordNames = coord_names)
+    return moveData
+
+def plot_moveData(moveData, compact=True):
+    """Plot animal tracks, time series and step lengths and turn distributions with
+    the R package moveHMM.""" 
+    moveHMM = import_moveHMM()
+    return moveHMM.plot(prepped_trj, compact=compact)
+
+def fitHMM(moveData, covariates=[], standardize=True, nb_states=2):
+    moveHMM = import(moveHMM)
+    if standardize:
+        mean = ro.r['mean']
+        std = ro.r['std']
+        for cov in covariates:
+            moveData[cov] = mean(moveData[cov])[0] / std(moveData[cov])[0]
+    mu0 = ro.FloatVector((0.1,1)) # step mean (two parameters: one for each state)
+    sigma0 = ro.FloatVector((0.1,1)) # step SD
+    zeromass0 = ro.FloatVector((0.1,0.05)) # step zero-mass
+    stepPar0 = ro.FloatVector((mu0,sigma0,zeromass0))
+    pi = ro.r['pi'][0]
+    angleMean0 = ro.FloatVector((pi,0)) # angle mean
+    kappa0 = ro.IntVector((1,1)) # angle concentration
+    anglePar0 = ro.FloatVector((angleMean0,kappa0))
+    ## call to fitting function
+    model = moveHMM.fitHMM(data=moveData,
+        nbStates=nb_states,
+        stepPar0=stepPar0,
+        anglePar0=anglePar0,
+        # formula=~dist_water,  # TODO
+        )
+    return model
+
+def plot_hmm_model(fitHMM_model):
+    return model.plot()
