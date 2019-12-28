@@ -35,11 +35,13 @@ __all__ = [
     "plot",
     "plot_3d",
     "plot_actogram",
+    "plot_autocorrelation",
     "plot_collection",
     "plot_contour",
     "plot_clustermap",
     "plot_flow",
     "plot_quiver",
+    "plot_periodogram",
     "plot_stream",
     "plot_surface",
     "plot_transition_graph",
@@ -172,7 +174,7 @@ def plot_rolling_hull(trj: TrajaDataFrame, window=100, step=20, areas=False, **k
         )
 
 
-def plot_period(trj: traja.TrajaDataFrame, col="x", dark=(7, 19), **kwargs):
+def plot_period(trj: TrajaDataFrame, col="x", dark=(7, 19), **kwargs):
     time_col = traja._get_time_col(trj)
     _trj = trj.set_index(time_col)
     if not col in _trj:
@@ -454,8 +456,54 @@ def plot(
     return collection
 
 
+def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = True):
+    """Plot power spectral density using a periodogram.
+
+    Args:
+        trj - Trajectory
+        coord - choice of 'x' or 'y'
+        fs - Sampling frequency
+        interactive - Plot immediately
+    
+    Returns:
+        Figure
+
+    """
+    from scipy import signal
+
+    vals = trj[coord].values
+    f, Pxx = signal.periodogram(vals, fs=fs, window="hanning", scaling="spectrum")
+    plt.title("Power Spectrum")
+    if interactive:
+        plt.plot(f, Pxx)
+    return plt.gcf()
+
+
+def plot_autocorrelation(
+    trj: TrajaDataFrame,
+    coord: str = "y",
+    unit: str = "Days",
+    sample_rate: float = 3.0,
+    xmax: int = 1000,
+    interactive: bool = True,
+):
+    """Plot autocorrelation of given coordinate."""
+    from statsmodels import api as sm
+
+    pos = trj[coord].values
+    acf = sm.tsa.acf(pos, nlags=len(pos))
+    lag = np.arange(len(pos)) / sample_rate
+    plt.plot(lag, acf)
+    plt.xlim((0, xmax))
+    plt.xlabel(f"Lags ({unit})")
+    plt.ylabel("Autocorrelation")
+    if interactive:
+        plt.show()
+    return plt.gcf()
+
+
 def plot_collection(
-    trjs: Union[pd.DataFrame, traja.TrajaDataFrame],
+    trjs: Union[pd.DataFrame, TrajaDataFrame],
     id_col: str = "id",
     colors: Optional[Union[dict, List[str]]] = None,
     **kwargs,
