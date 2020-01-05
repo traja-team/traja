@@ -32,13 +32,11 @@ Convert a `TrajaDataFrame` to `trajr` dataframe with:
 
 .. code-block:: python
 
-    from traja.rutils import trajr
-
     # Convert to trajr trajectory
     traj = rutils.to_trajr(df)
 
     # Plot trajectory using trajr backend
-    trajr.plot_Trajectory(traj)
+    traj.plot_Trajectory(traj)
 
 
 Perform further analysis in Python
