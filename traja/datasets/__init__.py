@@ -5,6 +5,8 @@ from typing import List
 
 import pandas as pd
 
+import traja
+
 
 def load_ped_datasets() -> List[str]:
     """Returns paths after downloading pedestrian datasets."""
@@ -63,3 +65,22 @@ def load_ped_data(dataset_name=None, aspaths=False) -> dict:
         "test": [pd.read_csv(path, sep="\t", names=col_names) for path in train_paths],
     }
     return dfs
+
+
+def load_geolife(folder: str, as_traja=True, lat=(32, 48.0), lon=(114, 120)):
+    """Read geolife data from folder. Default mask in UTM Zone 50 (Beijing)"""
+    import traja.datasets.geolife as geolife
+
+    df = geolife.read_all_users(folder)
+    if as_traja:
+        # Convert lat/long to utm coordinates
+        if lat and lon:
+            geomask = (
+                (df["lon"] > lon[0])
+                & (df["lon"] < lon[1])
+                & (df["lat"] > lat[0])
+                & (df["lat"] < lat[1])
+            )
+            df = df[geomask]
+        df = traja.to_utm(df)
+    return df

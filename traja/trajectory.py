@@ -52,6 +52,7 @@ __all__ = [
     "speed_intervals",
     "step_lengths",
     "to_shapely",
+    "to_utm",
     "traj_from_coords",
     "transition_matrix",
     "transitions",
@@ -234,6 +235,22 @@ def expected_sq_displacement(
         # Eqn 2
         esd = n * l2 + 2 * l ** 2 * c / (1 - c) * (n - (1 - c ** n) / (1 - c))
         return esd
+
+
+def to_utm(trj, lat="lat", lon="lon"):
+    """Convert lat/lon to UTM coordinates"""
+    try:
+        import pyproj
+    except ImportError:
+        raise ImportError(
+            """Mising pyproj
+            Please download it with pip install pyproj
+    """
+        )
+    x, y = proj(trj[lon].tolist(), trj[lat].tolist())
+    trj["x"] = x
+    trj["y"] = y
+    return trj
 
 
 def traj_from_coords(
