@@ -17,15 +17,15 @@ df = traja.generate(n=20)
 
 
 def test_import_adehabitat():
-    traja.rutils.import_adehabitat(suppress_messages=True)
+    rutils.import_adehabitat(suppress_messages=True)
 
 
 def test_import_trajr():
-    traja.rutils.import_trajr(suppress_messages=True)
+    rutils.import_trajr(suppress_messages=True)
 
 
 def test_to_trajr():
-    trjr = traja.rutils.to_trajr(df)
+    trjr = rutils.to_trajr(df)
     assert "x" in trjr
     assert "y" in trjr
     assert "time" in trjr
@@ -38,7 +38,7 @@ def test_to_trajr():
 
 
 def test_to_ltraj():
-    ltraj = traja.rutils.to_ltraj(df)
+    ltraj = rutils.to_ltraj(df)
     rdataframe = ltraj
     assert "x" in rdataframe
     assert "y" in rdataframe
