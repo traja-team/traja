@@ -64,7 +64,7 @@ def to_trajr(trj):
     """Convert trajectory to R `trajr` object. Default fps is 30.
 
     Args:
-        trajectory (:class:`~traja.main.TrajaDataFrame`): trajectory
+        trajectory (:class:`~traja.TrajaDataFrame`): trajectory
 
 
     Returns:
@@ -114,7 +114,7 @@ def to_ltraj(trj, id=1, typeII=False):
     """Convert trajectory to R `ltraj` object.
 
     Args:
-        trajectory (:class:`~traja.main.TrajaDataFrame`): trajectory
+        trajectory (:class:`~traja.TrajaDataFrame`): trajectory
         id (str, optional): id of animal/target
         typeII (bool):  contains datatime format time series (not yet supported)
 

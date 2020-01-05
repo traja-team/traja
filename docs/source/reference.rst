@@ -28,7 +28,11 @@ The following methods are available via :mod:`traja.plotting`:
 
 .. automethod:: traja.plotting.plot
 
+.. automethod:: traja.plotting.plot_3d
+
 .. automethod:: traja.plotting.plot_actogram
+
+.. automethod:: traja.plotting.plot_autocorrelation
 
 .. automethod:: traja.plotting.plot_contour
 
@@ -42,6 +46,8 @@ The following methods are available via :mod:`traja.plotting`:
 
 .. automethod:: traja.plotting.plot_surface
 
+.. automethod:: traja.plotting.plot_transition_matrix
+
 .. automethod:: traja.plotting.plot_xy
 
 .. automethod:: traja.plotting.polar_bar
@@ -53,24 +59,6 @@ The following methods are available via :mod:`traja.plotting`:
 .. automethod:: traja.plotting.stylize_axes
 
 .. automethod:: traja.plotting.trip_grid
-
-
-
-R functions
------------
-
-The following methods are available via :mod:`traja.rutils`:
-
-.. automethod:: traja.rutils.to_trajr
-
-.. automethod:: traja.rutils.to_ltraj
-
-.. automethod:: traja.rutils.import_adehabitat
-
-.. automethod:: traja.rutils.import_trajr
-
-.. automethod:: traja.rutils.plot_ltraj
-
 
 
 Analysis
@@ -184,5 +172,3 @@ API Pages
   TrajaDataFrame
   TrajaCollection
   read_file
-  datasets.load_ped_datasets
-  datasets.load_ped_data
