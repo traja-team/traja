@@ -388,7 +388,7 @@ def plot(
         xs,
         ys,
         c=colors,
-        s=kwargs.pop("s", 5),
+        s=kwargs.pop("s", 1),
         cmap=plt.cm.viridis,
         alpha=0.7,
         vmin=vmin,
@@ -487,7 +487,20 @@ def plot_autocorrelation(
     xmax: int = 1000,
     interactive: bool = True,
 ):
-    """Plot autocorrelation of given coordinate."""
+    """Plot autocorrelation of given coordinate.
+    
+    Args:
+        trj - Trajectory
+        coord - 'x' or 'y'
+        unit - string, eg, 'Days'
+        sample_rate - sample rate
+        xmax - max xaxis value
+        interactive - Plot immediately
+    
+    Returns:
+        Matplotlib Figure
+    
+    """
     from statsmodels import api as sm
 
     pos = trj[coord].values

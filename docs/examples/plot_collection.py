@@ -6,7 +6,7 @@ Plotting multiple trajectories is easy with :meth:`~traja.frame.TrajaCollection.
 import traja
 from traja import TrajaCollection
 
-# Create a dictionary of DataFrames, with ``id`` as key.
+# Create a dictionary of DataFrames, with 'id' as key.
 dfs = {idx: traja.generate(idx, seed=idx) for idx in range(10, 15)}
 
 # Create a TrajaCollection.
