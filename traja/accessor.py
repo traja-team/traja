@@ -266,6 +266,21 @@ class TrajaAccessor(object):
         if time_col is None:
             raise Exception("Missing time information in trajectory.")
 
+    def __getattr__(self, name):
+        """Catch all method calls which are not defined and forward to modules."""
+
+        def method(*args, **kwargs):
+            if name in traja.plotting.__all__:
+                return getattr(traja.plotting, name)(self._obj, *args, **kwargs)
+            elif name in traja.trajectory.__all__:
+                return getattr(traja.plotting, name)(self._obj, *args, **kwargs)
+            elif name in dir(self):
+                return getattr(self, name)(*args)(**kwargs)
+            else:
+                raise AttributeError(f"{name} attribute not defined")
+
+        return method
+
     def transitions(self, *args, **kwargs):
         """Calculate transition matrix"""
         return traja.transitions(self._obj, *args, **kwargs)
