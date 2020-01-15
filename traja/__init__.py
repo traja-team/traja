@@ -10,6 +10,6 @@ from .trajectory import *
 import logging
 
 __author__ = "justinshenk"
-__version__ = "0.2.0"
+__version__ = "0.2.2"
 
 logging.basicConfig(level=logging.INFO)
