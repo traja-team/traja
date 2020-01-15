@@ -597,8 +597,8 @@ def plot_collection(
 
 def _label_axes(trj: TrajaDataFrame, ax) -> Axes:
     if "spatial_units" in trj.__dict__:
-        ax.set_xlabel(trj.spatial_units)
-        ax.set_ylabel(trj.spatial_units)
+        ax.set_xlabel(trj.__dict__.get("spatial_units", "m"))
+        ax.set_ylabel(trj.__dict__.get("spatial_units", "m"))
     return ax
 
 
@@ -1284,8 +1284,8 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     ax1.set(
         xlim=xlim,
         ylim=ylim,
-        ylabel=trj.spatial_units or "m",
-        xlabel=trj.spatial_units or "m",
+        ylabel=trj.__dict__.get("spatial_units", "m"),
+        xlabel=trj.__dict__.get("spatial_units", "m"),
         aspect="equal",
     )
 
@@ -1300,7 +1300,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     def update(frame_number):
         ind = frame_number % len(xy)
         if ind < XY_STEPS:
-            scat.set_offsets(xy[:XY_STEPS])
+            scat.set_offsets(xy[:ind])
         else:
             prev_steps = max(ind - XY_STEPS, 0)
             scat.set_offsets(xy[prev_steps:ind])
