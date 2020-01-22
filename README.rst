@@ -1,4 +1,4 @@
-traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI|
+Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI|
 ============================================================================================
 
 .. |Python-ver| image:: https://img.shields.io/badge/python-3.6+-blue.svg
@@ -34,7 +34,7 @@ traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Co
 .. |DOI| image:: https://zenodo.org/badge/166056696.svg
    :target: https://zenodo.org/badge/latestdoi/166056696
 
-traja is a Python library for trajectory analysis. It extends the capability of
+Traja is a Python library for trajectory analysis. It extends the capability of
 pandas DataFrame specific for animal trajectory analysis in 2D, and provides
 convenient interfaces to other geometric analysis packages (eg, R and shapely).
 
@@ -92,7 +92,7 @@ Import traja into your Python script or via the Python command-line with
 Trajectories with traja
 -----------------------
 
-traja stores trajectories in pandas DataFrames, allowing any pandas
+Traja stores trajectories in pandas DataFrames, allowing any pandas
 functions to be used.
 
 Load trajectory with x,y and time coordinates:
