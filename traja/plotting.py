@@ -1041,6 +1041,7 @@ def polar_bar(
     trj: TrajaDataFrame,
     feature: str = "turn_angle",
     bin_size: int = 2,
+    threshold: float = 0.001,
     overlap: bool = True,
     ax: Optional[matplotlib.axes.Axes] = None,
     **plot_kws: str,
@@ -1050,19 +1051,18 @@ def polar_bar(
     Args:
         trj (:class:`traja.TrajaDataFrame`): trajectory
         feature (str): Options: 'turn_angle', 'heading'
-        bins (int): width of bins
+        bin_size (int): width of bins
+        threshold (float): filter for step distance
         overlap (bool): Overlapping shows all values, if set to false is a histogram
 
     Returns:
         ax (:class:`~matplotlib.collections.PathCollection`): Axes of plot
 
     """
-    DIST_THRESHOLD = 0.001
     # Get displacement
-
     displacement = traja.trajectory.calc_displacement(trj)
     trj["displacement"] = displacement
-    trj = trj.loc[trj.displacement > DIST_THRESHOLD]
+    trj = trj.loc[trj.displacement > threshold]
     if feature == "turn_angle":
         feature_series = traja.trajectory.calc_turn_angle(trj)
         trj["turn_angle"] = feature_series
@@ -1074,7 +1074,9 @@ def polar_bar(
     trj = trj[pd.notnull(trj[feature])]
     trj = trj[pd.notnull(trj.displacement)]
 
-    assert len(trj) > 0, "Dataframe is empty after filtering, check coordinates"
+    assert (
+        len(trj) > 0
+    ), f"Dataframe is empty after filtering for step distance threshold {threshold}"
 
     ax = _polar_bar(
         trj.displacement,
