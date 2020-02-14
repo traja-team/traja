@@ -225,7 +225,7 @@ _Laterality_ is the preference for left or right turning and a _laterality index
  dimensionality of high dimensional data is to identify the directions which explain
  most of the variance via eigendecomposition. 
  
- This requires converting the trajectory to an image (ie, trip grid, see [@tripgrid]) and performing principal component analysis on the image in 2D (Figure X) or 3D (Figure X).
+ This requires converting the trajectory to an image (ie, trip grid, see [tripgrid-ref]) and performing principal component analysis on the image in 2D (Figure X) or 3D (Figure X).
  
  Some clusterings in the data are apparent if viewed by light/dark period. 
  
