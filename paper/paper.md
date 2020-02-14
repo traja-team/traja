@@ -267,7 +267,7 @@ spatial trajectories [@cox_gaussian_nodate].
  Transition probabilities are most commonly modelled with Hidden Markov Models
  (HMM) because of their ability to capture spatial and temporal dependencies.
  A recent introduction to methods is available at [@patterson_statistical_2017-1].
- HMMs have successfully been used to analyze movement of caribou [@Franke], fruit flies[@holzmann_hidden_2006],
+ HMMs have successfully been used to analyze movement of caribou [@franke_analysis_2004], fruit flies[@holzmann_hidden_2006],
  and tuna[@patterson_migration_2018], among others.
  Trajectories are typically modelled as bivariate time series consisting of step length and turn angle, regularly spaced in time.
  
