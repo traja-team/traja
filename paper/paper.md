@@ -116,7 +116,7 @@ This type of noise can be minimized by thresholding or using a logarithmic scale
 
 #### Smoothing.
  Data provided were already smoothed as described in [@iannello_non-intrusive_2019], therefore readers
- are encouraged to read [@here] for an overview on trajectory smoothing. Smoothing can also be achieved with traja using Savitzky-Golay filtering, `traja.smooth_sg()`.
+ are encouraged to read [here] for an overview on trajectory smoothing. Smoothing can also be achieved with traja using Savitzky-Golay filtering, `traja.smooth_sg()`.
  
 #### Adjacency Matrix. 
  
