@@ -314,7 +314,7 @@ A probabilistic graphical model of a spatial occupancy grid can be used to ident
 ### Convex Hull
 
  The convex hull of a subtrajectory is the set $X$ of points in the Euclidean plane that is the smallest convex set to include $X$.
- For computational efficiency, a geometric $k$-simplex $\sigma \equals [v_0,...,v_k]$ in $\mathbb{R}^2$ is 
+ For computational efficiency, a geometric $k$-simplex $\sigma \equals \[v_0,...,v_k\]$ in $\mathbb{R}^2$ is 
  
  [Insert convex hull method of Traja]
  
