@@ -12,8 +12,10 @@ authors:
 affiliations:
  - name: Donders Institute for Brain, Cognition and Behavior, Radboud University Nijmegen
    index: 1
+ - name: VisioLab, Berlin, Germany
+   index: 2
    
-date: 5 January 2020
+date: 13 April 2020
 bibliography: paper.bib
 ---
 
@@ -25,7 +27,7 @@ img + br + em {
     text-align: center;
     font-size: 90%;
 }
-</style>
+</style>l
 
 
 # Summary
@@ -138,7 +140,8 @@ This type of noise can be minimized by thresholding or using a logarithmic scale
 Transformation of trajectories can be useful for comparing trajectories from various
 geospatial coordinates, data compression, or simply for visualization purposes.
 
-#### Rotation
+__Rotation__
+
  Rotation of a 2D rectilinear trajectory is a coordinate transformation of
  orthonormal bases x and y at angle $\theta$ around the origin defined by 
  
@@ -154,12 +157,12 @@ $$\begin{bmatrix} x' \\ y' \end{bmatrix} =
  #### Scale.
  Scaling a trajectory is achieved with `df.traja.scale(factor)` for factor $f$ where $f \in \mathbb{R} : f \in [0,1]$.
 
- ### Periodic Analysis
+### Periodic Analysis
  
  Periodic behaviors are relevant to circadian rhythm as well as observing expression of underlying cognitive traits.
  Some basic implementations of periodic analysis of mouse cage data are presented.
  
- #### Autocorrelation.
+#### Autocorrelation.
  Autocorrelation is the ...
  
  It can be computed with `traja.autocorrelation` and plotted with `traja.plot_autocorrelation`, as in Figure X.
@@ -167,7 +170,7 @@ $$\begin{bmatrix} x' \\ y' \end{bmatrix} =
   ![Autocorrelation of the y-dimension reveals daily (1440 minutes) periodic behavior](adds/autocorrelation_E1.png)
   
  
- #### Power Spectrum.
+#### Power Spectrum.
  
  Power spectrum of a time-series signal can be estimated with `traja.plot_periodogram`.
 
@@ -177,102 +180,102 @@ Higher peaks indicate higher repetition of a signal.
  
  ![Power Spectral Density. One day of activity reveals fairly smooth power spectral density.](adds/spectrum.png)
  
- ### Speed and Linear Acceleration
- 
- #### Speed.
- 
- Speed or velocity is the first derivative of centroids with respect to time.
- Peak velocity in a home cage environment is perhaps less interesting than a distribution of velocity observations, as in Figure X.
- Additionally, noise can be eliminated from velocity calculations by using a minimal distance moved threshold, as demonstrated in [Fortasyn paper].
- This allows identifying broad-scale behaviors such as cage crossings. 
- 
- >>> df.traja.calc_turn_angles()
- 
-  ![velocity](adds/velocitylog.png)
-  *Velocity histogram from one day.*
- 
+### Speed and Linear Acceleration
+
+#### Speed.
+
+Speed or velocity is the first derivative of centroids with respect to time.
+Peak velocity in a home cage environment is perhaps less interesting than a distribution of velocity observations, as in Figure X.
+Additionally, noise can be eliminated from velocity calculations by using a minimal distance moved threshold, as demonstrated in [Fortasyn paper].
+This allows identifying broad-scale behaviors such as cage crossings. 
+
+>>> df.traja.calc_turn_angles()
+
+![velocity](adds/velocitylog.png)
+*Velocity histogram from one day.*
+
 #### Turn Angles. 
- Turn angles are the angle between the movement vectors of two consecutive samples. They can be calculated with \texttt{trj.traja.calc\_turn\_angles}.
- 
+Turn angles are the angle between the movement vectors of two consecutive samples. They can be calculated with \texttt{trj.traja.calc\_turn\_angles}.
+
 `trj.traja.calc_turn_angles()`
- 
+
 #### Laterality.
 _Laterality_ is the preference for left or right turning and a _laterality index_ is defined as: 
- 
- $$LI = \frac{RT}{LT + RT}$$
- 
- where $RT$ is the number of right turns observed and $LT$ is the number of left turns observed.
- Turns are counted within a turn angle range $\in (30, 90)$ for left turns and $\in (-90, -30)$ for right turns. In Traja it is computed with \texttt{trj.traja.calc\_laterality()}:
+
+$$LI = \frac{RT}{LT + RT}$$
+
+where $RT$ is the number of right turns observed and $LT$ is the number of left turns observed.
+Turns are counted within a turn angle range $\in (30, 90)$ for left turns and $\in (-90, -30)$ for right turns. In Traja it is computed with \texttt{trj.traja.calc\_laterality()}:
 
 
-         x &          y &  time
-  0.000000 &   0.000000 &  0.00
-  1.162606 &   1.412179 &  0.02
-  1.861837 &   2.727244 &  0.04
-  1.860393 &   4.857967 &  0.06
- -0.096486 &   5.802457 &  0.08
+     x &          y &  time
+0.000000 &   0.000000 &  0.00
+1.162606 &   1.412179 &  0.02
+1.861837 &   2.727244 &  0.04
+1.860393 &   4.857967 &  0.06
+-0.096486 &   5.802457 &  0.08
 
 ## Algorithms and Statistical Models
 
- ### Machine Learning
- Machine learning methods enable researchers to solve tasks computationally
- without explicit instructions by detecting patterns or relying on inference.
- 
- __Principal Component Analysis__
- 
- Identifying patterns between groups and over time requires finding sufficient
- representations of the data for particular methods. One method of reducing the
- dimensionality of high dimensional data is to identify the directions which explain
- most of the variance via eigendecomposition. 
- 
- This requires converting the trajectory to an image (ie, trip grid, see [tripgrid-ref]) and performing principal component analysis on the image in 2D (Figure X) or 3D (Figure X).
- 
- Some clusterings in the data are apparent if viewed by light/dark period. 
- 
-  ![PCA of Fortasyn trajectory data. Daily trajectories (day and
-     night) were binned into 8x8 grids before applying PCA.](adds/pca_fortasyn-period.png)
-     *PCA of Fortasyn trajectory data. Daily trajectories (day and
-     night) were binned into 8x8 grids before applying PCA.*
-     
- 
- __Linear Discriminant Analysis__
+### Machine Learning
+Machine learning methods enable researchers to solve tasks computationally
+without explicit instructions by detecting patterns or relying on inference.
 
- Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. 
- It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance.
- It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. 
- The advantage of LDA over logistic regression is that is more stable with few examples and well-separated classes than logistic regression.
+__Principal Component Analysis__
+
+Identifying patterns between groups and over time requires finding sufficient
+representations of the data for particular methods. One method of reducing the
+dimensionality of high dimensional data is to identify the directions which explain
+most of the variance via eigendecomposition. 
+
+This requires converting the trajectory to an image (ie, trip grid, see [tripgrid-ref]) and performing principal component analysis on the image in 2D (Figure X) or 3D (Figure X).
+
+Some clusterings in the data are apparent if viewed by light/dark period. 
+
+![PCA of Fortasyn trajectory data. Daily trajectories (day and
+ night) were binned into 8x8 grids before applying PCA.](adds/pca_fortasyn-period.png)
+ *PCA of Fortasyn trajectory data. Daily trajectories (day and
+ night) were binned into 8x8 grids before applying PCA.*
  
- LDA assumes Gaussian distribution of attributes, and identifies the probability that a new set of inputs belong to a given class.
- It provides an identical view to PCA ..[explain] as shown in Figure X.
- 
-  ![lda](adds/lda_fortasyn-period.png)
-  *LDA*
- 
- __Clustering__
- 
- Clustering of trajectories is an extensive topic with applications in geospatial data, vehicle and pedestrian classification, as well as molecular identification.
- Some current methods are reviewed in ...
- K-Means clustering is an iterative unsupervised learning method that assigns a label to data points based on a distance function.
- 
- ![kmeans](adds/kmeans_pca-fortasyn.png)
- *K-Means clustering on the results of Figure X reveals a high accuracy of classification, with a few errors. Cluster labels are generated by the model.*
- 
+
+__Linear Discriminant Analysis__
+
+Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. 
+It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance.
+It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. 
+The advantage of LDA over logistic regression is that is more stable with few examples and well-separated classes than logistic regression.
+
+LDA assumes Gaussian distribution of attributes, and identifies the probability that a new set of inputs belong to a given class.
+It provides an identical view to PCA ..[explain] as shown in Figure X.
+
+![lda](adds/lda_fortasyn-period.png)
+*LDA*
+
+__Clustering__
+
+Clustering of trajectories is an extensive topic with applications in geospatial data, vehicle and pedestrian classification, as well as molecular identification.
+Some current methods are reviewed in ...
+K-Means clustering is an iterative unsupervised learning method that assigns a label to data points based on a distance function.
+
+![kmeans](adds/kmeans_pca-fortasyn.png)
+*K-Means clustering on the results of Figure X reveals a high accuracy of classification, with a few errors. Cluster labels are generated by the model.*
+
 __Gaussian Processes__
 
 Gaussian Processes is a non-parametric method which can be used to model 
 spatial trajectories [@cox_gaussian_nodate]. 
 
- __Hidden Markov-Models__
- 
- Transition probabilities are most commonly modelled with Hidden Markov Models
- (HMM) because of their ability to capture spatial and temporal dependencies.
- A recent introduction to methods is available at [@patterson_statistical_2017-1].
- HMMs have successfully been used to analyze movement of caribou [@franke_analysis_2004], fruit flies[@holzmann_hidden_2006],
- and tuna[@patterson_migration_2018], among others.
- Trajectories are typically modelled as bivariate time series consisting of step length and turn angle, regularly spaced in time.
- 
- Traja implements the rectangular spatial grid version of HMM with `traja.transitions()`.
- 
+__Hidden Markov-Models__
+
+Transition probabilities are most commonly modelled with Hidden Markov Models
+(HMM) because of their ability to capture spatial and temporal dependencies.
+A recent introduction to methods is available at [@patterson_statistical_2017-1].
+HMMs have successfully been used to analyze movement of caribou [@franke_analysis_2004], fruit flies[@holzmann_hidden_2006],
+and tuna[@patterson_migration_2018], among others.
+Trajectories are typically modelled as bivariate time series consisting of step length and turn angle, regularly spaced in time.
+
+Traja implements the rectangular spatial grid version of HMM with `traja.transitions()`.
+
 The probability of transition from each cell to another cell is stored as a probability within the transition matrix.
 This can further be plotted (eg, Figure X) with `traja.plot_transition_matrix()`.
 
@@ -293,10 +296,10 @@ $$x' = \frac{x - \bar{x}}{std(x)}$$
 
 To present the data as a sequence to a neural network, a sliding-window approach is desirable.
 A continuous multivariate time-series data $X$ of dimension $d$ with $n$ time-steps, $X = X_1, X_2, ..., X_n$.  Let $w$ be the window width, $s$ as the stride,  and $t$ as the start time of a sliding window in the data.
- 
- ![Transition matrix](adds/transition_matrix.png)
- *Transition matrix. Rows and columns are flattened histogram of a grid 20 cells high and 10 cells wide. Spatially adjacent grid cells are visible at a spacing of -11, -10, -9, 1, 10, and 11 cells from the diagonal. The intensity of pixels in the diagonal represents relative likelihood to stay in the same position.*
- 
+
+![Transition matrix](adds/transition_matrix.png)
+*Transition matrix. Rows and columns are flattened histogram of a grid 20 cells high and 10 cells wide. Spatially adjacent grid cells are visible at a spacing of -11, -10, -9, 1, 10, and 11 cells from the diagonal. The intensity of pixels in the diagonal represents relative likelihood to stay in the same position.*
+
 __Hierarchical Agglomerative Clustering__
 
 Clustering spatial trajectories has broad applications. 
@@ -313,13 +316,13 @@ A probabilistic graphical model of a spatial occupancy grid can be used to ident
 
 ### Convex Hull
 
- The convex hull of a subtrajectory is the set $X$ of points in the Euclidean plane that is the smallest convex set to include $X$.
- For computational efficiency, a geometric $k$-simplex 
- 
- [WIP]:: $\sigma = \[v_0,...,v_k\] \in \mathbb{R}^2$ is ...
- 
- [Insert convex hull method of Traja]
- 
+The convex hull of a subtrajectory is the set $X$ of points in the Euclidean plane that is the smallest convex set to include $X$.
+For computational efficiency, a geometric $k$-simplex 
+
+[WIP]:: $\sigma = \[v_0,...,v_k\] \in \mathbb{R}^2$ is ...
+
+[Insert convex hull method of Traja]
+
 # References
 
 [^1]: Nicolas Limare \url{http://nicolas.limare.net/pro/notes/2014/12/12_arit_speed/} notes that a 65\% speed-up is observed by reducing precision from pandas default double-precision (64-bytes) to single-precision (32-bytes).}
