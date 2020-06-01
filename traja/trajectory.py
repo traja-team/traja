@@ -721,12 +721,12 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
         trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
 
-    .. doctest::
+    .. doctest::  
 
         >>> from traja import generate, resample_time
         >>> df = generate()
         >>> resampled = resample_time(df, '50L') # 50 milliseconds
-        >>> resampled.head()
+        >>> resampled.head() # doctest: +NORMALIZE_WHITESPACE
                                          x         y
         time                                        
         1970-01-01 00:00:00.000   0.000000  0.000000
