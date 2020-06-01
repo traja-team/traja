@@ -5,8 +5,8 @@ Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Co
     :target: https://www.python.org/downloads/release/python-360/
     :alt: Python 3.6+
 
-.. |Travis| image:: https://travis-ci.org/justinshenk/traja.svg?branch=master
-    :target: https://travis-ci.org/justinshenk/traja
+.. |Travis| image:: https://travis-ci.org/travis-team/traja.svg?branch=master
+    :target: https://travis-ci.org/travis-team/traja
 
 .. |PyPI| image:: https://badge.fury.io/py/traja.svg
     :target: https://badge.fury.io/py/traja
