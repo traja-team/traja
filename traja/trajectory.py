@@ -728,7 +728,7 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
         >>> resampled = resample_time(df, '50L') # 50 milliseconds
         >>> resampled.head()
                                          x         y
-        time
+        time                                        
         1970-01-01 00:00:00.000   0.000000  0.000000
         1970-01-01 00:00:00.050   0.999571  4.293384
         1970-01-01 00:00:00.100  -1.298510  5.423373
