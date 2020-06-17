@@ -38,7 +38,7 @@ Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Co
 
 
 .. |Colab| image:: https://colab.research.google.com/assets/colab-badge.svg
-   :targe: http://colab.research.google.com/github/justinshenk/traja/blob/master/traja-demo.ipynb
+   :target: https://colab.research.google.com/github/justinshenk/traja/blob/master/demo.ipynb
 
 Traja is a Python library for trajectory analysis. It extends the capability of
 pandas DataFrame specific for animal trajectory analysis in 2D, and provides
