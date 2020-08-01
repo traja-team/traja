@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 plt.ioff()
 import matplotlib.style as style
 import matplotlib.backends.backend_qt5agg.FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar
 from PyQt5 import QtGui, QtWidgets, QtCore
 from PyQt5.QtCore import Qt, QThread, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QProgressBar, QMenu, QAction, QStatusBar
@@ -275,7 +276,7 @@ class PlottingWidget(QtWidgets.QMainWindow):
         # TODO: Move mapping to separate method
         if plot_kind == "Actogram":
             displacement = traja.trajectory.calc_displacement(self.df)
-            if TIME_WINDOW is not "None":
+            if TIME_WINDOW != "None":
                 displacement = displacement.rolling(TIME_WINDOW).mean()
                 # from pyqtgraph.Qt import QtGui, QtCore
             traja.plotting.plot_actogram(displacement, ax=ax, interactive=False)

@@ -87,7 +87,7 @@ def predict(
     model="lstm",
 ):  # pragma: no cover
     """Method for training and visualizing LSTM with trajectory datasets."""
-    if model is "lstm":
+    if model == "lstm":
         from traja.models.nn import TrajectoryLSTM
 
         TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
@@ -445,7 +445,7 @@ def plot(
         else:
             cbar_labels = trj.index[indices].values
         cbar_labels = np.round(cbar_labels, 6)
-        if fps is not None and fps > 0 and fps is not 1 and show_time:
+        if fps != None and fps > 0 and fps != 1 and show_time:
             cbar_labels = cbar_labels / fps
 
     cbar.set_ticks(indices)
