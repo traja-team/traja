@@ -33,9 +33,10 @@ def test_from_df():
     sequence_length = 5
     train_fraction = .25
     batch_size = 1
+    shift = 2
 
     train_loader, test_loader = traja.models.get_timeseries_data_loaders(df, sequence_length,
-                                                                         train_fraction, batch_size)
+                                                                         train_fraction, batch_size, shift)
 
     trainer = traja.models.Trainer(model, train_loader, test_loader, epochs=6, optimizer="adam",
                                    warmup_steps=warmup_steps)
