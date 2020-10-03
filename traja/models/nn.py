@@ -33,20 +33,21 @@ class TimeseriesDataset(Dataset):
     # with sufficiently long sequence lengths the
     # bias should even out.
 
-    def __init__(self, data_frame, sequence_length):
+    def __init__(self, data_frame, sequence_length, shift):
         self.data = data_frame.filter(items=['x', 'y'])
         self.sequence_length = sequence_length
+        self.shift = shift
 
     def __len__(self):
-        return int(self.data.shape[0] / self.sequence_length)
+        return int((self.data.shape[0] - self.shift) / self.sequence_length)
 
     def __getitem__(self, index):
         data = (self.data.values[index * self.sequence_length: (index + 1) * self.sequence_length],
-                self.data.values[index * self.sequence_length: (index + 1) * self.sequence_length])
+                self.data.values[index * self.sequence_length: (index + 1) * self.sequence_length + self.shift])
         return data
 
 
-def get_timeseries_data_loaders(data_frame, sequence_length, train_fraction, batch_size):
+def get_timeseries_data_loaders(data_frame, sequence_length, train_fraction, batch_size, shift):
 
     dataset_length = int(data_frame.shape[0] / sequence_length)
     indices = list(range(dataset_length))
@@ -57,7 +58,7 @@ def get_timeseries_data_loaders(data_frame, sequence_length, train_fraction, bat
     train_sampler = SubsetRandomSampler(train_indices)
     valid_sampler = SubsetRandomSampler(val_indices)
 
-    dataset = TimeseriesDataset(data_frame, sequence_length)
+    dataset = TimeseriesDataset(data_frame, sequence_length, shift)
 
     train_loader = DataLoader(dataset, batch_size=batch_size,
                               sampler=train_sampler)
