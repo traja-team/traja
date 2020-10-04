@@ -211,7 +211,6 @@ class Trainer:
 
     def test(self, epoch, save=True):
         self.model.eval()
-        correct = 0
         total = 0
         test_loss = 0
         with torch.no_grad():
@@ -225,7 +224,6 @@ class Trainer:
                 loss = self.criterion(outputs, labels)
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
-                correct += (predicted == labels.long()).sum().item()
                 test_loss += loss.item()
 
         if save:
@@ -235,7 +233,7 @@ class Trainer:
                 'epoch': epoch,
                 'test_loss': test_loss / total
             }, self.savepath.replace('.csv', '.pt'))
-        return correct / total, test_loss / total
+        return test_loss / total
 
 
 class LSTM(nn.Module):
