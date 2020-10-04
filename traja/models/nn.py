@@ -525,10 +525,9 @@ class Trainer:
         total = 0
         running_loss = 0
         old_time = time()
-        top5_accumulator = 0
         for batch, data in enumerate(self.train_loader):
             if batch % 10 == 0 and batch != 0:
-                print(batch, 'of', len(self.train_loader), 'processing time', time()-old_time, "top5_acc:" if self.compute_top_k else 'acc:', round(top5_accumulator/(batch),3) if self.compute_top_k else correct/total)
+                print(batch, 'of', len(self.train_loader), 'processing time', time()-old_time, 'acc:', correct/total)
                 old_time = time()
             inputs, labels = data
             inputs, labels = inputs.to(self.device).float(), labels.to(self.device).float()
