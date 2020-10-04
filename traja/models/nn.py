@@ -87,6 +87,7 @@ class LossMseWarmup:
         y_pred_slice = y_pred[:, self.warmup_steps:, :]
 
         # Calculate the Mean Squared Error and use it as loss.
+        print("Shapes", y_true_slice.shape, y_pred_slice.shape)
         mse = torch.mean(torch.square(y_true_slice - y_pred_slice))
 
         return mse
