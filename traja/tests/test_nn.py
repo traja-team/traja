@@ -15,13 +15,13 @@ import traja
 
 
 def test_from_df():
-    df = traja.generate(n=20)
+    df = traja.generate(n=599581)
 
     df = df.filter(items=['x', 'y'])
 
     save_path = 'temp/test'
 
-    warmup_steps = 1
+    warmup_steps = 50
 
     # Run 1
     timeseries_method = 'last_timestep'
@@ -33,9 +33,9 @@ def test_from_df():
                                      stats=['embed'],
                                      timeseries_method=timeseries_method)
 
-    sequence_length = 5
+    sequence_length = 2000
     train_fraction = .25
-    batch_size = 1
+    batch_size = 50
     shift = 2
 
     train_loader, test_loader = traja.models.get_timeseries_data_loaders(df, sequence_length,
