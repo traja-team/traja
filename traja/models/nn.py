@@ -369,6 +369,7 @@ class TimeseriesDataset(Dataset):
     # bias should even out.
 
     def __init__(self, data_frame, sequence_length, shift):
+        self.data = data_frame
         self.sequence_length = sequence_length
         self.shift = shift
 
