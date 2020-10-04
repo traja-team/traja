@@ -471,6 +471,9 @@ class Trainer:
         elif optimizer == "radam":
             print('Using radam')
             self.optimizer = RAdam(model.parameters())
+        elif optimizer == "RMSprop":
+            print('Using RMSprop')
+            self.optimizer = optim.RMSprop(model.parameters())
         else:
             raise ValueError('Unknown optimizer {}'.format(optimizer))
         self.opt_name = optimizer
