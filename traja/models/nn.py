@@ -417,12 +417,13 @@ class LossMseWarmup:
         self.warmup_steps = warmup_steps
 
     def __call__(self, y_pred, y_true):
+        print("Shapes", y_true, y_pred)
 
         y_true_slice = y_true[:, self.warmup_steps:, :]
         y_pred_slice = y_pred[:, self.warmup_steps:, :]
 
         # Calculate the Mean Squared Error and use it as loss.
-        print("Shapes", y_true_slice.shape, y_pred_slice.shape)
+        print("Shapes truncated", y_true_slice.shape, y_pred_slice.shape)
         mse = torch.mean(torch.square(y_true_slice - y_pred_slice))
 
         return mse
@@ -532,6 +533,7 @@ class Trainer:
                 old_time = time()
             inputs, labels = data
             inputs, labels = inputs.to(self.device).float(), labels.to(self.device).float()
+            print("Input, labels", inputs.shape, labels.shape)
 
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
