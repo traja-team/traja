@@ -177,7 +177,7 @@ class Trainer:
         for epoch in range(self.start_epoch, self.epochs):
 
             print('Start training epoch', epoch)
-            print("{} Epoch {}, training loss: {}, training accuracy: {}".format(datetime.now(), epoch, *self.train_epoch()))
+            print("{} Epoch {}, training loss: {}".format(datetime.now(), epoch, self.train_epoch()))
             self.test(epoch=epoch)
             if self.opt_name == "LRS":
                 print('LRS step')
@@ -186,13 +186,12 @@ class Trainer:
 
     def train_epoch(self):
         self.model.train()
-        correct = 0
         total = 0
         running_loss = 0
         old_time = time()
         for batch, data in enumerate(self.train_loader):
             if batch % 10 == 0 and batch != 0:
-                print(batch, 'of', len(self.train_loader), 'processing time', time()-old_time, 'acc:', correct/total)
+                print(batch, 'of', len(self.train_loader), 'processing time', time()-old_time, 'loss:', running_loss/total)
                 old_time = time()
             inputs, labels = data
             inputs, labels = inputs.to(self.device).float(), labels.to(self.device).float()
@@ -205,11 +204,10 @@ class Trainer:
             loss = self.criterion(outputs, labels)
             loss.backward()
             self.optimizer.step()
-            correct += (predicted == labels.long()).sum().item()
 
             running_loss += loss.item()
 
-        return running_loss/total, correct/total
+        return running_loss/total
 
     def test(self, epoch, save=True):
         self.model.eval()
