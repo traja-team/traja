@@ -81,7 +81,7 @@ class LossMseWarmup:
     def __init__(self, warmup_steps=50):
         self.warmup_steps = warmup_steps
 
-    def __call__(self):
+    def __call__(self, y_pred, y_true):
 
         y_true_slice = y_true[:, self.warmup_steps:, :]
         y_pred_slice = y_pred[:, self.warmup_steps:, :]
