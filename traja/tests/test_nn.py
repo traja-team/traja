@@ -16,6 +16,9 @@ import traja
 
 def test_from_df():
     df = traja.generate(n=20)
+
+    df = df.filter(items=['x', 'y'])
+
     save_path = 'temp/test'
 
     warmup_steps = 1
