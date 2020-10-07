@@ -381,29 +381,21 @@ class TimeseriesDataset(Dataset):
                 self.data.values[index * self.sequence_length + self.shift: (index + 1) * self.sequence_length + self.shift])
         return data
     
-def get_timeseries_data_loaders(data_frame, sequence_length, train_fraction, batch_size, shift):
+def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int, shift:int):
+    """ Scale the timeseries dataset and return train and test dataloaders
 
-    dataset_length = int(data_frame.shape[0] / sequence_length)
-    indices = list(range(dataset_length))
-    split = int(np.floor(train_fraction * dataset_length))
-    train_indices, val_indices = indices[split:], indices[:split]
+    Args:
+        data_frame (pd.DataFrame): Dataset 
+        sequence_length (int): Sequence length of time series for a single gradient step 
+        train_fraction (float): train data vs test data ratio
+        batch_size (int): Batch size of single gradient measure
+        shift (int): [description]
 
-    # Creating PT data samplers and loaders:
-    train_sampler = SubsetRandomSampler(train_indices)
-    valid_sampler = SubsetRandomSampler(val_indices)
-
-    dataset = TimeseriesDataset(data_frame, sequence_length, shift)
-
-    train_loader = DataLoader(dataset, batch_size=batch_size,
-                              sampler=train_sampler)
-    validation_loader = DataLoader(dataset, batch_size=batch_size,
-                                   sampler=valid_sampler)
-
-    train_loader.name = "time_series"
-
-    return train_loader, validation_loader
-
-def get_transformed_timeseries_dataloaders(data_frame, sequence_length, train_fraction, batch_size, shift):
+    Returns:
+        train_loader (Dataloader)
+        validation_loader(Dataloader)
+        scaler (instance): Data scaler instance
+    """
     
     dataset_length = int(data_frame.shape[0] / sequence_length)
     indices = list(range(dataset_length))
