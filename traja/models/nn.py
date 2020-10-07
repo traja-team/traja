@@ -17,7 +17,7 @@ import torch.optim as optim
 import os
 import pandas as pd
 from time import time
-
+from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
@@ -380,8 +380,7 @@ class TimeseriesDataset(Dataset):
         data = (self.data.values[index * self.sequence_length: (index + 1) * self.sequence_length],
                 self.data.values[index * self.sequence_length + self.shift: (index + 1) * self.sequence_length + self.shift])
         return data
-
-
+    
 def get_timeseries_data_loaders(data_frame, sequence_length, train_fraction, batch_size, shift):
 
     dataset_length = int(data_frame.shape[0] / sequence_length)
@@ -404,6 +403,29 @@ def get_timeseries_data_loaders(data_frame, sequence_length, train_fraction, bat
 
     return train_loader, validation_loader
 
+def get_transformed_timeseries_dataloaders(data_frame, sequence_length, train_fraction, batch_size, shift):
+    
+    dataset_length = int(data_frame.shape[0] / sequence_length)
+    indices = list(range(dataset_length))
+    split = int(np.floor(train_fraction * dataset_length))
+    train_indices, val_indices = indices[split:], indices[:split]
+
+    # Creating PT data samplers and loaders:
+    train_sampler = SubsetRandomSampler(train_indices)
+    valid_sampler = SubsetRandomSampler(val_indices)
+
+    dataset = TimeseriesDataset(data_frame, sequence_length, shift)
+    
+    # Dataset transformation
+    scaler = MinMaxScaler()
+    scaled_dataset = scaler.fit_transform(dataset)
+    
+    train_loader = DataLoader(scaled_dataset, batch_size=batch_size,
+                              sampler=train_sampler)
+    validation_loader = DataLoader(scaled_dataset, batch_size=batch_size,
+                                   sampler=valid_sampler)
+    train_loader.name = "time_series"
+    return train_loader, validation_loader, scaler
 
 class LossMseWarmup:
     """
