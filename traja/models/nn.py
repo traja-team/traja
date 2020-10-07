@@ -368,28 +368,26 @@ class TimeseriesDataset(Dataset):
     # with sufficiently long sequence lengths the
     # bias should even out.
 
-    def __init__(self, data_frame, sequence_length, shift):
+    def __init__(self, data_frame, sequence_length):
         self.data = data_frame
         self.sequence_length = sequence_length
-        self.shift = shift
 
     def __len__(self):
-        return int((self.data.shape[0] - self.shift) / self.sequence_length)
+        return int((self.data.shape[0]) / self.sequence_length)
 
     def __getitem__(self, index):
         data = (self.data.values[index * self.sequence_length: (index + 1) * self.sequence_length],
-                self.data.values[index * self.sequence_length + self.shift: (index + 1) * self.sequence_length + self.shift])
+                self.data.values[index * self.sequence_length : (index + 1) * self.sequence_length])
         return data
     
-def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int, shift:int):
-    """ Scale the timeseries dataset and return train and test dataloaders
+def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
+    """ Scale the timeseries dataset and generate train and test dataloaders
 
     Args:
         data_frame (pd.DataFrame): Dataset 
         sequence_length (int): Sequence length of time series for a single gradient step 
         train_fraction (float): train data vs test data ratio
         batch_size (int): Batch size of single gradient measure
-        shift (int): [description]
 
     Returns:
         train_loader (Dataloader)
@@ -406,7 +404,7 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
     train_sampler = SubsetRandomSampler(train_indices)
     valid_sampler = SubsetRandomSampler(val_indices)
 
-    dataset = TimeseriesDataset(data_frame, sequence_length, shift)
+    dataset = TimeseriesDataset(data_frame, sequence_length)
     
     # Dataset transformation
     scaler = MinMaxScaler()
