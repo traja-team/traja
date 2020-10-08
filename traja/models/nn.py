@@ -41,8 +41,8 @@ class TimeseriesDataset(Dataset):
         return int((self.data.shape[0]) / self.sequence_length)
 
     def __getitem__(self, index):
-        data = (self.data.values[index * self.sequence_length: (index + 1) * self.sequence_length],
-                self.data.values[index * self.sequence_length : (index + 1) * self.sequence_length])
+        data = (self.data[index * self.sequence_length: (index + 1) * self.sequence_length],
+                self.data[index * self.sequence_length : (index + 1) * self.sequence_length])
         return data
     
 def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
@@ -59,8 +59,10 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
         validation_loader(Dataloader)
         scaler (instance): Data scaler instance
     """
-    
-    dataset_length = int(data_frame.shape[0] / sequence_length)
+    # Dataset transformation
+    scaler = MinMaxScaler(copy=False)
+    scaled_dataset = scaler.fit_transform(data_frame.values)
+    dataset_length = int(scaled_dataset.shape[0] / sequence_length)
     indices = list(range(dataset_length))
     split = int(np.floor(train_fraction * dataset_length))
     train_indices, val_indices = indices[split:], indices[:split]
@@ -69,15 +71,11 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
     train_sampler = SubsetRandomSampler(train_indices)
     valid_sampler = SubsetRandomSampler(val_indices)
 
-    dataset = TimeseriesDataset(data_frame, sequence_length)
+    dataset = TimeseriesDataset(scaled_dataset, sequence_length)
     
-    # Dataset transformation
-    scaler = MinMaxScaler()
-    scaled_dataset = scaler.fit_transform(dataset)
-    
-    train_loader = DataLoader(scaled_dataset, batch_size=batch_size,
+    train_loader = DataLoader(dataset, batch_size=batch_size,
                               sampler=train_sampler)
-    validation_loader = DataLoader(scaled_dataset, batch_size=batch_size,
+    validation_loader = DataLoader(dataset, batch_size=batch_size,
                                    sampler=valid_sampler)
     train_loader.name = "time_series"
     return train_loader, validation_loader, scaler
