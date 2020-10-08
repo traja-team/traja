@@ -17,7 +17,7 @@ import torch.optim as optim
 import os
 import pandas as pd
 from time import time
-
+from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
@@ -33,22 +33,33 @@ class TimeseriesDataset(Dataset):
     # with sufficiently long sequence lengths the
     # bias should even out.
 
-    def __init__(self, data_frame, sequence_length, shift):
+    def __init__(self, data_frame, sequence_length):
         self.data = data_frame
         self.sequence_length = sequence_length
-        self.shift = shift
 
     def __len__(self):
-        return int((self.data.shape[0] - self.shift) / self.sequence_length)
+        return int((self.data.shape[0]) / self.sequence_length)
 
     def __getitem__(self, index):
         data = (self.data.values[index * self.sequence_length: (index + 1) * self.sequence_length],
-                self.data.values[index * self.sequence_length + self.shift: (index + 1) * self.sequence_length + self.shift])
+                self.data.values[index * self.sequence_length : (index + 1) * self.sequence_length])
         return data
+    
+def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
+    """ Scale the timeseries dataset and generate train and test dataloaders
 
+    Args:
+        data_frame (pd.DataFrame): Dataset 
+        sequence_length (int): Sequence length of time series for a single gradient step 
+        train_fraction (float): train data vs test data ratio
+        batch_size (int): Batch size of single gradient measure
 
-def get_timeseries_data_loaders(data_frame, sequence_length, train_fraction, batch_size, shift):
-
+    Returns:
+        train_loader (Dataloader)
+        validation_loader(Dataloader)
+        scaler (instance): Data scaler instance
+    """
+    
     dataset_length = int(data_frame.shape[0] / sequence_length)
     indices = list(range(dataset_length))
     split = int(np.floor(train_fraction * dataset_length))
@@ -58,17 +69,18 @@ def get_timeseries_data_loaders(data_frame, sequence_length, train_fraction, bat
     train_sampler = SubsetRandomSampler(train_indices)
     valid_sampler = SubsetRandomSampler(val_indices)
 
-    dataset = TimeseriesDataset(data_frame, sequence_length, shift)
-
-    train_loader = DataLoader(dataset, batch_size=batch_size,
+    dataset = TimeseriesDataset(data_frame, sequence_length)
+    
+    # Dataset transformation
+    scaler = MinMaxScaler()
+    scaled_dataset = scaler.fit_transform(dataset)
+    
+    train_loader = DataLoader(scaled_dataset, batch_size=batch_size,
                               sampler=train_sampler)
-    validation_loader = DataLoader(dataset, batch_size=batch_size,
+    validation_loader = DataLoader(scaled_dataset, batch_size=batch_size,
                                    sampler=valid_sampler)
-
     train_loader.name = "time_series"
-
-    return train_loader, validation_loader
-
+    return train_loader, validation_loader, scaler
 
 class LossMseWarmup:
     """
