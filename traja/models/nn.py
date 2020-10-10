@@ -20,8 +20,12 @@ import pandas as pd
 from time import time
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
+<<<<<<< Updated upstream
 from sklearn.model_selection import train_test_split
+=======
+>>>>>>> Stashed changes
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
+from sklearn.model_selection import train_test_split
 
 nb_steps = 10
 
@@ -122,6 +126,10 @@ def get_transformed_timeseries_dataloaders_(data_frame: pd.DataFrame, sequence_l
                                    sampler=valid_sampler, drop_last=False )
     train_loader.name = "time_series"
     return train_loader, validation_loader, train_dataset_scaler, test_dataset_scaler
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 class LossMseWarmup:
     """
     Calculate the Mean Squared Error between y_true and y_pred,
