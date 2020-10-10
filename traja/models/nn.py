@@ -14,13 +14,286 @@ except ImportError:
     )
 import torch.nn as nn
 import torch.optim as optim
+<<<<<<< Updated upstream
 
+=======
+import os
+import pandas as pd
+from time import time
+from sklearn.preprocessing import MinMaxScaler
+from datetime import datetime
+from sklearn.model_selection import train_test_split
+from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
+>>>>>>> Stashed changes
 
 nb_steps = 10
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+<<<<<<< Updated upstream
+=======
+class TimeseriesDataset(Dataset):
+    # Loads the dataset and splits it into equally sized chunks.
+    # Whereas this can lead to uneven training data,
+    # with sufficiently long sequence lengths the
+    # bias should even out.
+
+    def __init__(self, data_frame, sequence_length):
+        self.data = data_frame
+        self.sequence_length = sequence_length
+
+    def __len__(self):
+        return int((self.data.shape[0]) / self.sequence_length)
+
+    def __getitem__(self, index):
+        data = self.data[index * self.sequence_length: (index + 1) * self.sequence_length]
+        return data
+    
+def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
+    """ Scale the timeseries dataset and generate train and test dataloaders
+
+    Args:
+        data_frame (pd.DataFrame): Dataset 
+        sequence_length (int): Sequence length of time series for a single gradient step 
+        train_fraction (float): train data vs test data ratio
+        batch_size (int): Batch size of single gradient measure
+
+    Returns:
+        train_loader (Dataloader)
+        validation_loader(Dataloader)
+        scaler (instance): Data scaler instance
+    """
+    # Dataset transformation
+    scaler = MinMaxScaler(copy=False)
+    # scaler.fit(data_frame.values)
+    # scaled_dataset = scaler.fit_transform(data_frame.values)
+    dataset_length = int(data_frame.values.shape[0] / sequence_length)
+    indices = list(range(dataset_length))
+    split = int(np.floor(train_fraction * dataset_length))
+    train_indices, val_indices = indices[split:], indices[:split]
+
+    # Creating PT data samplers and loaders:
+    train_sampler = SubsetRandomSampler(train_indices)
+    valid_sampler = SubsetRandomSampler(val_indices)
+
+    dataset = TimeseriesDataset(data_frame.values, sequence_length)
+    
+    train_loader = DataLoader(dataset, batch_size=batch_size,
+                              sampler=train_sampler)
+    validation_loader = DataLoader(dataset, batch_size=batch_size,
+                                   sampler=valid_sampler)
+    train_loader.name = "time_series"
+    return train_loader, validation_loader, scaler
+
+def get_transformed_timeseries_dataloaders_(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
+    """ Scale the timeseries dataset and generate train and test dataloaders
+
+    Args:
+        data_frame (pd.DataFrame): Dataset 
+        sequence_length (int): Sequence length of time series for a single gradient step 
+        train_fraction (float): train data vs test data ratio
+        batch_size (int): Batch size of single gradient measure
+
+    Returns:
+        train_loader (Dataloader)
+        validation_loader(Dataloader)
+        scaler (instance): Data scaler instance
+    """
+    # Split the data into train and test:
+    train_dataset, test_dataset = train_test_split(data_frame.values, train_size=train_fraction)
+    dataset_length = int(data_frame.values.shape[0] / sequence_length)
+    indices = list(range(dataset_length))
+    split = int(np.floor(train_fraction * dataset_length))
+    train_indices, val_indices = indices[split:], indices[:split]
+    
+    # Creating PT data samplers and loaders:
+    train_sampler = SubsetRandomSampler(train_indices)
+    valid_sampler = SubsetRandomSampler(val_indices)
+
+    # Dataset transformation; Train and test should have different scaler instances;
+    train_dataset_scaler = MinMaxScaler(copy=False)
+    scaled_train_dataset = train_dataset_scaler.fit_transform(train_dataset)
+    test_dataset_scaler = MinMaxScaler(copy=False)
+    scaled_test_dataset = test_dataset_scaler.fit_transform(test_dataset)
+
+    # Convert transformed data into 3D tensor (batch_size,sequence_length, num_features)
+    train_dataset_3d = TimeseriesDataset(scaled_train_dataset, sequence_length)
+    test_dataset_3d = TimeseriesDataset(scaled_test_dataset, sequence_length)
+    
+    train_loader = DataLoader(train_dataset_3d, batch_size=batch_size,
+                              sampler=train_sampler, drop_last=False )
+    validation_loader = DataLoader(test_dataset_3d, batch_size=batch_size,
+                                   sampler=valid_sampler, drop_last=False )
+    train_loader.name = "time_series"
+    return train_loader, validation_loader, train_dataset_scaler, test_dataset_scaler
+class LossMseWarmup:
+    """
+    Calculate the Mean Squared Error between y_true and y_pred,
+    but ignore the beginning "warmup" part of the sequences.
+
+    y_true is the desired output.
+    y_pred is the model's output.
+    """
+    def __init__(self, warmup_steps=50):
+        self.warmup_steps = warmup_steps
+
+    def __call__(self, y_pred, y_true):
+
+        y_true_slice = y_true[:, self.warmup_steps:, :]
+        y_pred_slice = y_pred[:, self.warmup_steps:, :]
+
+        # Calculate the Mean Squared Error and use it as loss.
+        mse = torch.mean(torch.square(y_true_slice - y_pred_slice))
+
+        return mse
+
+
+class Trainer:
+    def __init__(self, model,
+                 train_loader,
+                 test_loader,
+                 epochs=200,
+                 batch_size=60,
+                 run_id=0,
+                 logs_dir='logs',
+                 device='cpu',
+                 optimizer='None',
+                 plot=True,
+                 downsampling=None,
+                 warmup_steps=50):
+        self.device = device
+        self.model = model
+        self.epochs = epochs
+        self.plot = plot
+
+        self.train_loader = train_loader
+        self.test_loader = test_loader
+
+        self.warmup_steps = warmup_steps
+
+        self.criterion = LossMseWarmup(self.warmup_steps)
+        print('Checking for optimizer for {}'.format(optimizer))
+        if optimizer == "adam":
+            print('Using adam')
+            self.optimizer = optim.Adam(model.parameters())
+        elif optimizer == "adam_lr":
+            print("Using adam with higher learning rate")
+            self.optimizer = optim.Adam(model.parameters(), lr=0.01)
+        elif optimizer == 'adam_lr2':
+            print('Using adam with to large learning rate')
+            self.optimizer = optim.Adam(model.parameters(), lr=0.0001)
+        elif optimizer == "SGD":
+            print('Using SGD')
+            self.optimizer = optim.SGD(model.parameters(), momentum=0.9, weight_decay=5e-4)
+        elif optimizer == "LRS":
+            print('Using LRS')
+            self.optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+            self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, self.epochs // 3)
+        elif optimizer == "radam":
+            print('Using radam')
+            self.optimizer = RAdam(model.parameters())
+        elif optimizer == "RMSprop":
+            print('Using RMSprop')
+            self.optimizer = optim.RMSprop(model.parameters())
+        else:
+            raise ValueError('Unknown optimizer {}'.format(optimizer))
+        self.opt_name = optimizer
+        save_dir = os.path.join(logs_dir, model.name, train_loader.name)
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        self.savepath = os.path.join(save_dir, f'{model.name}_bs{batch_size}_e{epochs}_dspl{downsampling}_id{run_id}.csv')
+        self.experiment_done = False
+        if os.path.exists(self.savepath):
+            trained_epochs = len(pd.read_csv(self.savepath, sep=';'))
+
+            if trained_epochs >= epochs:
+                self.experiment_done = True
+                print(f'Experiment Logs for the exact same experiment with identical run_id was detected, training will be skipped, consider using another run_id')
+        if os.path.exists((self.savepath.replace('.csv', '.pt'))):
+            self.model.load_state_dict(torch.load(self.savepath.replace('.csv', '.pt'))['model_state_dict'])
+            self.model = self.model.to(self.device)
+
+            self.optimizer.load_state_dict(torch.load(self.savepath.replace('.csv', '.pt'))['optimizer'])
+            self.start_epoch = torch.load(self.savepath.replace('.csv', '.pt'))['epoch'] + 1
+        else:
+
+            self.start_epoch = 0
+            self.model = self.model.to(self.device)
+
+
+    def _infer_initial_epoch(self, savepath):
+        if not os.path.exists(savepath):
+            return 0
+        else:
+            df = pd.read_csv(savepath, sep=';', index_col=0)
+            print(len(df)+1)
+            return len(df)
+
+    def train(self):
+        if self.experiment_done:
+            return
+        for epoch in range(self.start_epoch, self.epochs):
+
+            print('Start training epoch', epoch)
+            print("{} Epoch {}, training loss: {}".format(datetime.now(), epoch, self.train_epoch()))
+            self.test(epoch=epoch)
+            if self.opt_name == "LRS":
+                print('LRS step')
+                self.lr_scheduler.step()
+        return self.savepath+'.csv'
+
+    def train_epoch(self):
+        self.model.train()
+        total = 0
+        running_loss = 0
+        old_time = time()
+        for batch, data in enumerate(self.train_loader):
+            if batch % 10 == 0 and batch != 0:
+                print(batch, 'of', len(self.train_loader), 'processing time', time()-old_time, 'loss:', running_loss/total)
+                old_time = time()
+            inputs= data.to(self.device).float()
+
+            self.optimizer.zero_grad()
+            outputs = self.model(inputs)
+            # For time series step prediction, targets are inputs
+            loss = self.criterion(outputs, inputs)
+            loss.backward()
+            self.optimizer.step()
+
+            running_loss += loss.item()
+            # Increment number of batches
+            total += 1
+        return running_loss/total
+
+    def test(self, epoch, save=True):
+        self.model.eval()
+        total = 0
+        test_loss = 0
+        with torch.no_grad():
+            for batch, data in enumerate(self.test_loader):
+                if batch % 10 == 0:
+                    print('Processing eval batch', batch,'of', len(self.test_loader))
+                inputs = data.to(self.device).float()
+
+                outputs = self.model(inputs)
+                # For time series step prediction, targets are inputs 
+                loss = self.criterion(outputs, inputs)
+                total += 1
+                test_loss += loss.item()
+
+        if save:
+            torch.save({
+                'model_state_dict': self.model.state_dict(),
+                'optimizer': self.optimizer.state_dict(),
+                'epoch': epoch,
+                'test_loss': test_loss / total
+            }, self.savepath.replace('.csv', '.pt'))
+        return test_loss / total
+
+
+>>>>>>> Stashed changes
 class LSTM(nn.Module):
     def __init__(self):
         super(LSTM, self).__init__()
