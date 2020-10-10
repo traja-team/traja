@@ -14,9 +14,7 @@ except ImportError:
     )
 import torch.nn as nn
 import torch.optim as optim
-<<<<<<< Updated upstream
 
-=======
 import os
 import pandas as pd
 from time import time
@@ -24,15 +22,12 @@ from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
->>>>>>> Stashed changes
 
 nb_steps = 10
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-<<<<<<< Updated upstream
-=======
 class TimeseriesDataset(Dataset):
     # Loads the dataset and splits it into equally sized chunks.
     # Whereas this can lead to uneven training data,
@@ -293,7 +288,6 @@ class Trainer:
         return test_loss / total
 
 
->>>>>>> Stashed changes
 class LSTM(nn.Module):
     def __init__(self):
         super(LSTM, self).__init__()
