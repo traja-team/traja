@@ -123,10 +123,7 @@ def get_transformed_timeseries_dataloaders_(data_frame: pd.DataFrame, sequence_l
                                    sampler=valid_sampler, drop_last=False )
     train_loader.name = "time_series"
     return train_loader, validation_loader, train_dataset_scaler, test_dataset_scaler
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
 class LossMseWarmup:
     """
     Calculate the Mean Squared Error between y_true and y_pred,
@@ -292,20 +289,41 @@ class Trainer:
             }, self.savepath.replace('.csv', '.pt'))
         return test_loss / total
 
-
 class LSTM(nn.Module):
-    def __init__(self):
+    """ Deep LSTM network. This implementation
+    returns output_size outputs.
+    Args:
+        input_size: The number of expected features in the input `x`
+        hidden_size: The number of features in the hidden state `h`
+        num_layers: Number of recurrent layers. E.g., setting ``num_layers=2``
+            would mean stacking two LSTMs together to form a `stacked LSTM`,
+            with the second LSTM taking in outputs of the first LSTM and
+            computing the final results. Default: 1
+        output_size: The number of output dimensions
+        dropout: If non-zero, introduces a `Dropout` layer on the outputs of each
+            LSTM layer except the last layer, with dropout probability equal to
+            :attr:`dropout`. Default: 0
+        bidirectional: If ``True``, becomes a bidirectional LSTM. Default: ``False``
+    """
+
+    name = "LSTM"
+
+    def __init__(self, input_size: int, hidden_size: int, num_layers: int,
+                 output_size: int, dropout: float, bidirectional: bool):
         super(LSTM, self).__init__()
-        self.lstm = nn.LSTM(2, 100)
-        self.head = nn.Linear(100, 2)
+
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
+                            num_layers=num_layers, dropout=dropout,
+                            bidirectional=bidirectional)
+
+        self.head = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        outputs, states = self.lstm(x)
-        outputs = outputs.reshape(x.shape[0] * x.shape[1], -1)
-        pred = self.head(outputs)
-
-        return pred
-
+        x, states = self.lstm(x)
+        #x = x.permute([1, 0, 2])
+        #x = x.reshape(x.shape[0], x.shape[1] * x.shape[2])
+        x = self.head(x)
+        return x
 
 class TrajectoryLSTM:
     def __init__(
