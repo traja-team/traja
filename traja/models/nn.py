@@ -20,10 +20,7 @@ import pandas as pd
 from time import time
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
-<<<<<<< Updated upstream
 from sklearn.model_selection import train_test_split
-=======
->>>>>>> Stashed changes
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 from sklearn.model_selection import train_test_split
 
