@@ -14,7 +14,6 @@ except ImportError:
     )
 import torch.nn as nn
 import torch.optim as optim
-
 import os
 import pandas as pd
 from time import time
@@ -22,31 +21,74 @@ from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
-from sklearn.model_selection import train_test_split
+import torchvision.transforms as transforms
 
 nb_steps = 10
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class TimeseriesDataset(Dataset):
-    # Loads the dataset and splits it into equally sized chunks.
-    # Whereas this can lead to uneven training data,
-    # with sufficiently long sequence lengths the
-    # bias should even out.
+class DataSequenceGenerator(torch.utils.data.Dataset):
 
-    def __init__(self, data_frame, sequence_length):
-        self.data = data_frame
-        self.sequence_length = sequence_length
+    """
+        Support class for the loading and batching of sequences of samples
 
+        Args:
+            dataset (Tensor): Tensor containing all the samples
+            sequence_length (int): length of the analyzed sequence by the LSTM
+            transforms (object torchvision.transform): Pytorch's transforms used to process the data
+    """
+
+    ##  Constructor
+    def __init__(self, dataset, batch_size, sequence_length, transforms=None):
+        self.dataset = dataset
+        self.seq_length = sequence_length
+        self.transforms = transforms # List to tensors
+        self.batch_size = batch_size
+
+    ##  Override total dataset's length getter
     def __len__(self):
-        return int((self.data.shape[0]) / self.sequence_length)
+        return self.dataset.__len__()
 
-    def __getitem__(self, index):
-        data = self.data[index * self.sequence_length: (index + 1) * self.sequence_length]
-        return data
-    
-def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
+    ##  Override single items' getter
+    def __getitem__(self, idx):
+        # if idx + self.seq_length > self.__len__():
+        #     if self.transforms is not None:
+        #         item = torch.zeros(self.seq_length, self.dataset[0].__len__())
+        #         item[:self.__len__()-idx] = self.transforms(self.dataset[idx:])
+        #         return item, item
+        #     else:
+        #         item = []
+        #         item[:self.__len__()-idx] = self.dataset[idx:]
+        #         return item, item
+        # else:
+        if self.transforms is not None:
+            return self.transforms(self.dataset[idx:idx+self.seq_length]), self.transforms(self.dataset[idx+self.seq_length:idx+self.seq_length+1])
+        else:
+            return self.dataset[idx:idx+self.seq_length], self.dataset[idx+self.seq_length:idx+self.seq_length+1]
+
+class DataLoaderLSTM:
+    def __init__(self,dataset,batch_size, seq_length, num_workers=6):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.seq_length = seq_length
+        self.num_workers = num_workers
+        self.name = None
+    def listToTensor(list):
+        tensor = torch.empty(list.__len__(), list[0].__len__())
+        for i in range(list.__len__()):
+            tensor[i, :] = torch.FloatTensor(list[i])
+        return tensor
+
+    def load(self):
+        
+        data_transform = transforms.Lambda(lambda x: self.__class__.listToTensor(x))
+        dataset = DataSequenceGenerator(self.dataset, self.batch_size, self.seq_length, transforms=data_transform)
+        data_loader = torch.utils.data.DataLoader(dataset, self.batch_size, shuffle=False, num_workers=self.num_workers)
+        setattr( data_loader, 'name', 'time_series' )
+        return data_loader
+
+def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int, num_workers:int):
     """ Scale the timeseries dataset and generate train and test dataloaders
 
     Args:
@@ -60,27 +102,26 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
         validation_loader(Dataloader)
         scaler (instance): Data scaler instance
     """
-    # Dataset transformation
-    scaler = MinMaxScaler(copy=False)
-    # scaler.fit(data_frame.values)
-    # scaled_dataset = scaler.fit_transform(data_frame.values)
-    dataset_length = int(data_frame.values.shape[0] / sequence_length)
-    indices = list(range(dataset_length))
-    split = int(np.floor(train_fraction * dataset_length))
-    train_indices, val_indices = indices[split:], indices[:split]
-
-    # Creating PT data samplers and loaders:
-    train_sampler = SubsetRandomSampler(train_indices)
-    valid_sampler = SubsetRandomSampler(val_indices)
-
-    dataset = TimeseriesDataset(data_frame.values, sequence_length)
     
-    train_loader = DataLoader(dataset, batch_size=batch_size,
-                              sampler=train_sampler)
-    validation_loader = DataLoader(dataset, batch_size=batch_size,
-                                   sampler=valid_sampler)
-    train_loader.name = "time_series"
-    return train_loader, validation_loader, scaler
+    # Split the dataset into train and val
+    train,test = train_test_split(data_frame.values,train_size=train_fraction)
+
+    # Train Dataset transformation
+    train_scaler = MinMaxScaler(copy=False)
+    train_scaler_fit = train_scaler.fit(train)
+    train_scaled_dataset = train_scaler_fit.transform(train)
+
+    # Test Dataset transformation 
+    val_scaler = MinMaxScaler(copy=False)
+    val_scaler_fit = val_scaler.fit(test)
+    val_scaled_dataset = val_scaler_fit.transform(test)
+
+    # Dataset and Dataloader for training and validation
+    train_loader = DataLoaderLSTM(train_scaled_dataset,batch_size,sequence_length,num_workers=num_workers)
+    validation_loader = DataLoaderLSTM(val_scaled_dataset,batch_size,sequence_length,num_workers=num_workers) 
+    # train_loader.name = "time_series"
+
+    return train_loader.load(), validation_loader.load(), train_scaler_fit, val_scaler_fit
 
 def get_transformed_timeseries_dataloaders_(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
     """ Scale the timeseries dataset and generate train and test dataloaders
@@ -145,6 +186,22 @@ class LossMseWarmup:
 
         return mse
 
+class LossMse:
+    """
+    Calculate the Mean Squared Error between y_true and y_pred
+
+    y_true is the desired output.
+    y_pred is the model's output.
+    """
+    def __init__(self,warmup_steps=None):
+        self.warmup_steps = warmup_steps
+
+    def __call__(self, y_pred, y_true):
+
+        # Calculate the Mean Squared Error and use it as loss.
+        mse = torch.mean(torch.square(y_true - y_pred))
+
+        return mse
 
 class Trainer:
     def __init__(self, model,
@@ -166,10 +223,11 @@ class Trainer:
 
         self.train_loader = train_loader
         self.test_loader = test_loader
-
         self.warmup_steps = warmup_steps
-
-        self.criterion = LossMseWarmup(self.warmup_steps)
+        if self.warmup_steps!=None: 
+            self.criterion = LossMseWarmup(self.warmup_steps)
+        else:
+            self.criterion = LossMse(self.warmup_steps) # warmup_steps == None
         print('Checking for optimizer for {}'.format(optimizer))
         if optimizer == "adam":
             print('Using adam')
@@ -247,19 +305,19 @@ class Trainer:
         running_loss = 0
         old_time = time()
         for batch, data in enumerate(self.train_loader):
+            
+            inputs, targets= data[0].to(self.device).float(), data[1].to(self.device).float()
+            self.optimizer.zero_grad()
+            outputs = self.model(inputs)
+            loss = self.criterion(outputs, targets)
+            loss.backward()
+            self.optimizer.step()
+            running_loss += loss.item()
+
             if batch % 10 == 0 and batch != 0:
                 print(batch, 'of', len(self.train_loader), 'processing time', time()-old_time, 'loss:', running_loss/total)
                 old_time = time()
-            inputs= data.to(self.device).float()
 
-            self.optimizer.zero_grad()
-            outputs = self.model(inputs)
-            # For time series step prediction, targets are inputs
-            loss = self.criterion(outputs, inputs)
-            loss.backward()
-            self.optimizer.step()
-
-            running_loss += loss.item()
             # Increment number of batches
             total += 1
         return running_loss/total
@@ -289,9 +347,12 @@ class Trainer:
             }, self.savepath.replace('.csv', '.pt'))
         return test_loss / total
 
+
 class LSTM(nn.Module):
     """ Deep LSTM network. This implementation
     returns output_size outputs.
+
+
     Args:
         input_size: The number of expected features in the input `x`
         hidden_size: The number of features in the hidden state `h`
@@ -314,16 +375,19 @@ class LSTM(nn.Module):
 
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
                             num_layers=num_layers, dropout=dropout,
-                            bidirectional=bidirectional)
+                            bidirectional=bidirectional, )
 
         self.head = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        x, states = self.lstm(x)
-        #x = x.permute([1, 0, 2])
-        #x = x.reshape(x.shape[0], x.shape[1] * x.shape[2])
+        x, state = self.lstm(x)
+        # x = x.permute([1, 0, 2])
+        # x = x.reshape(x.shape[0], x.shape[1] * x.shape[2])
+        # Use the last hidden state of last layer
+        x = state[0][-1]  # (batch_size,hidden_dim) 
         x = self.head(x)
         return x
+
 
 class TrajectoryLSTM:
     def __init__(
@@ -408,11 +472,6 @@ class TrajectoryLSTM:
         else:
             self._plot()
             return self.fig
-
-
-import torch
-import torch.nn as nn
-
 
 def make_mlp(dim_list, activation="relu", batch_norm=True, dropout=0):
     layers = []
@@ -984,7 +1043,6 @@ class TrajectoryGenerator(nn.Module):
         pred_traj_fake_rel, final_decoder_h = decoder_out
 
         return pred_traj_fake_rel
-
 
 class TrajectoryDiscriminator(nn.Module):
     def __init__(
