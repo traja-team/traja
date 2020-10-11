@@ -182,48 +182,6 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
                                            random_sampler= None, num_workers=num_workers) 
         return train_loader.load(), validation_loader.load(), train_scaler_fit, val_scaler_fit
 
-def get_transformed_timeseries_dataloaders_(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
-    """ Scale the timeseries dataset and generate train and test dataloaders
-
-    Args:
-        data_frame (pd.DataFrame): Dataset 
-        sequence_length (int): Sequence length of time series for a single gradient step 
-        train_fraction (float): train data vs test data ratio
-        batch_size (int): Batch size of single gradient measure
-
-    Returns:
-        train_loader (Dataloader)
-        validation_loader(Dataloader)
-        scaler (instance): Data scaler instance
-    """
-    # Split the data into train and test:
-    train_dataset, test_dataset = train_test_split(data_frame.values, train_size=train_fraction)
-    dataset_length = int(data_frame.values.shape[0] / sequence_length)
-    indices = list(range(dataset_length))
-    split = int(np.floor(train_fraction * dataset_length))
-    train_indices, val_indices = indices[split:], indices[:split]
-    
-    # Creating PT data samplers and loaders:
-    train_sampler = SubsetRandomSampler(train_indices)
-    valid_sampler = SubsetRandomSampler(val_indices)
-
-    # Dataset transformation; Train and test should have different scaler instances;
-    train_dataset_scaler = MinMaxScaler(copy=False)
-    scaled_train_dataset = train_dataset_scaler.fit_transform(train_dataset)
-    test_dataset_scaler = MinMaxScaler(copy=False)
-    scaled_test_dataset = test_dataset_scaler.fit_transform(test_dataset)
-
-    # Convert transformed data into 3D tensor (batch_size,sequence_length, num_features)
-    train_dataset_3d = TimeseriesDataset(scaled_train_dataset, sequence_length)
-    test_dataset_3d = TimeseriesDataset(scaled_test_dataset, sequence_length)
-    
-    train_loader = DataLoader(train_dataset_3d, batch_size=batch_size,
-                              sampler=train_sampler, drop_last=False )
-    validation_loader = DataLoader(test_dataset_3d, batch_size=batch_size,
-                                   sampler=valid_sampler, drop_last=False )
-    train_loader.name = "time_series"
-    return train_loader, validation_loader, train_dataset_scaler, test_dataset_scaler
-
 class LossMseWarmup:
     """
     Calculate the Mean Squared Error between y_true and y_pred,
@@ -436,15 +394,13 @@ class LSTM(nn.Module):
 
         self.head = nn.Linear(hidden_size, output_size)
 
-    def forward(self, x):
+    def forward(self, x): 
+        # lstm(batch_size,seq_length,hidden_dim) ---> fc(hidden_dim,output_dim)
         x, state = self.lstm(x)
-        # x = x.permute([1, 0, 2])
-        # x = x.reshape(x.shape[0], x.shape[1] * x.shape[2])
         # Use the last hidden state of last layer
-        x = state[0][-1]  # (batch_size,hidden_dim) 
+        x = state[0][-1]  
         x = self.head(x)
         return x
-
 
 class TrajectoryLSTM:
     def __init__(
