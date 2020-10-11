@@ -70,7 +70,7 @@ class DataSequenceGenerator(torch.utils.data.Dataset):
 
     # Override total dataset's length getter
     def __len__(self):
-        return self.dataset.__len__()
+        return self.dataset.__len__()-self.seq_length
 
     # Override single items' getter
     def __getitem__(self, idx):
@@ -117,6 +117,7 @@ class DataLoaderLSTM:
         """
         data_transform = transforms.Lambda(lambda x: self.__class__.listToTensor(x))
         dataset = DataSequenceGenerator(self.dataset, self.batch_size, self.seq_length, transforms=data_transform)
+        # dataset = DataSequenceGenerator(self.dataset, self.batch_size, self.seq_length, transforms=None)
         if random_sampler!=None:
             data_loader = torch.utils.data.DataLoader(dataset, self.batch_size, shuffle=False, sampler = random_sampler, num_workers=self.num_workers)
         else:
@@ -164,18 +165,12 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
         # Creating PT data samplers and loaders:
         train_sampler = SubsetRandomSampler(train_indices)
         valid_sampler = SubsetRandomSampler(val_indices)
-        # dataset = TimeseriesDataset(concat_dataset, sequence_length)
         
-        # train_loader = DataLoader(dataset, batch_size=batch_size,
-        #                         sampler=train_sampler)
-        # validation_loader = DataLoader(dataset, batch_size=batch_size,
-        #                             sampler=valid_sampler)
-        # train_loader.name = "time_series"
         # Sequential  Dataloader for training and validation
         train_loader = DataLoaderLSTM(train_scaled_dataset,batch_size,sequence_length, 
                                       random_sampler= train_sampler, num_workers=num_workers)
         validation_loader = DataLoaderLSTM(val_scaled_dataset,batch_size,sequence_length, 
-                                           random_sampler = valid_sampler, num_workers=num_workers)
+                                           random_sampler= valid_sampler, num_workers=num_workers)
 
         return train_loader.load(), validation_loader.load(), train_scaler_fit, val_scaler_fit
     
@@ -184,7 +179,7 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
         train_loader = DataLoaderLSTM(train_scaled_dataset,batch_size,sequence_length, 
                                       random_sampler= None, num_workers=num_workers)
         validation_loader = DataLoaderLSTM(val_scaled_dataset,batch_size,sequence_length, 
-                                           random_sampler = None, num_workers=num_workers) 
+                                           random_sampler= None, num_workers=num_workers) 
         return train_loader.load(), validation_loader.load(), train_scaler_fit, val_scaler_fit
 
 def get_transformed_timeseries_dataloaders_(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
@@ -394,11 +389,9 @@ class Trainer:
             for batch, data in enumerate(self.test_loader):
                 if batch % 10 == 0:
                     print('Processing eval batch', batch,'of', len(self.test_loader))
-                inputs = data.to(self.device).float()
-
+                inputs, targets = data[0].to(self.device).float(), data[1].to(self.device).float()
                 outputs = self.model(inputs)
-                # For time series step prediction, targets are inputs 
-                loss = self.criterion(outputs, inputs)
+                loss = self.criterion(outputs, targets)
                 total += 1
                 test_loss += loss.item()
 
