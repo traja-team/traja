@@ -5,6 +5,7 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
+from torch.utils.data import sampler
 
 try:
     import torch
@@ -88,15 +89,18 @@ class DataLoaderLSTM:
             batch_size (int): Batch size
             seq_length (int): Sequence length at each batch
             num_workers (int, optional): Number of subprocesses to deploy for dataloading. Defaults to 6.
-            random_sampler (Sampler object): 
+            random_sampler (Sampler instance name): If !=None, Random sampling of batches, otherwise Sequential. Defaults to None.
+            dir_name (str): Target folder name where the model will be saved after training: './logs/<model_name>/<dir_name>'
         """
         
-    def __init__(self,dataset: np.array, batch_size: int, seq_length: int, random_sampler: str = None, num_workers: int=6):
+    def __init__(self,dataset: np.array, batch_size: int, seq_length: int, random_sampler: str=None, dir_name: str=None, num_workers: int=6):
         
         self.dataset = dataset
         self.batch_size = batch_size
         self.seq_length = seq_length
         self.num_workers = num_workers
+        self.random_sampler = random_sampler
+        self.dir_name = dir_name
         self.name = None
     
     def listToTensor(list):
@@ -105,27 +109,24 @@ class DataLoaderLSTM:
             tensor[i, :] = torch.FloatTensor(list[i])
         return tensor
 
-    def load(self, random_sampler: str=None):
+    def load(self):
         """Load the dataset using corresponding sampler
-
-        Args:
-            random_sampler (Sampler instance name): If !=None, Random sampling of batches, otherwise Sequential. Defaults to None.
-
         Returns:
             [torch.utils.data.Dataloader]: Dataloader
         """
         data_transform = transforms.Lambda(lambda x: self.__class__.listToTensor(x))
         dataset = DataSequenceGenerator(self.dataset, self.batch_size, self.seq_length, transforms=data_transform)
-        # dataset = DataSequenceGenerator(self.dataset, self.batch_size, self.seq_length, transforms=None)
-        if random_sampler!=None:
-            data_loader = torch.utils.data.DataLoader(dataset, self.batch_size, shuffle=False, sampler = random_sampler, num_workers=self.num_workers)
+        
+        if self.random_sampler!=None:
+            data_loader = torch.utils.data.DataLoader(dataset, self.batch_size, shuffle=False, sampler = self.random_sampler, num_workers=self.num_workers)
         else:
             data_loader = torch.utils.data.DataLoader(dataset, self.batch_size, shuffle=False, num_workers=self.num_workers)
-
-        setattr( data_loader, 'name', 'time_series' )
+        
+        # Directory where the model will be saved
+        setattr( data_loader, 'name', self.dir_name )
         return data_loader
 
-def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int, random_sampler: bool, num_workers:int):
+def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int, random_sampler: bool, dir_name: str, num_workers:int):
     """ Scale the timeseries dataset and generate train and test dataloaders
 
     Args:
@@ -133,7 +134,8 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
         sequence_length (int): Sequence length of time series for a single gradient step 
         train_fraction (float): train data vs test data ratio
         batch_size (int): Batch size of single gradient measure
-
+        dir_name (str: optional): Directory name that corresponds to type of running task, where the trained model will be saved'
+    
     Returns:
         train_loader (Dataloader)
         validation_loader(Dataloader)
@@ -155,52 +157,29 @@ def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_le
 
     if random_sampler:
         # Concatenate train and val data and slice them again using their indices and SubsetRandomSampler
-        concat_dataset = np.concatenate((train_scaled_dataset,val_scaled_dataset),axis=0)
-        dataset_length = int(concat_dataset.shape[0] / sequence_length)
+        concat_dataset = np.concatenate((train_scaled_dataset, val_scaled_dataset),axis=0)
+        dataset_length = int(concat_dataset.shape[0]- sequence_length)
         indices = list(range(dataset_length))
         split = int(np.floor(train_fraction * dataset_length))
-        train_indices, val_indices = indices[split:], indices[:split]
+        train_indices, val_indices = indices[:split], indices[split:]
 
         # Creating PT data samplers and loaders:
         train_sampler = SubsetRandomSampler(train_indices)
         valid_sampler = SubsetRandomSampler(val_indices)
         
-        # Sequential  Dataloader for training and validation
-        train_loader = DataLoaderLSTM(train_scaled_dataset,batch_size,sequence_length, 
-                                      random_sampler= train_sampler, num_workers=num_workers)
-        validation_loader = DataLoaderLSTM(val_scaled_dataset,batch_size,sequence_length, 
-                                           random_sampler= valid_sampler, num_workers=num_workers)
-
-        return train_loader.load(), validation_loader.load(), train_scaler_fit, val_scaler_fit
+        # Random  Dataloader for training and validation
+        train_loader = DataLoaderLSTM(concat_dataset, batch_size, sequence_length, 
+                                      random_sampler= train_sampler, dir_name = dir_name, num_workers=num_workers)
+        validation_loader = DataLoaderLSTM(concat_dataset,batch_size,sequence_length, 
+                                           random_sampler= valid_sampler, dir_name = dir_name, num_workers=num_workers)
+        
+        return train_loader.load() , validation_loader.load(), train_scaler_fit, val_scaler_fit
     
     else:
         # Sequential  Dataloader for training and validation
-        train_loader = DataLoaderLSTM(train_scaled_dataset,batch_size,sequence_length, 
-                                      random_sampler= None, num_workers=num_workers)
-        validation_loader = DataLoaderLSTM(val_scaled_dataset,batch_size,sequence_length, 
-                                           random_sampler= None, num_workers=num_workers) 
+        train_loader = DataLoaderLSTM(train_scaled_dataset, batch_size, sequence_length, random_sampler= None, dir_name = dir_name, num_workers=num_workers)
+        validation_loader = DataLoaderLSTM(val_scaled_dataset,batch_size,sequence_length, random_sampler= None, dir_name = dir_name, num_workers=num_workers) 
         return train_loader.load(), validation_loader.load(), train_scaler_fit, val_scaler_fit
-
-class LossMseWarmup:
-    """
-    Calculate the Mean Squared Error between y_true and y_pred,
-    but ignore the beginning "warmup" part of the sequences.
-
-    y_true is the desired output.
-    y_pred is the model's output.
-    """
-    def __init__(self, warmup_steps=50):
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, y_pred, y_true):
-
-        y_true_slice = y_true[:, self.warmup_steps:, :]
-        y_pred_slice = y_pred[:, self.warmup_steps:, :]
-
-        # Calculate the Mean Squared Error and use it as loss.
-        mse = torch.mean(torch.square(y_true_slice - y_pred_slice))
-
-        return mse
 
 class LossMse:
     """
@@ -209,9 +188,8 @@ class LossMse:
     y_true is the desired output.
     y_pred is the model's output.
     """
-    def __init__(self,warmup_steps=None):
-        self.warmup_steps = warmup_steps
-
+    def __init__(self) -> None:
+        pass
     def __call__(self, y_pred, y_true):
 
         # Calculate the Mean Squared Error and use it as loss.
@@ -230,8 +208,7 @@ class Trainer:
                  device='cpu',
                  optimizer='None',
                  plot=True,
-                 downsampling=None,
-                 warmup_steps=50):
+                 downsampling=None):
         self.device = device
         self.model = model
         self.epochs = epochs
@@ -239,11 +216,8 @@ class Trainer:
 
         self.train_loader = train_loader
         self.test_loader = test_loader
-        self.warmup_steps = warmup_steps
-        if self.warmup_steps!=None: 
-            self.criterion = LossMseWarmup(self.warmup_steps)
-        else:
-            self.criterion = LossMse(self.warmup_steps) # warmup_steps == None
+
+        self.criterion = LossMse()
         print('Checking for optimizer for {}'.format(optimizer))
         if optimizer == "adam":
             print('Using adam')
@@ -623,7 +597,6 @@ class LSTM(nn.Module):
         return x
 
     def forward(self, x): 
-        # lstm(batch_size,seq_length,hidden_dim) ---> fc(hidden_dim,output_dim)
         x, state = self.lstm(x)
         # Use the last hidden state of last layer
         x = state[0][-1]  
