@@ -82,7 +82,7 @@ class DataSequenceGenerator(torch.utils.data.Dataset):
 
 class DataLoaderLSTM:
     
-    """Dataloader object for both Random and sequential samplers. 
+    """Dataloader object for Single Step-prediction problems using Random and sequential samplers. 
 
         Args:
             dataset (np.array): Dataset
