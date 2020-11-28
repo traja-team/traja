@@ -1,0 +1,295 @@
+from .ae import MultiModelAE
+from .vae import MultiModelVAE
+from .vaegan import MultiModelVAEGAN
+from .lstm import LSTM
+import torch
+from functools import wraps
+import inspect
+from . import utils
+from .losses import Criterion
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+def initializer(func):
+    """
+    Automatically assigns the parameters.
+    https://stackoverflow.com/questions/109087/how-to-get-instance-variables-in-python
+
+    >>> class process:
+    ...     @initializer
+    ...     def __init__(self, cmd, reachable=False, user='root'):
+    ...         pass
+    >>> p = process('halt', True)
+    >>> p.cmd, p.reachable, p.user
+    ('halt', True, 'root')
+    """
+    names, varargs, keywords, defaults = inspect.getargspec(func)
+    
+    @wraps(func)
+    def wrapper(self, *args, **kargs):
+        for name, arg in list(zip(names[1:], args)) + list(kargs.items()):
+            setattr(self, name, arg)
+
+        for name, default in zip(reversed(names), reversed(defaults)):
+            if not hasattr(self, name):
+                setattr(self, name, default)
+
+        func(self, *args, **kargs)
+
+    return wrapper
+
+class Trainer(object):
+    # @initializer
+    def __init__(self, model_type:str, device:str, 
+                 input_size:int, output_size:int, 
+                 lstm_hidden_size:int, lstm_num_layers:int,
+                 reset_state:bool, num_classes:int, 
+                 latent_size:int, dropout:float, 
+                 num_layers:int, epochs:int, batch_size:int, 
+                 num_future:int, sequence_length:int,
+                 bidirectional:bool =False, 
+                 batch_first:bool =True,
+                 loss_type:str = 'huber'):
+        
+        white_keys = ['ae','vae','lstm','vaegan', 'irl']
+        assert model_type  in white_keys, "Valid models are {}".format(white_keys)
+        self.model_type = model_type
+        self.device = device
+        self.input_size = input_size
+        self.lstm_hidden_size = lstm_hidden_size
+        self.lstm_num_layers = lstm_num_layers
+        self.num_layers = lstm_num_layers
+        self.hidden_size = lstm_hidden_size # For classifiers too
+        self.batch_first = batch_first
+        self.reset_state = reset_state
+        self.output_size = output_size
+        self.num_classes = num_classes
+        self.latent_size = latent_size
+        self.num_layers = num_layers
+        self.num_future = num_future
+        self.epochs = epochs
+        self.batch_size = batch_size
+        self.sequence_length = sequence_length
+        self.dropout = dropout
+        self.bidirectional= bidirectional
+        self.loss_type = loss_type
+        
+        self.model_hyperparameters = {'input_size':self.input_size,
+                                'sequence_length':self.sequence_length,
+                                'epochs':self.epochs,
+                                'batch_size':self.batch_size, 
+                                'batch_first':self.batch_first,
+                                'lstm_hidden_size':self.lstm_hidden_size,
+                                'hidden_size':self.lstm_hidden_size,
+                                'num_future':self.num_future, 
+                                'lstm_num_layers':self.lstm_num_layers,
+                                'num_layers':self.lstm_num_layers,
+                                'latent_size':self.latent_size, 
+                                'output_size':self.output_size,
+                                'num_classes':self.num_classes,
+                                'batch_first':self.batch_first, 
+                                'dropout':self.dropout, 
+                                'reset_state':self.reset_state,
+                                'bidirectional':self.bidirectional, 
+                                'dropout':self.dropout,
+                                'loss_type':self.loss_type
+                                }
+ 
+        if self.model_type == 'lstm':
+            self.model = LSTM(self.model_hyperparameters)
+            
+        if self.model_type == 'ae':
+            self.model = MultiModelAE(self.model_hyperparameters)
+            
+        if self.model_type == 'vae':
+            self.model = MultiModelVAE(self.model_hyperparameters)
+            
+        if self.model_type == 'vaegan':
+            self.model = MultiModelVAEGAN(self.model_hyperparameters)
+        
+        if self.model_type == 'irl':
+            return NotImplementedError
+            
+        # Get the optimizers for each network in the model
+        [self.encoder_optimizer, self.latent_optimizer, self.decoder_optimizer, self.classifier_optimizer] = utils.set_optimizers(self.model_type, self.model)
+
+        # Learning rate schedulers for the models
+        [self.encoder_scheduler, self.latent_scheduler, self.decoder_scheduler, self.classifier_scheduler] = utils.get_lrschedulers(self.model_type, self.model, factor=0.1, patience=10)
+    
+
+    def __str__(self):
+        return "Training model type {}".format(self.model_type)
+    
+    # TRAIN AUTOENCODERS
+    def train_ae(self, train_loader, test_loader, model_save_path):
+        
+        assert self.model_type == 'ae'
+        # Move the model to target device
+        self.model.to(device)
+
+        # Training mode: Switch from Generative to classifier training mode
+        training_mode = 'forecasting'
+
+        # Training
+        for epoch in range(self.epochs*2): # First half for generative model and next for classifier
+            if epoch>0: # Initial step is to test and set LR schduler
+                # Training
+                self.model.train()
+                total_loss = 0
+                for idx, (data, target,category) in enumerate(train_loader):
+                    # Reset optimizer states
+                    self.encoder_optimizer.zero_grad()
+                    self.latent_optimizer.zero_grad()
+                    self.decoder_optimizer.zero_grad()
+                    self.classifier_optimizer.zero_grad()
+                    
+                    data, target,category = data.float().to(device), target.float().to(device), category.to(device)
+                    
+                    if training_mode =='forecasting':
+
+                        decoder_out,latent_out= self.model(data,training=True, is_classification=False)
+                        loss = Criterion.ae_criterion(decoder_out, target)
+                        loss.backward()
+
+                        self.encoder_optimizer.step()
+                        self.decoder_optimizer.step()
+                        self.latent_optimizer.step()
+
+                    else:
+                        
+                        classifier_out = self.model(data,training=True, is_classification=True)
+                        loss = Criterion.classifier_criterion(classifier_out, category-1)
+                        loss.backward()
+                        
+                        self.classifier_optimizer.step()
+
+                    total_loss+=loss
+            
+                print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss/(idx+1)))
+            
+            if epoch+1 == self.epochs: #
+                training_mode = 'classification'
+
+            # Testing
+            if epoch%10==0:
+                with torch.no_grad():
+                    self.model.eval()
+                    test_loss_forecasting = 0
+                    test_loss_classification = 0
+                    for idx, (data, target,category) in enumerate(list(test_loader)):
+                        data, target, category = data.float().to(device), target.float().to(device), category.to(device)
+                        out, latent = self.model(data, training=False, is_classification=False)
+                        test_loss_forecasting += Criterion.ae_criterion(out,target).item()
+                        
+                        classifier_out= self.model(data,training=False, is_classification=True)
+                        test_loss_classification += Criterion.classifier_criterion(classifier_out, category-1).item()
+
+                test_loss_forecasting /= len(test_loader.dataset)
+                print(f'====> Mean test set generator loss: {test_loss_forecasting:.4f}')
+                test_loss_classification /= len(test_loader.dataset)
+                print(f'====> Mean test set classifier loss: {test_loss_classification:.4f}')
+
+            # Scheduler metric is test set loss
+            if training_mode =='forecasting':
+                self.encoder_scheduler.step(self.test_loss_forecasting)
+                self.decoder_scheduler.step(self.test_loss_forecasting)
+                self.latent_scheduler.step(self.test_loss_forecasting)
+            else:
+                self.classifier_scheduler.step(self.test_loss_classification)
+
+        # Save the model at target path
+        utils.save_model(self.model,PATH = model_save_path)
+    
+    # TRAIN VARIATIONAL AUTOENCODERS   
+    def train_vae(self, train_loader, test_loader, model_save_path):
+        assert self.model_type == 'vae'
+        # Move the model to target device
+        self.model.to(device)
+
+        # Training mode: Switch from Generative to classifier training mode
+        training_mode = 'forecasting'
+
+        # Training
+        for epoch in range(self.epochs*2): # First half for generative model and next for classifier
+            if epoch>0: # Initial step is to test and set LR schduler
+                # Training
+                self.model.train()
+                total_loss = 0
+                for idx, (data, target,category) in enumerate(train_loader):
+                    # Reset optimizer states
+                    self.encoder_optimizer.zero_grad()
+                    self.latent_optimizer.zero_grad()
+                    self.decoder_optimizer.zero_grad()
+                    self.classifier_optimizer.zero_grad()
+                    
+                    data, target,category = data.float().to(device), target.float().to(device), category.to(device)
+                    
+                    if training_mode =='forecasting':
+
+                        decoder_out,latent_out,mu,logvar= self.model(data,training=True, is_classification=False)
+                        loss = Criterion.vae_criterion(decoder_out, target,mu,logvar)
+                        loss.backward()
+
+                        self.encoder_optimizer.step()
+                        self.decoder_optimizer.step()
+                        self.latent_optimizer.step()
+
+                    else:
+                        
+                        classifier_out = self.model(data,training=True, is_classification=True)
+                        loss = Criterion.classifier_criterion(classifier_out, category-1)
+                        loss.backward()
+                        
+                        self.classifier_optimizer.step()
+
+                    total_loss+=loss
+            
+                print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss/(idx+1)))
+            
+            if epoch+1 == self.epochs: #
+                training_mode = 'classification'
+
+            # Testing
+            if epoch%10==0:
+                with torch.no_grad():
+                    self.model.eval()
+                    test_loss_forecasting = 0
+                    test_loss_classification = 0
+                    for idx, (data, target,category) in enumerate(list(test_loader)):
+                        data, target, category = data.float().to(device), target.float().to(device), category.to(device)
+                        out, latent, mu, logvar = self.model(data, training=False, is_classification=False)
+                        test_loss_forecasting += Criterion.vae_criterion(out,target, mu, logvar).item()
+                        
+                        classifier_out= self.model(data,training=False, is_classification=True)
+                        test_loss_classification += Criterion.classifier_criterion(classifier_out, category-1).item()
+
+                test_loss_forecasting /= len(test_loader.dataset)
+                print(f'====> Mean test set generator loss: {test_loss_forecasting:.4f}')
+                test_loss_classification /= len(test_loader.dataset)
+                print(f'====> Mean test set classifier loss: {test_loss_classification:.4f}')
+
+            # Scheduler metric is test set loss
+            if training_mode =='forecasting':
+                self.encoder_scheduler.step(self.test_loss_forecasting)
+                self.decoder_scheduler.step(self.test_loss_forecasting)
+                self.latent_scheduler.step(self.test_loss_forecasting)
+            else:
+                self.classifier_scheduler.step(self.test_loss_classification)
+
+        # Save the model at target path
+        utils.save_model(self.model,PATH = model_save_path)
+    
+    # TRAIN VARIATIONAL AUTOENCODERS-GAN 
+    def train_vaegan(self):
+        assert self.model_type == 'vaegan'
+        return NotImplementedError
+    
+    # TRAIN INVERSE RL 
+    def train_irl(self):
+        assert self.model_type == 'irl'
+        return NotImplementedError
+    
+    # TRAIN LSTM
+    def train_lstm(self):
+        assert self.model_type == 'lstm'
+        return NotImplementedError

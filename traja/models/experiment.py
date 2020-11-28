@@ -2,6 +2,7 @@
 """Pytorch visualization code modified from Chad Jensen's implementation
 (https://discuss.pytorch.org/t/lstm-for-sequence-prediction/22021/3)."""
 import logging
+
 import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import sampler
@@ -23,24 +24,8 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 import torchvision.transforms as transforms
 
-nb_steps = 10
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-class LossMse:
-    """
-    Calculate the Mean Squared Error between y_true and y_pred
-
-    y_true is the desired output.
-    y_pred is the model's output.
-    """
-    def __init__(self) -> None:
-        pass
-    def __call__(self, y_pred, y_true):
-
-        # Calculate the Mean Squared Error and use it as loss.
-        mse = torch.mean(torch.square(y_true - y_pred))
-
-        return mse
 
 class Trainer:
     def __init__(self, model,
@@ -62,7 +47,7 @@ class Trainer:
         self.train_loader = train_loader
         self.test_loader = test_loader
 
-        self.criterion = LossMse()
+        self.criterion =torch.nn.MSELoss()
         print('Checking for optimizer for {}'.format(optimizer))
         if optimizer == "adam":
             print('Using adam')
@@ -140,7 +125,6 @@ class Trainer:
         running_loss = 0
         old_time = time()
         for batch, data in enumerate(self.train_loader):
-            
             inputs, targets= data[0].to(self.device).float(), data[1].to(self.device).float()
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
