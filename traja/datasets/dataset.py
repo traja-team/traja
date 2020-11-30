@@ -250,7 +250,31 @@ class TimeSeriesDataset(Dataset):
         return len(self.data)
 
 class MultiModalDataLoader(object):
-    r""" Data loader object. Wrap Data preprocessors, dataset, sampler and return the data loader object"""
+    """
+    MultiModalDataLoader wraps the following data preparation steps,
+    
+    1. Data generator: Extract x and y time series and corresponding ID (category) in the dataset. This process split the dataset into 
+                        i) Train samples with sequence length equals n_past
+                        ii) Target samples with sequence length equals n_future 
+                        iii) Target category(ID) of both train and target data
+    2. Data scalling: Scale the train and target data columns between the range (-1,1) using MinMaxScalers; TODO: It is more optimal to scale data for each ID(category)
+    3. Data shuffling: Shuffle the order of samples in the dataset without loosing the train<->target<->category combination
+    4. Create train test split: Split the shuffled batches into train (data, target, category) and test(data, target, category)
+    5. Weighted Random sampling: Apply weights with respect to category counts in the dataset: category_sample_weight = 1/num_category_samples; This avoid model overfit to category appear often in the dataset 
+    6. Create pytorch Dataset instances
+    7. Returns the train and test data loader instances given the dataset instances and batch size
+
+        Args:
+            df (pd.DataFrame): Dataset
+            batch_size (int): Number of samples per batch of data
+            n_past (int): Input sequence length. Number of time steps from the past. 
+            n_future (int): Target sequence length. Number of time steps to the future. 
+            num_workers (int): Number of cpu subprocess to be occupied during data loading process
+        
+        Usage:
+        train_dataloader, test_dataloader = MultiModalDataLoader(df = data_frame, batch_size=32, 
+                                                                n_past = 20, n_future = 10, num_workers=4)
+        """
     
     def __init__(self, df:pd.DataFrame, batch_size:int, n_past:int, n_future:int, num_workers: int):
         
