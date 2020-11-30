@@ -10,36 +10,9 @@ from .losses import Criterion
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-def initializer(func):
-    """
-    Automatically assigns the parameters.
-    https://stackoverflow.com/questions/109087/how-to-get-instance-variables-in-python
-
-    >>> class process:
-    ...     @initializer
-    ...     def __init__(self, cmd, reachable=False, user='root'):
-    ...         pass
-    >>> p = process('halt', True)
-    >>> p.cmd, p.reachable, p.user
-    ('halt', True, 'root')
-    """
-    names, varargs, keywords, defaults = inspect.getargspec(func)
-    
-    @wraps(func)
-    def wrapper(self, *args, **kargs):
-        for name, arg in list(zip(names[1:], args)) + list(kargs.items()):
-            setattr(self, name, arg)
-
-        for name, default in zip(reversed(names), reversed(defaults)):
-            if not hasattr(self, name):
-                setattr(self, name, default)
-
-        func(self, *args, **kargs)
-
-    return wrapper
 
 class Trainer(object):
-    # @initializer
+    
     def __init__(self, model_type:str, device:str, 
                  input_size:int, output_size:int, 
                  lstm_hidden_size:int, lstm_num_layers:int,
@@ -51,7 +24,7 @@ class Trainer(object):
                  batch_first:bool =True,
                  loss_type:str = 'huber'):
         
-        white_keys = ['ae','vae','lstm','vaegan', 'irl']
+        white_keys = ['ae','vae','lstm','vaeg   an', 'irl']
         assert model_type  in white_keys, "Valid models are {}".format(white_keys)
         self.model_type = model_type
         self.device = device
@@ -120,10 +93,10 @@ class Trainer(object):
     def __str__(self):
         return "Training model type {}".format(self.model_type)
     
-    # TRAIN AUTOENCODERS
-    def train_ae(self, train_loader, test_loader, model_save_path):
+    # TRAIN AUTOENCODERS/VARIATIONAL AUTOENCODERS
+    def train_latent_model(self, train_loader, test_loader, model_save_path):
         
-        assert self.model_type == 'ae'
+        assert self.model_type == 'ae' or 'vae'
         # Move the model to target device
         self.model.to(device)
 
@@ -146,23 +119,26 @@ class Trainer(object):
                     data, target,category = data.float().to(device), target.float().to(device), category.to(device)
                     
                     if training_mode =='forecasting':
-
-                        decoder_out,latent_out= self.model(data,training=True, is_classification=False)
-                        loss = Criterion.ae_criterion(decoder_out, target)
+                        if self.model_type == 'ae':
+                            decoder_out, latent_out = self.model(data, training=True, is_classification=False)
+                            loss = Criterion.ae_criterion(decoder_out, target)
+                        
+                        else: # vae
+                            decoder_out, latent_out, mu, logvar= self.model(data, training=True, is_classification=False)
+                            loss = Criterion.vae_criterion(decoder_out, target, mu, logvar)
+                            
                         loss.backward()
 
                         self.encoder_optimizer.step()
                         self.decoder_optimizer.step()
                         self.latent_optimizer.step()
 
-                    else:
+                    else: # training_mode == 'classification'
                         
-                        classifier_out = self.model(data,training=True, is_classification=True)
+                        classifier_out = self.model(data, training=True, is_classification=True)
                         loss = Criterion.classifier_criterion(classifier_out, category-1)
                         loss.backward()
-                        
                         self.classifier_optimizer.step()
-
                     total_loss+=loss
             
                 print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss/(idx+1)))
@@ -178,9 +154,14 @@ class Trainer(object):
                     test_loss_classification = 0
                     for idx, (data, target,category) in enumerate(list(test_loader)):
                         data, target, category = data.float().to(device), target.float().to(device), category.to(device)
-                        out, latent = self.model(data, training=False, is_classification=False)
-                        test_loss_forecasting += Criterion.ae_criterion(out,target).item()
-                        
+                        # Time seriesforecasting test
+                        if self.model_type=='ae':
+                            out, latent = self.model(data, training=False, is_classification=False)
+                            test_loss_forecasting += Criterion.ae_criterion(out,target).item()
+                        else:
+                            decoder_out,latent_out,mu,logvar= self.model(data,training=False, is_classification=False)
+                            test_loss_forecasting += Criterion.vae_criterion(decoder_out, target,mu,logvar)
+                        # Classification test
                         classifier_out= self.model(data,training=False, is_classification=True)
                         test_loss_classification += Criterion.classifier_criterion(classifier_out, category-1).item()
 
@@ -200,84 +181,6 @@ class Trainer(object):
         # Save the model at target path
         utils.save_model(self.model,PATH = model_save_path)
     
-    # TRAIN VARIATIONAL AUTOENCODERS   
-    def train_vae(self, train_loader, test_loader, model_save_path):
-        assert self.model_type == 'vae'
-        # Move the model to target device
-        self.model.to(device)
-
-        # Training mode: Switch from Generative to classifier training mode
-        training_mode = 'forecasting'
-
-        # Training
-        for epoch in range(self.epochs*2): # First half for generative model and next for classifier
-            if epoch>0: # Initial step is to test and set LR schduler
-                # Training
-                self.model.train()
-                total_loss = 0
-                for idx, (data, target,category) in enumerate(train_loader):
-                    # Reset optimizer states
-                    self.encoder_optimizer.zero_grad()
-                    self.latent_optimizer.zero_grad()
-                    self.decoder_optimizer.zero_grad()
-                    self.classifier_optimizer.zero_grad()
-                    
-                    data, target,category = data.float().to(device), target.float().to(device), category.to(device)
-                    
-                    if training_mode =='forecasting':
-
-                        decoder_out,latent_out,mu,logvar= self.model(data,training=True, is_classification=False)
-                        loss = Criterion.vae_criterion(decoder_out, target,mu,logvar)
-                        loss.backward()
-
-                        self.encoder_optimizer.step()
-                        self.decoder_optimizer.step()
-                        self.latent_optimizer.step()
-
-                    else:
-                        
-                        classifier_out = self.model(data,training=True, is_classification=True)
-                        loss = Criterion.classifier_criterion(classifier_out, category-1)
-                        loss.backward()
-                        
-                        self.classifier_optimizer.step()
-
-                    total_loss+=loss
-            
-                print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss/(idx+1)))
-            
-            if epoch+1 == self.epochs: #
-                training_mode = 'classification'
-
-            # Testing
-            if epoch%10==0:
-                with torch.no_grad():
-                    self.model.eval()
-                    test_loss_forecasting = 0
-                    test_loss_classification = 0
-                    for idx, (data, target,category) in enumerate(list(test_loader)):
-                        data, target, category = data.float().to(device), target.float().to(device), category.to(device)
-                        out, latent, mu, logvar = self.model(data, training=False, is_classification=False)
-                        test_loss_forecasting += Criterion.vae_criterion(out,target, mu, logvar).item()
-                        
-                        classifier_out= self.model(data,training=False, is_classification=True)
-                        test_loss_classification += Criterion.classifier_criterion(classifier_out, category-1).item()
-
-                test_loss_forecasting /= len(test_loader.dataset)
-                print(f'====> Mean test set generator loss: {test_loss_forecasting:.4f}')
-                test_loss_classification /= len(test_loader.dataset)
-                print(f'====> Mean test set classifier loss: {test_loss_classification:.4f}')
-
-            # Scheduler metric is test set loss
-            if training_mode =='forecasting':
-                self.encoder_scheduler.step(self.test_loss_forecasting)
-                self.decoder_scheduler.step(self.test_loss_forecasting)
-                self.latent_scheduler.step(self.test_loss_forecasting)
-            else:
-                self.classifier_scheduler.step(self.test_loss_classification)
-
-        # Save the model at target path
-        utils.save_model(self.model,PATH = model_save_path)
     
     # TRAIN VARIATIONAL AUTOENCODERS-GAN 
     def train_vaegan(self):
