@@ -24,8 +24,8 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 import torchvision.transforms as transforms
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Trainer:
     def __init__(self, model,
@@ -47,7 +47,7 @@ class Trainer:
         self.train_loader = train_loader
         self.test_loader = test_loader
 
-        self.criterion = torch.nn.MSELoss()
+        self.criterion =torch.nn.MSELoss()
         print('Checking for optimizer for {}'.format(optimizer))
         if optimizer == "adam":
             print('Using adam')
@@ -78,16 +78,14 @@ class Trainer:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-        self.savepath = os.path.join(save_dir,
-                                     f'{model.name}_bs{batch_size}_e{epochs}_dspl{downsampling}_id{run_id}.csv')
+        self.savepath = os.path.join(save_dir, f'{model.name}_bs{batch_size}_e{epochs}_dspl{downsampling}_id{run_id}.csv')
         self.experiment_done = False
         if os.path.exists(self.savepath):
             trained_epochs = len(pd.read_csv(self.savepath, sep=';'))
 
             if trained_epochs >= epochs:
                 self.experiment_done = True
-                print(
-                    f'Experiment Logs for the exact same experiment with identical run_id was detected, training will be skipped, consider using another run_id')
+                print(f'Experiment Logs for the exact same experiment with identical run_id was detected, training will be skipped, consider using another run_id')
         if os.path.exists((self.savepath.replace('.csv', '.pt'))):
             self.model.load_state_dict(torch.load(self.savepath.replace('.csv', '.pt'))['model_state_dict'])
             self.model = self.model.to(self.device)
@@ -99,12 +97,13 @@ class Trainer:
             self.start_epoch = 0
             self.model = self.model.to(self.device)
 
+
     def _infer_initial_epoch(self, savepath):
         if not os.path.exists(savepath):
             return 0
         else:
             df = pd.read_csv(savepath, sep=';', index_col=0)
-            print(len(df) + 1)
+            print(len(df)+1)
             return len(df)
 
     def train(self):
@@ -118,7 +117,7 @@ class Trainer:
             if self.opt_name == "LRS":
                 print('LRS step')
                 self.lr_scheduler.step()
-        return self.savepath + '.csv'
+        return self.savepath+'.csv'
 
     def train_epoch(self):
         self.model.train()
@@ -126,7 +125,7 @@ class Trainer:
         running_loss = 0
         old_time = time()
         for batch, data in enumerate(self.train_loader):
-            inputs, targets = data[0].to(self.device).float(), data[1].to(self.device).float()
+            inputs, targets= data[0].to(self.device).float(), data[1].to(self.device).float()
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
             loss = self.criterion(outputs, targets)
@@ -135,13 +134,12 @@ class Trainer:
             running_loss += loss.item()
 
             if batch % 10 == 0 and batch != 0:
-                print(batch, 'of', len(self.train_loader), 'processing time', time() - old_time, 'loss:',
-                      running_loss / total)
+                print(batch, 'of', len(self.train_loader), 'processing time', time()-old_time, 'loss:', running_loss/total)
                 old_time = time()
 
             # Increment number of batches
             total += 1
-        return running_loss / total
+        return running_loss/total
 
     def test(self, epoch, save=True):
         self.model.eval()
@@ -150,7 +148,7 @@ class Trainer:
         with torch.no_grad():
             for batch, data in enumerate(self.test_loader):
                 if batch % 10 == 0:
-                    print('Processing eval batch', batch, 'of', len(self.test_loader))
+                    print('Processing eval batch', batch,'of', len(self.test_loader))
                 inputs, targets = data[0].to(self.device).float(), data[1].to(self.device).float()
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, targets)
@@ -198,17 +196,16 @@ class LSTM(nn.Module):
 
         self.head = nn.Linear(hidden_size, output_size)
 
-    def forward(self, x):
+    def forward(self, x): 
         x, state = self.lstm(x)
         # Use the last hidden state of last layer
-        x = state[0][-1]
+        x = state[0][-1]  
         x = self.head(x)
         return x
 
-
 class TrajectoryLSTM:
     def __init__(
-            self, xy, nb_steps=10, epochs=1000, batch_size=1, criterion=nn.MSELoss()
+        self, xy, nb_steps=10, epochs=1000, batch_size=1, criterion=nn.MSELoss()
     ):
         fig, ax = plt.subplots(2, 1)
         self.fig = fig
@@ -227,10 +224,10 @@ class TrajectoryLSTM:
 
         inds = np.random.randint(0, len(self.xy) - self.nb_steps, (self.batch_size))
         for i, ind in enumerate(inds):
-            t_1_b[:, i] = self.xy[ind: ind + self.nb_steps]
-            t_b[i * nb_steps: (i + 1) * self.nb_steps] = self.xy[
-                                                         ind + 1: ind + nb_steps + 1
-                                                         ]
+            t_1_b[:, i] = self.xy[ind : ind + self.nb_steps]
+            t_b[i * nb_steps : (i + 1) * self.nb_steps] = self.xy[
+                ind + 1 : ind + nb_steps + 1
+            ]
         return torch.from_numpy(t_1_b).float(), torch.from_numpy(t_b).float()
 
     def train(self):
@@ -290,7 +287,6 @@ class TrajectoryLSTM:
             self._plot()
             return self.fig
 
-
 def make_mlp(dim_list, activation="relu", batch_norm=True, dropout=0):
     layers = []
     for dim_in, dim_out in zip(dim_list[:-1], dim_list[1:]):
@@ -319,7 +315,7 @@ class Encoder(nn.Module):
     TrajectoryDiscriminator"""
 
     def __init__(
-            self, embedding_dim=64, h_dim=64, mlp_dim=1024, num_layers=1, dropout=0.0
+        self, embedding_dim=64, h_dim=64, mlp_dim=1024, num_layers=1, dropout=0.0
     ):
         super(Encoder, self).__init__()
 
@@ -359,20 +355,20 @@ class Decoder(nn.Module):
     """Decoder is part of TrajectoryGenerator"""
 
     def __init__(
-            self,
-            seq_len,
-            embedding_dim=64,
-            h_dim=128,
-            mlp_dim=1024,
-            num_layers=1,
-            pool_every_timestep=True,
-            dropout=0.0,
-            bottleneck_dim=1024,
-            activation="relu",
-            batch_norm=True,
-            pooling_type="pool_net",
-            neighborhood_size=2.0,
-            grid_size=8,
+        self,
+        seq_len,
+        embedding_dim=64,
+        h_dim=128,
+        mlp_dim=1024,
+        num_layers=1,
+        pool_every_timestep=True,
+        dropout=0.0,
+        bottleneck_dim=1024,
+        activation="relu",
+        batch_norm=True,
+        pooling_type="pool_net",
+        neighborhood_size=2.0,
+        grid_size=8,
     ):
         super(Decoder, self).__init__()
 
@@ -456,14 +452,14 @@ class PoolHiddenNet(nn.Module):
     """Pooling module as proposed in our paper"""
 
     def __init__(
-            self,
-            embedding_dim=64,
-            h_dim=64,
-            mlp_dim=1024,
-            bottleneck_dim=1024,
-            activation="relu",
-            batch_norm=True,
-            dropout=0.0,
+        self,
+        embedding_dim=64,
+        h_dim=64,
+        mlp_dim=1024,
+        bottleneck_dim=1024,
+        activation="relu",
+        batch_norm=True,
+        dropout=0.0,
     ):
         super(PoolHiddenNet, self).__init__()
 
@@ -533,14 +529,14 @@ class SocialPooling(nn.Module):
     http://cvgl.stanford.edu/papers/CVPR16_Social_LSTM.pdf"""
 
     def __init__(
-            self,
-            h_dim=64,
-            activation="relu",
-            batch_norm=True,
-            dropout=0.0,
-            neighborhood_size=2.0,
-            grid_size=8,
-            pool_dim=None,
+        self,
+        h_dim=64,
+        activation="relu",
+        batch_norm=True,
+        dropout=0.0,
+        neighborhood_size=2.0,
+        grid_size=8,
+        pool_dim=None,
     ):
         super(SocialPooling, self).__init__()
         self.h_dim = h_dim
@@ -624,14 +620,14 @@ class SocialPooling(nn.Module):
             # Make all positions to exclude as non-zero
             # Find which peds to exclude
             x_bound = (curr_end_pos[:, 0] >= bottom_right[:, 0]) + (
-                    curr_end_pos[:, 0] <= top_left[:, 0]
+                curr_end_pos[:, 0] <= top_left[:, 0]
             )
             y_bound = (curr_end_pos[:, 1] >= top_left[:, 1]) + (
-                    curr_end_pos[:, 1] <= bottom_right[:, 1]
+                curr_end_pos[:, 1] <= bottom_right[:, 1]
             )
 
             within_bound = x_bound + y_bound
-            within_bound[0:: num_ped + 1] = 1  # Don't include the ped itself
+            within_bound[0 :: num_ped + 1] = 1  # Don't include the ped itself
             within_bound = within_bound.view(-1)
 
             # This is a tricky way to get scatter add to work. Helps me avoid a
@@ -661,25 +657,25 @@ class TrajectoryGenerator(nn.Module):
     """Modified from @agrimgupta92's https://github.com/agrimgupta92/sgan/blob/master/sgan/models.py."""
 
     def __init__(
-            self,
-            obs_len,
-            pred_len,
-            embedding_dim=64,
-            encoder_h_dim=64,
-            decoder_h_dim=128,
-            mlp_dim=1024,
-            num_layers=1,
-            noise_dim=(0,),
-            noise_type="gaussian",
-            noise_mix_type="ped",
-            pooling_type=None,
-            pool_every_timestep=True,
-            dropout=0.0,
-            bottleneck_dim=1024,
-            activation="relu",
-            batch_norm=True,
-            neighborhood_size=2.0,
-            grid_size=8,
+        self,
+        obs_len,
+        pred_len,
+        embedding_dim=64,
+        encoder_h_dim=64,
+        decoder_h_dim=128,
+        mlp_dim=1024,
+        num_layers=1,
+        noise_dim=(0,),
+        noise_type="gaussian",
+        noise_mix_type="ped",
+        pooling_type=None,
+        pool_every_timestep=True,
+        dropout=0.0,
+        bottleneck_dim=1024,
+        activation="relu",
+        batch_norm=True,
+        neighborhood_size=2.0,
+        grid_size=8,
     ):
         super(TrajectoryGenerator, self).__init__()
 
@@ -809,9 +805,9 @@ class TrajectoryGenerator(nn.Module):
 
     def mlp_decoder_needed(self):
         if (
-                self.noise_dim
-                or self.pooling_type
-                or self.encoder_h_dim != self.decoder_h_dim
+            self.noise_dim
+            or self.pooling_type
+            or self.encoder_h_dim != self.decoder_h_dim
         ):
             return True
         else:
@@ -862,20 +858,19 @@ class TrajectoryGenerator(nn.Module):
 
         return pred_traj_fake_rel
 
-
 class TrajectoryDiscriminator(nn.Module):
     def __init__(
-            self,
-            obs_len,
-            pred_len,
-            embedding_dim=64,
-            h_dim=64,
-            mlp_dim=1024,
-            num_layers=1,
-            activation="relu",
-            batch_norm=True,
-            dropout=0.0,
-            d_type="local",
+        self,
+        obs_len,
+        pred_len,
+        embedding_dim=64,
+        h_dim=64,
+        mlp_dim=1024,
+        num_layers=1,
+        activation="relu",
+        batch_norm=True,
+        dropout=0.0,
+        d_type="local",
     ):
         super(TrajectoryDiscriminator, self).__init__()
 

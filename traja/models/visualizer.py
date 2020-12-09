@@ -19,29 +19,27 @@ import seaborn as sns
 import matplotlib
 from matplotlib import style
 from scipy.sparse import csgraph
-import argparse, copy, h5py, os, sys, time, socket
+import argparse,copy,h5py, os,sys,time,socket
 import tensorflow as tf
-import torch, torchvision, torch.nn as nn
+import torch,torchvision,torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 # from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot 
-from matplotlib import ticker, colors
+from matplotlib import ticker,colors
 
 # print(matplotlib.get_backend())
 # matplotlib.rcParams["backend"] = "Gtk3Agg"
 # print(matplotlib.get_backend())
 # matplotlib.use('Gtk3Agg')
 import matplotlib.pyplot as plt
-
 # plt.switch_backend('Qt4Agg')
 # print(matplotlib.get_backend())
 plt.switch_backend("TkAgg")
 
 # seed value and plotly
 # init_notebook_mode(connected=True)
-np.set_printoptions(suppress=True, precision=3, )
+np.set_printoptions(suppress=True,precision=3,)
 style.use('ggplot')
-
 
 class DirectedNetwork(object):
 
@@ -80,36 +78,40 @@ class DirectedNetwork(object):
         vmax = np.max(states)
         cmap = plt.cm.coolwarm
         edge_cmap = plt.cm.Spectral
-        nx.draw(G, with_labels=True,
-                cmap=cmap, node_color=neuron_color,
-                node_size=200, linewidths=5,
-                edge_color=edge_colors_,
-                edge_cmap=edge_cmap, font_size=10,
+        nx.draw(G, with_labels=True, 
+                cmap=cmap, node_color = neuron_color,
+                node_size=200, linewidths=5, 
+                edge_color = edge_colors_, 
+                edge_cmap = edge_cmap, font_size=10,
                 connectionstyle='arc3, rad=0.3')
+
+        # nx.draw(G, with_labels=True, cmap=cmap, node_color=neuron_color, edge_color=edge_colors_,
+        #         node_size=200, linewidths=5, edge_cmap=cmap, font_size=10,
+        #         connectionstyle='arc3, rad=0.3')
 
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
         sm.set_array([])
         cbar = plt.colorbar(sm, orientation="vertical", pad=0.1)
-
+        
         # State of streaming plot
         if plt.fignum_exists(fig.number):
             fig.canvas.draw()
             fig.canvas.flush_events()
             fig.clear()
-
+            
             # Plot is not closed
             return False
         else:
             return True
 
-
+        
 class LocalLinearEmbedding(object):
 
     def __init__(self):
         super(LocalLinearEmbedding, self).__init__()
         pass
 
-    def local_linear_embedding(self, X, d, k, alpha=0.1):
+    def local_linear_embedding(self,X,d,k,alpha = 0.1):
         """
             Local Linear Embeddings
 
@@ -137,7 +139,7 @@ class LocalLinearEmbedding(object):
 
             # Calculate the matrix G
             G_i = Z_i @ Z_i.T
-
+            
             # Weights between neigbors
             w_i = scipy.linalg.pinv(G_i + alpha * np.eye(k)) @ np.ones(k)
             W[i, k_indices] = w_i / w_i.sum()
@@ -152,43 +154,52 @@ class LocalLinearEmbedding(object):
         # Return the vectors and discard the first column of the matrix
         return vectors[:, 1:]
 
-    def show(self, pc, fig2):
-        """[summary]
+    def show(self,pc,fig2):
 
-        Args:
-            pc ([type]): [description]
-            fig2 ([type]): [description]
-        """
+        # plotly.offline.init_notebook_mode()
 
+        # # Configure the layout.
+        # layout = go.Layout(
+        #     margin=dict(l=80, r=80, t=100, b=80), title='Trajectory of first 3 principle components')
+        #
+        # fig1 = go.FigureWidget(data=[go.Scatter3d(x=pc[:, 0], y=pc[:, 1], z=pc[:, 2], mode='markers',
+        #                                    marker=dict(size=12,
+        #                                                color=pc[:, 2],  # set color to an array/list of desired values
+        #                                                colorscale='Viridis',  # choose a colorscale
+        #                                                opacity=0.8))], layout=layout)
+        #
+        # plotly.offline.plot(fig1,auto_open = False, filename = 'pc')
+        
         ax = Axes3D(fig2)
-        f = ax.scatter(pc[:, 0], pc[:, 1], pc[:, 2], s=40, c=pc[:, 2])
-        #         ax.set_xlim(-1,1)
-        #         ax.set_ylim(-1,1)
-        #         ax.set_zlim(-1,1)
+        f = ax.scatter(pc[:, 0], pc[:, 1], pc[:, 2], s = 40,c = pc[:, 2])
+#         ax.set_xlim(-1,1)
+#         ax.set_ylim(-1,1)
+#         ax.set_zlim(-1,1)
         for i in range(len(pc)):
-            ax.plot3D(pc[i:, 0], pc[i:, 1], pc[i:, 2],
-                      alpha=i / len(pc), color='red', linewidth=1)
+        
+            ax.plot3D(pc[i:, 0], pc[i:, 1], pc[i:, 2], 
+                      alpha = i/len(pc), color = 'red', linewidth=1 )
         fig2.colorbar(f)
-        #         plt.pause(0.0001)
+#         plt.pause(0.0001)
         # State of streaming plot
         if plt.fignum_exists(fig2.number):
             fig2.canvas.draw()
             fig2.canvas.flush_events()
             fig2.clear()
-
+            
             # Plot is not closed
             return False
         else:
             return True
-
-
+        
+        
 class SpectralEmbedding(object):
 
     def __init__(self):
         super(SpectralEmbedding, self).__init__()
         pass
 
-    def spectral_embedding(self, X, rad):
+    def spectral_embedding(self,X,rad):
         """
             Spectral Clustering
 
@@ -198,69 +209,58 @@ class SpectralEmbedding(object):
             :return Y: numpy.ndarray - matrix m row, d attributes are reduced dimensional
             """
         # Get the adjacency matrix/nearest neighbor graph; neighbors within the radius of 0.4
-        A = radius_neighbors_graph(X.T, rad, mode='distance',
-                                   metric='minkowski', p=2,
-                                   metric_params=None, include_self=False)
+        A = radius_neighbors_graph(X.T,rad,mode='distance', 
+                                   metric='minkowski', p=2, 
+                                   metric_params=None, include_self=False) 
         A = A.toarray()
-
+        
         # Find the laplacian of the neighbour graph
         # L = D - A ; where D is the diagonal degree matrix        
         L = csgraph.laplacian(A, normed=False)
+        
         # Embedd the data points i low dimension using the Eigen values/vectos 
         # of the laplacian graph to get the most optimal partition of the graph
+        
         eigval, eigvec = np.linalg.eig(L)
         # the second smallest eigenvalue represents sparsest cut of the graph.
         np.where(eigval == np.partition(eigval, 1)[1])
         # Partition the graph using the smallest eigen value
-        y_spec = eigvec[:, 1].copy()
+        y_spec =eigvec[:,1].copy()
         y_spec[y_spec < 0] = 0
         y_spec[y_spec > 0] = 1
         return y_spec
 
-    def show(self, X, spec_embed, fig3):
-        """[summary]
-
-        Args:
-            X ([type]): [description]
-            spec_embed ([type]): [description]
-            fig3 ([type]): [description]
-
-        Returns:
-            [type]: [description]
-        """
+    def show(self,X, spec_embed,fig3):
 
         ax3 = fig3.add_subplot()
         X = X.T
-        fi = ax3.scatter(x=X[:, 0], y=X[:, 1], c=spec_embed, s=30, cmap=plt.cm.Spectral)
-        for i in range(len(X[:, 0])):
+        fi = ax3.scatter(x = X[:, 0], y = X[:, 1],c=spec_embed ,s=30, cmap=plt.cm.Spectral)
+        for i in range(len(X[:,0])):
             ax3.annotate(i, (X[:, 0][i], X[:, 1][i]))
         fig3.colorbar(fi)
-
+        
         # State of streaming plot
         if plt.fignum_exists(fig3.number):
             fig3.canvas.draw()
             fig3.canvas.flush_events()
             fig3.clear()
-
+            
             # Plot is not closed
             return False
         else:
             return True
-
-
+         
 if __name__ == '__main__':
+       
     # create the coordinates
-    numebr_of_points = 21;
-    small_range = -1.0;
-    large_range = 1.0
+    numebr_of_points = 21 ; small_range = -1.0 ; large_range =  1.0
 
-    xcoordinates = np.linspace(small_range, large_range, num=numebr_of_points)
-    ycoordinates = np.linspace(small_range, large_range, num=numebr_of_points)
+    xcoordinates = np.linspace(small_range, large_range, num=numebr_of_points) 
+    ycoordinates = np.linspace(small_range, large_range, num=numebr_of_points) 
 
     xcoord_mesh, ycoord_mesh = np.meshgrid(xcoordinates, ycoordinates)
-    inds = np.array(range(numebr_of_points ** 2))
-    s1 = xcoord_mesh.ravel()[inds]
-    s2 = ycoord_mesh.ravel()[inds]
-    coordinate = np.c_[s1, s2]
-    print('From ', small_range, ' to ', large_range, ' with ', numebr_of_points, ' total number of coordinate: ',
-          numebr_of_points ** 2)
+    inds = np.array(range(numebr_of_points**2))
+    s1   = xcoord_mesh.ravel()[inds]
+    s2   = ycoord_mesh.ravel()[inds]
+    coordinate = np.c_[s1,s2]
+    print('From ',small_range,' to ',large_range,' with ',numebr_of_points,' total number of coordinate: ', numebr_of_points**2)

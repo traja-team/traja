@@ -1,3 +1,16 @@
+"""
+Modified from https://github.com/agrimgupta92/sgan/blob/master/sgan/data/trajectories.py.
+
+This module contains:
+
+Classes:
+1. Pytorch Time series dataset class instance
+2. Weighted train and test dataset loader with respect to class distribution
+
+Helpers:
+1. Class distribution in the dataset
+
+"""
 import logging
 import os
 import math
@@ -8,7 +21,7 @@ from collections import Counter
 from torch.utils.data.sampler import WeightedRandomSampler
 import pandas as pd
 from sklearn.utils import shuffle
-from traja.datasets import utils
+from datasets import utils
 
 logger = logging.getLogger(__name__)
 
@@ -236,7 +249,7 @@ class TimeSeriesDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-class MultiModalDataLoader:
+class MultiModalDataLoader(object):
     """
     MultiModalDataLoader wraps the following data preparation steps,
     
@@ -256,7 +269,7 @@ class MultiModalDataLoader:
             batch_size (int): Number of samples per batch of data
             n_past (int): Input sequence length. Number of time steps from the past. 
             n_future (int): Target sequence length. Number of time steps to the future. 
-            num_workers (int): Number of cpu subprocess occupied during data loading process
+            num_workers (int): Number of cpu subprocess to be occupied during data loading process
         
         Usage:
         train_dataloader, test_dataloader = MultiModalDataLoader(df = data_frame, batch_size=32, 
