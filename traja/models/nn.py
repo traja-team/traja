@@ -19,13 +19,13 @@ import pandas as pd
 from time import time
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
-
+from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
+import torchvision.transforms as transforms
 
 nb_steps = 10
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
+    
 class LossMse:
     """
     Calculate the Mean Squared Error between y_true and y_pred
@@ -33,16 +33,14 @@ class LossMse:
     y_true is the desired output.
     y_pred is the model's output.
     """
-
     def __init__(self) -> None:
         pass
-
     def __call__(self, y_pred, y_true):
+
         # Calculate the Mean Squared Error and use it as loss.
         mse = torch.mean(torch.square(y_true - y_pred))
 
         return mse
-
 
 class Trainer:
     def __init__(self, model,
@@ -65,225 +63,6 @@ class Trainer:
         self.test_loader = test_loader
 
         self.criterion = LossMse()
-        print('Checking for optimizer for {}'.format(optimizer))
-        if optimizer == "adam":
-            print('Using adam')
-            self.optimizer = optim.Adam(model.parameters())
-        elif optimizer == "adam_lr":
-            print("Using adam with higher learning rate")
-            self.optimizer = optim.Adam(model.parameters(), lr=0.01)
-        elif optimizer == 'adam_lr2':
-            print('Using adam with to large learning rate')
-            self.optimizer = optim.Adam(model.parameters(), lr=0.0001)
-        elif optimizer == "SGD":
-            print('Using SGD')
-            self.optimizer = optim.SGD(model.parameters(), momentum=0.9, weight_decay=5e-4)
-        elif optimizer == "LRS":
-            print('Using LRS')
-            self.optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
-            self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, self.epochs // 3)
-        elif optimizer == "radam":
-            print('Using radam')
-            self.optimizer = RAdam(model.parameters())
-        elif optimizer == "RMSprop":
-            print('Using RMSprop')
-            self.optimizer = optim.RMSprop(model.parameters())
-        else:
-            raise ValueError('Unknown optimizer {}'.format(optimizer))
-        self.opt_name = optimizer
-        save_dir = os.path.join(logs_dir, model.name, train_loader.name)
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-
-        self.savepath = os.path.join(save_dir,
-                                     f'{model.name}_bs{batch_size}_e{epochs}_dspl{downsampling}_id{run_id}.csv')
-        self.experiment_done = False
-        if os.path.exists(self.savepath):
-            trained_epochs = len(pd.read_csv(self.savepath, sep=';'))
-
-            if trained_epochs >= epochs:
-                self.experiment_done = True
-                print(
-                    f'Experiment Logs for the exact same experiment with identical run_id was detected, training will be skipped, consider using another run_id')
-        if os.path.exists((self.savepath.replace('.csv', '.pt'))):
-            self.model.load_state_dict(torch.load(self.savepath.replace('.csv', '.pt'))['model_state_dict'])
-            self.model = self.model.to(self.device)
-
-            self.optimizer.load_state_dict(torch.load(self.savepath.replace('.csv', '.pt'))['optimizer'])
-            self.start_epoch = torch.load(self.savepath.replace('.csv', '.pt'))['epoch'] + 1
-        else:
-
-            self.start_epoch = 0
-            self.model = self.model.to(self.device)
-
-    def _infer_initial_epoch(self, savepath):
-        if not os.path.exists(savepath):
-            return 0
-        else:
-            df = pd.read_csv(savepath, sep=';', index_col=0)
-            print(len(df) + 1)
-            return len(df)
-
-    def train(self):
-        if self.experiment_done:
-            return
-        for epoch in range(self.start_epoch, self.epochs):
-
-            print('Start training epoch', epoch)
-            print("{} Epoch {}, training loss: {}".format(datetime.now(), epoch, self.train_epoch()))
-            self.test(epoch=epoch)
-            if self.opt_name == "LRS":
-                print('LRS step')
-                self.lr_scheduler.step()
-        return self.savepath + '.csv'
-
-    def train_epoch(self):
-        self.model.train()
-        total = 0
-        running_loss = 0
-        old_time = time()
-        for batch, data in enumerate(self.train_loader):
-
-            inputs, targets = data[0].to(self.device).float(), data[1].to(self.device).float()
-            self.optimizer.zero_grad()
-            outputs = self.model(inputs)
-            loss = self.criterion(outputs, targets)
-            loss.backward()
-            self.optimizer.step()
-            running_loss += loss.item()
-
-            if batch % 10 == 0 and batch != 0:
-                print(batch, 'of', len(self.train_loader), 'processing time', time() - old_time, 'loss:',
-                      running_loss / total)
-                old_time = time()
-
-            # Increment number of batches
-            total += 1
-        return running_loss / total
-
-    def test(self, epoch, save=True):
-        self.model.eval()
-        total = 0
-        test_loss = 0
-        with torch.no_grad():
-            for batch, data in enumerate(self.test_loader):
-                if batch % 10 == 0:
-                    print('Processing eval batch', batch, 'of', len(self.test_loader))
-                inputs, targets = data[0].to(self.device).float(), data[1].to(self.device).float()
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, targets)
-                total += 1
-                test_loss += loss.item()
-
-        if save:
-            torch.save({
-                'model_state_dict': self.model.state_dict(),
-                'optimizer': self.optimizer.state_dict(),
-                'epoch': epoch,
-                'test_loss': test_loss / total
-            }, self.savepath.replace('.csv', '.pt'))
-        return test_loss / total
-
-
-class TimeseriesDataset(Dataset):
-    # Loads the dataset and splits it into equally sized chunks.
-    # Whereas this can lead to uneven training data,
-    # with sufficiently long sequence lengths the
-    # bias should even out.
-
-    def __init__(self, data_frame, sequence_length):
-        self.data = data_frame
-        self.sequence_length = sequence_length
-
-    def __len__(self):
-        return int((self.data.shape[0]) / self.sequence_length)
-
-    def __getitem__(self, index):
-        data = (self.data[index * self.sequence_length: (index + 1) * self.sequence_length],
-                self.data[index * self.sequence_length : (index + 1) * self.sequence_length])
-        return data
-    
-def get_transformed_timeseries_dataloaders(data_frame: pd.DataFrame, sequence_length: int, train_fraction: float, batch_size:int):
-    """ Scale the timeseries dataset and generate train and test dataloaders
-
-    Args:
-        data_frame (pd.DataFrame): Dataset 
-        sequence_length (int): Sequence length of time series for a single gradient step 
-        train_fraction (float): train data vs test data ratio
-        batch_size (int): Batch size of single gradient measure
-
-    Returns:
-        train_loader (Dataloader)
-        validation_loader(Dataloader)
-        scaler (instance): Data scaler instance
-    """
-    # Dataset transformation
-    scaler = MinMaxScaler(copy=False)
-    scaled_dataset = scaler.fit_transform(data_frame.values)
-    dataset_length = int(scaled_dataset.shape[0] / sequence_length)
-    indices = list(range(dataset_length))
-    split = int(np.floor(train_fraction * dataset_length))
-    train_indices, val_indices = indices[split:], indices[:split]
-
-    # Creating PT data samplers and loaders:
-    train_sampler = SubsetRandomSampler(train_indices)
-    valid_sampler = SubsetRandomSampler(val_indices)
-
-    dataset = TimeseriesDataset(scaled_dataset, sequence_length)
-    
-    train_loader = DataLoader(dataset, batch_size=batch_size,
-                              sampler=train_sampler)
-    validation_loader = DataLoader(dataset, batch_size=batch_size,
-                                   sampler=valid_sampler)
-    train_loader.name = "time_series"
-    return train_loader, validation_loader, scaler
-
-class LossMseWarmup:
-    """
-    Calculate the Mean Squared Error between y_true and y_pred,
-    but ignore the beginning "warmup" part of the sequences.
-
-    y_true is the desired output.
-    y_pred is the model's output.
-    """
-    def __init__(self, warmup_steps=50):
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, y_pred, y_true):
-
-        y_true_slice = y_true[:, self.warmup_steps:, :]
-        y_pred_slice = y_pred[:, self.warmup_steps:, :]
-
-        # Calculate the Mean Squared Error and use it as loss.
-        mse = torch.mean(torch.square(y_true_slice - y_pred_slice))
-
-        return mse
-
-
-class Trainer:
-    def __init__(self, model,
-                 train_loader,
-                 test_loader,
-                 epochs=200,
-                 batch_size=60,
-                 run_id=0,
-                 logs_dir='logs',
-                 device='cpu',
-                 optimizer='None',
-                 plot=True,
-                 downsampling=None,
-                 warmup_steps=50):
-        self.device = device
-        self.model = model
-        self.epochs = epochs
-        self.plot = plot
-
-        self.train_loader = train_loader
-        self.test_loader = test_loader
-
-        self.warmup_steps = warmup_steps
-
-        self.criterion = LossMseWarmup(self.warmup_steps)
         print('Checking for optimizer for {}'.format(optimizer))
         if optimizer == "adam":
             print('Using adam')
@@ -361,23 +140,21 @@ class Trainer:
         running_loss = 0
         old_time = time()
         for batch, data in enumerate(self.train_loader):
+            
+            inputs, targets= data[0].to(self.device).float(), data[1].to(self.device).float()
+            self.optimizer.zero_grad()
+            outputs = self.model(inputs)
+            loss = self.criterion(outputs, targets)
+            loss.backward()
+            self.optimizer.step()
+            running_loss += loss.item()
+
             if batch % 10 == 0 and batch != 0:
                 print(batch, 'of', len(self.train_loader), 'processing time', time()-old_time, 'loss:', running_loss/total)
                 old_time = time()
-            inputs, labels = data
-            inputs, labels = inputs.to(self.device).float(), labels.to(self.device).float()
 
-            self.optimizer.zero_grad()
-            outputs = self.model(inputs)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-
-            loss = self.criterion(outputs, labels)
-            loss.backward()
-            self.optimizer.step()
-
-            running_loss += loss.item()
-
+            # Increment number of batches
+            total += 1
         return running_loss/total
 
     def test(self, epoch, save=True):
@@ -388,13 +165,10 @@ class Trainer:
             for batch, data in enumerate(self.test_loader):
                 if batch % 10 == 0:
                     print('Processing eval batch', batch,'of', len(self.test_loader))
-                inputs, labels = data
-                inputs, labels = inputs.to(self.device).float(), labels.to(self.device).float()
-
+                inputs, targets = data[0].to(self.device).float(), data[1].to(self.device).float()
                 outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
+                loss = self.criterion(outputs, targets)
+                total += 1
                 test_loss += loss.item()
 
         if save:
@@ -434,26 +208,25 @@ class LSTM(nn.Module):
 
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
                             num_layers=num_layers, dropout=dropout,
-                            bidirectional=bidirectional)
+                            bidirectional=bidirectional, )
 
         self.head = nn.Linear(hidden_size, output_size)
 
-    def forward(self, x):
+    def forward(self, x): 
         x, state = self.lstm(x)
         # Use the last hidden state of last layer
-        x = state[0][-1]
+        x = state[0][-1]  
         x = self.head(x)
         return x
 
-
 class TrajectoryLSTM:
     def __init__(
-            self, xy, nb_steps=10, epochs=1000, batch_size=1, criterion=nn.MSELoss()
+        self, xy, nb_steps=10, epochs=1000, batch_size=1, criterion=nn.MSELoss()
     ):
         fig, ax = plt.subplots(2, 1)
         self.fig = fig
         self.ax = ax
-        assert xy.shape[1] == 2, f"xy should be an N x 2 array, but is {xy.shape}"
+        assert xy.shape[1] is 2, f"xy should be an N x 2 array, but is {xy.shape}"
         self.xy = xy
         self.nb_steps = nb_steps
         self.epochs = epochs
@@ -467,10 +240,10 @@ class TrajectoryLSTM:
 
         inds = np.random.randint(0, len(self.xy) - self.nb_steps, (self.batch_size))
         for i, ind in enumerate(inds):
-            t_1_b[:, i] = self.xy[ind: ind + self.nb_steps]
-            t_b[i * nb_steps: (i + 1) * self.nb_steps] = self.xy[
-                                                         ind + 1: ind + nb_steps + 1
-                                                         ]
+            t_1_b[:, i] = self.xy[ind : ind + self.nb_steps]
+            t_b[i * nb_steps : (i + 1) * self.nb_steps] = self.xy[
+                ind + 1 : ind + nb_steps + 1
+            ]
         return torch.from_numpy(t_1_b).float(), torch.from_numpy(t_b).float()
 
     def train(self):
@@ -530,7 +303,6 @@ class TrajectoryLSTM:
             self._plot()
             return self.fig
 
-
 def make_mlp(dim_list, activation="relu", batch_norm=True, dropout=0):
     layers = []
     for dim_in, dim_out in zip(dim_list[:-1], dim_list[1:]):
@@ -559,7 +331,7 @@ class Encoder(nn.Module):
     TrajectoryDiscriminator"""
 
     def __init__(
-            self, embedding_dim=64, h_dim=64, mlp_dim=1024, num_layers=1, dropout=0.0
+        self, embedding_dim=64, h_dim=64, mlp_dim=1024, num_layers=1, dropout=0.0
     ):
         super(Encoder, self).__init__()
 
@@ -599,20 +371,20 @@ class Decoder(nn.Module):
     """Decoder is part of TrajectoryGenerator"""
 
     def __init__(
-            self,
-            seq_len,
-            embedding_dim=64,
-            h_dim=128,
-            mlp_dim=1024,
-            num_layers=1,
-            pool_every_timestep=True,
-            dropout=0.0,
-            bottleneck_dim=1024,
-            activation="relu",
-            batch_norm=True,
-            pooling_type="pool_net",
-            neighborhood_size=2.0,
-            grid_size=8,
+        self,
+        seq_len,
+        embedding_dim=64,
+        h_dim=128,
+        mlp_dim=1024,
+        num_layers=1,
+        pool_every_timestep=True,
+        dropout=0.0,
+        bottleneck_dim=1024,
+        activation="relu",
+        batch_norm=True,
+        pooling_type="pool_net",
+        neighborhood_size=2.0,
+        grid_size=8,
     ):
         super(Decoder, self).__init__()
 
@@ -696,14 +468,14 @@ class PoolHiddenNet(nn.Module):
     """Pooling module as proposed in our paper"""
 
     def __init__(
-            self,
-            embedding_dim=64,
-            h_dim=64,
-            mlp_dim=1024,
-            bottleneck_dim=1024,
-            activation="relu",
-            batch_norm=True,
-            dropout=0.0,
+        self,
+        embedding_dim=64,
+        h_dim=64,
+        mlp_dim=1024,
+        bottleneck_dim=1024,
+        activation="relu",
+        batch_norm=True,
+        dropout=0.0,
     ):
         super(PoolHiddenNet, self).__init__()
 
@@ -773,14 +545,14 @@ class SocialPooling(nn.Module):
     http://cvgl.stanford.edu/papers/CVPR16_Social_LSTM.pdf"""
 
     def __init__(
-            self,
-            h_dim=64,
-            activation="relu",
-            batch_norm=True,
-            dropout=0.0,
-            neighborhood_size=2.0,
-            grid_size=8,
-            pool_dim=None,
+        self,
+        h_dim=64,
+        activation="relu",
+        batch_norm=True,
+        dropout=0.0,
+        neighborhood_size=2.0,
+        grid_size=8,
+        pool_dim=None,
     ):
         super(SocialPooling, self).__init__()
         self.h_dim = h_dim
@@ -864,14 +636,14 @@ class SocialPooling(nn.Module):
             # Make all positions to exclude as non-zero
             # Find which peds to exclude
             x_bound = (curr_end_pos[:, 0] >= bottom_right[:, 0]) + (
-                    curr_end_pos[:, 0] <= top_left[:, 0]
+                curr_end_pos[:, 0] <= top_left[:, 0]
             )
             y_bound = (curr_end_pos[:, 1] >= top_left[:, 1]) + (
-                    curr_end_pos[:, 1] <= bottom_right[:, 1]
+                curr_end_pos[:, 1] <= bottom_right[:, 1]
             )
 
             within_bound = x_bound + y_bound
-            within_bound[0:: num_ped + 1] = 1  # Don't include the ped itself
+            within_bound[0 :: num_ped + 1] = 1  # Don't include the ped itself
             within_bound = within_bound.view(-1)
 
             # This is a tricky way to get scatter add to work. Helps me avoid a
@@ -901,25 +673,25 @@ class TrajectoryGenerator(nn.Module):
     """Modified from @agrimgupta92's https://github.com/agrimgupta92/sgan/blob/master/sgan/models.py."""
 
     def __init__(
-            self,
-            obs_len,
-            pred_len,
-            embedding_dim=64,
-            encoder_h_dim=64,
-            decoder_h_dim=128,
-            mlp_dim=1024,
-            num_layers=1,
-            noise_dim=(0,),
-            noise_type="gaussian",
-            noise_mix_type="ped",
-            pooling_type=None,
-            pool_every_timestep=True,
-            dropout=0.0,
-            bottleneck_dim=1024,
-            activation="relu",
-            batch_norm=True,
-            neighborhood_size=2.0,
-            grid_size=8,
+        self,
+        obs_len,
+        pred_len,
+        embedding_dim=64,
+        encoder_h_dim=64,
+        decoder_h_dim=128,
+        mlp_dim=1024,
+        num_layers=1,
+        noise_dim=(0,),
+        noise_type="gaussian",
+        noise_mix_type="ped",
+        pooling_type=None,
+        pool_every_timestep=True,
+        dropout=0.0,
+        bottleneck_dim=1024,
+        activation="relu",
+        batch_norm=True,
+        neighborhood_size=2.0,
+        grid_size=8,
     ):
         super(TrajectoryGenerator, self).__init__()
 
@@ -1049,9 +821,9 @@ class TrajectoryGenerator(nn.Module):
 
     def mlp_decoder_needed(self):
         if (
-                self.noise_dim
-                or self.pooling_type
-                or self.encoder_h_dim != self.decoder_h_dim
+            self.noise_dim
+            or self.pooling_type
+            or self.encoder_h_dim != self.decoder_h_dim
         ):
             return True
         else:
@@ -1102,20 +874,19 @@ class TrajectoryGenerator(nn.Module):
 
         return pred_traj_fake_rel
 
-
 class TrajectoryDiscriminator(nn.Module):
     def __init__(
-            self,
-            obs_len,
-            pred_len,
-            embedding_dim=64,
-            h_dim=64,
-            mlp_dim=1024,
-            num_layers=1,
-            activation="relu",
-            batch_norm=True,
-            dropout=0.0,
-            d_type="local",
+        self,
+        obs_len,
+        pred_len,
+        embedding_dim=64,
+        h_dim=64,
+        mlp_dim=1024,
+        num_layers=1,
+        activation="relu",
+        batch_norm=True,
+        dropout=0.0,
+        d_type="local",
     ):
         super(TrajectoryDiscriminator, self).__init__()
 
