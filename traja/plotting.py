@@ -3,6 +3,7 @@ from datetime import timedelta
 import logging
 from typing import Union, Optional, Tuple, List
 
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
