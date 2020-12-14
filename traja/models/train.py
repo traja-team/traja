@@ -1,12 +1,12 @@
-from models.ae import MultiModelAE
-from models.vae import MultiModelVAE
-from models.vaegan import MultiModelVAEGAN
-from models.lstm import LSTM
+from .ae import MultiModelAE
+from .vae import MultiModelVAE
+from .vaegan import MultiModelVAEGAN
+from .lstm import LSTM
 import torch
 from functools import wraps
 import inspect
-from models import utils
-from models.losses import Criterion
+from . import utils
+from .losses import Criterion
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
