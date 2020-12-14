@@ -29,68 +29,79 @@ class TimeDistributed(torch.nn.Module):
             out = out.view(-1, x.size(1), out.size(-1))  # (timesteps, samples, output_size)
 
         return out
+  
+class Optimizers:
     
-def get_optimizers(model_type, model, lr=0.0001):
-    r"""Optimizers for each network in the model
+    def __init__(self):
+        pass  
+    
+    def get_optimizers(model_type, model, lr=0.0001):
+        """Optimizers for each network in the model
 
-    Args:
-        model_type ([type]): [description]
-        model ([type]): [description]
-        lr (float, optional): [description]. Defaults to 0.0001.
+        Args:
+            model_type ([type]): [description]
+            model ([type]): [description]
+            lr (float, optional): [description]. Defaults to 0.0001.
 
-    Returns:
-        [type]: [description]
-    """
-    
-    if model_type == 'ae' or 'vae':
-        # Optimizers for each network in the model
-        encoder_optimizer = torch.optim.Adam(model.encoder.parameters(), lr=lr)
-        latent_optimizer = torch.optim.Adam(model.latent.parameters(), lr=lr)
-        decoder_optimizer = torch.optim.Adam(model.decoder.parameters(), lr=lr)
-        classifier_optimizer = torch.optim.Adam(model.classifier.parameters(), lr=lr)
-        return [encoder_optimizer, latent_optimizer, decoder_optimizer, classifier_optimizer]
-    
-    elif model_type == 'vaegan':
-        return NotImplementedError
-    
-    else: # LSTM
-        return NotImplementedError
+        Returns:
+            [type]: [description]
+        """
+        
+        if model_type == 'ae' or 'vae':
+            keys = ['encoder','decoder', 'latent', 'classifier']
+            optimizers = {}
+            for network in keys:
+                optimizers[network]=torch.optim.Adam(model.keys[network].parameters(), lr=lr)
+                
+        if model_type == 'lstm':
+            optimizers = {}
+            optimizers["lstm_optimizer"] = torch.optim.Adam(model.parameters(), lr=lr)
+            return optimizers
+        
+        elif model_type == 'vaegan':
+            return NotImplementedError
+        
+        else: # LSTM
+            return NotImplementedError
 
-def get_lrschedulers(model_type, encoder_optimizer, decoder_optimizer, latent_optimizer, classifier_optimizer, factor=0.1, patience=10):
-    
-    r"""Learning rate scheduler for each network in the model
-    NOTE: Scheduler metric should be test set loss
+        def get_lrschedulers(model_type, lstm_optimizer=None, encoder_optimizer=None, decoder_optimizer=None, latent_optimizer=None, classifier_optimizer=None, factor=0.1, patience=10):
+            
+            """Learning rate scheduler for each network in the model
+            NOTE: Scheduler metric should be test set loss
 
-    Args:
-        model_type ([type]): [description]
-        encoder_optimizer ([type]): [description]
-        decoder_optimizer ([type]): [description]
-        latent_optimizer ([type]): [description]
-        classifier_optimizer ([type]): [description]
-        factor (float, optional): [description]. Defaults to 0.1.
-        patience (int, optional): [description]. Defaults to 10.
+            Args:
+                model_type ([type]): [description]
+                encoder_optimizer ([type]): [description]
+                decoder_optimizer ([type]): [description]
+                latent_optimizer ([type]): [description]
+                classifier_optimizer ([type]): [description]
+                factor (float, optional): [description]. Defaults to 0.1.
+                patience (int, optional): [description]. Defaults to 10.
 
-    Returns:
-        [type]: [description]
-    """
-    
-    if model_type == 'ae' or 'vae':
-        encoder_scheduler = ReduceLROnPlateau(encoder_optimizer, mode='max', factor=factor, patience=patience, verbose=True)
-        decoder_scheduler = ReduceLROnPlateau(decoder_optimizer, mode='max', factor=factor, patience=patience, verbose=True)
-        latent_scheduler = ReduceLROnPlateau(latent_optimizer, mode='max', factor=factor, patience=patience, verbose=True)
-        classifier_scheduler = ReduceLROnPlateau(classifier_optimizer, mode='max', factor=factor, patience=patience, verbose=True)
-        return [encoder_scheduler, decoder_scheduler, latent_scheduler, classifier_scheduler]
-    
-    elif model_type == 'vaegan':
-        return NotImplementedError
-    
-    else: # LSTM
-        return NotImplementedError
+            Returns:
+                [type]: [description]
+            """
+            
+            if model_type == 'ae' or 'vae':
+                keys = ['encoder_scheduler','decoder_scheduler', 'latent_scheduler', 'classifier_scheduler']
+                schedulers = {}
+                for key in keys:
+                    schedulers[key] = ReduceLROnPlateau(encoder_optimizer, mode='max', factor=factor, patience=patience, verbose=True)
+                return schedulers
+            if model_type == 'lstm':
+                scheduler = ReduceLROnPlateau(lstm_optimizer, mode='max', factor=factor, patience=patience, verbose=True)
+                return scheduler
+                
+            elif model_type == 'vaegan':
+                return NotImplementedError
+            
+            else: # irl
+                return NotImplementedError
     
     
     
 def save_model(model, PATH):
-    r"""[summary]
+    """[summary]
 
     Args:
         model ([type]): [description]
@@ -103,7 +114,7 @@ def save_model(model, PATH):
     print('Model saved at {}'.format(PATH))
     
 def load_model(model,model_hyperparameters, PATH):
-    r"""[summary]
+    """[summary]
 
     Args:
         model ([type]): [description]
