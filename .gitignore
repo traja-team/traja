@@ -77,9 +77,8 @@ target/
 
 .DS_Store
 
+# Visualstudio code file
 .vscode
-.vscode/
-
 # celery beat schedule file
 celerybeat-schedule
 

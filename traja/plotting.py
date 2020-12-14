@@ -3,7 +3,6 @@ from datetime import timedelta
 import logging
 from typing import Union, Optional, Tuple, List
 
-import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
@@ -287,7 +286,6 @@ def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollect
         rcParams["axes.labelpad"] = labelpad
 
     return ax
-
 
 def plot(
     trj: TrajaDataFrame,
