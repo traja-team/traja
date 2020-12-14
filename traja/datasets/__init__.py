@@ -3,7 +3,7 @@ import glob
 import os
 from typing import List
 import pandas as pd
-import .dataset
+from traja.datasets import dataset
 import traja
 
 
