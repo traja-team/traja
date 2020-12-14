@@ -21,7 +21,7 @@ from collections import Counter
 from torch.utils.data.sampler import WeightedRandomSampler
 import pandas as pd
 from sklearn.utils import shuffle
-from datasets import utils
+from traja.datasets import utils
 
 logger = logging.getLogger(__name__)
 
