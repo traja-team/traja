@@ -7,6 +7,7 @@ from .parsers import read_file, from_df
 from .plotting import *
 from .trajectory import *
 from .datasets import *
+from .models import *
 
 import logging
 
