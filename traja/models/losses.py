@@ -27,7 +27,7 @@ class Criterion(object):
     
     @staticmethod
     def vae_criterion(recon_x, x, mu, logvar, loss_type='huber'):
-        r"""Time series generative model loss function
+        """Time series generative model loss function
 
         Args:
             recon_x ([type]): [description]

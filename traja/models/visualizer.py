@@ -85,10 +85,6 @@ class DirectedNetwork(object):
                 edge_cmap = edge_cmap, font_size=10,
                 connectionstyle='arc3, rad=0.3')
 
-        # nx.draw(G, with_labels=True, cmap=cmap, node_color=neuron_color, edge_color=edge_colors_,
-        #         node_size=200, linewidths=5, edge_cmap=cmap, font_size=10,
-        #         connectionstyle='arc3, rad=0.3')
-
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
         sm.set_array([])
         cbar = plt.colorbar(sm, orientation="vertical", pad=0.1)
@@ -104,7 +100,6 @@ class DirectedNetwork(object):
         else:
             return True
 
-        
 class LocalLinearEmbedding(object):
 
     def __init__(self):
@@ -155,21 +150,13 @@ class LocalLinearEmbedding(object):
         return vectors[:, 1:]
 
     def show(self,pc,fig2):
+        """[summary]
 
-        # plotly.offline.init_notebook_mode()
-
-        # # Configure the layout.
-        # layout = go.Layout(
-        #     margin=dict(l=80, r=80, t=100, b=80), title='Trajectory of first 3 principle components')
-        #
-        # fig1 = go.FigureWidget(data=[go.Scatter3d(x=pc[:, 0], y=pc[:, 1], z=pc[:, 2], mode='markers',
-        #                                    marker=dict(size=12,
-        #                                                color=pc[:, 2],  # set color to an array/list of desired values
-        #                                                colorscale='Viridis',  # choose a colorscale
-        #                                                opacity=0.8))], layout=layout)
-        #
-        # plotly.offline.plot(fig1,auto_open = False, filename = 'pc')
-        
+        Args:
+            pc ([type]): [description]
+            fig2 ([type]): [description]
+        """
+    
         ax = Axes3D(fig2)
         f = ax.scatter(pc[:, 0], pc[:, 1], pc[:, 2], s = 40,c = pc[:, 2])
 #         ax.set_xlim(-1,1)
@@ -217,10 +204,8 @@ class SpectralEmbedding(object):
         # Find the laplacian of the neighbour graph
         # L = D - A ; where D is the diagonal degree matrix        
         L = csgraph.laplacian(A, normed=False)
-        
         # Embedd the data points i low dimension using the Eigen values/vectos 
         # of the laplacian graph to get the most optimal partition of the graph
-        
         eigval, eigvec = np.linalg.eig(L)
         # the second smallest eigenvalue represents sparsest cut of the graph.
         np.where(eigval == np.partition(eigval, 1)[1])
@@ -231,6 +216,16 @@ class SpectralEmbedding(object):
         return y_spec
 
     def show(self,X, spec_embed,fig3):
+        """[summary]
+
+        Args:
+            X ([type]): [description]
+            spec_embed ([type]): [description]
+            fig3 ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
 
         ax3 = fig3.add_subplot()
         X = X.T
