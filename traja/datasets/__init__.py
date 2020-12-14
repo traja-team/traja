@@ -2,7 +2,6 @@ import subprocess
 import glob
 import os
 from typing import List
-from traja import datasets
 import pandas as pd
 
 import traja
