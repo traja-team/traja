@@ -6,6 +6,7 @@ from .frame import TrajaDataFrame, TrajaCollection
 from .parsers import read_file, from_df
 from .plotting import *
 from .trajectory import *
+from .datasets import *
 
 import logging
 
