@@ -1,7 +1,7 @@
 import torch
 from torch.optim import optimizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from ae import MultiModelAE
+from traja.models.ae import MultiModelAE
 
 class Optimizer:
     
