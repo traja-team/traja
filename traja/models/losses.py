@@ -52,7 +52,8 @@ class Criterion(object):
     @staticmethod
     def classifier_criterion(predicted,target):
         """Classifier loss function"""
-        loss = torch.nn.CrossEntropyLoss(predicted,target)
+        loss = torch.nn.CrossEntropyLoss()
+        loss = loss(predicted, target)
         return loss
 
     def vaegan_criterion():
