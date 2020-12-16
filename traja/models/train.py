@@ -12,6 +12,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 class Trainer(object):
     
     def __init__(self, model_type:str,
+                optimizer_type:str,
                  device:str, 
                  input_size:int, 
                  output_size:int, 
@@ -26,7 +27,6 @@ class Trainer(object):
                  batch_size:int, 
                  num_future:int, 
                  sequence_length:int,
-                 optimizer_type:str = 'Adam',
                  bidirectional:bool =False, 
                  batch_first:bool =True,
                  loss_type:str = 'huber',
@@ -86,8 +86,8 @@ class Trainer(object):
         
         if self.model_type == 'irl':
             return NotImplementedError
-        print(str(self.optimizer_type))      
-        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
+        print(self.optimizer_type[0])      
+        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type[0])
         
         self.model_optimizers = optimizer.get_optimizers(lr=0.001)
         self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience)
