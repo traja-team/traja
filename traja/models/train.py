@@ -2,11 +2,13 @@ from .ae import MultiModelAE
 from .vae import MultiModelVAE
 from .vaegan import MultiModelVAEGAN
 from .lstm import LSTM
+
+from . import utils
+from .losses import Criterion
+from .optimizers import Optimizer
 import torch
 from functools import wraps
 import inspect
-from . import utils
-from .losses import Criterion
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -31,6 +33,7 @@ class Trainer(object):
                  bidirectional:bool =False, 
                  batch_first:bool =True,
                  loss_type:str = 'huber', 
+                 optimizer_type = 'adam',
                  lr_factor:float = 0.1, 
                  scheduler_patience: int=10):
         
@@ -56,6 +59,7 @@ class Trainer(object):
         self.dropout = dropout
         self.bidirectional= bidirectional
         self.loss_type = loss_type
+        self.optimizer_type = optimizer_type,
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
         self.model_hyperparameters = {'input_size':self.input_size,
@@ -93,9 +97,10 @@ class Trainer(object):
         if self.model_type == 'irl':
             return NotImplementedError
             
-        self.model_optimizers = utils.get_optimizers(self.model_type, self.model)
-        self.model_lrschedulers = utils.get_lrschedulers(self.model_type,self.model_optimizers, factor= self.lr_factor, patience = self.scheduler_patience)
-            
+        optimizer = Optimizer(self.model_type, self.model)
+        self.model_optimizers = optimizer.get_optimizers(lr=0.001)
+        self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor,patience=self.scheduler_patience)
+          
     def __str__(self):
         return "Training model type {}".format(self.model_type)
     
