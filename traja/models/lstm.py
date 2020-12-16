@@ -1,6 +1,7 @@
 """Implementation of Multimodel LSTM"""
 
-import torch 
+import torch
+
 
 class LSTM(torch.nn.Module):
     """ Deep LSTM network. This implementation
@@ -21,11 +22,11 @@ class LSTM(torch.nn.Module):
         bidirectional: If ``True``, becomes a bidirectional LSTM. Default: ``False``
     """
 
-    def __init__(self, batch_size:int, num_future:int, hidden_size: int, num_layers: int,
-                output_size: int, input_size:int, batch_first: bool, dropout: float, 
-                reset_state: bool, bidirectional: bool):
+    def __init__(self, batch_size: int, num_future: int, hidden_size: int, num_layers: int,
+                 output_size: int, input_size: int, batch_first: bool, dropout: float,
+                 reset_state: bool, bidirectional: bool):
         super(LSTM, self).__init__()
-        
+
         self.batch_size = batch_size
         self.input_size = input_size
         self.num_future = num_future
@@ -39,21 +40,21 @@ class LSTM(torch.nn.Module):
 
         # RNN decoder
         self.lstm_decoder = torch.nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size,
-                            num_layers=self.num_layers, dropout=self.dropout,
-                            bidirectional=self.bidirectional, batch_first=True)
-        self.output = TimeDistributed(torch.nn.Linear(self.hidden_size , self.output_size))
+                                          num_layers=self.num_layers, dropout=self.dropout,
+                                          bidirectional=self.bidirectional, batch_first=True)
+        self.output = TimeDistributed(torch.nn.Linear(self.hidden_size, self.output_size))
 
     def _init_hidden(self):
-        return (torch.zeros(self.num_layers, self.batch_size, self.hidden_size).to(device), torch.zeros(self.num_layers, self.batch_size, self.hidden_size).to(device))
+        return (torch.zeros(self.num_layers, self.batch_size, self.hidden_size).to(device),
+                torch.zeros(self.num_layers, self.batch_size, self.hidden_size).to(device))
 
     def forward(self, x):
-    
         # To feed the latent states into lstm decoder, repeat the tensor n_future times at second dim
         _init_hidden = self._init_hidden()
-            
+
         # Decoder input Shape(batch_size, num_futures, latent_size)
-        dec,(dec_hidden,dec_cell) = self.lstm_decoder(x,_init_hidden)
-    
+        dec, (dec_hidden, dec_cell) = self.lstm_decoder(x, _init_hidden)
+
         # Map the decoder output: Shape(batch_size, sequence_len, hidden_dim) to Time Dsitributed Linear Layer
         output = self.output(dec)
         return output
