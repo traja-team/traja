@@ -142,7 +142,7 @@ class Trainer(object):
 
                     else: # training_mode == 'classification'
                         
-                        classifier_out = self.model(data, training=True, is_classification=True)
+                        classifier_out, latent_out, mu, logvar = self.model(data, training=True, is_classification=True)
                         loss = Criterion.classifier_criterion(classifier_out, category-1)
                         loss.backward()
                         classifier_optimizer.step()
