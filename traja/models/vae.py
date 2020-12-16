@@ -100,8 +100,11 @@ class DisentangledAELatent(torch.nn.Module):
         return mu
 
     def forward(self, x, training=True):
+        
         z_variables = self.latent(x)  # [batch_size, latent_size*2]
         mu, logvar = torch.chunk(z_variables, 2, dim=1)  # [batch_size,latent_size]
+        if not training:
+            return mu
         # Reparameterize    
         z = self.reparameterize(mu, logvar, training=training)  # [batch_size,latent_size]
         return z, mu, logvar
@@ -173,6 +176,7 @@ class LSTMDecoder(torch.nn.Module):
             decoder_inputs = decoder_inputs.repeat(1, num_future, 1)
 
         # Decoder input Shape(batch_size, num_futures, latent_size)
+        print(decoder_inputs.shape)
         dec, _ = self.lstm_decoder(decoder_inputs, _init_hidden)
 
         # Map the decoder output: Shape(batch_size, sequence_len, hidden_dim) 
