@@ -24,8 +24,8 @@ trainer = Trainer(model_type='ae',
 trainer.train_latent_model(train_dataloader, test_dataloader, model_save_path=PATH)"""
 
 import torch
-from utils import TimeDistributed
-from utils import load_model
+from traja.utils import TimeDistributed
+from traja.utils import load_model
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
