@@ -33,11 +33,11 @@ class Trainer(object):
                  bidirectional:bool =False, 
                  batch_first:bool =True,
                  loss_type:str = 'huber', 
-                 optimizer_type:str = 'Adam',
+                 optimizer_type:str = 'RMSprop',
                  lr_factor:float = 0.1, 
                  scheduler_patience: int=10):
         
-        white_keys = ['ae','vae','lstm','vaeg   an', 'irl']
+        white_keys = ['ae','vae','lstm','vaegan', 'irl']
         assert model_type  in white_keys, "Valid models are {}".format(white_keys)
         self.model_type = model_type
         self.device = device
