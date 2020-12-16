@@ -56,10 +56,10 @@ class Criterion(object):
         loss = loss(predicted, target)
         return loss
 
-    def vaegan_criterion():
+    def vaegan_criterion(self):
         return NotImplementedError
 
-    def lstm_criterion():
+    def lstm_criterion(self):
         return NotImplementedError
 
 # VAE loss
