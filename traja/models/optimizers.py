@@ -8,12 +8,14 @@ class Optimizer:
     def __init__(self, model_type, model, optimizer_type):
         
         assert isinstance(model,torch.nn.Module)
+        print(optimizer_type)
+        assert optimizer_type in ['Adam','Adadelta','Adagrad','AdamW','SparseAdam','RMSprop','Rprop','LBFGS','ASGD','Adamax']
+        
         self.model_type = model_type
         self.model = model 
         self.optimizer_type = optimizer_type
         self.optimizers = {}
         self.schedulers = {}
-        assert optimizer_type in ['Adam','Adadelta','Adagrad','AdamW','SparseAdam','RMSprop','Rprop','LBFGS','ASGD','Adamax']
         
     def get_optimizers(self, lr=0.0001):
         """Optimizers for each network in the model
