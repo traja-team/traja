@@ -16,6 +16,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 class Trainer(object):
     
     def __init__(self, model_type:str, 
+                 optimizer_type:str,
                  device:str, 
                  input_size:int, 
                  output_size:int, 
@@ -33,7 +34,7 @@ class Trainer(object):
                  bidirectional:bool =False, 
                  batch_first:bool =True,
                  loss_type:str = 'huber', 
-                 optimizer_type:str = 'RMSprop',
+                 
                  lr_factor:float = 0.1, 
                  scheduler_patience: int=10):
         
@@ -64,22 +65,17 @@ class Trainer(object):
         self.scheduler_patience = scheduler_patience
         self.model_hyperparameters = {'input_size':self.input_size,
                                 'sequence_length':self.sequence_length,
-                                'batch_size':self.batch_size, 
-                                'batch_first':self.batch_first,
-                
+                                'batch_size':self.batch_size,                
                                 'hidden_size':self.lstm_hidden_size,
                                 'num_future':self.num_future, 
-                                
                                 'num_layers':self.lstm_num_layers,
                                 'latent_size':self.latent_size, 
                                 'output_size':self.output_size,
                                 'num_classes':self.num_classes,
                                 'batch_first':self.batch_first, 
-                                'dropout':self.dropout, 
                                 'reset_state':self.reset_state,
                                 'bidirectional':self.bidirectional, 
-                                'dropout':self.dropout,
-                                
+                                'dropout':self.dropout
                                 }
  
         if self.model_type == 'lstm':
@@ -96,7 +92,7 @@ class Trainer(object):
         
         if self.model_type == 'irl':
             return NotImplementedError
-            
+              
         optimizer = Optimizer(self.model_type, self.model,self.optimizer_type)
         self.model_optimizers = optimizer.get_optimizers( lr=0.001)
         self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor,patience=self.scheduler_patience)
