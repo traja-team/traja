@@ -8,7 +8,7 @@ class Optimizer:
     def __init__(self, model_type, model, optimizer_type):
         
         assert isinstance(model,torch.nn.Module)
-        assert optimizer_type in ['Adam','Adadelta','Adagrad','AdamW','SparseAdam','RMSprop','Rprop','LBFGS','ASGD','Adamax']
+        assert str(optimizer_type) in ['Adam','Adadelta','Adagrad','AdamW','SparseAdam','RMSprop','Rprop','LBFGS','ASGD','Adamax']
         
         self.model_type = model_type
         self.model = model 

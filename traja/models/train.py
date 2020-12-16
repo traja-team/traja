@@ -86,7 +86,7 @@ class Trainer(object):
         
         if self.model_type == 'irl':
             return NotImplementedError
-        print(self.optimizer_type)      
+        print(str(self.optimizer_type))      
         optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
         
         self.model_optimizers = optimizer.get_optimizers(lr=0.001)
