@@ -4,8 +4,10 @@ import numpy as np
 import collections
 from numpy import math
 
+
 class TimeDistributed(torch.nn.Module):
     """ Time distributed wrapper compatible with linear/dense pytorch layer modules"""
+
     def __init__(self, module, batch_first=True):
         super(TimeDistributed, self).__init__()
         self.module = module
@@ -29,7 +31,7 @@ class TimeDistributed(torch.nn.Module):
 
         return out
 
-    
+
 def save_model(model, PATH):
     """[summary]
 
@@ -37,13 +39,14 @@ def save_model(model, PATH):
         model ([type]): [description]
         PATH ([type]): [description]
     """
-    
+
     # PATH = "state_dict_model.pt"
     # Save
     torch.save(model.state_dict(), PATH)
     print('Model saved at {}'.format(PATH))
-    
-def load_model(model,model_hyperparameters, PATH):
+
+
+def load_model(model, model_hyperparameters, PATH):
     """[summary]
 
     Args:
@@ -57,11 +60,5 @@ def load_model(model,model_hyperparameters, PATH):
     # Load
     model = model(model_hyperparameters)
     model.load_state_dict(torch.load(PATH))
-    
+
     return model
-
-
-
-
-
-
