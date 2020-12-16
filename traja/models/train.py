@@ -33,7 +33,7 @@ class Trainer(object):
                  bidirectional:bool =False, 
                  batch_first:bool =True,
                  loss_type:str = 'huber', 
-                 optimizer_type = 'adam',
+                 optimizer_type:str = 'Adam',
                  lr_factor:float = 0.1, 
                  scheduler_patience: int=10):
         
@@ -97,8 +97,8 @@ class Trainer(object):
         if self.model_type == 'irl':
             return NotImplementedError
             
-        optimizer = Optimizer(self.model_type, self.model)
-        self.model_optimizers = optimizer.get_optimizers(lr=0.001)
+        optimizer = Optimizer(self.model_type, self.model,self.optimizer_type)
+        self.model_optimizers = optimizer.get_optimizers( lr=0.001)
         self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor,patience=self.scheduler_patience)
           
     def __str__(self):
