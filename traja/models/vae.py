@@ -291,7 +291,7 @@ class MultiModelVAE(torch.nn.Module):
             latent_out, mu, logvar = self.latent(enc_out)
             # Decoder
             decoder_out = self.decoder(latent_out)
-            return decoder_out, latent_out, mu,logvar
+            return decoder_out, latent_out, mu, logvar
 
         else:  # training_mode = 'classification'
             # Unfreeze classifier parameters and freeze all other
@@ -310,5 +310,5 @@ class MultiModelVAE(torch.nn.Module):
             # Latent
             latent_out, mu, logvar = self.latent(enc_out, training=training)
             # Classifier
-            classifier_out = self.classifier(latent_out)  # Deterministic
+            classifier_out = self.classifier(mu)  # Deterministic
             return classifier_out, latent_out, mu, logvar

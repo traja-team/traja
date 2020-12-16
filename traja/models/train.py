@@ -164,10 +164,10 @@ class Trainer(object):
                             out, latent = self.model(data, training=False, is_classification=False)
                             test_loss_forecasting += Criterion.ae_criterion(out,target).item()
                         else:
-                            decoder_out,latent_out,mu,logvar= self.model(data,training=False, is_classification=False)
+                            decoder_out,latent_out, mu, logvar= self.model(data,training=False, is_classification=False)
                             test_loss_forecasting += Criterion.vae_criterion(decoder_out, target,mu,logvar)
                         # Classification test
-                        classifier_out= self.model(data,training=False, is_classification=True)
+                        classifier_out, latent_out, mu, logvar= self.model(data,training=False, is_classification=True)
                         test_loss_classification += Criterion.classifier_criterion(classifier_out, category-1).item()
 
                 test_loss_forecasting /= len(test_loader.dataset)
