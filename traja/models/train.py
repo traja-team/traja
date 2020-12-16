@@ -33,8 +33,7 @@ class Trainer(object):
                  sequence_length:int,
                  bidirectional:bool =False, 
                  batch_first:bool =True,
-                 loss_type:str = 'huber', 
-                 
+                 loss_type:str = 'huber',
                  lr_factor:float = 0.1, 
                  scheduler_patience: int=10):
         
@@ -45,7 +44,6 @@ class Trainer(object):
         self.input_size = input_size
         self.lstm_hidden_size = lstm_hidden_size
         self.lstm_num_layers = lstm_num_layers
-        self.num_layers = lstm_num_layers
         self.hidden_size = lstm_hidden_size # For classifiers too
         self.batch_first = batch_first
         self.reset_state = reset_state
@@ -92,10 +90,11 @@ class Trainer(object):
         
         if self.model_type == 'irl':
             return NotImplementedError
-              
+        print(self.optimizer_type)      
         optimizer = Optimizer(self.model_type, self.model,self.optimizer_type)
-        self.model_optimizers = optimizer.get_optimizers( lr=0.001)
-        self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor,patience=self.scheduler_patience)
+        
+        self.model_optimizers = optimizer.get_optimizers(lr=0.001)
+        self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience)
           
     def __str__(self):
         return "Training model type {}".format(self.model_type)
