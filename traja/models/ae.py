@@ -1,34 +1,8 @@
-""" This module implement the Auto encoder model for both forecasting 
-and classification of time series data.
-
-```USAGE``` to train AE model:
-trainer = Trainer(model_type='ae',
-                 device=device,
-                 input_size=input_size, 
-                 output_size=output_size, 
-                 lstm_hidden_size=lstm_hidden_size, 
-                 lstm_num_layers=lstm_num_layers,
-                 reset_state=True,
-                 num_classes=num_classes,
-                 latent_size=latent_size,
-                 dropout=0.1,
-                 num_layers=num_layers,
-                 epochs=epochs,
-                 batch_size=batch_size,
-                 num_future=num_future,
-                 sequence_length=sequence_length,
-                 bidirectional =False,
-                 batch_first =True,
-                 loss_type = 'huber')
-
-trainer.train_latent_model(train_dataloader, test_dataloader, model_save_path=PATH)"""
-
 import torch
 from traja.models.utils import TimeDistributed
 from traja.models.utils import load_model
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
 
 class LSTMEncoder(torch.nn.Module):
     """ Deep LSTM network. This implementation

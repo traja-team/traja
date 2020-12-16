@@ -8,7 +8,6 @@ class Optimizer:
     def __init__(self, model_type, model, optimizer_type):
         
         assert isinstance(model,torch.nn.Module)
-        print(optimizer_type)
         assert optimizer_type in ['Adam','Adadelta','Adagrad','AdamW','SparseAdam','RMSprop','Rprop','LBFGS','ASGD','Adamax']
         
         self.model_type = model_type
