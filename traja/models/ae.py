@@ -1,6 +1,5 @@
 import torch
 from traja.models.utils import TimeDistributed
-from traja.models.utils import load_model
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 

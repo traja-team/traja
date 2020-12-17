@@ -1,6 +1,8 @@
 """Implementation of Multimodel LSTM"""
-
 import torch
+from traja.models.utils import TimeDistributed
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 class LSTM(torch.nn.Module):
