@@ -1,6 +1,5 @@
 from .ae import MultiModelAE
 from .vae import MultiModelVAE
-from .vaegan import MultiModelVAEGAN
 from .lstm import LSTM
 
 from . import utils
@@ -153,15 +152,15 @@ class LatentModelTrainer(object):
                         # Time series forecasting test
                         if self.model_type == 'ae':
                             out, latent = self.model(data, training=False, is_classification=False)
-                            test_loss_forecasting += Criterion.ae_criterion(out, target).item()
+                            test_loss_forecasting += Criterion().ae_criterion(out, target).item()
                         else:
                             decoder_out, latent_out, mu, logvar = self.model(data, training=False,
                                                                              is_classification=False)
-                            test_loss_forecasting += Criterion.vae_criterion(decoder_out, target, mu, logvar)
+                            test_loss_forecasting += Criterion().vae_criterion(decoder_out, target, mu, logvar)
                         # Classification test
                         classifier_out, latent_out, mu, logvar = self.model(data, training=False,
                                                                             is_classification=True)
-                        test_loss_classification += Criterion.classifier_criterion(classifier_out, category - 1).item()
+                        test_loss_classification += Criterion().classifier_criterion(classifier_out, category - 1).item()
 
                 test_loss_forecasting /= len(test_loader.dataset)
                 print(f'====> Mean test set generator loss: {test_loss_forecasting:.4f}')
