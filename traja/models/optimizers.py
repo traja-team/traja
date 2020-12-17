@@ -57,8 +57,8 @@ class Optimizer:
             [dict]: [description]
         """
         if self.model_type == 'lstm':
-            self.schedulers["lstm"] = ReduceLROnPlateau(self.optimizers["lstm"], mode='max', factor=factor,
-                                                patience=patience, verbose=True)
+            self.schedulers["lstm"] = ReduceLROnPlateau(self.optimizers["lstm"], mode='max',
+                                                        patience=patience, verbose=True)
         else:
             for network in self.optimizers.keys():
                 self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
