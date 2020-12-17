@@ -42,7 +42,6 @@ class Optimizer:
 
         elif self.model_type == 'vaegan':
             return NotImplementedError
-
         return self.optimizers
 
     def get_lrschedulers(self, factor=0.1, patience=10):
@@ -57,10 +56,13 @@ class Optimizer:
         Returns:
             [dict]: [description]
         """
-
-        for network in self.optimizers.keys():
-            self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
-                                                         patience=patience, verbose=True)
+        if self.model_type == 'lstm':
+            self.schedulers["lstm"] = ReduceLROnPlateau(self.optimizers["lstm"], mode='max', factor=factor,
+                                                patience=patience, verbose=True)
+        else:
+            for network in self.optimizers.keys():
+                self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
+                                                             patience=patience, verbose=True)
         return self.schedulers
 
 
