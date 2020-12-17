@@ -38,7 +38,7 @@ class Optimizer:
                     getattr(self.model, f'{network}').parameters(), lr=lr)
 
         elif self.model_type == 'lstm':
-            self.optimizers["lstm"] = torch.optim.Adam(self.model.parameters(), lr=lr)
+            self.optimizers["lstm"] = getattr(torch.optim, f'{self.optimizer_type}')(self.model.parameters(), lr=lr)
 
         elif self.model_type == 'vaegan':
             return NotImplementedError
