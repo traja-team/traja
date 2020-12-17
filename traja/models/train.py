@@ -118,12 +118,12 @@ class LatentModelTrainer(object):
                     if training_mode == 'forecasting':
                         if self.model_type == 'ae':
                             decoder_out, latent_out = self.model(data, training=True, is_classification=False)
-                            loss = Criterion.ae_criterion(decoder_out, target)
+                            loss = Criterion().ae_criterion(decoder_out, target)
 
                         else:  # vae
                             decoder_out, latent_out, mu, logvar = self.model(data, training=True,
                                                                              is_classification=False)
-                            loss = Criterion.vae_criterion(decoder_out, target, mu, logvar)
+                            loss = Criterion().vae_criterion(decoder_out, target, mu, logvar)
 
                         loss.backward()
                         encoder_optimizer.step()
@@ -136,7 +136,7 @@ class LatentModelTrainer(object):
                         else:
                             classifier_out = self.model(data, training=True,
                                                         is_classification=True)
-                        loss = Criterion.classifier_criterion(classifier_out, category - 1)
+                        loss = Criterion().classifier_criterion(classifier_out, category - 1)
                         loss.backward()
                         classifier_optimizer.step()
                     total_loss += loss
