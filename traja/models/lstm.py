@@ -41,9 +41,9 @@ class LSTM(torch.nn.Module):
         self.bidirectional = bidirectional
 
         # RNN decoder
-        self.lstm_decoder = torch.nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size,
-                                          num_layers=self.num_layers, dropout=self.dropout,
-                                          bidirectional=self.bidirectional, batch_first=True)
+        self.lstm = torch.nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size,
+                                  num_layers=self.num_layers, dropout=self.dropout,
+                                  bidirectional=self.bidirectional, batch_first=True)
         self.output = TimeDistributed(torch.nn.Linear(self.hidden_size, self.output_size))
 
     def _init_hidden(self):
@@ -55,8 +55,8 @@ class LSTM(torch.nn.Module):
         _init_hidden = self._init_hidden()
 
         # Decoder input Shape(batch_size, num_futures, latent_size)
-        dec, (dec_hidden, dec_cell) = self.lstm_decoder(x, _init_hidden)
+        out, (dec_hidden, dec_cell) = self.lstm(x, _init_hidden)
 
         # Map the decoder output: Shape(batch_size, sequence_len, hidden_dim) to Time Dsitributed Linear Layer
-        output = self.output(dec)
-        return output
+        out = self.output(out)
+        return out
