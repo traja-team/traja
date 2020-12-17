@@ -240,7 +240,7 @@ class LSTMTrainer:
         self.model = LSTM(**self.model_hyperparameters)
         optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
         self.optimizer = optimizer.get_optimizers(lr=0.001).values()
-        self.scheduler = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience).values()
+        self.scheduler = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience)
 
     def train(self, train_loader, test_loader, model_save_path):
 
@@ -249,14 +249,11 @@ class LSTMTrainer:
 
         for epoch in range(self.epochs):
             if epoch > 0:
-                # Training
                 self.model.train()
                 total_loss = 0
                 for idx, (data, target, _) in enumerate(train_loader):
-                    # Reset optimizer states
                     self.optimizer.zero_grad()
                     data, target = data.float().to(device), target.float().to(device)
-
                     output = self.model(data)
                     loss = Criterion().lstm_criterion(output, target)
                     loss.backward()
