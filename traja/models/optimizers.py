@@ -44,7 +44,7 @@ class Optimizer:
             return NotImplementedError
         return self.optimizers
 
-    def get_lrschedulers(self, factor=0.1, patience=10):
+    def get_lrschedulers(self, factor:float, patience:int):
 
         """Learning rate scheduler for each network in the model
         NOTE: Scheduler metric should be test set loss
