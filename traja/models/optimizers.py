@@ -30,7 +30,7 @@ class Optimizer:
         Returns:
             [type]: [description]
         """
-
+        print(self.model_type)
         if self.model_type == 'ae' or 'vae':
             keys = ['encoder', 'decoder', 'latent', 'classifier']
             for network in keys:
@@ -44,8 +44,6 @@ class Optimizer:
         elif self.model_type == 'vaegan':
             return NotImplementedError
 
-        else:  # LSTM
-            return NotImplementedError
 
     def get_lrschedulers(self, factor=0.1, patience=10):
 
