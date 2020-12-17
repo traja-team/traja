@@ -57,6 +57,7 @@ class Optimizer:
         Returns:
             [dict]: [description]
         """
+
         for network in self.optimizers.keys():
             self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
                                                          patience=patience, verbose=True)
