@@ -31,14 +31,14 @@ class Optimizer:
             [type]: [description]
         """
 
-        if self.model_type == 'ae' or 'vae':
+        if self.model_type == 'lstm':
+            self.optimizers["lstm"] = getattr(torch.optim, f'{self.optimizer_type}')(self.model.parameters(), lr=lr)
+
+        elif self.model_type == 'ae' or 'vae':
             keys = ['encoder', 'decoder', 'latent', 'classifier']
             for network in keys:
                 self.optimizers[network] = getattr(torch.optim, f'{self.optimizer_type}')(
                     getattr(self.model, f'{network}').parameters(), lr=lr)
-
-        elif self.model_type == 'lstm':
-            self.optimizers["lstm"] = getattr(torch.optim, f'{self.optimizer_type}')(self.model.parameters(), lr=lr)
 
         elif self.model_type == 'vaegan':
             return NotImplementedError
