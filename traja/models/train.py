@@ -239,7 +239,7 @@ class LSTMTrainer:
 
         self.model = LSTM(**self.model_hyperparameters)
         optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
-        self.optimizer = optimizer.get_optimizers(lr=0.001).values()
+        self.optimizer = optimizer.get_optimizers(lr=0.001)
         self.scheduler = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience)
 
     def train(self, train_loader, test_loader, model_save_path):
