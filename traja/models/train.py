@@ -80,7 +80,7 @@ class LatentModelTrainer(object):
         if self.model_type == 'vae':
             self.model = MultiModelVAE(**self.model_hyperparameters)
 
-        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type[0])
+        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
 
         self.model_optimizers = optimizer.get_optimizers(lr=0.001)
         self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience)
@@ -230,7 +230,7 @@ class LSTMTrainer:
                                       }
 
         self.model = LSTM(**self.model_hyperparameters)
-        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type[0])
+        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
         self.optimizer = optimizer.get_optimizers(lr=0.001).values()
         self.scheduler= optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience).values()
 
