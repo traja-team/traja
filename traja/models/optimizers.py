@@ -32,7 +32,7 @@ class Optimizer:
         """
 
         if self.model_type == 'lstm':
-            self.optimizers["lstm"] = getattr(torch.optim, f'{self.optimizer_type}')(self.model.parameters(), lr=lr)
+            self.optimizers = getattr(torch.optim, f'{self.optimizer_type}')(self.model.parameters(), lr=lr)
 
         elif self.model_type == 'ae' or 'vae':
             keys = ['encoder', 'decoder', 'latent', 'classifier']
@@ -57,7 +57,8 @@ class Optimizer:
             [dict]: [description]
         """
         if self.model_type == 'lstm':
-            self.schedulers= ReduceLROnPlateau(self.optimizers["lstm"], mode='max', factor= factor,
+            assert not isinstance(self.optimizers, dict)
+            self.schedulers= ReduceLROnPlateau(self.optimizers, mode='max', factor= factor,
                                                         patience=patience, verbose=True)
         else:
             for network in self.optimizers.keys():
