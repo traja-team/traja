@@ -247,8 +247,8 @@ class LSTMTrainer:
         assert self.model_type == 'lstm'
         self.model.to(device)
 
-        for epoch in range(self.epochs):  # First half for generative model and next for classifier
-            if epoch > 0:  # Initial step is to test and set LR schduler
+        for epoch in range(self.epochs):
+            if epoch > 0:
                 # Training
                 self.model.train()
                 total_loss = 0
@@ -258,7 +258,7 @@ class LSTMTrainer:
                     data, target = data.float().to(device), target.float().to(device)
 
                     output = self.model(data)
-                    loss = Criterion.lstm_criterion(output, target)
+                    loss = Criterion().lstm_criterion(output, target)
                     loss.backward()
                     self.optimizer.step()
                     total_loss += loss
@@ -273,7 +273,7 @@ class LSTMTrainer:
                     for idx, (data, target, _) in enumerate(list(test_loader)):
                         data, target = data.float().to(device), target.float().to(device)
                         out = self.model(data)
-                        test_loss_forecasting += Criterion.lstm_criterion(out, target).item()
+                        test_loss_forecasting += Criterion().lstm_criterion(out, target).item()
 
                 test_loss_forecasting /= len(test_loader.dataset)
                 print(f'====> Test set generator loss: {test_loss_forecasting:.4f}')
