@@ -219,8 +219,8 @@ class LSTMTrainer:
         self.num_layers = num_layers
         self.output_size = output_size
         self.batch_first = batch_first
-        self.lr_factor = lr_factor,
-        self.scheduler_patience = scheduler_patience,
+        self.lr_factor = lr_factor
+        self.scheduler_patience = scheduler_patience
         self.dropout = dropout
         self.reset_state = reset_state
         self.bidirectional = bidirectional
