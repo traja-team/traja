@@ -30,20 +30,20 @@ class Optimizer:
         Returns:
             [type]: [description]
         """
-        print(self.model_type)
+
         if self.model_type == 'ae' or 'vae':
             keys = ['encoder', 'decoder', 'latent', 'classifier']
             for network in keys:
                 self.optimizers[network] = getattr(torch.optim, f'{self.optimizer_type}')(
                     getattr(self.model, f'{network}').parameters(), lr=lr)
-            return self.optimizers
-        if self.model_type == 'lstm':
+
+        elif self.model_type == 'lstm':
             self.optimizers["lstm"] = torch.optim.Adam(self.model.parameters(), lr=lr)
-            return self.optimizers
 
         elif self.model_type == 'vaegan':
             return NotImplementedError
 
+        return self.optimizers
 
     def get_lrschedulers(self, factor=0.1, patience=10):
 
