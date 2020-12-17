@@ -131,8 +131,11 @@ class LatentModelTrainer(object):
                         latent_optimizer.step()
 
                     else:  # training_mode == 'classification'
-
-                        classifier_out, latent_out, mu, logvar = self.model(data, training=True, is_classification=True)
+                        if self.model_type == 'vae':
+                            classifier_out, latent_out, mu, logvar = self.model(data, training=True, is_classification=True)
+                        else:
+                            classifier_out = self.model(data, training=True,
+                                                        is_classification=True)
                         loss = Criterion.classifier_criterion(classifier_out, category - 1)
                         loss.backward()
                         classifier_optimizer.step()
@@ -158,9 +161,15 @@ class LatentModelTrainer(object):
                                                                              is_classification=False)
                             test_loss_forecasting += Criterion().vae_criterion(decoder_out, target, mu, logvar)
                         # Classification test
-                        classifier_out, latent_out, mu, logvar = self.model(data, training=False,
-                                                                            is_classification=True)
-                        test_loss_classification += Criterion().classifier_criterion(classifier_out, category - 1).item()
+                        if self.model_type == 'ae':
+                            classifier_out = self.model(data, training=False,
+                                                        is_classification=True)
+                        else:
+                            classifier_out, latent_out, mu, logvar = self.model(data, training=False,
+                                                                                is_classification=True)
+
+                        test_loss_classification += Criterion().classifier_criterion(classifier_out,
+                                                                                     category - 1).item()
 
                 test_loss_forecasting /= len(test_loader.dataset)
                 print(f'====> Mean test set generator loss: {test_loss_forecasting:.4f}')
@@ -192,8 +201,8 @@ class LSTMTrainer:
                  num_future: int,
                  num_layers: int,
                  output_size: int,
-                 lr_factor:float,
-                 scheduler_patience:int,
+                 lr_factor: float,
+                 scheduler_patience: int,
                  batch_first: True,
                  dropout: float,
                  reset_state: bool,
@@ -211,7 +220,7 @@ class LSTMTrainer:
         self.output_size = output_size
         self.batch_first = batch_first
         self.lr_factor = lr_factor,
-        self.scheduler_patience=scheduler_patience,
+        self.scheduler_patience = scheduler_patience,
         self.dropout = dropout
         self.reset_state = reset_state
         self.bidirectional = bidirectional
@@ -231,7 +240,7 @@ class LSTMTrainer:
         self.model = LSTM(**self.model_hyperparameters)
         optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
         self.optimizer = optimizer.get_optimizers(lr=0.001).values()
-        self.scheduler= optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience).values()
+        self.scheduler = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience).values()
 
     def train(self, train_loader, test_loader, model_save_path):
 
