@@ -56,7 +56,7 @@ class LatentModelTrainer(object):
         self.dropout = dropout
         self.bidirectional = bidirectional
         self.loss_type = loss_type
-        self.optimizer_type = optimizer_type,
+        self.optimizer_type = optimizer_type
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
         self.model_hyperparameters = {'input_size': self.input_size,
