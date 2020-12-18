@@ -70,8 +70,10 @@ class LSTMEncoder(torch.nn.Module):
                                           bidirectional=self.bidirectional, batch_first=True)
 
     def _init_hidden(self):
-        return (torch.zeros(self.num_layers, self.batch_size, self.hidden_size),
-                torch.zeros(self.num_layers, self.batch_size, self.hidden_size))
+        return (torch.zeros(self.num_layers, self.batch_size, 
+                            self.hidden_size).to(device), 
+                torch.zeros(self.num_layers, self.batch_size, 
+                            self.hidden_size).to(device))
 
     def forward(self, x):
         enc_init_hidden = self._init_hidden()
@@ -90,7 +92,7 @@ class DisentangledAELatent(torch.nn.Module):
         self.latent_size = latent_size
         self.hidden_size = hidden_size
         self.dropout = dropout
-        self.latent = torch.nn.Linear(self.hidden_size, self.latent_size*2)
+        self.latent = torch.nn.Linear(self.hidden_size, self.latent_size * 2)
 
     @staticmethod
     def reparameterize(mu, logvar, training=True):
