@@ -297,7 +297,7 @@ class MultiModelVAE(torch.nn.Module):
             # Encoder
             enc_out = self.encoder(data)
             # Latent
-            latent_out, mu, logvar = self.latent(enc_out)
+            latent_out, mu, logvar = self.latent(enc_out, training=training)
             # Decoder
             decoder_out = self.decoder(latent_out)
             return decoder_out, latent_out, mu, logvar
