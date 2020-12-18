@@ -44,8 +44,8 @@ class LSTMEncoder(torch.nn.Module):
                                           bidirectional=self.bidirectional, batch_first=True)
 
     def _init_hidden(self):
-        return (torch.zeros(self.num_layers, self.batch_size, self.hidden_size),
-                torch.zeros(self.num_layers, self.batch_size, self.hidden_size))
+        return (torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size),
+                torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size))
 
     def forward(self, x):
         enc_init_hidden = self._init_hidden()
@@ -119,9 +119,9 @@ class LSTMDecoder(torch.nn.Module):
                                                       self.output_size))
 
     def _init_hidden(self):
-        return (torch.zeros(self.num_layers, self.batch_size,
+        return (torch.zeros(self.num_lstm_layers, self.batch_size,
                             self.hidden_size).to(device),
-                torch.zeros(self.num_layers, self.batch_size,
+                torch.zeros(self.num_lstm_layers, self.batch_size,
                             self.hidden_size).to(device))
 
     def forward(self, x, num_future=None):
