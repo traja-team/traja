@@ -1,6 +1,6 @@
 import torch
 from traja.models.utils import TimeDistributed
-
+from torch import nn
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -17,7 +17,7 @@ class LSTMEncoder(torch.nn.Module):
             with the second LSTM taking in outputs of the first LSTM and
             computing the final results. Default: 1
         output_size: The number of output dimensions
-        dropout: If non-zero, introduces a `Dropout` layer on the outputs of each
+        dropout : If non-zero, introduces a `Dropout` layer on the outputs of each
             LSTM layer except the last layer, with dropout probability equal to
             :attr:`dropout`. Default: 0
         bidirectional: If ``True``, becomes a bidirectional LSTM. Default: ``False``
@@ -149,24 +149,23 @@ class MLPClassifier(torch.nn.Module):
     """ MLP classifier
     """
 
-    def __init__(self, hidden_size: int, num_classes: int, latent_size: int, num_classifier_layers: int,
+    def __init__(self, input_size: int, hidden_size:int, num_classes: int, latent_size: int, num_classifier_layers: int,
                  dropout: float):
         super(MLPClassifier, self).__init__()
         self.latent_size = latent_size
+        self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_classes = num_classes
         self.num_classifier_layers = num_classifier_layers
         self.dropout = dropout
 
         # Classifier layers
-        self.inp = torch.nn.Linear(self.latent_size, self.hidden_size)
-        self.hidden = torch.nn.ModuleList([torch.nn.Linear(hidden_size, hidden_size)
-                                           for _ in range(self.num_classifier_layers)])
-        self.out = torch.nn.Linear(self.hidden_size, self.num_classes)
+        self.hidden = nn.ModuleList([nn.Linear(self.input_size, self.hidden_size)])
+        self.hidden.extend([nn.Linear(self.hidden_size, self.hidden_size) for _ in range(1, self.num_layers - 1)])
+        self.out = nn.Linear(self.hidden_size, self.num_classes)
         self.dropout = torch.nn.Dropout(p=dropout)
 
     def forward(self, x):
-        x = self.dropout(self.inp(x))
         x = self.dropout(self.hidden(x))
         out = self.out(x)
         return out
