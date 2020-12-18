@@ -69,8 +69,7 @@ class LatentModelTrainer(object):
 
         white_keys = ['ae', 'vae']
         assert model_type in white_keys, "Valid models are {}".format(white_keys)
-        assert sequence_length == num_future, "For Autoencoders and Variational Autoencoders, " \
-                                              "sequence length==num_past== or != num_future"
+        
         self.model_type = model_type
         self.device = device
         self.input_size = input_size
