@@ -161,7 +161,7 @@ class MLPClassifier(torch.nn.Module):
 
         # Classifier layers
         self.hidden = nn.ModuleList([nn.Linear(self.input_size, self.hidden_size)])
-        self.hidden.extend([nn.Linear(self.hidden_size, self.hidden_size) for _ in range(1, self.num_layers - 1)])
+        self.hidden.extend([nn.Linear(self.hidden_size, self.hidden_size) for _ in range(1, self.num_classifier_layers - 1)])
         self.out = nn.Linear(self.hidden_size, self.num_classes)
         self.dropout = torch.nn.Dropout(p=dropout)
 
