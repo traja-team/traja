@@ -50,7 +50,7 @@ class LSTMEncoder(torch.nn.Module):
     """
 
     def __init__(self, input_size: int, sequence_length: int, batch_size: int,
-                 hidden_size: int, num_layers: int,
+                 hidden_size: int, num_lstm_layers: int,
                  batch_first: bool, dropout: float,
                  reset_state: bool, bidirectional: bool):
         super(LSTMEncoder, self).__init__()
@@ -59,14 +59,14 @@ class LSTMEncoder(torch.nn.Module):
         self.sequence_length = sequence_length
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.num_layers = num_layers
+        self.num_lstm_layers = num_lstm_layers
         self.batch_first = batch_first
         self.dropout = dropout
         self.reset_state = reset_state
         self.bidirectional = bidirectional
 
         self.lstm_encoder = torch.nn.LSTM(input_size=input_size, hidden_size=self.hidden_size,
-                                          num_layers=num_layers, dropout=dropout,
+                                          num_layers=num_lstm_layers, dropout=dropout,
                                           bidirectional=self.bidirectional, batch_first=True)
 
     def _init_hidden(self):
@@ -76,7 +76,8 @@ class LSTMEncoder(torch.nn.Module):
     def forward(self, x):
         enc_init_hidden = self._init_hidden()
         enc_output, _ = self.lstm_encoder(x, enc_init_hidden)
-        # RNNs obeys, Markovian. Consider the last state of the hidden is the markovian of the entire sequence in that batch.
+        # RNNs obeys, Markovian. So, the last state of the hidden is the markovian state for the entire
+        # sequence in that batch.
         enc_output = enc_output[:, -1, :]  # Shape(batch_size,hidden_dim)
         return enc_output
 
@@ -130,7 +131,7 @@ class LSTMDecoder(torch.nn.Module):
     """
 
     def __init__(self, batch_size: int, num_future: int, hidden_size: int,
-                 num_layers: int, output_size: int, latent_size: int,
+                 num_lstm_layers: int, output_size: int, latent_size: int,
                  batch_first: bool, dropout: float,
                  reset_state: bool, bidirectional: bool):
         super(LSTMDecoder, self).__init__()
@@ -138,7 +139,7 @@ class LSTMDecoder(torch.nn.Module):
         self.latent_size = latent_size
         self.num_future = num_future
         self.hidden_size = hidden_size
-        self.num_layers = num_layers
+        self.num_lstm_layers = num_lstm_layers
         self.output_size = output_size
         self.batch_first = batch_first
         self.dropout = dropout
@@ -148,7 +149,7 @@ class LSTMDecoder(torch.nn.Module):
         # RNN decoder
         self.lstm_decoder = torch.nn.LSTM(input_size=self.latent_size,
                                           hidden_size=self.hidden_size,
-                                          num_layers=self.num_layers,
+                                          num_layers=self.num_lstm_layers,
                                           dropout=self.dropout,
                                           bidirectional=self.bidirectional,
                                           batch_first=True)
@@ -163,8 +164,8 @@ class LSTMDecoder(torch.nn.Module):
 
     def forward(self, x, num_future=None):
 
-        # To feed the latent states into lstm decoder, repeat the 
-        # tensor n_future times at second dim
+        # To feed the latent states into lstm decoder,
+        # repeat the tensor n_future times at second dim
         _init_hidden = self._init_hidden()
         decoder_inputs = x.unsqueeze(1)
 
@@ -186,27 +187,27 @@ class MLPClassifier(torch.nn.Module):
     """ MLP classifier
     """
 
-    def __init__(self, hidden_size: int, num_classes: int, latent_size: int,
+    def __init__(self, hidden_size: int, num_classes: int, latent_size: int, num_classifier_layers: int,
                  dropout: float):
         super(MLPClassifier, self).__init__()
         self.latent_size = latent_size
         self.hidden_size = hidden_size
         self.num_classes = num_classes
+        self.num_classifier_layers = num_classifier_layers
         self.dropout = dropout
 
         # Classifier layers
-        self.classifier1 = torch.nn.Linear(self.latent_size, self.hidden_size)
-        self.classifier2 = torch.nn.Linear(self.hidden_size, self.hidden_size)
-        self.classifier3 = torch.nn.Linear(self.hidden_size, self.hidden_size)
-        self.classifier4 = torch.nn.Linear(self.hidden_size, self.num_classes)
+        self.inp = torch.nn.Linear(self.latent_size, self.hidden_size)
+        self.hidden = torch.nn.ModuleList([torch.nn.Linear(hidden_size, hidden_size)
+                                           for _ in range(self.num_classifier_layers)])
+        self.out = torch.nn.Linear(self.hidden_size, self.num_classes)
         self.dropout = torch.nn.Dropout(p=dropout)
 
     def forward(self, x):
-        classifier1 = self.dropout(self.classifier1(x))
-        classifier2 = self.dropout(self.classifier2(classifier1))
-        classifier3 = self.dropout(self.classifier3(classifier2))
-        classifier4 = self.classifier4(classifier3)
-        return classifier4
+        x = self.dropout(self.inp(x))
+        x = self.dropout(self.hidden(x))
+        out = self.out(x)
+        return out
 
 
 class MultiModelVAE(torch.nn.Module):
@@ -217,8 +218,10 @@ class MultiModelVAE(torch.nn.Module):
                  sequence_length: int,
                  batch_size: int,
                  num_future: int,
-                 hidden_size: int,
-                 num_layers: int,
+                 lstm_hidden_size: int,
+                 num_lstm_layers: int,
+                 classifier_hidden_size: int,
+                 num_classifier_layers: int,
                  output_size: int,
                  num_classes: int,
                  latent_size: int,
@@ -233,8 +236,10 @@ class MultiModelVAE(torch.nn.Module):
         self.batch_size = batch_size
         self.latent_size = latent_size
         self.num_future = num_future
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
+        self.lstm_hidden_size = lstm_hidden_size
+        self.num_lstm_layers = num_lstm_layers
+        self.classifier_hidden_size = classifier_hidden_size
+        self.num_classifier_layers = num_classifier_layers
         self.output_size = output_size
         self.num_classes = num_classes
         self.batch_first = batch_first
@@ -245,21 +250,21 @@ class MultiModelVAE(torch.nn.Module):
         self.encoder = LSTMEncoder(input_size=self.input_size,
                                    sequence_length=self.sequence_length,
                                    batch_size=self.batch_size,
-                                   hidden_size=self.hidden_size,
-                                   num_layers=self.num_layers,
+                                   hidden_size=self.lstm_hidden_size,
+                                   num_layers=self.num_lstm_layers,
                                    batch_first=self.batch_first,
                                    dropout=self.dropout,
                                    reset_state=True,
                                    bidirectional=self.bidirectional)
 
-        self.latent = DisentangledAELatent(hidden_size=self.hidden_size,
+        self.latent = DisentangledAELatent(hidden_size=self.lstm_hidden_size,
                                            latent_size=self.latent_size,
                                            dropout=self.dropout)
 
         self.decoder = LSTMDecoder(batch_size=self.batch_size,
                                    num_future=self.num_future,
-                                   hidden_size=self.hidden_size,
-                                   num_layers=self.num_layers,
+                                   hidden_size=self.lstm_hidden_size,
+                                   num_layers=self.num_lstm_layers,
                                    output_size=self.output_size,
                                    latent_size=self.latent_size,
                                    batch_first=self.batch_first,
@@ -267,9 +272,10 @@ class MultiModelVAE(torch.nn.Module):
                                    reset_state=True,
                                    bidirectional=self.bidirectional)
 
-        self.classifier = MLPClassifier(hidden_size=self.hidden_size,
+        self.classifier = MLPClassifier(hidden_size=self.classifier_hidden_size,
                                         num_classes=self.num_classes,
                                         latent_size=self.latent_size,
+                                        num_classifier_layers=self.num_classifier_layers,
                                         dropout=self.dropout)
 
     def forward(self, data, training=True, is_classification=False):

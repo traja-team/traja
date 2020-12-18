@@ -11,6 +11,38 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 class LatentModelTrainer(object):
+    """
+    Wrapper for training and testing the LSTM model
+
+            :param model_type: Type of model should be "LSTM"
+            :param optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
+                                                                                'AdamW', 'SparseAdam', 'RMSprop', '
+                                                                                Rprop', 'LBFGS', 'ASGD', 'Adamax'] 
+            :param device: Selected device; 'cuda' or 'cpu' 
+            :param input_size: The number of expected features in the input x
+            :param output_size: Output feature dimension
+            :param lstm_hidden_size: The number of features in the hidden state h
+            :param num_layers: Number of layers in the LSTM model
+            :param reset_state: If True, will reset the hidden and cell state for each batch of data
+            :param num_classes: 
+            :param latent_size: 
+            :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                    with dropout probability equal to dropout
+            :param num_classifier_layers: Number of layers in the classifier
+            :param epochs: Number of epochs to train the network
+            :param batch_size: Number of samples in a batch 
+            :param num_future: Number of time steps to be predicted forward
+            :param sequence_length: Number of past time steps otherwise, length of sequences in each batch of data.
+            :param bidirectional:  If True, becomes a bidirectional LSTM
+            :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+            :param loss_type: 
+            :param lr_factor:  Factor by which the learning rate will be reduced
+            :param scheduler_patience: Number of epochs with no improvement after which learning rate will be reduced.
+                                For example, if patience = 2, then we will ignore the first 2 epochs with no
+                                improvement, and will only decrease the LR after the 3rd epoch if the loss still
+                                hasn’t improved then.
+            
+            """
 
     def __init__(self, model_type: str,
                  optimizer_type: str,
@@ -18,12 +50,13 @@ class LatentModelTrainer(object):
                  input_size: int,
                  output_size: int,
                  lstm_hidden_size: int,
-                 lstm_num_layers: int,
+                 num_lstm_layers: int,
+                 classifier_hidden_size: int,
+                 num_classifier_layers: int,
                  reset_state: bool,
                  num_classes: int,
                  latent_size: int,
                  dropout: float,
-                 num_layers: int,
                  epochs: int,
                  batch_size: int,
                  num_future: int,
@@ -36,18 +69,21 @@ class LatentModelTrainer(object):
 
         white_keys = ['ae', 'vae']
         assert model_type in white_keys, "Valid models are {}".format(white_keys)
+        assert sequence_length == num_future, "For Autoencoders and Variational Autoencoders, " \
+                                              "sequence length==num_past== or != num_future"
         self.model_type = model_type
         self.device = device
         self.input_size = input_size
         self.lstm_hidden_size = lstm_hidden_size
-        self.lstm_num_layers = lstm_num_layers
-        self.hidden_size = lstm_hidden_size  # For classifiers too
+        self.num_lstm_layers = num_lstm_layers
+        self.classifier_hidden_size = classifier_hidden_size
+        self.num_classifier_layers = num_classifier_layers
         self.batch_first = batch_first
         self.reset_state = reset_state
         self.output_size = output_size
         self.num_classes = num_classes
         self.latent_size = latent_size
-        self.num_layers = num_layers
+        self.num_classifier_layers = num_classifier_layers
         self.num_future = num_future
         self.epochs = epochs
         self.batch_size = batch_size
@@ -61,9 +97,11 @@ class LatentModelTrainer(object):
         self.model_hyperparameters = {'input_size': self.input_size,
                                       'sequence_length': self.sequence_length,
                                       'batch_size': self.batch_size,
-                                      'hidden_size': self.lstm_hidden_size,
+                                      'lstm_hidden_size': self.lstm_hidden_size,
+                                      'num_lstm_layers':self.num_lstm_layers,
+                                      'clasifier_hidden_size':self.classifier_hidden_size,
+                                      'num_classifier_layers':self.num_classifier_layers,
                                       'num_future': self.num_future,
-                                      'num_layers': self.lstm_num_layers,
                                       'latent_size': self.latent_size,
                                       'output_size': self.output_size,
                                       'num_classes': self.num_classes,
@@ -73,14 +111,16 @@ class LatentModelTrainer(object):
                                       'dropout': self.dropout
                                       }
 
+        # Instantiate model instance based on model_type
         if self.model_type == 'ae':
             self.model = MultiModelAE(**self.model_hyperparameters)
 
         if self.model_type == 'vae':
             self.model = MultiModelVAE(**self.model_hyperparameters)
 
+        # Model optimizer and the learning rate scheduler based on user defined optimizer_type
+        # and learning rate parameters
         optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
-
         self.model_optimizers = optimizer.get_optimizers(lr=0.001)
         self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience)
 
@@ -88,6 +128,15 @@ class LatentModelTrainer(object):
         return "Training model type {}".format(self.model_type)
 
     def train(self, train_loader, test_loader, model_save_path):
+        """
+        This method implements the batch- wise training and testing protocol for both time series forecasting and
+        classification of the timeseries
+
+        :param train_loader: Dataloader object of train dataset with batch data [data,target,category]
+        :param test_loader: Dataloader object of test dataset with [data,target,category]
+        :param model_save_path: Directory path to save the model
+        :return: None
+        """
 
         assert self.model_type == 'ae' or 'vae'
         self.model.to(device)
@@ -189,6 +238,33 @@ class LatentModelTrainer(object):
 
 
 class LSTMTrainer:
+    """
+    Wrapper for training and testing the LSTM model
+
+    :param model_type: Type of model should be "LSTM"
+    :param optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
+                                                                                'AdamW', 'SparseAdam', 'RMSprop', '
+                                                                                Rprop', 'LBFGS', 'ASGD', 'Adamax']
+    :param device: Selected device; 'cuda' or 'cpu'
+    :param epochs: Number of epochs to train the network
+    :param input_size: The number of expected features in the input x
+    :param batch_size: Number of samples in a batch
+    :param hidden_size: The number of features in the hidden state h
+    :param num_future: Number of time steps to be predicted forward
+    :param num_layers: Number of layers in the LSTM model
+    :param output_size: Output feature dimension
+    :param lr_factor:  Factor by which the learning rate will be reduced
+    :param scheduler_patience: Number of epochs with no improvement after which learning rate will be reduced.
+                                For example, if patience = 2, then we will ignore the first 2 epochs with no
+                                improvement, and will only decrease the LR after the 3rd epoch if the loss still
+                                hasn’t improved then.
+    :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+    :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                    with dropout probability equal to dropout
+    :param reset_state: If True, will reset the hidden and cell state for each batch of data
+    :param bidirectional:  If True, becomes a bidirectional LSTM
+
+    """
 
     def __init__(self,
                  model_type: str,
@@ -207,7 +283,6 @@ class LSTMTrainer:
                  dropout: float,
                  reset_state: bool,
                  bidirectional: bool):
-
         self.model_type = model_type
         self.optimizer_type = optimizer_type
         self.device = device
@@ -243,6 +318,12 @@ class LSTMTrainer:
         self.scheduler = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience)
 
     def train(self, train_loader, test_loader, model_save_path):
+
+        """ Implements the batch wise training and testing for time series forecasting
+        :param train_loader: Dataloader object of train dataset with batch data [data,target,category]
+        :param test_loader: Dataloader object of test dataset with [data,target,category]
+        :param model_save_path: Directory path to save the model
+        :return: None"""
 
         assert self.model_type == 'lstm'
         self.model.to(device)
