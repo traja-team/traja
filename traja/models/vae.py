@@ -93,7 +93,7 @@ class DisentangledAELatent(torch.nn.Module):
         self.latent_size = latent_size
         self.hidden_size = hidden_size
         self.dropout = dropout
-        self.latent = torch.nn.Linear(self.hidden_size, self.latent_size)
+        self.latent = torch.nn.Linear(self.hidden_size, self.latent_size * 2)
    
     def reparameterize(self, mu, logvar, training= True):
         if training:
