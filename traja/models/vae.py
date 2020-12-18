@@ -273,7 +273,8 @@ class MultiModelVAE(torch.nn.Module):
                                    reset_state=True,
                                    bidirectional=self.bidirectional)
 
-        self.classifier = MLPClassifier(hidden_size=self.classifier_hidden_size,
+        self.classifier = MLPClassifier(input_size=self.latent_size,
+                                        hidden_size = self.classifier_hidden_size,
                                         num_classes=self.num_classes,
                                         latent_size=self.latent_size,
                                         num_classifier_layers=self.num_classifier_layers,
