@@ -1,14 +1,12 @@
 from .ae import MultiModelAE
 from .vae import MultiModelVAE
 from .lstm import LSTM
-
 from . import utils
 from .losses import Criterion
 from .optimizers import Optimizer
 import torch
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
 
 class LatentModelTrainer(object):
     """
@@ -22,20 +20,20 @@ class LatentModelTrainer(object):
             :param input_size: The number of expected features in the input x
             :param output_size: Output feature dimension
             :param lstm_hidden_size: The number of features in the hidden state h
-            :param num_layers: Number of layers in the LSTM model
+            :param num_lstm_layers: Number of layers in the LSTM model
             :param reset_state: If True, will reset the hidden and cell state for each batch of data
-            :param num_classes: 
-            :param latent_size: 
+            :param num_classes: Number of categories/labels
+            :param latent_size: Latent space dimension
             :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                     with dropout probability equal to dropout
             :param num_classifier_layers: Number of layers in the classifier
             :param epochs: Number of epochs to train the network
             :param batch_size: Number of samples in a batch 
             :param num_future: Number of time steps to be predicted forward
-            :param sequence_length: Number of past time steps otherwise, length of sequences in each batch of data.
+            :param num_past: Number of past time steps otherwise, length of sequences in each batch of data.
             :param bidirectional:  If True, becomes a bidirectional LSTM
             :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
-            :param loss_type: 
+            :param loss_type: Type of reconstruction loss to apply, 'huber' or 'rmse'. Default:'huber'
             :param lr_factor:  Factor by which the learning rate will be reduced
             :param scheduler_patience: Number of epochs with no improvement after which learning rate will be reduced.
                                 For example, if patience = 2, then we will ignore the first 2 epochs with no
@@ -60,7 +58,7 @@ class LatentModelTrainer(object):
                  epochs: int,
                  batch_size: int,
                  num_future: int,
-                 sequence_length: int,
+                 num_past: int,
                  bidirectional: bool = False,
                  batch_first: bool = True,
                  loss_type: str = 'huber',
@@ -86,7 +84,7 @@ class LatentModelTrainer(object):
         self.num_future = num_future
         self.epochs = epochs
         self.batch_size = batch_size
-        self.sequence_length = sequence_length
+        self.num_past = num_past
         self.dropout = dropout
         self.bidirectional = bidirectional
         self.loss_type = loss_type
@@ -94,7 +92,7 @@ class LatentModelTrainer(object):
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
         self.model_hyperparameters = {'input_size': self.input_size,
-                                      'sequence_length': self.sequence_length,
+                                      'num_past': self.num_past,
                                       'batch_size': self.batch_size,
                                       'lstm_hidden_size': self.lstm_hidden_size,
                                       'num_lstm_layers':self.num_lstm_layers,

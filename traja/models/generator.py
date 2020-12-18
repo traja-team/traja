@@ -17,7 +17,7 @@ def timeseries(model_type: str, model_hyperparameters: dict, model_path: str, ba
     batch_size = model_hyperparameters.batch_size  # Number of samples
     num_future = model_hyperparameters.num_future  # Number of time steps in each sample
     if model_type == 'ae':
-        model = MultiModelAE(**model_hyperparameters)
+        model = MultiModelAE(,
 
     if model_type == 'vae':
         model = MultiModelVAE(**model_hyperparameters)
