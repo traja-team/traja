@@ -5,32 +5,30 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 class LSTMEncoder(torch.nn.Module):
-    """ Deep LSTM network. This implementation
-    returns output_size hidden size.
-    Args:
-        input_size: The number of expected features in the input `x`
-        batch_size: 
-        sequence_length: The number of in each sample
-        hidden_size: The number of features in the hidden state `h`
-        num_layers: Number of recurrent layers. E.g., setting ``num_layers=2``
-            would mean stacking two LSTMs together to form a `stacked LSTM`,
-            with the second LSTM taking in outputs of the first LSTM and
-            computing the final results. Default: 1
-        output_size: The number of output dimensions
-        dropout : If non-zero, introduces a `Dropout` layer on the outputs of each
-            LSTM layer except the last layer, with dropout probability equal to
-            :attr:`dropout`. Default: 0
-        bidirectional: If ``True``, becomes a bidirectional LSTM. Default: ``False``
+
+    """ Implementation of Encoder network using LSTM layers
+    :param input_size: The number of expected features in the input x
+    :param num_past: Number of time steps to look backwards to predict num_future steps forward
+    :param batch_size: Number of samples in a batch
+    :param hidden_size: The number of features in the hidden state h
+    :param num_lstm_layers: Number of layers in the LSTM model
+
+    :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+    :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                    with dropout probability equal to dropout
+    :param reset_state: If True, will reset the hidden and cell state for each batch of data
+    :param bidirectional:  If True, becomes a bidirectional LSTM
     """
 
-    def __init__(self, input_size: int, sequence_length: int, batch_size: int,
+    def __init__(self, input_size: int, num_past: int, batch_size: int,
                  hidden_size: int, num_lstm_layers: int,
                  batch_first: bool, dropout: float,
                  reset_state: bool, bidirectional: bool):
+
         super(LSTMEncoder, self).__init__()
 
         self.input_size = input_size
-        self.sequence_length = sequence_length
+        self.num_past = num_past
         self.batch_size = batch_size
         self.hidden_size = hidden_size
         self.num_lstm_layers = num_lstm_layers
@@ -174,25 +172,14 @@ class MLPClassifier(torch.nn.Module):
 
 class MultiModelAE(torch.nn.Module):
 
-    def __init__(self, input_size: int,
-                 sequence_length: int,
-                 batch_size: int,
-                 num_future: int,
-                 lstm_hidden_size: int,
-                 num_lstm_layers: int,
-                 classifier_hidden_size: int,
-                 num_classifier_layers: int,
-                 output_size: int,
-                 num_classes: int,
-                 latent_size: int,
-                 batch_first: bool,
-                 dropout: float,
-                 reset_state: bool,
+    def __init__(self, input_size: int, num_past: int, batch_size: int, num_future: int, lstm_hidden_size: int,
+                 num_lstm_layers: int, classifier_hidden_size: int, num_classifier_layers: int, output_size: int,
+                 num_classes: int, latent_size: int, batch_first: bool, dropout: float, reset_state: bool,
                  bidirectional: bool):
 
         super(MultiModelAE, self).__init__()
         self.input_size = input_size
-        self.sequence_length = sequence_length
+        self.num_past = num_past
         self.batch_size = batch_size
         self.latent_size = latent_size
         self.num_future = num_future
@@ -208,7 +195,7 @@ class MultiModelAE(torch.nn.Module):
         self.bidirectional = bidirectional
 
         self.encoder = LSTMEncoder(input_size=self.input_size,
-                                   sequence_length=self.sequence_length,
+                                   num_past=self.num_past,
                                    batch_size=self.batch_size,
                                    hidden_size=self.lstm_hidden_size,
                                    num_lstm_layers=self.num_lstm_layers,

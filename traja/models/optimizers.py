@@ -1,5 +1,4 @@
 import torch
-from torch.optim import optimizer
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from traja.models.ae import MultiModelAE
 
@@ -7,9 +6,17 @@ from traja.models.ae import MultiModelAE
 class Optimizer:
 
     def __init__(self, model_type, model, optimizer_type):
+        """
+        Wrapper for setting the model optimizer and learning rate schedulers using ReduceLROnPlateau;
+        If the model type is 'ae' or 'vae' - var optimizers is a dict with separate optimizers for encoder, decoder,
+        latent and classifier. In case of 'lstm', var optimizers is an optimizer for lstm and TimeDistributed(linear layer)
+        :param model_type: Type of model 'ae', 'vae' or 'lstm'
+        :param model: Model instance
+        :param optimizer_type: Optimizer to be used; Should be one in ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop',
+                                       'LBFGS', 'ASGD', 'Adamax']
+        """
 
         assert isinstance(model, torch.nn.Module)
-
         assert str(optimizer_type) in ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop',
                                        'LBFGS', 'ASGD', 'Adamax']
 
@@ -44,7 +51,7 @@ class Optimizer:
             return NotImplementedError
         return self.optimizers
 
-    def get_lrschedulers(self, factor:float, patience:int):
+    def get_lrschedulers(self, factor: float, patience: int):
 
         """Learning rate scheduler for each network in the model
         NOTE: Scheduler metric should be test set loss
@@ -58,8 +65,8 @@ class Optimizer:
         """
         if self.model_type == 'lstm':
             assert not isinstance(self.optimizers, dict)
-            self.schedulers= ReduceLROnPlateau(self.optimizers, mode='max', factor= factor,
-                                                        patience=patience, verbose=True)
+            self.schedulers = ReduceLROnPlateau(self.optimizers, mode='max', factor=factor,
+                                                patience=patience, verbose=True)
         else:
             for network in self.optimizers.keys():
                 self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
@@ -70,19 +77,9 @@ class Optimizer:
 if __name__ == '__main__':
     # Test
     model_type = 'ae'
-    model = MultiModelAE(input_size=2,
-                         sequence_length=10,
-                         batch_size=5,
-                         num_future=5,
-                         hidden_size=10,
-                         num_layers=2,
-                         output_size=2,
-                         num_classes=10,
-                         latent_size=10,
-                         batch_first=True,
-                         dropout=0.2,
-                         reset_state=True,
-                         bidirectional=True)
+    model = MultiModelAE(input_size=2, num_past=10, batch_size=5, num_future=5, lstm_hidden_size=32, num_lstm_layers=2,
+                         classifier_hidden_size=32, num_classifier_layers=4, output_size=2, num_classes=10,
+                         latent_size=10, batch_first=True, dropout=0.2, reset_state=True, bidirectional=True)
 
     # Get the optimizers
     opt = Optimizer(model_type, model, optimizer_type='RMSprop')
