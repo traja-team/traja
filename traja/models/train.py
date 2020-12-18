@@ -69,7 +69,7 @@ class LatentModelTrainer(object):
 
         white_keys = ['ae', 'vae']
         assert model_type in white_keys, "Valid models are {}".format(white_keys)
-        
+
         self.model_type = model_type
         self.device = device
         self.input_size = input_size
@@ -98,7 +98,7 @@ class LatentModelTrainer(object):
                                       'batch_size': self.batch_size,
                                       'lstm_hidden_size': self.lstm_hidden_size,
                                       'num_lstm_layers':self.num_lstm_layers,
-                                      'clasifier_hidden_size':self.classifier_hidden_size,
+                                      'classifier_hidden_size':self.classifier_hidden_size,
                                       'num_classifier_layers':self.num_classifier_layers,
                                       'num_future': self.num_future,
                                       'latent_size': self.latent_size,
