@@ -3,6 +3,7 @@ import os
 import math
 import numpy as np
 import torch
+from torch import long
 from torch.utils.data import Dataset
 from collections import Counter
 from torch.utils.data.sampler import WeightedRandomSampler
@@ -14,10 +15,17 @@ import torch
 logger = logging.getLogger(__name__)
 
 def get_class_distribution(targets): 
-    """Compute class distribution, returns number of classes and their count in the targets"""
+    """Compute class distribution, returns number of classes and their count in the targets
+
+    Args:
+        targets ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     targets_ = np.unique(targets, return_counts=True)
     return targets_[0],targets_[1]
-
+    
 def generate_dataset(df, n_past, n_future):
     """
     df : Dataframe
@@ -54,6 +62,17 @@ def generate_dataset(df, n_past, n_future):
     return train_data, target_data, target_category
 
 def shuffle_split(train_data:np.array, target_data:np.array,target_category:np.array, train_ratio:float):
+    """[summary]
+
+    Args:
+        train_data (np.array): [description]
+        target_data (np.array): [description]
+        target_category (np.array): [description]
+        train_ratio (float): [description]
+
+    Returns:
+        [type]: [description]
+    """
     
     # Shuffle the IDs and the corresponding sequence , preserving the order
     train_data, target_data, target_category = shuffle(train_data, target_data, target_category)
@@ -74,6 +93,15 @@ def shuffle_split(train_data:np.array, target_data:np.array,target_category:np.a
     return [train_x,train_y,train_z],[test_x,test_y,test_z]
 
 def scale_data(data, sequence_length):
+    """[summary]
+
+    Args:
+        data ([type]): [description]
+        sequence_length ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     assert len(data[0].shape)==2
     scalers={}
     data = np.vstack(data)
@@ -89,11 +117,20 @@ def scale_data(data, sequence_length):
     return data, scalers
 
 def weighted_random_samplers(train_z,test_z):
+    """[summary]
+
+    Args:
+        train_z ([type]): [description]
+        test_z ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
 
     # Prepare weighted random sampler: 
-    train_target_list = torch.tensor(train_z)
-    test_target_list = torch.tensor(test_z)
-
+    train_target_list = torch.tensor(train_z).type(torch.LongTensor)
+    test_target_list = torch.tensor(test_z).type(torch.LongTensor)
+    
     # Number of classes and their frequencies
     train_targets_, train_class_count = get_class_distribution(train_target_list)
     test_targets_, test_class_count = get_class_distribution(test_target_list)
@@ -101,7 +138,7 @@ def weighted_random_samplers(train_z,test_z):
     # Compute class weights
     train_class_weights = 1./torch.tensor(train_class_count, dtype=torch.float)
     test_class_weights = 1./torch.tensor(test_class_count, dtype=torch.float)
-
+    
     # Assign weights to original target list
     train_class_weights_all = train_class_weights[train_target_list-1] # Note the targets start from 1, to python idx to apply,-1
     test_class_weights_all = test_class_weights[test_target_list-1]
