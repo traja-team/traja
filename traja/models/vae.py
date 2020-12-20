@@ -107,25 +107,19 @@ class DisentangledAELatent(torch.nn.Module):
 
 
 class LSTMDecoder(torch.nn.Module):
-    """ Deep LSTM network. This implementation
-    returns output_size outputs.
-    Args:
-        latent_size: The number of dimensions of the latent layer
-        batch_size: Number of samples in each batch of training data
-        hidden_size: The number of features in the hidden state `h`
-        num_layers: Number of recurrent layers. E.g., setting ``num_layers=2``
-            would mean stacking two LSTMs together to form a `stacked LSTM`,
-            with the second LSTM taking in outputs of the first LSTM and
-            computing the final results. Default: 1
-        output_size: The number of output/input dimensions
-        num_future: The number of time steps in future predictions
-        dropout: If non-zero, introduces a `Dropout` layer on the outputs of each
-            LSTM layer except the last layer, with dropout probability equal to
-            :attr:`dropout`. Default: 0
-        bidirectional: If ``True``, becomes a bidirectional LSTM. Default: ``False``
-        reset_state: If ``True``, the hidden and cell states of the LSTM will 
-            be reset at the beginning of each batch of input
-    """
+    """ Implementation of Decoder network using LSTM layers
+        :param input_size: The number of expected features in the input x
+        :param num_future: Number of time steps to be predicted given the num_past steps
+        :param batch_size: Number of samples in a batch
+        :param hidden_size: The number of features in the hidden state h
+        :param num_lstm_layers: Number of layers in the LSTM model
+        :param output_size: Number of expectd features in the output x_
+        :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+        :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                        with dropout probability equal to dropout
+        :param reset_state: If True, will reset the hidden and cell state for each batch of data
+        :param bidirectional:  If True, becomes a bidirectional LSTM
+        """
 
     def __init__(self, batch_size: int, num_future: int, hidden_size: int,
                  num_lstm_layers: int, output_size: int, latent_size: int,
@@ -181,13 +175,17 @@ class LSTMDecoder(torch.nn.Module):
 
 
 class MLPClassifier(torch.nn.Module):
-    """ MLP classifier
-    """
-
+    """ MLP classifier: Classify the input data using the latent embeddings
+            :param input_size: The number of expected latent size
+            :param hidden_size: The number of features in the hidden state h
+            :param num_classes: Size of labels or the number of categories in the data
+            :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                            with dropout probability equal to dropout
+            :param num_classifier_layers: Number of hidden layers in the classifier
+            """
     def __init__(self, input_size: int, hidden_size:int, num_classes: int, latent_size: int, num_classifier_layers: int,
                  dropout: float):
         super(MLPClassifier, self).__init__()
-        self.latent_size = latent_size
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_classes = num_classes
@@ -208,24 +206,24 @@ class MLPClassifier(torch.nn.Module):
 
 
 class MultiModelVAE(torch.nn.Module):
-    """Implementation of Multimodel Variational autoencoders;
-    """
+    """Implementation of Multimodel Variational autoencoders; This Module wraps the Variational Autoencoder
+    models [Encoder,Latent[Sampler],Decoder]. If classify=True, then the wrapper also include classification layers
 
-    def __init__(self, input_size: int,
-                 num_past: int,
-                 batch_size: int,
-                 num_future: int,
-                 lstm_hidden_size: int,
-                 num_lstm_layers: int,
-                 classifier_hidden_size: int,
-                 num_classifier_layers: int,
-                 output_size: int,
-                 num_classes: int,
-                 latent_size: int,
-                 batch_first: bool,
-                 dropout: float,
-                 reset_state: bool,
-                 bidirectional: bool):
+    :param input_size: The number of expected features in the input x
+    :param num_future: Number of time steps to be predicted given the num_past steps
+    :param batch_size: Number of samples in a batch
+    :param hidden_size: The number of features in the hidden state h
+    :param num_lstm_layers: Number of layers in the LSTM model
+    :param output_size: Number of expectd features in the output x_
+    :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+    :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                    with dropout probability equal to dropout
+    :param reset_state: If True, will reset the hidden and cell state for each batch of data
+    :param bidirectional:  If True, becomes a bidirectional LSTM
+    """
+    def __init__(self, input_size: int, num_past: int, batch_size: int, num_future: int, lstm_hidden_size: int,
+                 num_lstm_layers: int , output_size: int, latent_size: int, batch_first: bool, dropout: float, reset_state: bool,
+                 bidirectional: bool=False, num_classifier_layers: int= None, classifier_hidden_size: int=None, num_classes: int=None):
 
         super(MultiModelVAE, self).__init__()
         self.input_size = input_size
@@ -268,38 +266,35 @@ class MultiModelVAE(torch.nn.Module):
                                    dropout=self.dropout,
                                    reset_state=True,
                                    bidirectional=self.bidirectional)
+        if self.num_classes is not None:
+            self.classifier = MLPClassifier(input_size=self.latent_size,
+                                            hidden_size = self.classifier_hidden_size,
+                                            num_classes=self.num_classes,
+                                            latent_size=self.latent_size,
+                                            num_classifier_layers=self.num_classifier_layers,
+                                            dropout=self.dropout)
 
-        self.classifier = MLPClassifier(input_size=self.latent_size,
-                                        hidden_size = self.classifier_hidden_size,
-                                        num_classes=self.num_classes,
-                                        latent_size=self.latent_size,
-                                        num_classifier_layers=self.num_classifier_layers,
-                                        dropout=self.dropout)
-
-    def forward(self, data, training=True, is_classification=False):
-
-        if not is_classification:
-            # Set the classifier grad off
-            for param in self.classifier.parameters():
-                param.requires_grad = False
-            for param in self.encoder.parameters():
-                param.requires_grad = True
-            for param in self.decoder.parameters():
-                param.requires_grad = True
-            for param in self.latent.parameters():
-                param.requires_grad = True
-
-            # Encoder
+    def forward(self, data, training=True, classify=False):
+        """
+        :param data: Train or test data
+        :param training: If Training= False, latents are deterministic
+        :param classify: If True, perform classification of input data using the latent embeddings
+        :return: decoder_out,latent_out or classifier out
+        """
+        if not classify:
+            if self.num_classes is not None:
+                # Set the classifier grad off
+                for param in self.classifier.parameters():
+                    param.requires_grad = False
+            # Encoder -->Latent --> Decoder
             enc_out = self.encoder(data)
-            # Latent
             latent_out, mu, logvar = self.latent(enc_out)
-            # Decoder
             decoder_out = self.decoder(latent_out)
             return decoder_out, latent_out, mu, logvar
 
-        else:  # training_mode = 'classification'
-            # Unfreeze classifier parameters and freeze all other
-            # network parameters
+        else:
+            # Unfreeze classifier and freeze the rest
+            assert self.num_classes is not None, "Classifier not found"
             for param in self.classifier.parameters():
                 param.requires_grad = True
             for param in self.encoder.parameters():
@@ -309,10 +304,8 @@ class MultiModelVAE(torch.nn.Module):
             for param in self.latent.parameters():
                 param.requires_grad = False
 
-            # Encoder
+            # Encoder -->Latent --> Classifier
             enc_out = self.encoder(data)
-            # Latent
             latent_out, mu, logvar = self.latent(enc_out, training=training)
-            # Classifier
             classifier_out = self.classifier(mu)  # Deterministic
             return classifier_out, latent_out, mu, logvar

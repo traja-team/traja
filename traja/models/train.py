@@ -8,6 +8,7 @@ import torch
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
+
 class HybridTrainer(object):
     """
     Wrapper for training and testing the LSTM model
@@ -49,16 +50,16 @@ class HybridTrainer(object):
                  output_size: int,
                  lstm_hidden_size: int,
                  num_lstm_layers: int,
-                 classifier_hidden_size: int,
-                 num_classifier_layers: int,
                  reset_state: bool,
-                 num_classes: int,
                  latent_size: int,
                  dropout: float,
                  epochs: int,
                  batch_size: int,
                  num_future: int,
                  num_past: int,
+                 num_classes: int = None,
+                 classifier_hidden_size: int =None,
+                 num_classifier_layers: int = None,
                  bidirectional: bool = False,
                  batch_first: bool = True,
                  loss_type: str = 'huber',
@@ -95,9 +96,9 @@ class HybridTrainer(object):
                                       'num_past': self.num_past,
                                       'batch_size': self.batch_size,
                                       'lstm_hidden_size': self.lstm_hidden_size,
-                                      'num_lstm_layers':self.num_lstm_layers,
-                                      'classifier_hidden_size':self.classifier_hidden_size,
-                                      'num_classifier_layers':self.num_classifier_layers,
+                                      'num_lstm_layers': self.num_lstm_layers,
+                                      'classifier_hidden_size': self.classifier_hidden_size,
+                                      'num_classifier_layers': self.num_classifier_layers,
                                       'num_future': self.num_future,
                                       'latent_size': self.latent_size,
                                       'output_size': self.output_size,
@@ -117,14 +118,17 @@ class HybridTrainer(object):
 
         # Model optimizer and the learning rate scheduler based on user defined optimizer_type
         # and learning rate parameters
-        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
+
+        classify = True if self.classifier_hidden_size is not None else False
+
+        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type, classify = classify)
         self.model_optimizers = optimizer.get_optimizers(lr=0.001)
         self.model_lrschedulers = optimizer.get_lrschedulers(factor=self.lr_factor, patience=self.scheduler_patience)
 
     def __str__(self):
         return "Training model type {}".format(self.model_type)
 
-    def train(self, train_loader, test_loader, model_save_path):
+    def train(self, train_loader, test_loader, model_save_path=None):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseries
@@ -136,6 +140,7 @@ class HybridTrainer(object):
         """
 
         assert self.model_type == 'ae' or 'vae'
+        assert model_save_path is not None, "Model path unknown"
         self.model.to(device)
 
         encoder_optimizer, latent_optimizer, decoder_optimizer, classifier_optimizer = self.model_optimizers.values()
@@ -144,8 +149,11 @@ class HybridTrainer(object):
         # Training mode: Switch from Generative to classifier training mode
         training_mode = 'forecasting'
 
+        if self.classifier_hidden_size is not None:
+            self.epochs *= 2
+
         # Training
-        for epoch in range(self.epochs * 2):  # First half for generative model and next for classifier
+        for epoch in range(self.epochs):  # First half for generative model and next for classifier
             test_loss_forecasting = 0
             test_loss_classification = 0
             if epoch > 0:  # Initial step is to test and set LR schduler
@@ -176,9 +184,11 @@ class HybridTrainer(object):
                         decoder_optimizer.step()
                         latent_optimizer.step()
 
-                    else:  # training_mode == 'classification'
+                    elif self.classifier_hidden_size \
+                            and training_mode is not 'forecasting':  # training_mode == 'classification'
                         if self.model_type == 'vae':
-                            classifier_out, latent_out, mu, logvar = self.model(data, training=True, is_classification=True)
+                            classifier_out, latent_out, mu, logvar = self.model(data, training=True,
+                                                                                is_classification=True)
                         else:
                             classifier_out = self.model(data, training=True,
                                                         is_classification=True)
@@ -200,7 +210,7 @@ class HybridTrainer(object):
                         data, target, category = data.float().to(device), target.float().to(device), category.to(device)
                         # Time series forecasting test
                         if self.model_type == 'ae':
-                            out, latent = self.model(data, training=False, is_classification=False)
+                            out, latent = self.model(data, training=False, classify=False)
                             test_loss_forecasting += Criterion().ae_criterion(out, target).item()
                         else:
                             decoder_out, latent_out, mu, logvar = self.model(data, training=False,
