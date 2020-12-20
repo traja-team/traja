@@ -131,7 +131,7 @@ class HybridTrainer(object):
     def train(self, train_loader, test_loader, model_save_path=None):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
-        classification of the timeseries
+        classification of the timeseriesis_classification
 
         :param train_loader: Dataloader object of train dataset with batch data [data,target,category]
         :param test_loader: Dataloader object of test dataset with [data,target,category]
