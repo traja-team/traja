@@ -1,6 +1,7 @@
 import torch
 from traja.models.utils import TimeDistributed
 from torch import nn
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -42,8 +43,8 @@ class LSTMEncoder(torch.nn.Module):
                                           bidirectional=self.bidirectional, batch_first=True)
 
     def _init_hidden(self):
-        return (torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size),
-                torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size))
+        return (torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size).to(device),
+                torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size).to(device))
 
     def forward(self, x):
         enc_init_hidden = self._init_hidden()
