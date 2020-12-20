@@ -263,6 +263,13 @@ class MultiModelAE(torch.nn.Module):
             if self.num_classes is not None:
                 for param in self.classifier.parameters():
                     param.requires_grad = False
+            for param in self.encoder.parameters():
+                param.requires_grad = True
+            for param in self.decoder.parameters():
+                param.requires_grad = True
+            for param in self.latent.parameters():
+                param.requires_grad = True
+
             # Encoder -->Latent --> Decoder
             enc_out = self.encoder(data)
             latent_out = self.latent(enc_out)
