@@ -282,10 +282,18 @@ class MultiModelVAE(torch.nn.Module):
         :return: decoder_out,latent_out or classifier out
         """
         if not classify:
+            
+            # Set the classifier grad off
             if self.num_classes is not None:
-                # Set the classifier grad off
                 for param in self.classifier.parameters():
                     param.requires_grad = False
+            for param in self.encoder.parameters():
+                param.requires_grad = True
+            for param in self.decoder.parameters():
+                param.requires_grad = True
+            for param in self.latent.parameters():
+                param.requires_grad = True
+
             # Encoder -->Latent --> Decoder
             enc_out = self.encoder(data)
             latent_out, mu, logvar = self.latent(enc_out)
