@@ -282,7 +282,7 @@ class MultiModelVAE(torch.nn.Module):
         :return: decoder_out,latent_out or classifier out
         """
         if not classify:
-            
+
             # Set the classifier grad off
             if self.num_classes is not None:
                 for param in self.classifier.parameters():
