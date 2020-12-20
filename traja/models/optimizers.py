@@ -76,7 +76,8 @@ class Optimizer:
             for network in self.optimizers.keys():
                 if self.optimizers[network] is not None:
                     self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
-            if not self.classify:                                                     patience=patience, verbose=True)
+                                                                 patience=patience, verbose=True)
+            if not self.classify:
                 self.schedulers['classifier'] = None
         return self.schedulers
 
