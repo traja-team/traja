@@ -171,12 +171,12 @@ class HybridTrainer(object):
 
                     if training_mode == 'forecasting':
                         if self.model_type == 'ae':
-                            decoder_out, latent_out = self.model(data, training=True, is_classification=False)
+                            decoder_out, latent_out = self.model(data, training=True, classify=False)
                             loss = Criterion().ae_criterion(decoder_out, target)
 
                         else:  # vae
                             decoder_out, latent_out, mu, logvar = self.model(data, training=True,
-                                                                             is_classification=False)
+                                                                             classify=False)
                             loss = Criterion().vae_criterion(decoder_out, target, mu, logvar)
 
                         loss.backward()
@@ -188,10 +188,10 @@ class HybridTrainer(object):
                             and training_mode is not 'forecasting':  # training_mode == 'classification'
                         if self.model_type == 'vae':
                             classifier_out, latent_out, mu, logvar = self.model(data, training=True,
-                                                                                is_classification=True)
+                                                                                classify=True)
                         else:
                             classifier_out = self.model(data, training=True,
-                                                        is_classification=True)
+                                                        classify=True)
                         loss = Criterion().classifier_criterion(classifier_out, category - 1)
                         loss.backward()
                         classifier_optimizer.step()
@@ -214,15 +214,15 @@ class HybridTrainer(object):
                             test_loss_forecasting += Criterion().ae_criterion(out, target).item()
                         else:
                             decoder_out, latent_out, mu, logvar = self.model(data, training=False,
-                                                                             is_classification=False)
+                                                                             classify=False)
                             test_loss_forecasting += Criterion().vae_criterion(decoder_out, target, mu, logvar)
                         # Classification test
                         if self.model_type == 'ae':
                             classifier_out = self.model(data, training=False,
-                                                        is_classification=True)
+                                                        classify=True)
                         else:
                             classifier_out, latent_out, mu, logvar = self.model(data, training=False,
-                                                                                is_classification=True)
+                                                                                classify=True)
 
                         test_loss_classification += Criterion().classifier_criterion(classifier_out,
                                                                                      category - 1).item()
