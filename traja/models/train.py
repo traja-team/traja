@@ -165,7 +165,8 @@ class HybridTrainer(object):
                     encoder_optimizer.zero_grad()
                     latent_optimizer.zero_grad()
                     decoder_optimizer.zero_grad()
-                    classifier_optimizer.zero_grad()
+                    if classifier_optimizer is not None:
+                        classifier_optimizer.zero_grad()
 
                     data, target, category = data.float().to(device), target.float().to(device), category.to(device)
 
