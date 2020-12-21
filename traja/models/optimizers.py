@@ -5,13 +5,16 @@ from traja.models.ae import MultiModelAE
 
 class Optimizer:
 
-    def __init__(self, model_type, model, optimizer_type):
+    def __init__(self, model_type, model, optimizer_type, classify=False):
+
         """
         Wrapper for setting the model optimizer and learning rate schedulers using ReduceLROnPlateau;
         If the model type is 'ae' or 'vae' - var optimizers is a dict with separate optimizers for encoder, decoder,
         latent and classifier. In case of 'lstm', var optimizers is an optimizer for lstm and TimeDistributed(linear layer)
         :param model_type: Type of model 'ae', 'vae' or 'lstm'
         :param model: Model instance
+        :param classify: If True, will return the Optimizer and scheduler for classifier
+
         :param optimizer_type: Optimizer to be used; Should be one in ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop',
                                        'LBFGS', 'ASGD', 'Adamax']
         """
@@ -23,6 +26,7 @@ class Optimizer:
         self.model_type = model_type
         self.model = model
         self.optimizer_type = optimizer_type
+        self.classify = classify
         self.optimizers = {}
         self.schedulers = {}
 
@@ -30,12 +34,12 @@ class Optimizer:
         """Optimizers for each network in the model
 
         Args:
-            model_type ([type]): [description]
-            model ([type]): [description]
+
             lr (float, optional): [description]. Defaults to 0.0001.
 
         Returns:
-            [type]: [description]
+            dict: Optimizers
+
         """
 
         if self.model_type == 'lstm':
@@ -44,11 +48,18 @@ class Optimizer:
         elif self.model_type == 'ae' or 'vae':
             keys = ['encoder', 'decoder', 'latent', 'classifier']
             for network in keys:
-                self.optimizers[network] = getattr(torch.optim, f'{self.optimizer_type}')(
-                    getattr(self.model, f'{network}').parameters(), lr=lr)
+                if network != 'classifier':
+                    self.optimizers[network] = getattr(torch.optim, f'{self.optimizer_type}')(
+                        getattr(self.model, f'{network}').parameters(), lr=lr)
+
+            if self.classify:
+                self.optimizers['classifier'] = getattr(torch.optim, f'{self.optimizer_type}')(getattr(self.model, 'classifier').parameters(), lr=lr)
+            else:
+                self.optimizers['classifier'] = None
 
         elif self.model_type == 'vaegan':
             return NotImplementedError
+
         return self.optimizers
 
     def get_lrschedulers(self, factor: float, patience: int):
@@ -61,7 +72,8 @@ class Optimizer:
             patience (int, optional): [description]. Defaults to 10.
 
         Returns:
-            [dict]: [description]
+            [dict]: Learning rate schedulers
+
         """
         if self.model_type == 'lstm':
             assert not isinstance(self.optimizers, dict)
@@ -69,8 +81,12 @@ class Optimizer:
                                                 patience=patience, verbose=True)
         else:
             for network in self.optimizers.keys():
-                self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
-                                                             patience=patience, verbose=True)
+                if self.optimizers[network] is not None:
+                    self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
+                                                                 patience=patience, verbose=True)
+            if not self.classify:
+                self.schedulers['classifier'] = None
+
         return self.schedulers
 
 

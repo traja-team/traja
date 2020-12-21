@@ -1,16 +1,3 @@
-"""
-Modified from https://github.com/agrimgupta92/sgan/blob/master/sgan/data/trajectories.py.
-
-This module contains:
-
-Classes:
-1. Pytorch Time series dataset class instance
-2. Weighted train and test dataset loader with respect to class distribution
-
-Helpers:
-1. Class distribution in the dataset
-
-"""
 import logging
 import os
 import math
