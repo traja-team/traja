@@ -46,13 +46,13 @@ class Optimizer:
         elif self.model_type == 'ae' or 'vae':
             keys = ['encoder', 'decoder', 'latent', 'classifier']
             for network in keys:
-                if network == 'classifier':
-                    
+                if network != 'classifier':
                     self.optimizers[network] = getattr(torch.optim, f'{self.optimizer_type}')(
                         getattr(self.model, f'{network}').parameters(), lr=lr)
 
             if self.classify:
-                self.optimizers['classifier'] =
+                self.optimizers['classifier'] = self.optimizers['classifier'] = getattr(torch.optim, f'{self.optimizer_type}')(
+                        getattr(self.model, 'classifier').parameters(), lr=lr)
 
         elif self.model_type == 'vaegan':
             return NotImplementedError
