@@ -32,12 +32,10 @@ class Optimizer:
         """Optimizers for each network in the model
 
         Args:
-            model_type ([type]): [description]
-            model ([type]): [description]
             lr (float, optional): [description]. Defaults to 0.0001.
 
         Returns:
-            [type]: [description]
+            dict: Optimizers
         """
 
         if self.model_type == 'lstm':
@@ -51,8 +49,9 @@ class Optimizer:
                         getattr(self.model, f'{network}').parameters(), lr=lr)
 
             if self.classify:
-                self.optimizers['classifier'] = self.optimizers['classifier'] = getattr(torch.optim, f'{self.optimizer_type}')(
-                        getattr(self.model, 'classifier').parameters(), lr=lr)
+                self.optimizers['classifier'] = getattr(torch.optim, f'{self.optimizer_type}')(getattr(self.model, 'classifier').parameters(), lr=lr)
+            else:
+                self.optimizers['classifier'] = None
 
         elif self.model_type == 'vaegan':
             return NotImplementedError
@@ -69,7 +68,7 @@ class Optimizer:
             patience (int, optional): [description]. Defaults to 10.
 
         Returns:
-            [dict]: [description]
+            [dict]: Learning rate schedulers
         """
         if self.model_type == 'lstm':
             assert not isinstance(self.optimizers, dict)
