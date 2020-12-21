@@ -216,21 +216,24 @@ class HybridTrainer(object):
                             decoder_out, latent_out, mu, logvar = self.model(data, training=False,
                                                                              classify=False)
                             test_loss_forecasting += Criterion().vae_criterion(decoder_out, target, mu, logvar)
-                        # Classification test
-                        if self.model_type == 'ae':
-                            classifier_out = self.model(data, training=False,
-                                                        classify=True)
-                        else:
-                            classifier_out, latent_out, mu, logvar = self.model(data, training=False,
-                                                                                classify=True)
 
-                        test_loss_classification += Criterion().classifier_criterion(classifier_out,
-                                                                                     category - 1).item()
+                        # Classification test
+                        if self.classifier_hidden_size is not None:
+                            if self.model_type == 'ae':
+                                classifier_out = self.model(data, training=False,
+                                                            classify=True)
+                            else:
+                                classifier_out, latent_out, mu, logvar = self.model(data, training=False,
+                                                                                    classify=True)
+
+                            test_loss_classification += Criterion().classifier_criterion(classifier_out,
+                                                                                         category - 1).item()
 
                 test_loss_forecasting /= len(test_loader.dataset)
                 print(f'====> Mean test set generator loss: {test_loss_forecasting:.4f}')
-                test_loss_classification /= len(test_loader.dataset)
-                print(f'====> Mean test set classifier loss: {test_loss_classification:.4f}')
+                if test_loss_classification != 0:
+                    test_loss_classification /= len(test_loader.dataset)
+                    print(f'====> Mean test set classifier loss: {test_loss_classification:.4f}')
 
             # Scheduler metric is test set loss
             if training_mode == 'forecasting':
@@ -238,7 +241,8 @@ class HybridTrainer(object):
                 decoder_scheduler.step(test_loss_forecasting)
                 latent_scheduler.step(test_loss_forecasting)
             else:
-                classifier_scheduler.step(test_loss_classification)
+                if self.classifier_hidden_size is not None:
+                    classifier_scheduler.step(test_loss_classification)
 
         # Save the model at target path
         utils.save_model(self.model, PATH=model_save_path)
