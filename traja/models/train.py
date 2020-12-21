@@ -202,8 +202,7 @@ class HybridTrainer(object):
 
             if epoch + 1 == self.epochs:
                 training_mode = 'classification'
-                print('Training classifier')
-
+                
             # Testing
             if epoch % 10 == 0:
                 with torch.no_grad():
