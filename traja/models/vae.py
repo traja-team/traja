@@ -107,6 +107,7 @@ class DisentangledAELatent(torch.nn.Module):
 
 
 class LSTMDecoder(torch.nn.Module):
+
     """ Implementation of Decoder network using LSTM layers
         :param input_size: The number of expected features in the input x
         :param num_future: Number of time steps to be predicted given the num_past steps
@@ -186,6 +187,7 @@ class MLPClassifier(torch.nn.Module):
     def __init__(self, input_size: int, hidden_size:int, num_classes: int, latent_size: int, num_classifier_layers: int,
                  dropout: float):
         super(MLPClassifier, self).__init__()
+
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_classes = num_classes
@@ -206,6 +208,7 @@ class MLPClassifier(torch.nn.Module):
 
 
 class MultiModelVAE(torch.nn.Module):
+
     """Implementation of Multimodel Variational autoencoders; This Module wraps the Variational Autoencoder
     models [Encoder,Latent[Sampler],Decoder]. If classify=True, then the wrapper also include classification layers
 
@@ -224,6 +227,7 @@ class MultiModelVAE(torch.nn.Module):
     def __init__(self, input_size: int, num_past: int, batch_size: int, num_future: int, lstm_hidden_size: int,
                  num_lstm_layers: int , output_size: int, latent_size: int, batch_first: bool, dropout: float, reset_state: bool,
                  bidirectional: bool=False, num_classifier_layers: int= None, classifier_hidden_size: int=None, num_classes: int=None):
+
 
         super(MultiModelVAE, self).__init__()
         self.input_size = input_size
@@ -266,6 +270,7 @@ class MultiModelVAE(torch.nn.Module):
                                    dropout=self.dropout,
                                    reset_state=True,
                                    bidirectional=self.bidirectional)
+
         if self.num_classes is not None:
             self.classifier = MLPClassifier(input_size=self.latent_size,
                                             hidden_size = self.classifier_hidden_size,
@@ -287,6 +292,7 @@ class MultiModelVAE(torch.nn.Module):
             if self.num_classes is not None:
                 for param in self.classifier.parameters():
                     param.requires_grad = False
+
             for param in self.encoder.parameters():
                 param.requires_grad = True
             for param in self.decoder.parameters():
@@ -303,6 +309,7 @@ class MultiModelVAE(torch.nn.Module):
         else:
             # Unfreeze classifier and freeze the rest
             assert self.num_classes is not None, "Classifier not found"
+
             for param in self.classifier.parameters():
                 param.requires_grad = True
             for param in self.encoder.parameters():
@@ -315,5 +322,6 @@ class MultiModelVAE(torch.nn.Module):
             # Encoder -->Latent --> Classifier
             enc_out = self.encoder(data)
             latent_out, mu, logvar = self.latent(enc_out, training=training)
+
             classifier_out = self.classifier(mu)  # Deterministic
             return classifier_out, latent_out, mu, logvar

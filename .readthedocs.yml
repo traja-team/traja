@@ -1,17 +1,10 @@
-version: 2
-sphinx:
-  configuration: docs/source/conf.py
+# .readthedocs.yml
 
-formats: all
-  
 build:
-  image: latest
+        image: latest
 
 python:
-  version: 3.7
-  install:
-    - method: pip
-      path: .
-    - requirements: docs/requirements.txt
-conda:
-  environment: docs/environment.yml
+        version: 3.6
+        pip_install: true
+
+requirements_file: docs/requirements.txt
