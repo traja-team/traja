@@ -200,9 +200,9 @@ class HybridTrainer(object):
 
                 print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss / (idx + 1)))
 
-            if epoch + 1 == self.epochs:
+            if epoch + 1 == self.epochs//2:
                 training_mode = 'classification'
-                
+
             # Testing
             if epoch % 10 == 0:
                 with torch.no_grad():
