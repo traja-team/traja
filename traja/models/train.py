@@ -233,7 +233,7 @@ class HybridTrainer(object):
                     )
                 )
 
-            if epoch == self.epochs // 2 and self.classify:
+            if epoch + 1 == self.epochs // 2 and self.classify:
                 training_mode = "classification"
 
             # Testing
