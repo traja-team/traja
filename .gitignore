@@ -80,6 +80,7 @@ target/
 .vscode
 .vscode/
 
+
 # celery beat schedule file
 celerybeat-schedule
 
@@ -111,6 +112,8 @@ venv.bak/
 .idea
 
 _build/
+_static/
+_templates/
 
 # BUILD FILES
 *.zip
@@ -118,4 +121,3 @@ _build/
 docs/source/gallery
 docs/source/savefig
 docs/source/reference
-docs/source/autoexamples

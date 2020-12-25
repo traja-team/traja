@@ -1,9 +1,0 @@
-pytest
-Sphinx
-sphinx_gallery
-sphinx_rtd_theme
-pillow
-black
-pre-commit
-pyinstaller
-pyqt5

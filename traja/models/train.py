@@ -8,7 +8,6 @@ import torch
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
 class HybridTrainer(object):
     """
     Wrapper for training and testing the LSTM model
@@ -70,6 +69,7 @@ class HybridTrainer(object):
     ):
 
         white_keys = ["ae", "vae"]
+
         assert model_type in white_keys, "Valid models are {}".format(white_keys)
 
         self.model_type = model_type
@@ -95,6 +95,7 @@ class HybridTrainer(object):
         self.optimizer_type = optimizer_type
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
+
         self.model_hyperparameters = {
             "input_size": self.input_size,
             "num_past": self.num_past,
@@ -113,6 +114,7 @@ class HybridTrainer(object):
             "dropout": self.dropout,
         }
 
+
         # Instantiate model instance based on model_type
         if self.model_type == "ae":
             self.model = MultiModelAE(**self.model_hyperparameters)
@@ -127,6 +129,7 @@ class HybridTrainer(object):
         optimizer = Optimizer(
             self.model_type, self.model, self.optimizer_type, classify=self.classify
         )
+
         self.model_optimizers = optimizer.get_optimizers(lr=0.001)
         self.model_lrschedulers = optimizer.get_lrschedulers(
             factor=self.lr_factor, patience=self.scheduler_patience
@@ -140,6 +143,7 @@ class HybridTrainer(object):
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseriesis_classification
 
+
     train_loader: Dataloader object of train dataset with batch data [data,target,category]
     test_loader: Dataloader object of test dataset with [data,target,category]
     model_save_path: Directory path to save the model
@@ -147,7 +151,9 @@ class HybridTrainer(object):
         """
 
         assert self.model_type == "ae" or "vae"
+
         assert model_save_path is not None, "Model path unknown"
+
         self.model.to(device)
 
         (
@@ -170,7 +176,9 @@ class HybridTrainer(object):
             self.epochs *= 2  # Forecasting + Classification
 
         # Training
+
         for epoch in range(self.epochs):
+
             test_loss_forecasting = 0
             test_loss_classification = 0
             if epoch > 0:  # Initial step is to test and set LR schduler
@@ -196,6 +204,7 @@ class HybridTrainer(object):
                             decoder_out, latent_out = self.model(
                                 data, training=True, classify=False
                             )
+
                             loss = Criterion().ae_criterion(decoder_out, target)
 
                         else:  # vae
@@ -223,6 +232,7 @@ class HybridTrainer(object):
                         loss = Criterion().classifier_criterion(
                             classifier_out, category - 1
                         )
+
                         loss.backward()
                         classifier_optimizer.step()
                     total_loss += loss
@@ -254,6 +264,7 @@ class HybridTrainer(object):
                             test_loss_forecasting += (
                                 Criterion().ae_criterion(out, target).item()
                             )
+
                         else:
                             decoder_out, latent_out, mu, logvar = self.model(
                                 data, training=False, classify=False
@@ -298,6 +309,7 @@ class HybridTrainer(object):
             else:
                 if self.classify:
                     classifier_scheduler.step(test_loss_classification)
+
         # Save the model at target path
         utils.save_model(self.model, PATH=model_save_path)
 

@@ -1,56 +1,35 @@
-sudo: false
-
+sudo: true
 dist: xenial
-
 language: python
-
 python:
- - '3.6'
- - '3.7'
-
+- '3.6'
+- '3.7'
 git:
   depth: false
-
 env:
- - MPLBACKEND=Agg CODECOV_TOKEN="287389e5-8f99-42e1-8844-17acef7c454f"
-
+- MPLBACKEND=Agg
 cache: pip
-
-before_install:
-  - sudo apt-get update
-  - sudo mkdir -p /usr/local/lib/R/site-library
-  - echo 'R_LIBS=/usr/local/lib/R/library:/usr/local/lib/R/site-library/' > ~/.Renviron
-  - sudo chmod 2777 /usr/local/lib/R/site-library
-
 install:
- - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
- - bash miniconda.sh -b -p $HOME/miniconda
- - export PATH="$HOME/miniconda/bin:$PATH"
- - hash -r
- - conda config --set always_yes yes --set changeps1 no
- - conda update -q conda
-
- # Update dependencies
- - conda env create -n test-environment -f environment.yml python=$TRAVIS_PYTHON_VERSION
- - source activate test-environment
- # Doc/Test requirements
- - pip install -r docs/requirements.txt
- - pip install .
-
+- wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  -O miniconda.sh
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- hash -r
+- conda config --set always_yes yes --set changeps1 no
+- conda update -q conda
+- conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION 
+- source activate test-environment
+- pip install -r requirements.txt
+- pip install --upgrade pytest flake8 sphinx
+- pip install .
 script:
- - cd docs && make doctest && cd ..
- - py.test . --cov-report term --cov=traja --ignore tests/test_rutils.py
-
-after_success:
- - codecov
-
+    cd docs && make doctest
 deploy:
   provider: pypi
   user: jshenk
   skip_cleanup: true
-  skip_existing: true
   on:
     tags: true
     branch: master
-  password:
-    secure: o5ON/6Q4aORM4dgTVUQ39w0N+Gc+6Ala+K5J16b5lnNWGgHglqIlJzYXJo8THpeNYTm6ZbEDQEFurCTEKA/MZ2WzreePWQ4Z4E2dIihqhI+71rSbForRPKunV2CEr/QQdUEzXe6npO2UTnO0zDS5XMSrlBncKO4F4zUvrYTuXLj5fES0IFiFHMWxEpNaXMKiypfcRIKJriRbHY22/H8uSgzFluxRG+UqpbJz+R94bqIg30wBJw4nI9JMI00Du67eCO91t+aQ26+5Am+DqA6+jawd89OVPxtlLSdWtgtxPmWAD/IBLP2d7sqfK+QnezmH8NuAMB6DJdTkbscHcvYT8itHg8csBDdvfH8xoA9x8f+Cc60gviKaBoayORFF7FXkjyAYTCSfEi2dfxTTDR0UisbEG99k0+25+DMHxdC8z7/NQz4qal2vKfhPe8kTsOPQLwh0EHmdVU+v9M9LgrLhN55/lI/a6w+zL1/BJ6ZO6arMhHLVmgRtHP+Ckq6OKwQJYNwZxsg8PfwZxl0jFfd3yVX9lS9s95An90z9mEPheC8zQNz2fzAZUZun6GI9u/FCrGpMbrzKzq4R0UtNc8mfipHJ/v027+C2x43wkXA0c6Zvf9b7i6Bgm6EonnTagWrkQ0RdwqiKDd3smfgK2QZzD4G9vuv6z0w5CFhHL9v1Oc0=
+  password: 
+    secure: Fmc7BLmn+M4jGu3s6w+gMfEDcHx348ZIPLS94Jt7UBWhPVy5qCu+tr2/a/Oak3wvzJfixmx9it9o4ti0UKFXRQNeMVFQVj72OjDzU7YX6gnfNLYhaT8Ip+LyrCdvTUPvHbaNy0R4Y7O3HJrgBekz2A0bPji9Xk6Aqhti2JevjxLWKuwmgubLwHW4rCutfxJoO6wi+t5mU1EhjIqW6/8MA9I8F2DxIs1bHGGgyHRfo74zBkkaWacMsfmlppHg+nsI2RQUWe/Yud4DDoFgbE+y0xW0ftsInGp6gyz0bczA0MxxU46mVmG/ZoE2/b95oKdbBa9p5d3Y4IOhmxaych5Nwq6gufZFNPfhtna6iPiuq5HdN4sslQn4wDglXXpA6Q6IwnBOPpy0STmDP6QJub7JUkRlykNqRPElm7AxgKEYkMnksuaywSSF6ATJTZllKmsZxWTUhuWmLTkk67gExOhOWH3sAHceNG7wTAwk9rLWE4feR1QdnJMG3xyWxqhl2FoAq03WyM72KRu04M0y0AI/9A30mD0BaEii6cWcq56yrtHB5HN5sTy0b2jqcexiOsa0hBzczIWM3uiz2BHR8jJ5O5sw0u1MuMeVqefPXbe1xch/oyocjU5Z90VMsK1p9rk9QcyP3wY+bRN/dlZAFNQvSSzf/vOCy4J4oJ1/nKZKVWI=

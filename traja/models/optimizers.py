@@ -6,6 +6,7 @@ from traja.models.ae import MultiModelAE
 class Optimizer:
 
     def __init__(self, model_type, model, optimizer_type, classify=False):
+
         """
         Wrapper for setting the model optimizer and learning rate schedulers using ReduceLROnPlateau;
         If the model type is 'ae' or 'vae' - var optimizers is a dict with separate optimizers for encoder, decoder,
@@ -13,6 +14,7 @@ class Optimizer:
         :param model_type: Type of model 'ae', 'vae' or 'lstm'
         :param model: Model instance
         :param classify: If True, will return the Optimizer and scheduler for classifier
+
         :param optimizer_type: Optimizer to be used; Should be one in ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop',
                                        'LBFGS', 'ASGD', 'Adamax']
         """
@@ -32,10 +34,12 @@ class Optimizer:
         """Optimizers for each network in the model
 
         Args:
+
             lr (float, optional): [description]. Defaults to 0.0001.
 
         Returns:
             dict: Optimizers
+
         """
 
         if self.model_type == 'lstm':
@@ -69,6 +73,7 @@ class Optimizer:
 
         Returns:
             [dict]: Learning rate schedulers
+
         """
         if self.model_type == 'lstm':
             assert not isinstance(self.optimizers, dict)
@@ -81,6 +86,7 @@ class Optimizer:
                                                                  patience=patience, verbose=True)
             if not self.classify:
                 self.schedulers['classifier'] = None
+
         return self.schedulers
 
 
