@@ -237,7 +237,7 @@ class HybridTrainer(object):
                 training_mode = "classification"
 
             # Testing
-            if epoch % 10 == 0:
+            if epoch + 1 % 10 == 0:
                 with torch.no_grad():
                     self.model.eval()
                     for idx, (data, target, category) in enumerate(list(test_loader)):
