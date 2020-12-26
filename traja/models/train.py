@@ -1,12 +1,13 @@
-from .ae import MultiModelAE
-from .vae import MultiModelVAE
-from .lstm import LSTM
+from models import MultiModelAE
+from models import MultiModelVAE
+from models import LSTM
 from . import utils
 from .losses import Criterion
 from .optimizers import Optimizer
 import torch
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 
 class HybridTrainer(object):
     """
@@ -91,22 +92,24 @@ class HybridTrainer(object):
         self.optimizer_type = optimizer_type
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
-        self.model_hyperparameters = {'input_size': self.input_size,
-                                      'num_past': self.num_past,
-                                      'batch_size': self.batch_size,
-                                      'lstm_hidden_size': self.lstm_hidden_size,
-                                      'num_lstm_layers':self.num_lstm_layers,
-                                      'classifier_hidden_size':self.classifier_hidden_size,
-                                      'num_classifier_layers':self.num_classifier_layers,
-                                      'num_future': self.num_future,
-                                      'latent_size': self.latent_size,
-                                      'output_size': self.output_size,
-                                      'num_classes': self.num_classes,
-                                      'batch_first': self.batch_first,
-                                      'reset_state': self.reset_state,
-                                      'bidirectional': self.bidirectional,
-                                      'dropout': self.dropout
-                                      }
+
+        self.model_hyperparameters = {
+            "input_size": self.input_size,
+            "num_past": self.num_past,
+            "batch_size": self.batch_size,
+            "lstm_hidden_size": self.lstm_hidden_size,
+            "num_lstm_layers": self.num_lstm_layers,
+            "classifier_hidden_size": self.classifier_hidden_size,
+            "num_classifier_layers": self.num_classifier_layers,
+            "num_future": self.num_future,
+            "latent_size": self.latent_size,
+            "output_size": self.output_size,
+            "num_classes": self.num_classes,
+            "batch_first": self.batch_first,
+            "reset_state": self.reset_state,
+            "bidirectional": self.bidirectional,
+            "dropout": self.dropout,
+        }
 
         # Instantiate model instance based on model_type
         if self.model_type == 'ae':
