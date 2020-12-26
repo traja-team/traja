@@ -1,3 +1,4 @@
+import os, sys
 import networkx as nx
 import pandas as pd
 import numpy as np
@@ -11,40 +12,27 @@ from sklearn.neighbors import kneighbors_graph
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.axes import Axes
 from matplotlib import cm
-# import plotly
-# import plotly.graph_objs as go
-# import plotly.io as pio
-import os, sys
 import seaborn as sns
 import matplotlib
 from matplotlib import style
-from scipy.sparse import csgraph
 import argparse, copy, h5py, os, sys, time, socket
 import tensorflow as tf
 import torch, torchvision, torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
-# from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot 
 from matplotlib import ticker, colors
 
-# print(matplotlib.get_backend())
-# matplotlib.rcParams["backend"] = "Gtk3Agg"
-# print(matplotlib.get_backend())
-# matplotlib.use('Gtk3Agg')
-import matplotlib.pyplot as plt
 
-# plt.switch_backend('Qt4Agg')
-# print(matplotlib.get_backend())
 plt.switch_backend("TkAgg")
 
-# seed value and plotly
-# init_notebook_mode(connected=True)
-np.set_printoptions(suppress=True, precision=3, )
-style.use('ggplot')
+
+np.set_printoptions(
+    suppress=True, precision=3,
+)
+style.use("ggplot")
 
 
 class DirectedNetwork(object):
-
     def __init__(self):
         super().__init__()
         pass
@@ -67,10 +55,12 @@ class DirectedNetwork(object):
         self_connections = [weight[i][i] for i in range(len(weight))]
 
         # Intialize graph
-        G = nx.from_numpy_matrix(weight, create_using=nx.MultiDiGraph, parallel_edges=True)
+        G = nx.from_numpy_matrix(
+            weight, create_using=nx.MultiDiGraph, parallel_edges=True
+        )
 
         edge_colors = weight.tolist()
-        edge_colors_ = [float('%.8f' % j) for i in edge_colors for j in i]
+        edge_colors_ = [float("%.8f" % j) for i in edge_colors for j in i]
 
         # Set up nodes
         neuron_color = [state_dict.get(node, 0.25) for node in G.nodes()]
@@ -80,12 +70,18 @@ class DirectedNetwork(object):
         vmax = np.max(states)
         cmap = plt.cm.coolwarm
         edge_cmap = plt.cm.Spectral
-        nx.draw(G, with_labels=True,
-                cmap=cmap, node_color=neuron_color,
-                node_size=200, linewidths=5,
-                edge_color=edge_colors_,
-                edge_cmap=edge_cmap, font_size=10,
-                connectionstyle='arc3, rad=0.3')
+        nx.draw(
+            G,
+            with_labels=True,
+            cmap=cmap,
+            node_color=neuron_color,
+            node_size=200,
+            linewidths=5,
+            edge_color=edge_colors_,
+            edge_cmap=edge_cmap,
+            font_size=10,
+            connectionstyle="arc3, rad=0.3",
+        )
 
         sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
         sm.set_array([])
@@ -104,7 +100,6 @@ class DirectedNetwork(object):
 
 
 class LocalLinearEmbedding(object):
-
     def __init__(self):
         super(LocalLinearEmbedding, self).__init__()
         pass
@@ -166,8 +161,14 @@ class LocalLinearEmbedding(object):
         #         ax.set_ylim(-1,1)
         #         ax.set_zlim(-1,1)
         for i in range(len(pc)):
-            ax.plot3D(pc[i:, 0], pc[i:, 1], pc[i:, 2],
-                      alpha=i / len(pc), color='red', linewidth=1)
+            ax.plot3D(
+                pc[i:, 0],
+                pc[i:, 1],
+                pc[i:, 2],
+                alpha=i / len(pc),
+                color="red",
+                linewidth=1,
+            )
         fig2.colorbar(f)
         #         plt.pause(0.0001)
         # State of streaming plot
@@ -183,7 +184,6 @@ class LocalLinearEmbedding(object):
 
 
 class SpectralEmbedding(object):
-
     def __init__(self):
         super(SpectralEmbedding, self).__init__()
         pass
@@ -198,15 +198,21 @@ class SpectralEmbedding(object):
             :return Y: numpy.ndarray - matrix m row, d attributes are reduced dimensional
             """
         # Get the adjacency matrix/nearest neighbor graph; neighbors within the radius of 0.4
-        A = radius_neighbors_graph(X.T, rad, mode='distance',
-                                   metric='minkowski', p=2,
-                                   metric_params=None, include_self=False)
+        A = radius_neighbors_graph(
+            X.T,
+            rad,
+            mode="distance",
+            metric="minkowski",
+            p=2,
+            metric_params=None,
+            include_self=False,
+        )
         A = A.toarray()
 
         # Find the laplacian of the neighbour graph
-        # L = D - A ; where D is the diagonal degree matrix        
+        # L = D - A ; where D is the diagonal degree matrix
         L = csgraph.laplacian(A, normed=False)
-        # Embedd the data points i low dimension using the Eigen values/vectos 
+        # Embedd the data points i low dimension using the Eigen values/vectos
         # of the laplacian graph to get the most optimal partition of the graph
         eigval, eigvec = np.linalg.eig(L)
         # the second smallest eigenvalue represents sparsest cut of the graph.
@@ -248,10 +254,10 @@ class SpectralEmbedding(object):
             return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # create the coordinates
-    numebr_of_points = 21;
-    small_range = -1.0;
+    numebr_of_points = 21
+    small_range = -1.0
     large_range = 1.0
 
     xcoordinates = np.linspace(small_range, large_range, num=numebr_of_points)
@@ -262,5 +268,14 @@ if __name__ == '__main__':
     s1 = xcoord_mesh.ravel()[inds]
     s2 = ycoord_mesh.ravel()[inds]
     coordinate = np.c_[s1, s2]
-    print('From ', small_range, ' to ', large_range, ' with ', numebr_of_points, ' total number of coordinate: ',
-          numebr_of_points ** 2)
+    print(
+        "From ",
+        small_range,
+        " to ",
+        large_range,
+        " with ",
+        numebr_of_points,
+        " total number of coordinate: ",
+        numebr_of_points ** 2,
+    )
+

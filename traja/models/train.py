@@ -1,12 +1,13 @@
-from .ae import MultiModelAE
-from .vae import MultiModelVAE
-from .lstm import LSTM
+from models import MultiModelAE
+from models import MultiModelVAE
+from models import LSTM
 from . import utils
 from .losses import Criterion
 from .optimizers import Optimizer
 import torch
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
 
 class HybridTrainer(object):
     """
@@ -113,7 +114,6 @@ class HybridTrainer(object):
             "bidirectional": self.bidirectional,
             "dropout": self.dropout,
         }
-
 
         # Instantiate model instance based on model_type
         if self.model_type == "ae":
