@@ -20,14 +20,20 @@ class TimeDistributed(torch.nn.Module):
             return self.module(x)
 
         # Squash samples and timesteps into a single axis
-        x_reshape = x.contiguous().view(-1, x.size(-1))  # (samples * timesteps, input_size)
+        x_reshape = x.contiguous().view(
+            -1, x.size(-1)
+        )  # (samples * timesteps, input_size)
         out = self.module(x_reshape)
 
         # We have to reshape Y back to the target shape
         if self.batch_first:
-            out = out.contiguous().view(x.size(0), -1, out.size(-1))  # (samples, timesteps, output_size)
+            out = out.contiguous().view(
+                x.size(0), -1, out.size(-1)
+            )  # (samples, timesteps, output_size)
         else:
-            out = out.view(-1, x.size(1), out.size(-1))  # (timesteps, samples, output_size)
+            out = out.view(
+                -1, x.size(1), out.size(-1)
+            )  # (timesteps, samples, output_size)
 
         return out
 
@@ -43,7 +49,7 @@ def save_model(model, PATH):
     # PATH = "state_dict_model.pt"
     # Save
     torch.save(model.state_dict(), PATH)
-    print('Model saved at {}'.format(PATH))
+    print("Model saved at {}".format(PATH))
 
 
 def load_model(model, model_hyperparameters, PATH):

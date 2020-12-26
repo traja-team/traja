@@ -6,58 +6,145 @@ from .ae import MultiModelAE
 from .vae import MultiModelVAE
 from .vaegan import MultiModelVAEGAN
 from .irl import MultiModelIRL
+from .lstm import LSTM
 from .utils import load_model
 import matplotlib.pyplot as plt
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def timeseries(model_type: str, model_hyperparameters: dict, model_path: str, batch_size: int, num_future: int, ):
-    # Generating few samples
-    batch_size = model_hyperparameters.batch_size  # Number of samples
-    num_future = model_hyperparameters.num_future  # Number of time steps in each sample
-    if model_type == 'ae':
-        model = MultiModelAE(,
+class Generate:
+    def __init__(
+        self,
+        model_type: str = None,
+        model_path: str = None,
+        model_hyperparameters: dict = None,
+        model: torch.nn.Module = None,
+    ):
+        """Generate a batch of future steps from a random latent state of Multi variate multi label models 
 
-    if model_type == 'vae':
-        model = MultiModelVAE(**model_hyperparameters)
+        Args:
+            model_type (str, optional): Type of model ['vae','vaegan','custom']. Defaults to None.
+            model_path (str, optional): [description]. Defaults to None.
+            model_hyperparameters (dict, optional): [description]. Defaults to None.
+            model (torch.nn.Module, optional): Custom model from user. Defaults to None
+        """
 
-    if model_type == 'vaegan':
-        model = MultiModelVAEGAN(**model_hyperparameters)
+        self.model_type = model_type
+        self.model_path = model_path
+        self.model_hyperparameters = model_hyperparameters
+
+        # Batch size and time step size
+        self.batch_size = self.model_hyperparameters.batch_size
+        self.num_future = self.model_hyperparameters.num_future
+
+        if self.model_type == "vae":
+            self.model = MultiModelVAE(**self.model_hyperparameters)
+
+        if self.model_type == "vaegan":
+            self.model = MultiModelVAEGAN(**self.model_hyperparameters)
+
+        if self.model_type == "custom":
+            assert model is not None
+            self.model = model(**self.model_hyperparameters)
+
+    def generate_batch(self):
+
+        # Load the model
+        model = load_model(self.model, self.model_hyperparameters, self.model_path)
+
+        if self.model_type == "vae":
+            # Random noise
+            z = (
+                torch.empty(self.batch_size, self.model_hyperparameters.latent_size)
+                .normal_(mean=0, std=0.1)
+                .to(device)
+            )
+            # Generate trajectories from the noise
+            out = model.decoder(z, self.num_future).cpu().detach().numpy()
+            out = out.reshape(out.shape[0] * out.shape[1], out.shape[2])
+            try:
+                cat = model.classifier(z)
+                print(
+                    "IDs in this batch of synthetic data", torch.max(cat, 1).indices + 1
+                )
+            except:
+                pass
+
+            plt.figure(figsize=(12, 4))
+            plt.plot(out[:, 0], label="Generated x: Longitude")
+            plt.plot(out[:, 1], label="Generated y: Latitude")
+            plt.legend()
+
+            fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=True)
+            fig.set_size_inches(20, 5)
+
+            for i in range(2):
+                for j in range(5):
+                    ax[i, j].plot(
+                        out[:, 0][
+                            (i + j) * self.num_future : (i + j) * self.num_future
+                            + self.num_future
+                        ],
+                        out[:, 1][
+                            (i + j) * self.num_future : (i + j) * self.num_future
+                            + self.num_future
+                        ],
+                        label="Animal ID {}".format(
+                            (torch.max(cat, 1).indices + 1).detach()[i + j]
+                        ),
+                        color="g",
+                    )
+                    ax[i, j].legend()
+            plt.show()
+
+            return out
+
+        elif self.model_type == "vaegan" or "custom":
+            return NotImplementedError
+
+    def generate_timeseries(num_steps):
         return NotImplementedError
 
-    if model_type == 'irl':
-        model = MultiModelIRL(**model_hyperparameters)
-        return NotImplementedError
 
-    # Load the model from model path:
-    model = load_model(model, model_hyperparameters, model_path)
-    # z = torch.randn((batch_size, latent_size)).to(device)
-    z = torch.empty(10, model_hyperparameters.latent_size).normal_(mean=0, std=.1).to(device)
-    # Category from the noise
-    cat = model.classifier(z)
-    # Generate trajectories from the noise
-    out = model.decoder(z, num_future).cpu().detach().numpy()
-    out = out.reshape(out.shape[0] * out.shape[1], out.shape[2])
+class Predict:
+    def __init__(
+        self,
+        model_type: str = None,
+        model_path: str = None,
+        model_hyperparameters: dict = None,
+        model: torch.nn.Module = None,
+    ):
+        """Generate a batch of future steps from a random latent state of Multi variate multi label models 
 
-    # for index, i in enumerate(train_df.columns):
-    #     scaler = scalers['scaler_'+i]  
-    #     out[:,index] = scaler.inverse_transform(out[:,index].reshape(1, -1))
-    print('IDs in this batch of synthetic data', torch.max(cat, 1).indices + 1)
-    plt.figure(figsize=(12, 4))
-    plt.plot(out[:, 0], label='Generated x: Longitude')
-    plt.plot(out[:, 1], label='Generated y: Latitude')
-    plt.legend()
+        Args:
+            model_type (str, optional): Type of model ['ae','irl','lstm','custom']. Defaults to None.
+            model_path (str, optional): [description]. Defaults to None.
+            model_hyperparameters (dict, optional): [description]. Defaults to None.
+            model (torch.nn.Module, optional): Custom model from user. Defaults to None
+        """
 
-    fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=True)
-    # plt.ticklabel_format(useOffset=False)
-    fig.set_size_inches(20, 5)
-    for i in range(2):
-        for j in range(5):
-            ax[i, j].plot(out[:, 0][(i + j) * num_future:(i + j) * num_future + num_future],
-                          out[:, 1][(i + j) * num_future:(i + j) * num_future + num_future],
-                          label='Animal ID {}'.format((torch.max(cat, 1).indices + 1).detach()[i + j]), color='g')
-            ax[i, j].legend()
-    plt.show()
+        self.model_type = model_type
+        self.model_path = model_path
+        self.model_hyperparameters = model_hyperparameters
 
-    return out
+        # Batch size and time step size
+        self.batch_size = self.model_hyperparameters.batch_size
+        self.num_future = self.model_hyperparameters.num_future
+
+        if self.model_type == "ae":
+            self.model = MultiModelAE(**self.model_hyperparameters)
+
+        if self.model_type == "lstm":
+            self.model = LSTM(**self.model_hyperparameters)
+
+        if self.model_type == "irl":
+            self.model = MultiModelIRL(**self.model_hyperparameters)
+
+        if self.model_type == "custom":
+            assert model is not None
+            self.model = model(**self.model_hyperparameters)
+            
+        
+            
+        
