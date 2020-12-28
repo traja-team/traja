@@ -73,7 +73,7 @@ class HybridTrainer(object):
 
         white_keys = ["ae", "vae"]
 
-        assert self.model_type in white_keys, "Valid models are {}".format(white_keys)
+        assert model_type in white_keys, "Valid models are {}".format(white_keys)
 
         self.model_type = model_type
         self.input_size = input_size
