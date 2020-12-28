@@ -507,7 +507,8 @@ class CustomTrainer:
         self.lr = lr
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
-        self.model_type == "custom"
+
+        self.model_type = "custom"
         optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
         self.optimizer = optimizer.get_optimizers(lr=self.lr)
         self.scheduler = optimizer.get_lrschedulers(
