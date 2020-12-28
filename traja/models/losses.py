@@ -9,10 +9,14 @@ class Criterion:
 
     def __init__(self):
 
-        self.huber_loss = torch.nn.SmoothL1Loss(reduction='sum')
+        self.huber_loss = torch.nn.SmoothL1Loss(reduction="sum")
+        self.mse_loss = torch.nn.MSELoss()
         self.crossentropy_loss = torch.nn.CrossEntropyLoss()
 
-    def ae_criterion(self, predicted, target, loss_type='huber'):
+    def RMSELoss(self, predicted, target):
+        return torch.sqrt(self.mse_loss(predicted, target))
+
+    def ae_criterion(self, predicted, target, loss_type="huber"):
         """ Implements the Autoencoder loss for time series forecasting
         :param predicted: Predicted time series by the model
         :param target: Target time series
@@ -20,13 +24,13 @@ class Criterion:
         :return:
         """
 
-        if loss_type == 'huber':
+        if loss_type == "huber":
             loss = self.huber_loss(predicted, target)
             return loss
         else:  # Root MSE
             return torch.sqrt(torch.mean((predicted - target) ** 2))
 
-    def vae_criterion(self, predicted, target, mu, logvar, loss_type='huber'):
+    def vae_criterion(self, predicted, target, mu, logvar, loss_type="huber"):
         """ Time series generative model loss function
         :param predicted: Predicted time series by the model
         :param target: Target time series
@@ -35,7 +39,7 @@ class Criterion:
         :param loss_type: Type of criterion; Defaults: 'huber'
         :return: Reconstruction loss + KLD loss
         """
-        if loss_type == 'huber':
+        if loss_type == "huber":
             dist_x = self.huber_loss(predicted, target)
         else:
             dist_x = torch.sqrt(torch.mean((predicted - target) ** 2))
