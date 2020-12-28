@@ -73,61 +73,7 @@ class HybridTrainer(object):
 
         white_keys = ["ae", "vae"]
 
-            :param model_type: Type of model should be "LSTM"
-            :param optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
-                                                                                'AdamW', 'SparseAdam', 'RMSprop', '
-                                                                                Rprop', 'LBFGS', 'ASGD', 'Adamax'] 
-            :param device: Selected device; 'cuda' or 'cpu' 
-            :param input_size: The number of expected features in the input x
-            :param output_size: Output feature dimension
-            :param lstm_hidden_size: The number of features in the hidden state h
-            :param num_lstm_layers: Number of layers in the LSTM model
-            :param reset_state: If True, will reset the hidden and cell state for each batch of data
-            :param num_classes: Number of categories/labels
-            :param latent_size: Latent space dimension
-            :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
-                    with dropout probability equal to dropout
-            :param num_classifier_layers: Number of layers in the classifier
-            :param epochs: Number of epochs to train the network
-            :param batch_size: Number of samples in a batch 
-            :param num_future: Number of time steps to be predicted forward
-            :param num_past: Number of past time steps otherwise, length of sequences in each batch of data.
-            :param bidirectional:  If True, becomes a bidirectional LSTM
-            :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
-            :param loss_type: Type of reconstruction loss to apply, 'huber' or 'rmse'. Default:'huber'
-            :param lr_factor:  Factor by which the learning rate will be reduced
-            :param scheduler_patience: Number of epochs with no improvement after which learning rate will be reduced.
-                                For example, if patience = 2, then we will ignore the first 2 epochs with no
-                                improvement, and will only decrease the LR after the 3rd epoch if the loss still
-                                hasn’t improved then.
-            
-            """
-
-    def __init__(self, model_type: str,
-                 optimizer_type: str,
-                 device: str,
-                 input_size: int,
-                 output_size: int,
-                 lstm_hidden_size: int,
-                 num_lstm_layers: int,
-                 classifier_hidden_size: int,
-                 num_classifier_layers: int,
-                 reset_state: bool,
-                 num_classes: int,
-                 latent_size: int,
-                 dropout: float,
-                 epochs: int,
-                 batch_size: int,
-                 num_future: int,
-                 num_past: int,
-                 bidirectional: bool = False,
-                 batch_first: bool = True,
-                 loss_type: str = 'huber',
-                 lr_factor: float = 0.1,
-                 scheduler_patience: int = 10):
-
-        white_keys = ['ae', 'vae']
-        assert model_type in white_keys, "Valid models are {}".format(white_keys)
+        assert self.model_type in white_keys, "Valid models are {}".format(white_keys)
 
         self.model_type = model_type
         self.input_size = input_size
