@@ -48,7 +48,7 @@ class Optimizer:
 
         Args:
 
-            lr (float, optional): [description]. Defaults to 0.0001.
+            lr (float, optional): Optimizer learning rate. Defaults to 0.0001.
 
         Returns:
             dict: Optimizers
@@ -56,6 +56,7 @@ class Optimizer:
         """
 
         if self.model_type == "lstm" or "custom":
+            print("Im running")
             self.optimizers = getattr(torch.optim, f"{self.optimizer_type}")(
                 self.model.parameters(), lr=lr
             )
