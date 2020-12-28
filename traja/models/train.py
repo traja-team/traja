@@ -14,37 +14,39 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 class HybridTrainer(object):
     """
     Wrapper for training and testing the LSTM model
-        Args:
-            model_type: Type of model should be "LSTM"
-            optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
-                                                                                    'AdamW', 'SparseAdam', 'RMSprop', '
-                                                                                    Rprop', 'LBFGS', 'ASGD', 'Adamax'] 
-            device: Selected device; 'cuda' or 'cpu' 
-            input_size: The number of expected features in the input x
-            output_size: Output feature dimension
-            lstm_hidden_size: The number of features in the hidden state h
-            num_lstm_layers: Number of layers in the LSTM model
-            reset_state: If True, will reset the hidden and cell state for each batch of data
-            num_classes: Number of categories/labels
-            latent_size: Latent space dimension
-            dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
-                        with dropout probability equal to dropout
-            num_classifier_layers: Number of layers in the classifier
-            epochs: Number of epochs to train the network
-            batch_size: Number of samples in a batch 
-            num_future: Number of time steps to be predicted forward
-            num_past: Number of past time steps otherwise, length of sequences in each batch of data.
-            bidirectional:  If True, becomes a bidirectional LSTM
-            batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
-            loss_type: Type of reconstruction loss to apply, 'huber' or 'rmse'. Default:'huber'
-            lr_factor:  Factor by which the learning rate will be reduced
-            scheduler_patience: Number of epochs with no improvement after which learning rate will be reduced.
-                                    For example, if patience = 2, then we will ignore the first 2 epochs with no
-                                    improvement, and will only decrease the LR after the 3rd epoch if the loss still
-                                    hasn’t improved then.
-            
-        """
+    Args:
+        model_type: Type of model should be "LSTM"
+        optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
+                                                                                'AdamW', 'SparseAdam', 'RMSprop', '
+                                                                                Rprop', 'LBFGS', 'ASGD', 'Adamax'] 
+        device: Selected device; 'cuda' or 'cpu' 
+        input_size: The number of expected features in the input x
+        output_size: Output feature dimension
+        lstm_hidden_size: The number of features in the hidden state h
+        num_lstm_layers: Number of layers in the LSTM model
+        reset_state: If True, will reset the hidden and cell state for each batch of data
+        num_classes: Number of categories/labels
+        latent_size: Latent space dimension
+        dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                    with dropout probability equal to dropout
+        num_classifier_layers: Number of layers in the classifier
+        epochs: Number of epochs to train the network
+        batch_size: Number of samples in a batch 
+        num_future: Number of time steps to be predicted forward
+        num_past: Number of past time steps otherwise, length of sequences in each batch of data.
+        bidirectional:  If True, becomes a bidirectional LSTM
+        batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+        loss_type: Type of reconstruction loss to apply, 'huber' or 'rmse'. Default:'huber'
+        lr_factor:  Factor by which the learning rate will be reduced
+        scheduler_patience: Number of epochs with no improvement after which learning rate will be reduced.
+                                For example, if patience = 2, then we will ignore the first 2 epochs with no
+                                improvement, and will only decrease the LR after the 3rd epoch if the loss still
+                                hasn’t improved then.
 
+    """
+
+    valid_models = ["ae", "vae"]
+    
     def __init__(
         self,
         model_type: str,
@@ -69,11 +71,9 @@ class HybridTrainer(object):
         lr: float = 0.001,
         lr_factor: float = 0.1,
         scheduler_patience: int = 10,
-    ):
+    ):        
 
-        white_keys = ["ae", "vae"]
-
-        assert model_type in white_keys, "Valid models are {}".format(white_keys)
+        assert model_type in HybridTrainer.valid_models, "Model type is {model_type}, valid models are {}".format(HybridTrainer.valid_models)
 
         self.model_type = model_type
         self.input_size = input_size
@@ -120,8 +120,7 @@ class HybridTrainer(object):
         # Instantiate model instance based on model_type
         if self.model_type == 'ae':
             self.model = MultiModelAE(**self.model_hyperparameters)
-
-        if self.model_type == 'vae':
+        elif self.model_type == "vae":
             self.model = MultiModelVAE(**self.model_hyperparameters)
 
         # Classification task check
@@ -138,7 +137,7 @@ class HybridTrainer(object):
         )
 
     def __str__(self):
-        return "Training model type {}".format(self.model_type)
+        return f"Training model type {self.model_type}"
 
     def fit(self, train_loader, test_loader, model_save_path=None):
         """
@@ -150,12 +149,10 @@ class HybridTrainer(object):
         train_loader: Dataloader object of train dataset with batch [data,target,category] as a tuple
         test_loader: Dataloader object of test dataset with [data,target,category] as a tuple
         model_save_path: Directory path to save the model
-        Return:
-        --------
-        None
         """
 
-        assert self.model_type == 'ae' or 'vae'
+        assert model_save_path is not None, f"Model path {model_save_path} unknown"
+
         self.model.to(device)
 
         encoder_optimizer, latent_optimizer, decoder_optimizer, classifier_optimizer = self.model_optimizers.values()
@@ -165,7 +162,7 @@ class HybridTrainer(object):
         training_mode = 'forecasting'
 
         # Training
-        for epoch in range(self.epochs * 2):  # First half for generative model and next for classifier
+        for epoch in range(self.epochs):
             test_loss_forecasting = 0
             test_loss_classification = 0
             if epoch > 0:  # Initial step is to test and set LR schduler
@@ -179,13 +176,12 @@ class HybridTrainer(object):
                     decoder_optimizer.zero_grad()
                     classifier_optimizer.zero_grad()
 
-                    data, target, category = data.float().to(device), target.float().to(device), category.to(device)
-
-                    if training_mode == 'forecasting':
-                        if self.model_type == 'ae':
-                            decoder_out, latent_out = self.model(data, training=True, is_classification=False)
+                    if training_mode == "forecasting":
+                        if self.model_type == "ae":
+                            decoder_out, latent_out = self.model(
+                                data, training=True, classify=False
+                            )
                             loss = Criterion().ae_criterion(decoder_out, target)
-
                         else:  # vae
                             decoder_out, latent_out, mu, logvar = self.model(data, training=True,
                                                                              is_classification=False)
@@ -209,8 +205,8 @@ class HybridTrainer(object):
 
                 print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss / (idx + 1)))
 
-            if epoch + 1 == self.epochs:
-                training_mode = 'classification'
+            if (epoch + 1) * 2 == self.epochs and self.classify:
+                training_mode = "classification"
 
             # Testing
             if epoch % 10 == 0:
@@ -296,7 +292,6 @@ class LSTMTrainer:
             If True, will reset the hidden and cell state for each batch of data
         bidirectional:  
             If True, becomes a bidirectional LSTM
-
     """
 
     def __init__(
@@ -450,7 +445,8 @@ class CustomTrainer:
             train_loader: Dataloader object of train dataset with batch data [data,target,category]
             test_loader: Dataloader object of test dataset with [data,target,category]
             model_save_path: Directory path to save the model
-        Return: None
+        Return:
+            None
         """
 
         self.model.to(device)
