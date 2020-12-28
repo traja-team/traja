@@ -47,7 +47,6 @@ class HybridTrainer(object):
         self,
         model_type: str,
         optimizer_type: str,
-        device: str,
         input_size: int,
         output_size: int,
         lstm_hidden_size: int,
@@ -75,7 +74,6 @@ class HybridTrainer(object):
         assert model_type in white_keys, "Valid models are {}".format(white_keys)
 
         self.model_type = model_type
-        self.device = device
         self.input_size = input_size
         self.lstm_hidden_size = lstm_hidden_size
         self.num_lstm_layers = num_lstm_layers
@@ -365,7 +363,6 @@ class LSTMTrainer:
         self,
         model_type: str,
         optimizer_type: str,
-        device: str,
         epochs: int,
         input_size: int,
         batch_size: int,
@@ -383,7 +380,6 @@ class LSTMTrainer:
     ):
         self.model_type = model_type
         self.optimizer_type = optimizer_type
-        self.device = device
         self.epochs = epochs
         self.input_size = input_size
         self.batch_size = batch_size
@@ -494,7 +490,6 @@ class CustomTrainer:
         model: torch.nn.Module,
         optimizer_type: None,
         criterion: None,
-        device: str,
         epochs: int,
         lr: float = 0.001,
         lr_factor: float = 0.001,
@@ -503,7 +498,6 @@ class CustomTrainer:
         self.model = model
         self.optimizer_type = optimizer_type
         self.criterion = criterion
-        self.device = device
         self.epochs = epochs
         self.lr = lr
         self.lr_factor = lr_factor
