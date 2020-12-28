@@ -144,12 +144,15 @@ class HybridTrainer(object):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseriesis_classification
-
-
-    train_loader: Dataloader object of train dataset with batch data [data,target,category]
-    test_loader: Dataloader object of test dataset with [data,target,category]
-    model_save_path: Directory path to save the model
-        :return: None
+        
+        Parameters:
+        -----------
+        train_loader: Dataloader object of train dataset with batch [data,target,category] as a tuple
+        test_loader: Dataloader object of test dataset with [data,target,category] as a tuple
+        model_save_path: Directory path to save the model
+        Return:
+        --------
+        None
         """
 
         assert self.model_type == "ae" or "vae"
