@@ -21,7 +21,7 @@ import torch, torchvision, torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 from matplotlib import ticker, colors
-
+import plotly.express as px
 
 plt.switch_backend("TkAgg")
 
@@ -30,6 +30,28 @@ np.set_printoptions(
     suppress=True, precision=3,
 )
 style.use("ggplot")
+
+
+def DisplayLatentDynamics(latent):
+    """Visualize the dynamics of combination of latents 
+    Args:
+        latent(tensor): Each point in the list is latent's state at the end of a sequence of each batch.
+        Latent shape (batch_size, latent_dim)
+    Return: Relative plots of latent unit activations
+    Usage:
+    ======
+    DisplayLatentDynamics(latent)
+    """
+
+    latents = {}
+    latents.fromkeys(list(range(latent.shape[1])))
+    for i in range(latent.shape[1]):
+        latents[f"{i}"] = latent[:, i].cpu().detach().numpy()
+    fig = px.scatter_matrix(latents)
+    fig.update_layout(
+        autosize=False, width=1600, height=1000,
+    )
+    return fig.show()
 
 
 class DirectedNetwork(object):
@@ -157,9 +179,6 @@ class LocalLinearEmbedding(object):
 
         ax = Axes3D(fig2)
         f = ax.scatter(pc[:, 0], pc[:, 1], pc[:, 2], s=40, c=pc[:, 2])
-        #         ax.set_xlim(-1,1)
-        #         ax.set_ylim(-1,1)
-        #         ax.set_zlim(-1,1)
         for i in range(len(pc)):
             ax.plot3D(
                 pc[i:, 0],
