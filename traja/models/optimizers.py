@@ -56,7 +56,7 @@ class Optimizer:
                 self.model.parameters(), lr=lr
             )
 
-        elif self.model_type in ["ae","vae"]:
+        elif self.model_type in ["ae", "vae"]:
             keys = ["encoder", "decoder", "latent", "classifier"]
             for network in keys:
                 if network != "classifier":
@@ -91,7 +91,7 @@ class Optimizer:
         Returns:
             [dict]: [description]
         """
-        if self.model_type == "lstm" or "custom":
+        if self.model_type in ["lstm", "custom"]:
             assert not isinstance(self.optimizers, dict)
             self.schedulers = ReduceLROnPlateau(
                 self.optimizers,
@@ -100,7 +100,7 @@ class Optimizer:
                 patience=patience,
                 verbose=True,
             )
-        else:
+        elif self.model_type in ["ae", "vae"]:
             for network in self.optimizers.keys():
                 if self.optimizers[network] is not None:
                     self.schedulers[network] = ReduceLROnPlateau(
@@ -112,6 +112,12 @@ class Optimizer:
                     )
             if not self.classify:
                 self.schedulers["classifier"] = None
+
+        elif self.model_type == "irl":
+            return NotImplementedError
+
+        else:  # self.model_type == 'vaegan':
+            return NotImplementedError
 
         return self.schedulers
 
