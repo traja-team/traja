@@ -74,6 +74,10 @@ class Optimizer:
 
         elif self.model_type == "vaegan":
             return NotImplementedError
+
+        else:  #  self.model_type == "irl":
+            return NotImplementedError
+
         return self.optimizers
 
     def get_lrschedulers(self, factor: float, patience: int):
