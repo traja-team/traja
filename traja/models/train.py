@@ -65,6 +65,7 @@ class HybridTrainer(object):
         bidirectional: bool = False,
         batch_first: bool = True,
         loss_type: str = "huber",
+        lr: float = 0.001,
         lr_factor: float = 0.1,
         scheduler_patience: int = 10,
     ):
@@ -94,6 +95,7 @@ class HybridTrainer(object):
         self.bidirectional = bidirectional
         self.loss_type = loss_type
         self.optimizer_type = optimizer_type
+        self.lr = lr
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
 
@@ -130,7 +132,7 @@ class HybridTrainer(object):
             self.model_type, self.model, self.optimizer_type, classify=self.classify
         )
 
-        self.model_optimizers = optimizer.get_optimizers(lr=0.001)
+        self.model_optimizers = optimizer.get_optimizers(lr=self.lr)
         self.model_lrschedulers = optimizer.get_lrschedulers(
             factor=self.lr_factor, patience=self.scheduler_patience
         )
@@ -138,7 +140,7 @@ class HybridTrainer(object):
     def __str__(self):
         return "Training model type {}".format(self.model_type)
 
-    def train(self, train_loader, test_loader, model_save_path=None):
+    def fit(self, train_loader, test_loader, model_save_path=None):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseriesis_classification
@@ -317,29 +319,45 @@ class HybridTrainer(object):
 class LSTMTrainer:
     """
     Wrapper for training and testing the LSTM model
-    Args:
-        model_type: Type of model should be "LSTM"
-        optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
-                                                                                        'AdamW', 'SparseAdam', 'RMSprop', '
-                                                                                        Rprop', 'LBFGS', 'ASGD', 'Adamax']
-        device: Selected device; 'cuda' or 'cpu'
-        epochs: Number of epochs to train the network
-        input_size: The number of expected features in the input x
-        batch_size: Number of samples in a batch
-        hidden_size: The number of features in the hidden state h
-        num_future: Number of time steps to be predicted forward
-        num_layers: Number of layers in the LSTM model
-        output_size: Output feature dimension
-        lr_factor:  Factor by which the learning rate will be reduced
-        scheduler_patience: Number of epochs with no improvement after which learning rate will be reduced.
-                                        For example, if patience = 2, then we will ignore the first 2 epochs with no
-                                        improvement, and will only decrease the LR after the 3rd epoch if the loss still
-                                        hasn’t improved then.
-        batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+    Parameters:
+    -----------
+        model_type: {'lstm'} 
+            Type of model should be "LSTM"
+        optimizer_type: {'Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop', 'LBFGS', 'ASGD', 'Adamax'}
+            Type of optimizer to use for training.
+        device: {'cuda', 'cpu'}
+            Target device to use for training the model
+        epochs: int, default=100
+            Number of epochs to train the network
+        input_size: 
+            The number of expected features in the input x
+        batch_size: 
+            Number of samples in a batch
+        hidden_size: 
+            The number of features in the hidden state h
+        num_future: 
+            Number of time steps to be predicted forward
+        num_layers: 
+            Number of layers in the LSTM model
+        output_size: 
+            Output feature dimension
+        lr: 
+            Optimizer learning rate
+        lr_factor:  
+            Factor by which the learning rate will be reduced
+        scheduler_patience: 
+            Number of epochs with no improvement after which learning rate will be reduced.
+            For example, if patience = 2, then we will ignore the first 2 epochs with no
+            improvement, and will only decrease the LR after the 3rd epoch if the loss still
+            hasn’t improved then.
+        batch_first: 
+            If True, then the input and output tensors are provided as (batch, seq, feature)
         dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
-                            with dropout probability equal to dropout
-        reset_state: If True, will reset the hidden and cell state for each batch of data
-        bidirectional:  If True, becomes a bidirectional LSTM
+        with dropout probability equal to dropout
+        reset_state: 
+            If True, will reset the hidden and cell state for each batch of data
+        bidirectional:  
+            If True, becomes a bidirectional LSTM
 
     """
 
@@ -355,6 +373,7 @@ class LSTMTrainer:
         num_future: int,
         num_layers: int,
         output_size: int,
+        lr: float,
         lr_factor: float,
         scheduler_patience: int,
         batch_first: True,
@@ -373,6 +392,7 @@ class LSTMTrainer:
         self.num_layers = num_layers
         self.output_size = output_size
         self.batch_first = batch_first
+        self.lr = lr
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
         self.dropout = dropout
@@ -399,13 +419,14 @@ class LSTMTrainer:
             factor=self.lr_factor, patience=self.scheduler_patience
         )
 
-    def train(self, train_loader, test_loader, model_save_path):
+    def fit(self, train_loader, test_loader, model_save_path):
 
-        """ Implements the batch wise training and testing for time series forecasting
-    train_loader: Dataloader object of train dataset with batch data [data,target,category]
-    test_loader: Dataloader object of test dataset with [data,target,category]
-    model_save_path: Directory path to save the model
-        :return: None"""
+        """ Implements the batch wise training and testing for time series forecasting. 
+        Args:
+            train_loader: Dataloader object of train dataset with batch data [data,target,category]
+            test_loader: Dataloader object of test dataset with [data,target,category]
+            model_save_path: Directory path to save the model
+        Return: None"""
 
         assert self.model_type == "lstm"
         self.model.to(device)
@@ -450,6 +471,147 @@ class LSTMTrainer:
         utils.save_model(self.model, PATH=model_save_path)
 
 
+class CustomTrainer:
+    """
+    Wrapper for training and testing user defined models
+    Args:
+        model: Custom/User-defined model
+        optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
+                                                                                        'AdamW', 'SparseAdam', 'RMSprop', '
+                                                                                        Rprop', 'LBFGS', 'ASGD', 'Adamax']
+        device: Selected device; 'cuda' or 'cpu'
+        epochs: Number of epochs to train the network
+        lr:Optimizer learning rate
+        lr_factor:  Factor by which the learning rate will be reduced
+        scheduler_patience: Number of epochs with no improvement after which learning rate will be reduced.
+                                        For example, if patience = 2, then we will ignore the first 2 epochs with no
+                                        improvement, and will only decrease the LR after the 3rd epoch if the loss still
+                                        hasn’t improved then.
+    """
+
+    def __init__(
+        self,
+        model: torch.nn.Module,
+        optimizer_type: None,
+        criterion: None,
+        device: str,
+        epochs: int,
+        lr: float = 0.001,
+        lr_factor: float = 0.001,
+        scheduler_patience: int = 10,
+    ):
+        self.model = model
+        self.optimizer_type = optimizer_type
+        self.criterion = criterion
+        self.device = device
+        self.epochs = epochs
+        self.lr = lr
+        self.lr_factor = lr_factor
+        self.scheduler_patience = scheduler_patience
+        self.model_type == "custom"
+        optimizer = Optimizer(self.model_type, self.model, self.optimizer_type)
+        self.optimizer = optimizer.get_optimizers(lr=self.lr)
+        self.scheduler = optimizer.get_lrschedulers(
+            factor=self.lr_factor, patience=self.scheduler_patience
+        )
+
+    def fit(self, train_loader, test_loader, model_save_path):
+
+        """ Implements the batch wise training and testing for time series forecasting
+            Save train, test and validation performance in forecasting/classification tasks as a performance.csv
+        Args:
+            train_loader: Dataloader object of train dataset with batch data [data,target,category]
+            test_loader: Dataloader object of test dataset with [data,target,category]
+            model_save_path: Directory path to save the model
+        Return: None
+        """
+
+        self.model.to(device)
+
+        for epoch in range(self.epochs):
+            if epoch > 0:
+                self.model.train()
+                total_loss = 0
+                for idx, (data, target, _) in enumerate(train_loader):
+                    self.optimizer.zero_grad()
+                    data, target = data.float().to(device), target.float().to(device)
+                    output = self.model(data)
+                    loss = self.criterion(output, target)
+                    loss.backward()
+                    self.optimizer.step()
+                    total_loss += loss
+
+                print("Epoch {} | loss {}".format(epoch, total_loss / (idx + 1)))
+
+            # Testing
+            if epoch % 10 == 0:
+                with torch.no_grad():
+                    self.model.eval()
+                    test_loss_forecasting = 0
+                    for idx, (data, target, _) in enumerate(list(test_loader)):
+                        data, target = (
+                            data.float().to(device),
+                            target.float().to(device),
+                        )
+                        out = self.model(data)
+                        test_loss_forecasting += self.criterion(out, target).item()
+
+                test_loss_forecasting /= len(test_loader.dataset)
+                print(f"====> Test set generator loss: {test_loss_forecasting:.4f}")
+
+                # Scheduler metric is test set loss
+            self.scheduler.step(test_loss_forecasting)
+
+        # Save the model at target path
+        utils.save_model(self.model, PATH=model_save_path)
+
+
+class Trainer:
+
+    """Wraps all the Trainers. Instantiate and return the Trainer of model type 
+    
+    Usage:
+    ======
+    
+    trainer = Trainer(model_type='vae',  # "ae" or "vae"
+                optimizer_type='Adam',   # ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop','LBFGS', 'ASGD', 'Adamax']
+                device='cuda', # 'cpu', 'cuda'
+                input_size=2,  
+                output_size=2, 
+                lstm_hidden_size=32, 
+                num_lstm_layers=2,
+                reset_state=True, 
+                latent_size=10, 
+                dropout=0.1, 
+                num_classes=9,  # Uncomment to create and train classifier network
+                num_classifier_layers=4,
+                classifier_hidden_size= 32, 
+                epochs=10, 
+                batch_size=batch_size, 
+                num_future=num_future, 
+                num_past=num_past,
+                bidirectional=False, 
+                batch_first=True,
+                loss_type='huber') # 'rmse' or 'huber'
+                  
+    trainer.train(train_loader, test_loader, model_save_path)    
+    """
+
+    def __init__(self):
+        pass
+
+    # Check model type and instantiate corresponding trainer class:
+    def __new__(cls):
+        # Generative model trainer(model_type)
+
+        # Predictive model trainer(model_type)
+
+        # Custom trainer(classify=False)
+
+        # Return the instance of the trainer
+        return NotImplementedError
+
+
 class VAEGANTrainer:
     def __init__(self):
         pass
@@ -464,3 +626,4 @@ class IRLTrainer:
 
     def train(self):
         return NotImplementedError
+

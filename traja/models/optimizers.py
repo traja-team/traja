@@ -4,7 +4,6 @@ from traja.models.ae import MultiModelAE
 
 
 class Optimizer:
-
     def __init__(self, model_type, model, optimizer_type, classify=False):
 
         """
@@ -20,8 +19,18 @@ class Optimizer:
         """
 
         assert isinstance(model, torch.nn.Module)
-        assert str(optimizer_type) in ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop',
-                                       'LBFGS', 'ASGD', 'Adamax']
+        assert str(optimizer_type) in [
+            "Adam",
+            "Adadelta",
+            "Adagrad",
+            "AdamW",
+            "SparseAdam",
+            "RMSprop",
+            "Rprop",
+            "LBFGS",
+            "ASGD",
+            "Adamax",
+        ]
 
         self.model_type = model_type
         self.model = model
@@ -42,22 +51,27 @@ class Optimizer:
 
         """
 
-        if self.model_type == 'lstm':
-            self.optimizers = getattr(torch.optim, f'{self.optimizer_type}')(self.model.parameters(), lr=lr)
+        if self.model_type == "lstm" or "custom":
+            self.optimizers = getattr(torch.optim, f"{self.optimizer_type}")(
+                self.model.parameters(), lr=lr
+            )
 
-        elif self.model_type == 'ae' or 'vae':
-            keys = ['encoder', 'decoder', 'latent', 'classifier']
+        elif self.model_type == "ae" or "vae":
+            keys = ["encoder", "decoder", "latent", "classifier"]
             for network in keys:
-                if network != 'classifier':
-                    self.optimizers[network] = getattr(torch.optim, f'{self.optimizer_type}')(
-                        getattr(self.model, f'{network}').parameters(), lr=lr)
+                if network != "classifier":
+                    self.optimizers[network] = getattr(
+                        torch.optim, f"{self.optimizer_type}"
+                    )(getattr(self.model, f"{network}").parameters(), lr=lr)
 
             if self.classify:
-                self.optimizers['classifier'] = getattr(torch.optim, f'{self.optimizer_type}')(getattr(self.model, 'classifier').parameters(), lr=lr)
+                self.optimizers["classifier"] = getattr(
+                    torch.optim, f"{self.optimizer_type}"
+                )(getattr(self.model, "classifier").parameters(), lr=lr)
             else:
-                self.optimizers['classifier'] = None
+                self.optimizers["classifier"] = None
 
-        elif self.model_type == 'vaegan':
+        elif self.model_type == "vaegan":
             return NotImplementedError
 
         return self.optimizers
@@ -75,30 +89,54 @@ class Optimizer:
             [dict]: Learning rate schedulers
 
         """
-        if self.model_type == 'lstm':
+        if self.model_type == "lstm" or "custom":
             assert not isinstance(self.optimizers, dict)
-            self.schedulers = ReduceLROnPlateau(self.optimizers, mode='max', factor=factor,
-                                                patience=patience, verbose=True)
+            self.schedulers = ReduceLROnPlateau(
+                self.optimizers,
+                mode="max",
+                factor=factor,
+                patience=patience,
+                verbose=True,
+            )
         else:
             for network in self.optimizers.keys():
                 if self.optimizers[network] is not None:
-                    self.schedulers[network] = ReduceLROnPlateau(self.optimizers[network], mode='max', factor=factor,
-                                                                 patience=patience, verbose=True)
+                    self.schedulers[network] = ReduceLROnPlateau(
+                        self.optimizers[network],
+                        mode="max",
+                        factor=factor,
+                        patience=patience,
+                        verbose=True,
+                    )
             if not self.classify:
-                self.schedulers['classifier'] = None
+                self.schedulers["classifier"] = None
 
         return self.schedulers
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Test
-    model_type = 'ae'
-    model = MultiModelAE(input_size=2, num_past=10, batch_size=5, num_future=5, lstm_hidden_size=32, num_lstm_layers=2,
-                         classifier_hidden_size=32, num_classifier_layers=4, output_size=2, num_classes=10,
-                         latent_size=10, batch_first=True, dropout=0.2, reset_state=True, bidirectional=True)
+    model_type = "custom"
+    model = MultiModelAE(
+        input_size=2,
+        num_past=10,
+        batch_size=5,
+        num_future=5,
+        lstm_hidden_size=32,
+        num_lstm_layers=2,
+        classifier_hidden_size=32,
+        num_classifier_layers=4,
+        output_size=2,
+        num_classes=10,
+        latent_size=10,
+        batch_first=True,
+        dropout=0.2,
+        reset_state=True,
+        bidirectional=True,
+    )
 
     # Get the optimizers
-    opt = Optimizer(model_type, model, optimizer_type='RMSprop')
+    opt = Optimizer(model_type, model, optimizer_type="RMSprop")
     model_optimizers = opt.get_optimizers(lr=0.1)
     model_schedulers = opt.get_lrschedulers(factor=0.1, patience=10)
 
