@@ -628,7 +628,7 @@ class CustomTrainer:
                         activations, out = self.model(data)
                         self.test_loss_forecasting += self.criterion(out, target).item()
 
-                self.test_loss_forecasting /= len(self.test_loader.dataset)
+                self.test_loss_forecasting /= len(test_loader.dataset)
                 print(
                     f"====> Test set generator loss: {self.test_loss_forecasting:.4f}"
                 )
