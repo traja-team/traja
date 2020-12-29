@@ -221,7 +221,7 @@ class HybridTrainer(object):
                         decoder_optimizer.step()
                         latent_optimizer.step()
 
-                    elif self.classify and training_mode is not "forecasting":
+                    elif self.classify and training_mode != "forecasting":
                         if self.model_type == "vae":
                             classifier_out, latent_out, mu, logvar = self.model(
                                 data, training=True, classify=True
@@ -231,7 +231,7 @@ class HybridTrainer(object):
                                 data, training=True, classify=True
                             )
                         loss = Criterion().classifier_criterion(
-                            classifier_out, category - 1
+                            classifier_out, (category - 1).long()
                         )
 
                         loss.backward()
@@ -250,6 +250,9 @@ class HybridTrainer(object):
             # Testing
             if epoch % 10 == 0:
                 with torch.no_grad():
+                    if self.classify:
+                        total = 0.0
+                        correct = 0.0
                     self.model.eval()
                     for idx, (data, target, category) in enumerate(list(test_loader)):
                         data, target, category = (
@@ -276,6 +279,7 @@ class HybridTrainer(object):
 
                         # Classification test
                         if self.classify:
+                            category = category.long()
                             if self.model_type == "ae":
                                 classifier_out = self.model(
                                     data, training=False, classify=True
@@ -291,15 +295,21 @@ class HybridTrainer(object):
                                 .item()
                             )
 
+                            # Compute number of correct samples
+                            total += category.size(0)
+                            _, predicted = torch.max(classifier_out.data, 1)
+                            correct += (predicted == (category - 1)).sum().item()
+
                 test_loss_forecasting /= len(test_loader.dataset)
                 print(
                     f"====> Mean test set generator loss: {test_loss_forecasting:.4f}"
                 )
                 if self.classify:
+                    accuracy = correct / total
                     if test_loss_classification != 0:
                         test_loss_classification /= len(test_loader.dataset)
                         print(
-                            f"====> Mean test set classifier loss: {test_loss_classification:.4f}"
+                            f"====> Mean test set classifier loss: {test_loss_classification:.4f}; accuracy: {accuracy:.2f}"
                         )
 
             # Scheduler metric is test set loss
