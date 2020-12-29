@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import collections
 from numpy import math
+import json
 
 
 class TimeDistributed(torch.nn.Module):
@@ -38,33 +39,68 @@ class TimeDistributed(torch.nn.Module):
         return out
 
 
-def save_model(model, PATH):
-    """[summary]
-
+def save(model, hyperparameters, PATH=None):
+    """Save the trained model(.pth) along with its hyperparameters as a json (hyper.json) at the user defined Path
     Args:
-        model ([type]): [description]
-        PATH ([type]): [description]
+        model (torch.nn.Module): Trained Model
+        hyperparameters(dict): Hyperparameters of the model
+        PATH (str): Directory path to save the trained model and its hyperparameters
+    Returns: 
+        None
     """
-
-    # PATH = "state_dict_model.pt"
+    if not isinstance(hyperparameters, dict):
+        raise Exception("Invalid argument, hyperparameters must be dict")
     # Save
+    if PATH is None:
+        PATH = os.getcwd() + "model.pt"
     torch.save(model.state_dict(), PATH)
-    print("Model saved at {}".format(PATH))
+
+    with open(PATH + "/hypers.json", "w") as fp:
+        json.dump(hyperparameters, fp, sort_keys=False)
+    print("Model and hyperparameters saved at {} ".format(PATH))
 
 
-def load_model(model, model_hyperparameters, PATH):
-    """[summary]
-
+def load(model, PATH=None):
+    """Load trained model from PATH using the model_hyperparameters saved in the
     Args:
-        model ([type]): [description]
-        model_hyperparameters ([type]): [description]
-        PATH ([type]): [description]
-
+        model (torch.nn.Module): Type of the model ['ae','vae','vaegan','irl','lstm','custom']
+        model_hyperparameters (dict): Dictionary of hyperparameters used to initiate model
+        PATH (str): Directory path of the model
     Returns:
-        [type]: [description]
+        model(torch.nn.module): Model
     """
+    # Hyperparameters
+    if PATH is None:
+        PATH = os.getcwd() + "/model.pt"
+        print(f"Model loaded from {PATH}")
+    else:
+        raise Exception("Model not found at " f"{PATH}")
+
+    # Get hyperparameters from the model path
+    PATH, _ = os.path.split(PATH)
+    try:
+        with open(PATH + "/hypers.json") as f:
+            hypers = json.load(f)
+    except:
+        raise Exception("Hyper parameters not found at " f"{PATH}")
+
     # Load
-    model = model(model_hyperparameters)
+    model = model(**hypers)
+    # Load state of the model
     model.load_state_dict(torch.load(PATH))
 
     return model
+
+
+def read_hyperparameters(hyperparameter_json):
+    """Read the json file and return the hyperparameters as dict
+
+    Args:
+        hyperparameter_json (json): Json file containing the hyperparameters of the trained model
+
+    Returns:
+        [dict]: Python dictionary of the hyperparameters 
+    """
+    with open(hyperparameter_json) as f_in:
+        return json.load(f_in)
+

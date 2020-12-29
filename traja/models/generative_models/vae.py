@@ -80,12 +80,12 @@ class LSTMEncoder(torch.nn.Module):
 
     def _init_hidden(self):
         return (
-            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size).to(
-                device
-            ),
-            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size).to(
-                device
-            ),
+            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
+            .requires_grad()
+            .to(device),
+            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
+            .requires_grad()
+            .to(device),
         )
 
     def forward(self, x):
@@ -182,12 +182,12 @@ class LSTMDecoder(torch.nn.Module):
 
     def _init_hidden(self):
         return (
-            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size).to(
-                device
-            ),
-            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size).to(
-                device
-            ),
+            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
+            .requires_grad()
+            .to(device),
+            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
+            .requires_grad()
+            .to(device),
         )
 
     def forward(self, x, num_future=None):
