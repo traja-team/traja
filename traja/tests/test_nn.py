@@ -1,49 +1,47 @@
-
-import sys
-sys.path.append('../../delve')
-
-import delve
-
-
 import pandas as pd
-
 import traja
+from traja import models
+from traja import datasets
+from traja.datasets import dataset
+from traja.models.train import LSTMTrainer, HybridTrainer, CustomTrainer
+
+data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
+df = pd.read_csv(data_url, error_bad_lines=False)
+model_save_path = './model.pt'
+
+# Hyperparameters
+batch_size = 10
+num_past = 10
+num_future = 5
+
+if __name__ == '__main__':
+    # Prepare the dataloader
+    train_loader, test_loader = dataset.MultiModalDataLoader(df,
+                                                     batch_size=batch_size,
+                                                     n_past=num_past,
+                                                     n_future=num_future,
+                                                     num_workers=2)
+    
+    trainer = HybridTrainer(model_type='vae',  # "ae" or "vae"
+                      optimizer_type='Adam',   # ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop','LBFGS', 'ASGD', 'Adamax']
+                      input_size=2,  
+                      output_size=2, 
+                      lstm_hidden_size=32, 
+                      num_lstm_layers=2,
+                      reset_state=True, 
+                      latent_size=10, 
+                      dropout=0.1, 
+                      num_classes=9,  # Uncomment to create and train classifier network
+                      num_classifier_layers=4,
+                      classifier_hidden_size= 32, 
+                      epochs=10, 
+                      batch_size=batch_size, 
+                      num_future=num_future, 
+                      num_past=num_past,
+                      bidirectional=False, 
+                      batch_first=True,
+                      loss_type='huber') # 'rmse' or 'huber'
 
 
-
-
-
-
-def test_from_df():
-    df = traja.generate(n=599581)
-
-    df = df.filter(items=['x', 'y'])
-
-    save_path = 'temp/test'
-
-    warmup_steps = 50
-
-    # Run 1
-    timeseries_method = 'last_timestep'
-
-    model = traja.models.LSTM(input_size=2, hidden_size=2, num_layers=3, output_size=2, dropout=0, bidirectional=False)
-    writer = delve.writers.CSVandPlottingWriter(save_path, fontsize=16, primary_metric='test_accuracy')
-    saturation = delve.CheckLayerSat(save_path,
-                                     [writer], model,
-                                     stats=['embed'],
-                                     timeseries_method=timeseries_method)
-
-    sequence_length = 2000
-    train_fraction = .25
-    batch_size = 50
-    shift = 2
-
-    train_loader, test_loader = traja.models.get_timeseries_data_loaders(df, sequence_length,
-                                                                         train_fraction, batch_size, shift)
-
-    trainer = traja.models.Trainer(model, train_loader, test_loader, epochs=6, optimizer="adam",
-                                   warmup_steps=warmup_steps)
-
-    trainer.train()
-
-    pass
+    # Train the model
+    trainer.fit(train_loader, test_loader, model_save_path)
