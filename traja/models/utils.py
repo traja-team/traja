@@ -50,7 +50,8 @@ def save(model, hyperparameters, PATH=None):
     ---------
         None
     """
-    if not isinstance(hyperparameters, dict):
+
+    if hyperparameters is not None and not isinstance(hyperparameters, dict):
         raise Exception("Invalid argument, hyperparameters must be dict")
     # Save
     if PATH is None:
