@@ -68,8 +68,8 @@ class LSTMEncoder(torch.nn.Module):
         )
 
     def forward(self, x):
-        enc_init_hidden = self._init_hidden()
-        enc_output, _ = self.lstm_encoder(x, enc_init_hidden)
+        (h0, c0) = self._init_hidden()
+        enc_output, _ = self.lstm_encoder(x, (h0.detach(), c0.detach()))
         # RNNs obeys, Markovian. So, the last state of the hidden is the markovian state for the entire
         # sequence in that batch.
         enc_output = enc_output[:, -1, :]  # Shape(batch_size,hidden_dim)
@@ -162,7 +162,7 @@ class LSTMDecoder(torch.nn.Module):
 
         # To feed the latent states into lstm decoder,
         # repeat the tensor n_future times at second dim
-        _init_hidden = self._init_hidden()
+        (h0, c0) = self._init_hidden()
         decoder_inputs = x.unsqueeze(1)
 
         if num_future is None:
@@ -171,7 +171,7 @@ class LSTMDecoder(torch.nn.Module):
             decoder_inputs = decoder_inputs.repeat(1, num_future, 1)
 
         # Decoder input Shape(batch_size, num_futures, latent_size)
-        dec, _ = self.lstm_decoder(decoder_inputs, _init_hidden)
+        dec, _ = self.lstm_decoder(decoder_inputs, (h0.detach(), c0.detach()))
 
         # Map the decoder output: Shape(batch_size, sequence_len, hidden_dim)
         # to Time Dsitributed Linear Layer

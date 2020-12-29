@@ -4,9 +4,11 @@ from traja.models.predictive_models.lstm import LSTM
 from traja.models.predictive_models.irl import MultiModelIRL
 from traja.models.generative_models.vaegan import MultiModelVAEGAN
 from . import utils
+from . import visualizer
 from .losses import Criterion
 from .optimizers import Optimizer
 import torch
+import matplotlib.pyplot as plt
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -453,6 +455,23 @@ class CustomTrainer:
             None
         """
 
+        # Init Visualization
+        if self.viz == "True":
+            self.fig = plt.figure(num="Latent Network Activity")
+            self.plt_close = False
+            self.directednetwork = visualizer.DirectedNetwork()
+
+            self.fig2 = plt.figure(num="Local Linear Embedded Trajectory")
+            self.plt2_close = False
+            self.lle = visualizer.LocalLinearEmbedding()
+
+            self.fig3 = plt.figure(num="Spectral Embedded Latent")
+            self.plt3_close = False
+            self.spectral_clustering = visualizer.SpectralEmbedding()
+
+            plt.pause(0.00001)
+
+        # Training loop
         self.model.to(device)
 
         for epoch in range(self.epochs):
@@ -462,32 +481,85 @@ class CustomTrainer:
                 for idx, (data, target, _) in enumerate(train_loader):
                     self.optimizer.zero_grad()
                     data, target = data.float().to(device), target.float().to(device)
-                    output = self.model(data)
+                    activations, output = self.model(data)
                     loss = self.criterion(output, target)
                     loss.backward()
                     self.optimizer.step()
                     total_loss += loss
 
+                    # TODO: Wrapper for visualization at visualizer.
+                    if self.viz == "True":
+                        # Visualize the network during training
+                        if not self.plt_close:
+                            # Get the hidden to hidden weights in the network and plot the connections
+                            # TODO: Visualization of multiple layer activations in a window
+                            hidden_weights = (
+                                dict(self.model.lstm.w_hhl0
+                                .clone()
+                                .detach()
+                                .numpy()
+                            )
+
+                            # Hidden activativations
+                            hidden_activ = list(activations.clone().detach().numpy()[0])
+
+                            try:
+                                plt_close = self.directednetwork.show(
+                                    hidden_activ, hidden_weights, self.fig4
+                                )
+                            except Exception:
+                                plt_close = True
+                                pass
+
+                            plt_close = self.directednetwork.show(
+                                hidden_activ, hidden_weights, self.fig
+                            )
+
+                        # # Visualize the network during training
+                        if not self.plt2_close:
+                            # Get the principle components
+                            pc = self.lle.local_linear_embedding(
+                                X=activations.clone().detach().numpy(),
+                                d=3,
+                                k=20,
+                                alpha=0.1,
+                            )
+                            plt2_close = self.lle.show(pc, self.fig2)
+
+                        # Visualize the graph embedding using spectral clusters
+                        if not self.plt3_close:
+                            # Get the principle components
+                            embeddings = self.spectral_clustering.spectral_embedding(
+                                X=activations.clone().detach().numpy(), rad=0.8
+                            )
+                            plt3_close = self.spectral_clustering.show(
+                                activations.clone().detach().numpy(),
+                                embeddings,
+                                self.fig3,
+                            )
+
                 print("Epoch {} | loss {}".format(epoch, total_loss / (idx + 1)))
 
-            # Testing
+            # Testing loop
             if epoch % 10 == 0:
                 with torch.no_grad():
                     self.model.eval()
-                    test_loss_forecasting = 0
+                    self.test_loss_forecasting = 0
                     for idx, (data, target, _) in enumerate(list(test_loader)):
                         data, target = (
                             data.float().to(device),
                             target.float().to(device),
                         )
                         out = self.model(data)
-                        test_loss_forecasting += self.criterion(out, target).item()
+                        self.test_loss_forecasting += self.criterion(out, target).item()
 
-                test_loss_forecasting /= len(test_loader.dataset)
-                print(f"====> Test set generator loss: {test_loss_forecasting:.4f}")
+                self.test_loss_forecasting /= len(self.test_loader.dataset)
+                print(
+                    f"====> Test set generator loss: {self.test_loss_forecasting:.4f}"
+                )
 
-                # Scheduler metric is test set loss
-            self.scheduler.step(test_loss_forecasting)
+            # Scheduler metric is test set loss
+            self.scheduler.step(self.test_loss_forecasting)
 
         # Save the model at target path
         utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)

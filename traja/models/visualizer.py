@@ -1,4 +1,5 @@
 import os, sys
+from matplotlib.pyplot import figimage
 import networkx as nx
 import pandas as pd
 import numpy as np
@@ -297,4 +298,23 @@ if __name__ == "__main__":
         " total number of coordinate: ",
         numebr_of_points ** 2,
     )
+
+
+class Network:
+    def __init__(self, activity, weights):
+
+        pass
+
+    def show(self):
+        fig = None
+        return fig
+
+
+class ShowManifold:
+    def __init__(self, inputs, manifold):
+        pass
+
+    def show(self):
+        fig = None
+        return fig
 

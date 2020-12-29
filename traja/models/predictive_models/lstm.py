@@ -75,10 +75,10 @@ class LSTM(torch.nn.Module):
 
     def forward(self, x):
         # To feed the latent states into lstm decoder, repeat the tensor n_future times at second dim
-        _init_hidden = self._init_hidden()
+        (h0, c0) = self._init_hidden()
 
         # Decoder input Shape(batch_size, num_futures, latent_size)
-        out, (dec_hidden, dec_cell) = self.lstm(x, _init_hidden)
+        out, (dec_hidden, dec_cell) = self.lstm(x, (h0.detach(), c0.detach()))
 
         # Map the decoder output: Shape(batch_size, sequence_len, hidden_dim) to Time Dsitributed Linear Layer
         out = self.output(out)
