@@ -7,7 +7,7 @@ class Manifold:
     """
 
     def __init__(self, manifold_type):
-        
+
         pass
 
     def __new__(cls):
