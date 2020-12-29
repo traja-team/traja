@@ -637,7 +637,7 @@ class CustomTrainer:
             self.scheduler.step(self.test_loss_forecasting)
 
         # Save the model at target path
-        utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)
+        utils.save(self.model, hyperparameters=None, PATH=model_save_path)
 
 
 class VAEGANTrainer:
