@@ -519,6 +519,7 @@ class CustomTrainer:
         self.scheduler = optimizer.get_lrschedulers(
             factor=self.lr_factor, patience=self.scheduler_patience
         )
+        self.viz = True
 
     def fit(self, train_loader, test_loader, model_save_path):
 
