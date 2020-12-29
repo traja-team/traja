@@ -7,7 +7,7 @@ from traja.models.generative_models.vae import MultiModelVAE
 from traja.models.generative_models.vaegan import MultiModelVAEGAN
 from traja.models.predictive_models.irl import MultiModelIRL
 from traja.models.predictive_models.lstm import LSTM
-from .utils import load_model
+from traja.models.utils import load
 import matplotlib.pyplot as plt
 import os
 
@@ -52,7 +52,7 @@ class Generate:
     def generate_batch(self):
 
         # Load the model
-        model = load_model(self.model, self.model_hyperparameters, self.model_path)
+        model = load(self.model, self.model_hyperparameters, self.model_path)
 
         if self.model_type == "vae":
             # Random noise
