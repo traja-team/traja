@@ -310,7 +310,7 @@ class HybridTrainer(object):
                     classifier_scheduler.step(test_loss_classification)
 
         # Save the model at target path
-        utils.save_model(self.model, self.model_hyperparameters, PATH=model_save_path)
+        utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)
 
 
 class LSTMTrainer:
@@ -462,7 +462,7 @@ class LSTMTrainer:
             self.scheduler.step(test_loss_forecasting)
 
         # Save the model at target path
-        utils.save_model(self.model, self.model_hyperparameters, PATH=model_save_path)
+        utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)
 
 
 class CustomTrainer:
@@ -557,7 +557,7 @@ class CustomTrainer:
             self.scheduler.step(test_loss_forecasting)
 
         # Save the model at target path
-        utils.save_model(self.model, self.model_hyperparameters, PATH=model_save_path)
+        utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)
 
 
 class VAEGANTrainer:
