@@ -10,6 +10,7 @@ class Criterion:
     def __init__(self):
 
         self.huber_loss = torch.nn.SmoothL1Loss(reduction="sum")
+        self.manhattan_loss = torch.nn.L1Loss(reduction="sum")
         self.mse_loss = torch.nn.MSELoss()
         self.crossentropy_loss = torch.nn.CrossEntropyLoss()
 
@@ -32,19 +33,33 @@ class Criterion:
 
     def vae_criterion(self, predicted, target, mu, logvar, loss_type="huber"):
         """ Time series generative model loss function
+        Provides both vae loss functions (huber, manhattan, mse)
+        and ae loss functions (huber_ae, manhattan_ae, mse_ae).
         :param predicted: Predicted time series by the model
         :param target: Target time series
         :param mu: Latent variable, Mean
         :param logvar: Latent variable, Log(Variance)
-        :param loss_type: Type of criterion; Defaults: 'huber'
-        :return: Reconstruction loss + KLD loss
+        :param loss_type: Type of criterion (huber, manhattan, mse, huber_ae, manhattan_ae, mse_ae); Defaults: 'huber'
+        :return: Reconstruction loss + KLD loss (if not ae)
         """
-        if loss_type == "huber":
-            dist_x = self.huber_loss(predicted, target)
-        else:
-            dist_x = torch.sqrt(torch.mean((predicted - target) ** 2))
+
         KLD = -0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp())
-        return dist_x + KLD
+
+        if loss_type == "huber":
+            loss = self.huber_loss(predicted, target) + KLD
+        elif loss_type == "manhattan":
+            loss = self.manhattan_loss(predicted, target) + KLD
+        elif loss_type == "mse":
+            loss = self.mse_loss(predicted, target) + KLD
+        elif loss_type == "huber_ae":
+            loss = self.huber_loss(predicted, target)
+        elif loss_type == "manhattan_ae":
+            loss = self.manhattan_loss(predicted, target)
+        elif loss_type == "mse_ae":
+            loss = self.mse_loss(predicted, target)
+        else:
+            raise Exception("Loss type '{}' is unknown!".format(loss_type))
+        return loss
 
     def classifier_criterion(self, predicted, target):
         """
