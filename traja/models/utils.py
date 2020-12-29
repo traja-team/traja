@@ -54,8 +54,8 @@ def save(model, hyperparameters, PATH=None):
     if PATH is None:
         PATH = os.getcwd() + "model.pt"
     torch.save(model.state_dict(), PATH)
-    hyperdir = os.path.split(PATH)
-    with open(hyperdir + "/hypers.json", "w") as fp:
+    hyperdir, _ = os.path.split(PATH)
+    with open(hyperdir + "hypers.json", "w") as fp:
         json.dump(hyperparameters, fp, sort_keys=False)
     print("Model and hyperparameters saved at {} ".format(hyperdir))
 
