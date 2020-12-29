@@ -35,10 +35,6 @@ class Generate:
         self.model_path = model_path
         self.model_hyperparameters = model_hyperparameters
 
-        # Batch size and time step size
-        self.batch_size = self.model_hyperparameters["batch_size"]
-        self.num_future = self.model_hyperparameters["num_future"]
-
         if self.model_type == "vae":
             self.model = MultiModelVAE(**self.model_hyperparameters)
 
@@ -49,28 +45,30 @@ class Generate:
             assert model is not None
             self.model = model(**self.model_hyperparameters)
 
-    def generate_batch(self):
+    def generate_batch(self, batch_size, num_future, classify=True):
 
         # Load the model
-        model = load(self.model, self.model_hyperparameters, self.model_path)
+        model = load(self.model)
 
         if self.model_type == "vae":
             # Random noise
             z = (
-                torch.empty(self.batch_size, self.model_hyperparameters.latent_size)
+                torch.empty(batch_size, self.model_hyperparameters.latent_size)
                 .normal_(mean=0, std=0.1)
                 .to(device)
             )
             # Generate trajectories from the noise
-            out = model.decoder(z, self.num_future).cpu().detach().numpy()
+            out = model.decoder(z, num_future).cpu().detach().numpy()
             out = out.reshape(out.shape[0] * out.shape[1], out.shape[2])
-            try:
-                cat = model.classifier(z)
-                print(
-                    "IDs in this batch of synthetic data", torch.max(cat, 1).indices + 1
-                )
-            except:
-                pass
+            if classify:
+                try:
+                    cat = model.classifier(z)
+                    print(
+                        "IDs in this batch of synthetic data",
+                        torch.max(cat, 1).indices + 1,
+                    )
+                except Exception as error:
+                    print("Classifier not found: " + repr(error))
 
             plt.figure(figsize=(12, 4))
             plt.plot(out[:, 0], label="Generated x: Longitude")
@@ -82,18 +80,22 @@ class Generate:
 
             for i in range(2):
                 for j in range(5):
+                    if classify:
+                        try:
+                            label = "Animal ID {}".format(
+                                (torch.max(cat, 1).indices + 1).detach()[i + j]
+                            )
+                        except Exception as error:
+                            print("Classifier not found:" + repr(error))
+
                     ax[i, j].plot(
                         out[:, 0][
-                            (i + j) * self.num_future : (i + j) * self.num_future
-                            + self.num_future
+                            (i + j) * num_future : (i + j) * num_future + num_future
                         ],
                         out[:, 1][
-                            (i + j) * self.num_future : (i + j) * self.num_future
-                            + self.num_future
+                            (i + j) * num_future : (i + j) * num_future + num_future
                         ],
-                        label="Animal ID {}".format(
-                            (torch.max(cat, 1).indices + 1).detach()[i + j]
-                        ),
+                        label=label,
                         color="g",
                     )
                     ax[i, j].legend()
@@ -131,7 +133,7 @@ class Predict:
 
         # Batch size and time step size
         self.batch_size = self.model_hyperparameters["batch_size"]
-        self.num_future = self.model_hyperparameters["num_future"]
+        num_future = self.model_hyperparameters["num_future"]
 
         if self.model_type == "ae":
             self.model = MultiModelAE(**self.model_hyperparameters)

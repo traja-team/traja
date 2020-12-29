@@ -61,7 +61,7 @@ def save(model, hyperparameters, PATH=None):
     if hyperparameters is not None:
         with open("./hypers.json", "w") as fp:
             json.dump(hyperparameters, fp, sort_keys=False)
-    print("Model saved at {} ".format(_dir))
+    print(f"Model saved at {_dir}")
 
 
 def load(model, PATH=None):
@@ -80,7 +80,7 @@ def load(model, PATH=None):
         PATH = os.getcwd() + "/model.pt"
         print(f"Model loaded from {PATH}")
     else:
-        raise Exception("Model not found at " f"{PATH}")
+        raise Exception(f"Model not found at {PATH}")
 
     # Get hyperparameters from the model path
     PATH, _ = os.path.split(PATH)
@@ -88,7 +88,7 @@ def load(model, PATH=None):
         with open(PATH + "/hypers.json") as f:
             hypers = json.load(f)
     except:
-        raise Exception("Hyper parameters not found at " f"{PATH}")
+        raise Exception(f"Hyper parameters not found at {PATH}")
 
     # Load
     model = model(**hypers)
