@@ -41,11 +41,13 @@ class TimeDistributed(torch.nn.Module):
 
 def save(model, hyperparameters, PATH=None):
     """Save the trained model(.pth) along with its hyperparameters as a json (hyper.json) at the user defined Path
-    Args:
+    Parameters:
+    -----------
         model (torch.nn.Module): Trained Model
         hyperparameters(dict): Hyperparameters of the model
         PATH (str): Directory path to save the trained model and its hyperparameters
     Returns: 
+    ---------
         None
     """
     if not isinstance(hyperparameters, dict):
@@ -62,11 +64,13 @@ def save(model, hyperparameters, PATH=None):
 
 def load(model, PATH=None):
     """Load trained model from PATH using the model_hyperparameters saved in the
-    Args:
+    Parameters:
+    -----------
         model (torch.nn.Module): Type of the model ['ae','vae','vaegan','irl','lstm','custom']
         model_hyperparameters (dict): Dictionary of hyperparameters used to initiate model
         PATH (str): Directory path of the model
     Returns:
+    ---------
         model(torch.nn.module): Model
     """
     # Hyperparameters
