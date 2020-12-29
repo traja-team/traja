@@ -36,8 +36,8 @@ class Generate:
         self.model_hyperparameters = model_hyperparameters
 
         # Batch size and time step size
-        self.batch_size = self.model_hyperparameters.batch_size
-        self.num_future = self.model_hyperparameters.num_future
+        self.batch_size = self.model_hyperparameters["batch_size"]
+        self.num_future = self.model_hyperparameters["num_future"]
 
         if self.model_type == "vae":
             self.model = MultiModelVAE(**self.model_hyperparameters)
@@ -130,8 +130,8 @@ class Predict:
         self.model_hyperparameters = model_hyperparameters
 
         # Batch size and time step size
-        self.batch_size = self.model_hyperparameters.batch_size
-        self.num_future = self.model_hyperparameters.num_future
+        self.batch_size = self.model_hyperparameters["batch_size"]
+        self.num_future = self.model_hyperparameters["num_future"]
 
         if self.model_type == "ae":
             self.model = MultiModelAE(**self.model_hyperparameters)
