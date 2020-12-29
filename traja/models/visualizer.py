@@ -22,13 +22,13 @@ import plotly.express as px
 
 import matplotlib
 
-matplotlib.use("TKAgg")
+# matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib import cm
 from matplotlib import style
 
-plt.switch_backend("TkAgg")
+# plt.switch_backend("TkAgg")
 
 
 np.set_printoptions(
