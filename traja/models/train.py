@@ -5,7 +5,7 @@ from traja.models.predictive_models.irl import MultiModelIRL
 from traja.models.generative_models.vaegan import MultiModelVAEGAN
 from . import utils
 from .losses import Criterion
-from .optimizers import Optimizer, model_type
+from .optimizers import Optimizer
 import torch
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -603,7 +603,7 @@ class Trainer:
         else:
             self.__TrainerType = CustomTrainer
 
-    # Check model type and instantiate corresponding trainer class:
+    # Check model type, instantiate and set corresponding trainer as traja trainer:
     def __new__(cls):
         # Generative model trainer(model_type)
 
