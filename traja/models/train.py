@@ -518,11 +518,8 @@ class CustomTrainer:
                         if not self.plt_close:
                             # Get the hidden to hidden weights in the network and plot the connections
                             # TODO: Visualization of multiple layer activations in a window
-                            hidden_weights = (
-                                dict(self.model.lstm.w_hhl0
-                                .clone()
-                                .detach()
-                                .numpy()
+                            hidden_weights = dict(
+                                self.model.lstm.w_hhl0.clone().detach().numpy()
                             )
 
                             # Hidden activativations
