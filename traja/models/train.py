@@ -573,7 +573,7 @@ class CustomTrainer:
                             data.float().to(device),
                             target.float().to(device),
                         )
-                        out = self.model(data)
+                        activations, out = self.model(data)
                         self.test_loss_forecasting += self.criterion(out, target).item()
 
                 self.test_loss_forecasting /= len(self.test_loader.dataset)
