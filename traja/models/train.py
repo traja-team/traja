@@ -5,7 +5,7 @@ from traja.models.predictive_models.irl import MultiModelIRL
 from traja.models.generative_models.vaegan import MultiModelVAEGAN
 from . import utils
 from .losses import Criterion
-from .optimizers import Optimizer
+from .optimizers import Optimizer, model_type
 import torch
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -46,7 +46,7 @@ class HybridTrainer(object):
     """
 
     valid_models = ["ae", "vae"]
-    
+
     def __init__(
         self,
         model_type: str,
@@ -71,9 +71,13 @@ class HybridTrainer(object):
         lr: float = 0.001,
         lr_factor: float = 0.1,
         scheduler_patience: int = 10,
-    ):        
+    ):
 
-        assert model_type in HybridTrainer.valid_models, "Model type is {model_type}, valid models are {}".format(HybridTrainer.valid_models)
+        assert (
+            model_type in HybridTrainer.valid_models
+        ), "Model type is {model_type}, valid models are {}".format(
+            HybridTrainer.valid_models
+        )
 
         self.model_type = model_type
         self.input_size = input_size
@@ -247,7 +251,7 @@ class HybridTrainer(object):
                 classifier_scheduler.step(test_loss_classification)
 
         # Save the model at target path
-        utils.save_model(self.model, PATH=model_save_path)
+        utils.save_model(self.model, self.model_hyperparameters, PATH=model_save_path)
 
 
 class LSTMTrainer:
@@ -391,7 +395,7 @@ class LSTMTrainer:
             self.scheduler.step(test_loss_forecasting)
 
         # Save the model at target path
-        utils.save_model(self.model, PATH=model_save_path)
+        utils.save_model(self.model, self.model_hyperparameters, PATH=model_save_path)
 
 
 class CustomTrainer:
@@ -486,53 +490,7 @@ class CustomTrainer:
             self.scheduler.step(test_loss_forecasting)
 
         # Save the model at target path
-        utils.save_model(self.model, PATH=model_save_path)
-
-
-class Trainer:
-
-    """Wraps all the Trainers. Instantiate and return the Trainer of model type 
-    
-    Usage:
-    ======
-    
-    trainer = Trainer(model_type='vae',  # "ae" or "vae"
-                optimizer_type='Adam',   # ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop','LBFGS', 'ASGD', 'Adamax']
-                device='cuda', # 'cpu', 'cuda'
-                input_size=2,  
-                output_size=2, 
-                lstm_hidden_size=32, 
-                num_lstm_layers=2,
-                reset_state=True, 
-                latent_size=10, 
-                dropout=0.1, 
-                num_classes=9,  # Uncomment to create and train classifier network
-                num_classifier_layers=4,
-                classifier_hidden_size= 32, 
-                epochs=10, 
-                batch_size=batch_size, 
-                num_future=num_future, 
-                num_past=num_past,
-                bidirectional=False, 
-                batch_first=True,
-                loss_type='huber') # 'rmse' or 'huber'
-                  
-    trainer.train(train_loader, test_loader, model_save_path)    
-    """
-
-    def __init__(self):
-        pass
-
-    # Check model type and instantiate corresponding trainer class:
-    def __new__(cls):
-        # Generative model trainer(model_type)
-
-        # Predictive model trainer(model_type)
-
-        # Custom trainer(classify=False)
-
-        # Return the instance of the trainer
-        return NotImplementedError
+        utils.save_model(self.model, self.model_hyperparameters, PATH=model_save_path)
 
 
 class VAEGANTrainer:
@@ -548,5 +506,44 @@ class IRLTrainer:
         pass
 
     def train(self):
+        return NotImplementedError
+
+
+# TODO
+class Trainer:
+
+    """Wraps all above Trainers. Instantiate and return the Trainer of model type """
+
+    def __init__(self, *model_hyperparameters, **kwargs):
+        self.model_type = model_hyperparameters["model_type"]
+        self.TrainerType = None
+
+    @property
+    def TrainerType(self):
+        return self.__TrainerType
+
+    @TrainerType.setter
+    def TrainerType(self, model_type):
+        """[summary]
+
+        Args:
+            model_type ([type]): [description]
+        """
+        if model_type in ["ae", "vae"]:
+            self.__TrainerType = HybridTrainer
+        elif model_type in ["lstm"]:
+            self.__TrainerType = LSTMTrainer
+        else:
+            self.__TrainerType = CustomTrainer
+
+    # Check model type and instantiate corresponding trainer class:
+    def __new__(cls):
+        # Generative model trainer(model_type)
+
+        # Predictive model trainer(model_type)
+
+        # Custom trainer(classify=False)
+
+        # Return the instance of the trainer
         return NotImplementedError
 

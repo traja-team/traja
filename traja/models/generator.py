@@ -9,6 +9,7 @@ from .irl import MultiModelIRL
 from .lstm import LSTM
 from .utils import load_model
 import matplotlib.pyplot as plt
+import os
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -25,7 +26,7 @@ class Generate:
 
         Args:
             model_type (str, optional): Type of model ['vae','vaegan','custom']. Defaults to None.
-            model_path (str, optional): [description]. Defaults to None.
+            model_path (str, optional): Path to trained model (model.pt). Defaults to None.
             model_hyperparameters (dict, optional): [description]. Defaults to None.
             model (torch.nn.Module, optional): Custom model from user. Defaults to None
         """
