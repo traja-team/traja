@@ -60,10 +60,10 @@ class LSTMEncoder(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad()
+            .requires_grad_()
             .to(device),
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad()
+            .requires_grad_()
             .to(device),
         )
 
@@ -151,10 +151,10 @@ class LSTMDecoder(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad()
+            .requires_grad_()
             .to(device),
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad()
+            .requires_grad_()
             .to(device),
         )
 
