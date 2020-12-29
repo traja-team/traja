@@ -89,8 +89,8 @@ class LSTMEncoder(torch.nn.Module):
         )
 
     def forward(self, x):
-        enc_init_hidden = self._init_hidden()
-        enc_output, _ = self.lstm_encoder(x, enc_init_hidden)
+        (h0, c0) = self._init_hidden()
+        enc_output, _ = self.lstm_encoder(x, (h0.detach(), c0.detach()))
         # RNNs obeys, Markovian. So, the last state of the hidden is the markovian state for the entire
         # sequence in that batch.
         enc_output = enc_output[:, -1, :]  # Shape(batch_size,hidden_dim)
