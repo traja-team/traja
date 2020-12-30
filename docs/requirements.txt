@@ -7,11 +7,6 @@ scipy
 sphinx
 sphinx-gallery
 fastdtw
-pillow
-tzlocal
-sphinx_rtd_theme
-pytest
-pytest-cov
-codecov
-readline
-rpy2
+plotly
+networkx
+seaborn
