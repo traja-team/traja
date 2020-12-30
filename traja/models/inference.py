@@ -63,7 +63,7 @@ class Generator:
                     cat = self.model.classifier(z)
                     print(
                         "IDs in this batch of synthetic data",
-                        torch.max(cat, 1).indices + 1,
+                        torch.max(cat, 1).indices.detach() + 1,
                     )
                 except Exception as error:
                     print("Classifier not found: " + repr(error))
@@ -85,7 +85,8 @@ class Generator:
                             )
                         except Exception as error:
                             print("Classifier not found:" + repr(error))
-
+                    else:
+                        label = ""
                     ax[i, j].plot(
                         out[:, 0][
                             (i + j) * num_future : (i + j) * num_future + num_future
