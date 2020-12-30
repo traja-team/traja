@@ -5,16 +5,18 @@ from traja import datasets
 from traja.datasets import dataset
 from traja.models.train import LSTMTrainer, HybridTrainer, CustomTrainer
 
-data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
-df = pd.read_csv(data_url, error_bad_lines=False)
-model_save_path = 'model'
 
-# Hyperparameters
-batch_size = 10
-num_past = 10
-num_future = 5
 
-if __name__ == '__main__':
+def test_from_df():
+    data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
+    df = pd.read_csv(data_url, error_bad_lines=False)
+    model_save_path = 'model'
+
+    # Hyperparameters
+    batch_size = 10
+    num_past = 10
+    num_future = 5
+
     # Prepare the dataloader
     train_loader, test_loader = dataset.MultiModalDataLoader(df,
                                                      batch_size=batch_size,
@@ -34,7 +36,6 @@ if __name__ == '__main__':
                       num_classes=9,  # Uncomment to create and train classifier network
                       num_classifier_layers=4,
                       classifier_hidden_size= 32, 
-                      epochs=10, 
                       batch_size=batch_size, 
                       num_future=num_future, 
                       num_past=num_past,
@@ -44,4 +45,9 @@ if __name__ == '__main__':
 
 
     # Train the model
-    trainer.fit(train_loader, test_loader, model_save_path)
+    trainer.fit(train_loader, test_loader, model_save_path, epochs=10, training_mode='forecasting')
+    trainer.fit(train_loader, test_loader, model_save_path, epochs=10, training_mode='classification')
+
+
+if __name__ == '__main__':
+    test_from_df()

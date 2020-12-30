@@ -32,7 +32,6 @@ class HybridTrainer(object):
         dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                     with dropout probability equal to dropout
         num_classifier_layers: Number of layers in the classifier
-        epochs: Number of epochs to train the network
         batch_size: Number of samples in a batch 
         num_future: Number of time steps to be predicted forward
         num_past: Number of past time steps otherwise, length of sequences in each batch of data.
@@ -60,7 +59,6 @@ class HybridTrainer(object):
         reset_state: bool,
         latent_size: int,
         dropout: float,
-        epochs: int,
         batch_size: int,
         num_future: int,
         num_past: int,
@@ -94,7 +92,6 @@ class HybridTrainer(object):
         self.latent_size = latent_size
         self.num_classifier_layers = num_classifier_layers
         self.num_future = num_future
-        self.epochs = epochs
         self.batch_size = batch_size
         self.num_past = num_past
         self.dropout = dropout
@@ -145,7 +142,7 @@ class HybridTrainer(object):
     def __str__(self):
         return f"Training model type {self.model_type}"
 
-    def fit(self, dataloaders, model_save_path=None):
+    def fit(self, train_loader, test_loader, model_save_path=None, training_mode='forecasting', epochs=50):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseriesis_classification
@@ -156,21 +153,20 @@ class HybridTrainer(object):
                 train_loader: Dataloader object of train dataset with batch data [data,target,category]
                 test_loader: Dataloader object of test dataset with [data,target,category]
         model_save_path: Directory path to save the model
+        training_mode: Type of training ('forecasting', 'classification')
+        epochs: Number of epochs to train
         """
 
         assert model_save_path is not None, f"Model path {model_save_path} unknown"
+        assert training_mode in ['forecasting', 'classification'], f'Training mode {classification} unknown'
 
         self.model.to(device)
 
         encoder_optimizer, latent_optimizer, decoder_optimizer, classifier_optimizer = self.model_optimizers.values()
         encoder_scheduler, latent_scheduler, decoder_scheduler, classifier_scheduler = self.model_lrschedulers.values()
 
-        # Training mode: Switch from Generative to classifier training mode
-        training_mode = 'forecasting'
-
-        train_loader, test_loader = dataloaders.values()
         # Training
-        for epoch in range(self.epochs):
+        for epoch in range(epochs):
             test_loss_forecasting = 0
             test_loss_classification = 0
             if epoch > 0:  # Initial step is to test and set LR schduler
@@ -200,7 +196,7 @@ class HybridTrainer(object):
                         decoder_optimizer.step()
                         latent_optimizer.step()
 
-                    elif self.classify and training_mode != "forecasting":
+                    elif self.classify and training_mode == "classification":
                         if self.model_type == "vae":
                             classifier_out, latent_out, mu, logvar = self.model(
                                 data, training=True, classify=True
@@ -218,9 +214,6 @@ class HybridTrainer(object):
                     total_loss += loss
 
                 print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss / (idx + 1)))
-
-            if (epoch + 1) * 2 == self.epochs and self.classify:
-                training_mode = "classification"
 
             # Testing
             if epoch % 10 == 0:
