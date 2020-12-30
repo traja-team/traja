@@ -123,3 +123,7 @@ docs/source/reference
 # Editor files
 *.swp
 *.swo
+
+
+# Model parameter files
+*.pt
