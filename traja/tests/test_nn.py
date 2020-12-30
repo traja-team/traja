@@ -7,7 +7,7 @@ from traja.models.train import LSTMTrainer, HybridTrainer, CustomTrainer
 
 data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
 df = pd.read_csv(data_url, error_bad_lines=False)
-model_save_path = './model.pt'
+model_save_path = 'model'
 
 # Hyperparameters
 batch_size = 10
