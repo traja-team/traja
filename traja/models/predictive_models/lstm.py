@@ -50,6 +50,9 @@ class LSTM(torch.nn.Module):
         self.reset_state = reset_state
         self.bidirectional = bidirectional
 
+        # Let the trainer know what kind of model this is
+        self.model_type = 'lstm'
+
         # RNN decoder
         self.lstm = torch.nn.LSTM(
             input_size=self.input_size,

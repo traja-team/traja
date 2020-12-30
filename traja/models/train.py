@@ -50,23 +50,8 @@ class HybridTrainer(object):
 
     def __init__(
         self,
-        model_type: str,
+        model: torch.nn.Module,
         optimizer_type: str,
-        input_size: int,
-        output_size: int,
-        lstm_hidden_size: int,
-        num_lstm_layers: int,
-        reset_state: bool,
-        latent_size: int,
-        dropout: float,
-        batch_size: int,
-        num_future: int,
-        num_past: int,
-        num_classes: int = None,
-        classifier_hidden_size: int = None,
-        num_classifier_layers: int = None,
-        bidirectional: bool = False,
-        batch_first: bool = True,
         loss_type: str = "huber",
         lr: float = 0.001,
         lr_factor: float = 0.1,
@@ -74,28 +59,12 @@ class HybridTrainer(object):
     ):
 
         assert (
-            model_type in HybridTrainer.valid_models
+            model.model_type in HybridTrainer.valid_models
         ), "Model type is {model_type}, valid models are {}".format(
             HybridTrainer.valid_models
         )
 
-        self.model_type = model_type
-        self.input_size = input_size
-        self.lstm_hidden_size = lstm_hidden_size
-        self.num_lstm_layers = num_lstm_layers
-        self.classifier_hidden_size = classifier_hidden_size
-        self.num_classifier_layers = num_classifier_layers
-        self.batch_first = batch_first
-        self.reset_state = reset_state
-        self.output_size = output_size
-        self.num_classes = num_classes
-        self.latent_size = latent_size
-        self.num_classifier_layers = num_classifier_layers
-        self.num_future = num_future
-        self.batch_size = batch_size
-        self.num_past = num_past
-        self.dropout = dropout
-        self.bidirectional = bidirectional
+        self.model_type = model.model_type
         self.loss_type = loss_type
         self.optimizer_type = optimizer_type
         self.lr = lr
@@ -103,31 +72,27 @@ class HybridTrainer(object):
         self.scheduler_patience = scheduler_patience
 
         self.model_hyperparameters = {
-            "input_size": self.input_size,
-            "num_past": self.num_past,
-            "batch_size": self.batch_size,
-            "lstm_hidden_size": self.lstm_hidden_size,
-            "num_lstm_layers": self.num_lstm_layers,
-            "classifier_hidden_size": self.classifier_hidden_size,
-            "num_classifier_layers": self.num_classifier_layers,
-            "num_future": self.num_future,
-            "latent_size": self.latent_size,
-            "output_size": self.output_size,
-            "num_classes": self.num_classes,
-            "batch_first": self.batch_first,
-            "reset_state": self.reset_state,
-            "bidirectional": self.bidirectional,
-            "dropout": self.dropout,
+            "input_size": model.input_size,
+            "num_past": model.num_past,
+            "batch_size": model.batch_size,
+            "lstm_hidden_size": model.lstm_hidden_size,
+            "num_lstm_layers": model.num_lstm_layers,
+            "classifier_hidden_size": model.classifier_hidden_size,
+            "num_classifier_layers": model.num_classifier_layers,
+            "num_future": model.num_future,
+            "latent_size": model.latent_size,
+            "output_size": model.output_size,
+            "num_classes": model.num_classes,
+            "batch_first": model.batch_first,
+            "reset_state": model.reset_state,
+            "bidirectional": model.bidirectional,
+            "dropout": model.dropout,
         }
 
-        # Instantiate model instance based on model_type
-        if self.model_type == 'ae':
-            self.model = MultiModelAE(**self.model_hyperparameters)
-        elif self.model_type == "vae":
-            self.model = MultiModelVAE(**self.model_hyperparameters)
+        self.model = model
 
         # Classification task check
-        self.classify = True if self.classifier_hidden_size is not None else False
+        self.classify = True if model.classifier_hidden_size is not None else False
 
         # Model optimizer and the learning rate scheduler
         optimizer = Optimizer(
