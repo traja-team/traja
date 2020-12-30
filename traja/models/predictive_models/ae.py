@@ -357,14 +357,6 @@ class MultiModelAE(torch.nn.Module):
         -------
             decoder_out,latent_out or classifier out
         """
-        if not training:
-            # Encoder -->Latent --> Decoder
-            #                  |--> Classifier
-            enc_out = self.encoder(data)
-            latent_out = self.latent(enc_out)
-            decoder_out = self.decoder(latent_out)
-            classifier_out = self.classifier(latent_out)
-            return decoder_out, classifier_out
 
         if not classify:
             # Set the classifier grad off
