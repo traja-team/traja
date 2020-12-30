@@ -10,6 +10,7 @@ from traja.models.predictive_models.lstm import LSTM
 from traja.models.utils import load
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -152,6 +153,115 @@ class Predictor:
         if self.model_type == "irl":
             self.model = MultiModelIRL(**self.model_hyperparameters)
 
+        if self.model_type == "vaegan":
+            self.model = MultiModelVAEGAN(**self.model_hyperparameters)
+
         if self.model_type == "custom":
             assert model is not None
             self.model = model(**self.model_hyperparameters)
+
+    def predict_batch(self, data_loader, num_future, scaler, classify=True):
+        """[summary]
+
+        Args:
+            data_loader ([type]): [description]
+            num_future ([type]): [description]
+            scaler (dict): Scalers of the target data. This scale the model predictions to the scale of the target (future steps).
+                        : This scaler will be returned by the traja data preprocessing and loading helper function.  
+            classify (bool, optional): [description]. Defaults to True.
+
+        Returns:
+            [type]: [description]
+        """
+
+        self.model.to(device)
+        if self.model_type == "ae":
+            for data, target, category in data_loader:
+                predicted_data, predicted_category = self.model(
+                    data.float().to(device), training=False, classify=classify
+                )
+                target = target.cpu().detach().numpy()
+                target = target.reshape(
+                    target.shape[0] * target.shape[1], target.shape[2]
+                )
+                predicted_data = predicted_data.cpu().detach().numpy()
+                predicted_data = predicted_data.reshape(
+                    predicted_data.shape[0] * predicted_data.shape[1],
+                    predicted_data.shape[2],
+                )
+
+                # Rescaling predicted data
+                for i in range(predicted_data.shape[1]):
+                    s_s = scaler[f"scaler_{i}"].inverse_transform(
+                        predicted_data[:, i].reshape(-1, 1)
+                    )
+                    s_s = np.reshape(s_s, len(s_s))
+                    predicted_data[:, i] = s_s
+
+                # TODO:Deprecated;Slicing the data into batches
+                predicted_data = np.array(
+                    [
+                        predicted_data[i : i + num_future]
+                        for i in range(0, len(predicted_data), num_future)
+                    ]
+                )
+                # Rescaling target data
+                target_data = target.copy()
+                for i in range(target_data.shape[1]):
+
+                    s_s = scaler["scaler_{}".format(i)].inverse_transform(
+                        target_data[:, i].reshape(-1, 1)
+                    )
+                    s_s = np.reshape(s_s, len(s_s))
+                    target_data[:, i] = s_s
+                # TODO:Deprecated;Slicing the data into batches
+                target_data = np.array(
+                    [
+                        target_data[i : i + num_future]
+                        for i in range(0, len(target_data), num_future)
+                    ]
+                )
+
+                # Reshape [batch_size*num_future,input_dim]
+                predicted_data_ = predicted_data.reshape(
+                    predicted_data.shape[0] * predicted_data.shape[1],
+                    predicted_data.shape[2],
+                )
+                target_data_ = target_data.reshape(
+                    target_data.shape[0] * target_data.shape[1], target_data.shape[2]
+                )
+
+                fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=False)
+                fig.set_size_inches(40, 20)
+                for i in range(2):
+                    for j in range(5):
+                        ax[i, j].plot(
+                            predicted_data_[:, 0][
+                                (i + j) * num_future : (i + j) * num_future + num_future
+                            ],
+                            predicted_data_[:, 1][
+                                (i + j) * num_future : (i + j) * num_future + num_future
+                            ],
+                            label=f"Predicted ID {predicted_category[i+j]}",
+                        )
+
+                        ax[i, j].plot(
+                            target_data_[:, 0][
+                                (i + j) * num_future : (i + j) * num_future + num_future
+                            ],
+                            target_data_[:, 1][
+                                (i + j) * num_future : (i + j) * num_future + num_future
+                            ],
+                            label=f"Target ID {category[i+j]}",
+                            color="g",
+                        )
+                        ax[i, j].legend()
+
+                        plt.autoscale(True, axis="y", tight=False)
+                plt.show()
+
+                # TODO: Convert predicted_data Tensor into Traja dataframe
+                return predicted_data
+
+        elif self.model_type == "vaegan" or "custom":
+            return NotImplementedError

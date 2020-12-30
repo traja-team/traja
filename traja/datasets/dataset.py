@@ -209,14 +209,16 @@ class TrajectoryDataset(Dataset):
             self.loss_mask[start:end, :],
         ]
         return out
-    
+
+
 class TimeSeriesDataset(Dataset):
     r"""Pytorch Dataset object
 
     Args:
         Dataset (torch.utils.data.Dataset): Pyptorch dataset object
     """
-    def __init__(self,data, target, category):
+
+    def __init__(self, data, target, category):
         r"""
         Args:
             data (array): Data
@@ -226,15 +228,16 @@ class TimeSeriesDataset(Dataset):
         self.data = data
         self.target = target
         self.category = category
-        
+
     def __getitem__(self, index):
         x = self.data[index]
         y = self.target[index]
         z = self.category[index]
-        return x, y,z
+        return x, y, z
 
     def __len__(self):
         return len(self.data)
+
 
 class MultiModalDataLoader:
     """
@@ -259,50 +262,90 @@ class MultiModalDataLoader:
             num_workers (int): Number of cpu subprocess occupied during data loading process
         
         Usage:
-        train_dataloader, test_dataloader = MultiModalDataLoader(df = data_frame, batch_size=32, 
-                                                                n_past = 20, n_future = 10, num_workers=4)
+        [train_dataloader, test_dataloader], 
+        [train_x_scaler, 
+        train_y_scaler, 
+        test_x_scaler, 
+        test_y_scaler] = MultiModalDataLoader(df = data_frame, batch_size=32, 
+                                            n_past = 20, n_future = 10, num_workers=4)
         """
-    
-    def __init__(self, df:pd.DataFrame, batch_size:int, n_past:int, n_future:int, num_workers: int):
-        
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        batch_size: int,
+        n_past: int,
+        n_future: int,
+        num_workers: int,
+    ):
+
         # Extract/generate data from the pandas df
-        train_data, target_data, target_category = utils.generate_dataset(df, n_past, n_future)
-        
+        train_data, target_data, target_category = utils.generate_dataset(
+            df, n_past, n_future
+        )
+
         # Shuffle and split the data
-        [train_x,train_y,train_z],[test_x,test_y,test_z] = utils.shuffle_split(train_data, target_data, target_category, train_ratio = 0.75)
-        
+        [train_x, train_y, train_z], [test_x, test_y, test_z] = utils.shuffle_split(
+            train_data, target_data, target_category, train_ratio=0.75
+        )
+
         # Scale data
-        (train_x, train_x_scaler),(train_y,train_y_scaler) = utils.scale_data(train_x,sequence_length=n_past),utils.scale_data(train_y,sequence_length=n_future)
-        (test_x,test_x_scaler),(test_y,test_y_scaler) = utils.scale_data(test_x,sequence_length=n_past),utils.scale_data(test_y,sequence_length=n_future)
+        (train_x, self.train_x_scaler), (train_y, self.train_y_scaler) = (
+            utils.scale_data(train_x, sequence_length=n_past),
+            utils.scale_data(train_y, sequence_length=n_future),
+        )
+        (test_x, self.test_x_scaler), (test_y, self.test_y_scaler) = (
+            utils.scale_data(test_x, sequence_length=n_past),
+            utils.scale_data(test_y, sequence_length=n_future),
+        )
 
         # Weighted Random Sampler
-        train_weighted_sampler, test_weighted_sampler = utils.weighted_random_samplers(train_z,test_z)
-        
+        train_weighted_sampler, test_weighted_sampler = utils.weighted_random_samplers(
+            train_z, test_z
+        )
+
         # Dataset
-        train_dataset = TimeSeriesDataset(train_x,train_y,train_z)
-        test_dataset = TimeSeriesDataset(test_x,test_y,test_z)
+        train_dataset = TimeSeriesDataset(train_x, train_y, train_z)
+        test_dataset = TimeSeriesDataset(test_x, test_y, test_z)
 
         # Dataloader with weighted samplers
-        self.train_loader = torch.utils.data.DataLoader(dataset=train_dataset, shuffle=False, 
-                                                        batch_size=batch_size, sampler=train_weighted_sampler, 
-                                                        drop_last=True, num_workers = num_workers)
-        self.test_loader = torch.utils.data.DataLoader(dataset=test_dataset, shuffle=False, 
-                                                       batch_size=batch_size, sampler=test_weighted_sampler, 
-                                                       drop_last=True, num_workers=num_workers)
-        
-    def __new__(cls, df:pd.DataFrame, batch_size:int, n_past:int, n_future:int, num_workers:int):
+        self.train_loader = torch.utils.data.DataLoader(
+            dataset=train_dataset,
+            shuffle=False,
+            batch_size=batch_size,
+            sampler=train_weighted_sampler,
+            drop_last=True,
+            num_workers=num_workers,
+        )
+        self.test_loader = torch.utils.data.DataLoader(
+            dataset=test_dataset,
+            shuffle=False,
+            batch_size=batch_size,
+            sampler=test_weighted_sampler,
+            drop_last=True,
+            num_workers=num_workers,
+        )
+
+    def __new__(
+        cls,
+        df: pd.DataFrame,
+        batch_size: int,
+        n_past: int,
+        n_future: int,
+        num_workers: int,
+    ):
         """Constructor of MultiModalDataLoader"""
-        # Loader instance 
+        # Loader instance
         loader_instance = super(MultiModalDataLoader, cls).__new__(cls)
         loader_instance.__init__(df, batch_size, n_past, n_future, num_workers)
         # Return train and test loader attributes
-        return loader_instance.train_loader, loader_instance.test_loader
-        
-    
-        
-    
-
-
-
-
+        return (
+            [loader_instance.train_loader, loader_instance.test_loader],
+            [
+                loader_instance.train_x_scaler,
+                loader_instance.train_y_scaler,
+                loader_instance.test_x_scaler,
+                loader_instance.test_y_scaler,
+            ],
+        )
 
