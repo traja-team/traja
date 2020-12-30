@@ -363,8 +363,6 @@ class MultiModelVAE(torch.nn.Module):
             decoder_out,latent_out or classifier out
         """
         if not classify:
-
-        if not is_classification:
             # Set the classifier grad off
             for param in self.classifier.parameters():
                 param.requires_grad = False

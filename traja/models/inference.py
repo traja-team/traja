@@ -46,54 +46,69 @@ class Generator:
             assert model is not None
             self.model = model(**self.model_hyperparameters)
 
-    def generate_batch(self, batch_size, num_future, classify=True):
+        (
+            self.generated_self.generated_categoryegory,
+            self.target_data,
+            self.target_data_,
+            self.generated_data,
+            self.generated_data_,
+        ) = (None, None, None, None, None)
+
+    def generate(self, num_steps, classify=True, scaler=None):
 
         self.model.to(device)
         if self.model_type == "vae":
             # Random noise
             z = (
-                torch.empty(batch_size, self.model_hyperparameters["latent_size"])
+                torch.empty(
+                    self.model_hyperparameters["batch_size"],
+                    self.model_hyperparameters["latent_size"],
+                )
                 .normal_(mean=0, std=0.1)
                 .to(device)
             )
             # Generate trajectories from the noise
-            out = self.model.decoder(z, num_future).cpu().detach().numpy()
-            out = out.reshape(out.shape[0] * out.shape[1], out.shape[2])
+            self.generated_data = (
+                self.model.decoder(z, num_steps).cpu().detach().numpy()
+            )
+            self.generated_data = self.generated_data.reshape(
+                self.generated_data.shape[0] * self.generated_data.shape[1],
+                self.generated_data.shape[2],
+            )
             if classify:
                 try:
-                    cat = self.model.classifier(z)
+                    self.generated_category = self.model.classifier(z)
                     print(
                         "IDs in this batch of synthetic data",
-                        torch.max(cat, 1).indices.detach() + 1,
+                        torch.max(self.generated_category, 1).indices.detach() + 1,
                     )
                 except Exception as error:
                     print("Classifier not found: " + repr(error))
 
-            plt.figure(figsize=(12, 4))
-            plt.plot(out[:, 0], label="Generated x: Longitude")
-            plt.plot(out[:, 1], label="Generated y: Latitude")
-            plt.legend()
-
             fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=True)
             fig.set_size_inches(20, 5)
+
+            # Scale original data and generated data
 
             for i in range(2):
                 for j in range(5):
                     if classify:
                         try:
                             label = "Animal ID {}".format(
-                                (torch.max(cat, 1).indices + 1).detach()[i + j]
+                                (
+                                    torch.max(self.generated_category, 1).indices + 1
+                                ).detach()[i + j]
                             )
                         except Exception as error:
                             print("Classifier not found:" + repr(error))
                     else:
                         label = ""
                     ax[i, j].plot(
-                        out[:, 0][
-                            (i + j) * num_future : (i + j) * num_future + num_future
+                        self.generated_data[:, 0][
+                            (i + j) * num_steps : (i + j) * num_steps + num_steps
                         ],
-                        out[:, 1][
-                            (i + j) * num_future : (i + j) * num_future + num_future
+                        self.generated_data[:, 1][
+                            (i + j) * num_steps : (i + j) * num_steps + num_steps
                         ],
                         label=label,
                         color="g",
@@ -101,13 +116,13 @@ class Generator:
                     ax[i, j].legend()
             plt.show()
 
-            return out
+            return self.generated_data
 
         elif self.model_type == "vaegan" or "custom":
             return NotImplementedError
 
     # TODO: State space models
-    def generate_timeseries(num_steps):
+    def generate_timeseries(self, num_steps):
         """Recurrently generate time series for infinite time steps. 
 
         Args:
@@ -140,10 +155,6 @@ class Predictor:
         self.model_path = model_path
         self.model_hyperparameters = model_hyperparameters
 
-        # Batch size and time step size
-        self.batch_size = self.model_hyperparameters["batch_size"]
-        num_future = self.model_hyperparameters["num_future"]
-
         if self.model_type == "ae":
             self.model = MultiModelAE(**self.model_hyperparameters)
 
@@ -153,19 +164,24 @@ class Predictor:
         if self.model_type == "irl":
             self.model = MultiModelIRL(**self.model_hyperparameters)
 
-        if self.model_type == "vaegan":
-            self.model = MultiModelVAEGAN(**self.model_hyperparameters)
-
         if self.model_type == "custom":
             assert model is not None
             self.model = model(**self.model_hyperparameters)
 
-    def predict_batch(self, data_loader, num_future, scaler, classify=True):
+        (
+            self.predicted_self.generated_categoryegory,
+            self.target_data,
+            self.target_data_,
+            self.predicted_data,
+            self.predicted_data_,
+        ) = (None, None, None, None, None)
+
+    def predict(self, data_loader, num_steps, scaler, classify=True):
         """[summary]
 
         Args:
             data_loader ([type]): [description]
-            num_future ([type]): [description]
+            num_steps ([type]): [description]
             scaler (dict): Scalers of the target data. This scale the model predictions to the scale of the target (future steps).
                         : This scaler will be returned by the traja data preprocessing and loading helper function.  
             classify (bool, optional): [description]. Defaults to True.
@@ -176,59 +192,66 @@ class Predictor:
 
         self.model.to(device)
         if self.model_type == "ae":
-            for data, target, category in data_loader:
-                predicted_data, predicted_category = self.model(
-                    data.float().to(device), training=False, classify=classify
-                )
+            for data, target, self.generated_categoryegory in data_loader:
+                data, target = data.to(device), target.to(device)
+                enc_self.generated_data = self.model.encoder(data)
+                latent_self.generated_data = self.model.latent(enc_self.generated_data)
+                self.predicted_data = self.model.decoder(latent_self.generated_data)
+                if classify:
+                    self.predicted_self.generated_categoryegory = self.model.classifier(
+                        latent_self.generated_data
+                    )
+
                 target = target.cpu().detach().numpy()
                 target = target.reshape(
                     target.shape[0] * target.shape[1], target.shape[2]
                 )
-                predicted_data = predicted_data.cpu().detach().numpy()
-                predicted_data = predicted_data.reshape(
-                    predicted_data.shape[0] * predicted_data.shape[1],
-                    predicted_data.shape[2],
+                self.predicted_data = self.predicted_data.cpu().detach().numpy()
+                self.predicted_data = self.predicted_data.reshape(
+                    self.predicted_data.shape[0] * self.predicted_data.shape[1],
+                    self.predicted_data.shape[2],
                 )
 
                 # Rescaling predicted data
-                for i in range(predicted_data.shape[1]):
+                for i in range(self.predicted_data.shape[1]):
                     s_s = scaler[f"scaler_{i}"].inverse_transform(
-                        predicted_data[:, i].reshape(-1, 1)
+                        self.predicted_data[:, i].reshape(-1, 1)
                     )
                     s_s = np.reshape(s_s, len(s_s))
-                    predicted_data[:, i] = s_s
+                    self.predicted_data[:, i] = s_s
 
-                # TODO:Deprecated;Slicing the data into batches
+                # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 predicted_data = np.array(
                     [
-                        predicted_data[i : i + num_future]
-                        for i in range(0, len(predicted_data), num_future)
+                        self.predicted_data[i : i + num_steps]
+                        for i in range(0, len(self.predicted_data), num_steps)
                     ]
                 )
                 # Rescaling target data
-                target_data = target.copy()
-                for i in range(target_data.shape[1]):
+                self.target_data = target.copy()
+                for i in range(self.target_data.shape[1]):
 
                     s_s = scaler["scaler_{}".format(i)].inverse_transform(
-                        target_data[:, i].reshape(-1, 1)
+                        self.target_data[:, i].reshape(-1, 1)
                     )
                     s_s = np.reshape(s_s, len(s_s))
-                    target_data[:, i] = s_s
-                # TODO:Deprecated;Slicing the data into batches
-                target_data = np.array(
+                    self.target_data[:, i] = s_s
+                # TODO:Depreself.generated_categoryed;Slicing the data into batches
+                self.target_data = np.array(
                     [
-                        target_data[i : i + num_future]
-                        for i in range(0, len(target_data), num_future)
+                        self.target_data[i : i + num_steps]
+                        for i in range(0, len(self.target_data), num_steps)
                     ]
                 )
 
-                # Reshape [batch_size*num_future,input_dim]
+                # Reshape [batch_size*num_steps,input_dim]
                 predicted_data_ = predicted_data.reshape(
-                    predicted_data.shape[0] * predicted_data.shape[1],
-                    predicted_data.shape[2],
+                    self.predicted_data.shape[0] * self.predicted_data.shape[1],
+                    self.predicted_data.shape[2],
                 )
-                target_data_ = target_data.reshape(
-                    target_data.shape[0] * target_data.shape[1], target_data.shape[2]
+                self.target_data_ = self.target_data.reshape(
+                    self.target_data.shape[0] * self.target_data.shape[1],
+                    self.target_data.shape[2],
                 )
 
                 fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=False)
@@ -237,22 +260,22 @@ class Predictor:
                     for j in range(5):
                         ax[i, j].plot(
                             predicted_data_[:, 0][
-                                (i + j) * num_future : (i + j) * num_future + num_future
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             predicted_data_[:, 1][
-                                (i + j) * num_future : (i + j) * num_future + num_future
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
-                            label=f"Predicted ID {predicted_category[i+j]}",
+                            label=f"Predicted ID {self.predicted_self.generated_categoryegory[i+j]}",
                         )
 
                         ax[i, j].plot(
-                            target_data_[:, 0][
-                                (i + j) * num_future : (i + j) * num_future + num_future
+                            self.target_data_[:, 0][
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
-                            target_data_[:, 1][
-                                (i + j) * num_future : (i + j) * num_future + num_future
+                            self.target_data_[:, 1][
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
-                            label=f"Target ID {category[i+j]}",
+                            label=f"Target ID {self.generated_categoryegory[i+j]}",
                             color="g",
                         )
                         ax[i, j].legend()
