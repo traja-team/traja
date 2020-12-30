@@ -5,4 +5,4 @@ from traja.models.predictive_models.lstm import LSTM
 from traja.models.predictive_models.irl import MultiModelIRL
 from traja.models.generative_models.vaegan import MultiModelVAEGAN
 from .utils import TimeDistributed, read_hyperparameters, save, load
-from .generator import *
+from .inference import *

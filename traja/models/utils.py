@@ -69,8 +69,7 @@ def load(model, PATH=None):
     Parameters:
     -----------
         model (torch.nn.Module): Type of the model ['ae','vae','vaegan','irl','lstm','custom']
-        model_hyperparameters (dict): Dictionary of hyperparameters used to initiate model
-        PATH (str): Directory path of the model
+        PATH (str): Directory path of the model: Defaults to None: Means Current working directory
     Returns:
     ---------
         model(torch.nn.module): Model
@@ -80,21 +79,9 @@ def load(model, PATH=None):
         PATH = os.getcwd() + "/model.pt"
         print(f"Model loaded from {PATH}")
     else:
-        raise Exception(f"Model not found at {PATH}")
-
-    # Get hyperparameters from the model path
-    PATH, _ = os.path.split(PATH)
-    try:
-        with open(PATH + "/hypers.json") as f:
-            hypers = json.load(f)
-    except:
-        raise Exception(f"Hyper parameters not found at {PATH}")
-
-    # Load
-    model = model(**hypers)
+        raise Exception(f"Model state dict not found at {PATH}")
     # Load state of the model
     model.load_state_dict(torch.load(PATH))
-
     return model
 
 
