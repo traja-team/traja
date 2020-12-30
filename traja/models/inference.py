@@ -50,7 +50,7 @@ class Generator:
         if self.model_type == "vae":
             # Random noise
             z = (
-                torch.empty(batch_size, self.model_hyperparameters.latent_size)
+                torch.empty(batch_size, self.model_hyperparameters["latent_size"])
                 .normal_(mean=0, std=0.1)
                 .to(device)
             )

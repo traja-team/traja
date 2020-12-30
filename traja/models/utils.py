@@ -80,6 +80,7 @@ def load(model, PATH=None):
         print(f"Model loaded from {PATH}")
     else:
         raise Exception(f"Model state dict not found at {PATH}")
+
     # Load state of the model
     model.load_state_dict(torch.load(PATH))
     return model
