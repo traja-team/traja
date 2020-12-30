@@ -14,7 +14,7 @@ import os
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-class Generate:
+class Generator:
     def __init__(
         self,
         model_type: str = None,
@@ -47,9 +47,6 @@ class Generate:
 
     def generate_batch(self, batch_size, num_future, classify=True):
 
-        # Load the model
-        model = load(self.model)
-
         if self.model_type == "vae":
             # Random noise
             z = (
@@ -58,11 +55,11 @@ class Generate:
                 .to(device)
             )
             # Generate trajectories from the noise
-            out = model.decoder(z, num_future).cpu().detach().numpy()
+            out = self.model.decoder(z, num_future).cpu().detach().numpy()
             out = out.reshape(out.shape[0] * out.shape[1], out.shape[2])
             if classify:
                 try:
-                    cat = model.classifier(z)
+                    cat = self.model.classifier(z)
                     print(
                         "IDs in this batch of synthetic data",
                         torch.max(cat, 1).indices + 1,
@@ -106,11 +103,20 @@ class Generate:
         elif self.model_type == "vaegan" or "custom":
             return NotImplementedError
 
+    # TODO: State space models
     def generate_timeseries(num_steps):
+        """Recurrently generate time series for infinite time steps. 
+
+        Args:
+            num_steps ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
         return NotImplementedError
 
 
-class Predict:
+class Predictor:
     def __init__(
         self,
         model_type: str = None,
