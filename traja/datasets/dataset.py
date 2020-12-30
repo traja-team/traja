@@ -265,7 +265,7 @@ class MultiModalDataLoader:
     4. Create train test split: Split the shuffled batches into train (data, target, category) and test(data, target, category)
     5. Weighted Random sampling: Apply weights with respect to category counts in the dataset: category_sample_weight = 1/num_category_samples; This avoid model overfit to category appear often in the dataset 
     6. Create pytorch Dataset instances
-    7. Returns the train and test data loader instances given the dataset instances and batch size
+    7. Returns the train and test data loader instances along with their scalers as a dictionaries given the dataset instances and batch size
 
         Args:
             df (pd.DataFrame): Dataset
@@ -275,12 +275,8 @@ class MultiModalDataLoader:
             num_workers (int): Number of cpu subprocess occupied during data loading process
         
         Usage:
-        [train_dataloader, test_dataloader], 
-        [train_x_scaler, 
-        train_y_scaler, 
-        test_x_scaler, 
-        test_y_scaler] = MultiModalDataLoader(df = data_frame, batch_size=32, 
-                                            n_past = 20, n_future = 10, num_workers=4)
+        ------
+        dataloaders, scalers = MultiModalDataLoader(df = data_frame, batch_size=32, n_past = 20, n_future = 10, num_workers=4)
         """
 
     def __init__(
@@ -339,6 +335,17 @@ class MultiModalDataLoader:
             num_workers=num_workers,
         )
 
+        self.dataloaders = {
+            "train_loader": self.train_loader,
+            "test_loader": self.test_loader,
+        }
+        self.scalers = {
+            "train_data_scaler": self.train_x_scaler,
+            "train_target_scaler": self.train_y_scaler,
+            "test_data_scaler": self.test_x_scaler,
+            "test_target_scaler": self.test_y_scaler,
+        }
+
     def __new__(
         cls,
         df: pd.DataFrame,
@@ -352,13 +359,5 @@ class MultiModalDataLoader:
         loader_instance = super(MultiModalDataLoader, cls).__new__(cls)
         loader_instance.__init__(df, batch_size, n_past, n_future, num_workers)
         # Return train and test loader attributes
-        return (
-            [loader_instance.train_loader, loader_instance.test_loader],
-            [
-                loader_instance.train_x_scaler,
-                loader_instance.train_y_scaler,
-                loader_instance.test_x_scaler,
-                loader_instance.test_y_scaler,
-            ],
-        )
+        return loader_instance.datalaoders, loader_instance.scalers
 
