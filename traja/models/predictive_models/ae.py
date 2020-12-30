@@ -359,6 +359,14 @@ class MultiModelAE(torch.nn.Module):
         -------
             decoder_out,latent_out or classifier out
         """
+        if not training:
+            # Encoder -->Latent --> Decoder
+            #                  |--> Classifier
+            enc_out = self.encoder(data)
+            latent_out = self.latent(enc_out)
+            decoder_out = self.decoder(latent_out)
+            classifier_out = self.classifier(latent_out)
+            return decoder_out, classifier_out
 
         if not classify:
             # Set the classifier grad off
@@ -377,6 +385,7 @@ class MultiModelAE(torch.nn.Module):
             enc_out = self.encoder(data)
             latent_out = self.latent(enc_out)
             decoder_out = self.decoder(latent_out)
+            return decoder_out, latent_out
 
         else:  # Classify
             # Unfreeze classifier and freeze the rest
@@ -396,11 +405,4 @@ class MultiModelAE(torch.nn.Module):
             latent_out = self.latent(enc_out)
 
             classifier_out = self.classifier(latent_out)  # Deterministic
-
-        if training and not classify:  # Only forecasting network is trained
-            return decoder_out, latent_out
-        if classify and training:  # Classifier is trained
             return classifier_out
-        if classify and not training:  # Inference
-            return decoder_out, classifier_out
-
