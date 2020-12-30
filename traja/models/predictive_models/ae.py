@@ -358,47 +358,47 @@ class MultiModelAE(torch.nn.Module):
             decoder_out,latent_out or classifier out
         """
 
-            if not classify:
-                # Set the classifier grad off
-                if self.num_classes is not None:
-                    for param in self.classifier.parameters():
-                        param.requires_grad = False
-
-                for param in self.encoder.parameters():
-                    param.requires_grad = True
-                for param in self.decoder.parameters():
-                    param.requires_grad = True
-                for param in self.latent.parameters():
-                    param.requires_grad = True
-
-                # Encoder -->Latent --> Decoder
-                enc_out = self.encoder(data)
-                latent_out = self.latent(enc_out)
-                decoder_out = self.decoder(latent_out)
-                
-            else:  # Classify
-                # Unfreeze classifier and freeze the rest
-                assert self.num_classifier_layers is not None, "Classifier not found"
-
+        if not classify:
+            # Set the classifier grad off
+            if self.num_classes is not None:
                 for param in self.classifier.parameters():
-                    param.requires_grad = True
-                for param in self.encoder.parameters():
-                    param.requires_grad = False
-                for param in self.decoder.parameters():
-                    param.requires_grad = False
-                for param in self.latent.parameters():
                     param.requires_grad = False
 
-                # Encoder-->Latent-->Classifier
-                enc_out = self.encoder(data)
-                latent_out = self.latent(enc_out)
+            for param in self.encoder.parameters():
+                param.requires_grad = True
+            for param in self.decoder.parameters():
+                param.requires_grad = True
+            for param in self.latent.parameters():
+                param.requires_grad = True
 
-                classifier_out = self.classifier(latent_out)  # Deterministic
+            # Encoder -->Latent --> Decoder
+            enc_out = self.encoder(data)
+            latent_out = self.latent(enc_out)
+            decoder_out = self.decoder(latent_out)
 
-            if training and not classify: # Only forecasting network is trained
-                return decoder_out, latent_out
-            if classify and training: # Classifier is trained
-                return classifier_out
-            if classify and not training: # Inference
-                return decoder_out,classifier_out
-                    
+        else:  # Classify
+            # Unfreeze classifier and freeze the rest
+            assert self.num_classifier_layers is not None, "Classifier not found"
+
+            for param in self.classifier.parameters():
+                param.requires_grad = True
+            for param in self.encoder.parameters():
+                param.requires_grad = False
+            for param in self.decoder.parameters():
+                param.requires_grad = False
+            for param in self.latent.parameters():
+                param.requires_grad = False
+
+            # Encoder-->Latent-->Classifier
+            enc_out = self.encoder(data)
+            latent_out = self.latent(enc_out)
+
+            classifier_out = self.classifier(latent_out)  # Deterministic
+
+        if training and not classify:  # Only forecasting network is trained
+            return decoder_out, latent_out
+        if classify and training:  # Classifier is trained
+            return classifier_out
+        if classify and not training:  # Inference
+            return decoder_out, classifier_out
+
