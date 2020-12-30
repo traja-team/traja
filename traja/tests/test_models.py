@@ -1,6 +1,9 @@
 import pandas as pd
 from traja.datasets import dataset
-from traja.models.train import LSTMTrainer, LatentModelTrainer
+from traja.models.train import LSTMTrainer, HybridTrainer
+from traja.models.generative_models.vae import MultiModelVAE
+from traja.models.predictive_models.ae import MultiModelAE
+
 
 # Sample data
 data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
@@ -24,31 +27,32 @@ def test_aevae():
                                                              num_workers=1)
 
     model_save_path = './model.pt'
+
+    model = MultiModelVAE(input_size=2,
+                          output_size=2,
+                          lstm_hidden_size=32,
+                          num_lstm_layers=2,
+                          num_classes=9,
+                          latent_size=10,
+                          dropout=0.1,
+                          num_classifier_layers=4,
+                          classifier_hidden_size=32,
+                          batch_size=batch_size,
+                          num_future=num_future,
+                          num_past=num_past,
+                          bidirectional=False,
+                          batch_first=True,
+                          reset_state=True)
+
     # Model Trainer
     # Model types; "ae" or "vae"
-    trainer = LatentModelTrainer(model_type='ae',
-                                 optimizer_type='Adam',
-                                 device='cpu',
-                                 input_size=2,
-                                 output_size=2,
-                                 lstm_hidden_size=32,
-                                 num_lstm_layers=2,
-                                 reset_state=True,
-                                 num_classes=9,
-                                 latent_size=10,
-                                 dropout=0.1,
-                                 num_classifier_layers=4,
-                                 classifier_hidden_size=32,
-                                 epochs=10,
-                                 batch_size=batch_size,
-                                 num_future=num_future,
-                                 num_past=num_past,
-                                 bidirectional=False,
-                                 batch_first=True,
-                                 loss_type='huber')
+    trainer = HybridTrainer(model=model,
+                            optimizer_type='Adam',
+                            loss_type='huber')
 
     # Train the model
-    trainer.train(train_loader, test_loader, model_save_path)
+    trainer.fit(train_loader, test_loader, model_save_path, epochs=10, training_mode='forecasting')
+    trainer.fit(train_loader, test_loader, model_save_path, epochs=10, training_mode='classification')
 
 
 def test_lstm():
@@ -82,7 +86,7 @@ def test_lstm():
                           num_future=num_future,
                           num_layers=2,
                           output_size=2,
-                          lr_factor=0.1,
+
                           scheduler_patience=3,
                           batch_first=True,
                           dropout=0.1,
