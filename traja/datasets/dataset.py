@@ -346,5 +346,5 @@ class MultiModalDataLoader:
         loader_instance = super(MultiModalDataLoader, cls).__new__(cls)
         loader_instance.__init__(df, batch_size, n_past, n_future, num_workers)
         # Return train and test loader attributes
-        return loader_instance.datalaoders, loader_instance.scalers
+        return loader_instance.dataloaders, loader_instance.scalers
 
