@@ -310,6 +310,9 @@ class MultiModelVAE(torch.nn.Module):
         self.reset_state = reset_state
         self.bidirectional = bidirectional
 
+        # Let the trainer know what kind of model this is
+        self.model_type = 'vae'
+
         self.encoder = LSTMEncoder(
             input_size=self.input_size,
             num_past=self.num_past,

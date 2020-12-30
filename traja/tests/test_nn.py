@@ -1,7 +1,4 @@
 import pandas as pd
-import traja
-from traja import models
-from traja import datasets
 from traja.datasets import dataset
 from traja.models.train import LSTMTrainer, HybridTrainer, CustomTrainer
 
@@ -23,7 +20,7 @@ def test_from_df():
                                                      n_past=num_past,
                                                      n_future=num_future,
                                                      num_workers=2)
-    
+
     trainer = HybridTrainer(model_type='vae',  # "ae" or "vae"
                       optimizer_type='Adam',   # ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop','LBFGS', 'ASGD', 'Adamax']
                       input_size=2,  
