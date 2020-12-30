@@ -113,8 +113,13 @@ _build/
 
 # BUILD FILES
 *.zip
+hypers.json
+model
 
 docs/source/gallery
 docs/source/savefig
 docs/source/reference
-docs/source/autoexamples
+
+# Editor files
+*.swp
+*.swo
