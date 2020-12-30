@@ -47,6 +47,7 @@ class Generator:
 
     def generate_batch(self, batch_size, num_future, classify=True):
 
+        self.model.to(device)
         if self.model_type == "vae":
             # Random noise
             z = (
