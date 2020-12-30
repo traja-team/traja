@@ -6,3 +6,6 @@ psutil
 scipy
 sphinx-gallery
 fastdtw
+plotly
+networkx
+seaborn
