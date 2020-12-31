@@ -188,7 +188,7 @@ class HybridTrainer(object):
                         for optimizer in self.forecasting_optimizers:
                             optimizer.step()
 
-                    elif self.classify and training_mode == "classification":
+                    elif training_mode == "classification":
                         if self.model_type == "vae":
                             classifier_out, latent_out, mu, logvar = self.model(
                                 data, training=True, classify=True
@@ -205,7 +205,7 @@ class HybridTrainer(object):
                         for optimizer in self.classification_optimizers:
                             optimizer.step()
 
-                    elif self.regress and training_mode == 'regression':
+                    elif training_mode == 'regression':
                         regressor_out = self.model(data, training=True, regress=True, latent=False)
                         loss = Criterion().regressor_criterion(
                             regressor_out, parameters
