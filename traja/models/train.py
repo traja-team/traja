@@ -167,7 +167,7 @@ class HybridTrainer(object):
                         data.float().to(device),
                         target.float().to(device),
                         category.to(device),
-                        parameters.to(device)
+                        parameters.float().to(device)
                     )
 
                     if training_mode == "forecasting":
@@ -230,7 +230,7 @@ class HybridTrainer(object):
                             data.float().to(device),
                             target.float().to(device),
                             category.to(device),
-                            parameters.to(device)
+                            parameters.float().to(device)
                         )
                         # Time series forecasting test
                         if self.model_type == 'ae' or self.model_type == 'lstm':
