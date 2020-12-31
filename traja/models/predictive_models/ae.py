@@ -351,7 +351,7 @@ class MultiModelAE(torch.nn.Module):
         assert self.classifier_hidden_size is not None, "Classifier not found"
         return [self.classifier.parameters()]
 
-    def forward(self, data, classify=False, training=True):
+    def forward(self, data, classify=False, training=True, latent=True):
         """
         Parameters:
         -----------
@@ -380,7 +380,10 @@ class MultiModelAE(torch.nn.Module):
             enc_out = self.encoder(data)
             latent_out = self.latent(enc_out)
             decoder_out = self.decoder(latent_out)
-            return decoder_out, latent_out
+            if latent:
+                return decoder_out, latent_out
+            else:
+                return decoder_out
 
         else:  # Classify
             # Unfreeze classifier and freeze the rest
