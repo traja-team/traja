@@ -1,10 +1,5 @@
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from traja.models.generative_models.vae import MultiModelVAE
-from traja.models.predictive_models.ae import MultiModelAE
-from traja.models.predictive_models.lstm import LSTM
-from traja.models.predictive_models.irl import MultiModelIRL
-from traja.models.generative_models.vaegan import MultiModelVAEGAN
 
 
 class Optimizer:
@@ -74,7 +69,7 @@ class Optimizer:
         elif self.model_type == "vaegan":
             return NotImplementedError
 
-        else:  #  self.model_type == "irl":
+        else:  # self.model_type == "irl":
             return NotImplementedError
 
         forecasting_optimizers = [self.optimizers[key] for key in self.forecasting_keys if key in self.optimizers]
