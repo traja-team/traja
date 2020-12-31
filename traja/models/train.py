@@ -230,7 +230,7 @@ class HybridTrainer(object):
                         total = 0.0
                         correct = 0.0
                     self.model.eval()
-                    for idx, (data, target, category, parameters) in enumerate(list(test_loader)):
+                    for idx, (data, target, category, parameters) in enumerate(test_loader):
                         data, target, category, parameters = (
                             data.float().to(device),
                             target.float().to(device),
