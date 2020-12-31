@@ -226,7 +226,6 @@ class HybridTrainer(object):
                     for idx, (data, target, category, parameters) in enumerate(test_loader):
                         if type(category) == list:
                             category = category[0]
-                        print(category)
                         data, target, category, parameters = (
                             data.float().to(device),
                             target.float().to(device),
