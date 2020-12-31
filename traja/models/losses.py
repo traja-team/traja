@@ -72,6 +72,17 @@ class Criterion:
         loss = self.crossentropy_loss(predicted, target)
         return loss
 
+    def regressor_criterion(self, predicted, target):
+        """
+        Regressor loss function
+        :param predicted: Predicted parameter value
+        :param target: Target parameter value
+        :return: MSE loss
+        """
+
+        loss = self.mse_loss(predicted, target)
+        return loss
+
     def lstm_criterion(self, predicted, target):
 
         loss = self.huber_loss(predicted, target)

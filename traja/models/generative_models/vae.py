@@ -291,6 +291,9 @@ class MultiModelVAE(torch.nn.Module):
         num_classifier_layers: int = None,
         classifier_hidden_size: int = None,
         num_classes: int = None,
+        num_regressor_layers: int = None,
+        regressor_hidden_size: int = None,
+        num_regressor_parameters: int = None,
     ):
 
         super(MultiModelVAE, self).__init__()
@@ -309,6 +312,9 @@ class MultiModelVAE(torch.nn.Module):
         self.dropout = dropout
         self.reset_state = reset_state
         self.bidirectional = bidirectional
+        self.num_regressor_layers = num_regressor_layers
+        self.regressor_hidden_size = regressor_hidden_size
+        self.num_regressor_parameters = num_regressor_parameters
 
         # Let the trainer know what kind of model this is
         self.model_type = 'vae'
@@ -354,7 +360,17 @@ class MultiModelVAE(torch.nn.Module):
                 dropout=self.dropout,
             )
 
-    def forward(self, data, training=True, classify=False, latent=True):
+        if self.num_regressor_parameters is not None:
+            self.regressor = MLPClassifier(
+                input_size=self.latent_size,
+                hidden_size=self.regressor_hidden_size,
+                num_classes=self.num_regressor_parameters,
+                latent_size=self.latent_size,
+                num_classifier_layers=self.num_regressor_layers,
+                dropout=self.dropout,
+            )
+
+    def forward(self, data, training=True, classify=False, regress=False, latent=True):
         """
         Parameters:
         -----------
@@ -365,10 +381,18 @@ class MultiModelVAE(torch.nn.Module):
         ------- 
             decoder_out,latent_out or classifier out
         """
-        if not classify:
-            # Set the classifier grad off
-            for param in self.classifier.parameters():
-                param.requires_grad = False
+
+        assert not (classify and regress), 'Model cannot both classify and regress!'
+
+        if not classify or regress:
+            # Set the classifier and regressor grads off
+            if self.num_classes is not None:
+                for param in self.classifier.parameters():
+                    param.requires_grad = False
+            if self.num_regressor_parameters is not None:
+                for param in self.regressor.parameters():
+                    param.requires_grad = False
+
             for param in self.encoder.parameters():
                 param.requires_grad = True
             for param in self.decoder.parameters():
@@ -387,11 +411,15 @@ class MultiModelVAE(torch.nn.Module):
             else:
                 return decoder_out
 
-        else:  # training_mode = 'classification'
-            # Unfreeze classifier parameters and freeze all other
-            # network parameters
+        elif classify:
+            # Unfreeze classifier and freeze the rest
+            assert self.num_classes is not None, "Classifier not found"
+
             for param in self.classifier.parameters():
                 param.requires_grad = True
+            if self.num_regressor_parameters is not None:
+                for param in self.regressor.parameters():
+                    param.requires_grad = False
             for param in self.encoder.parameters():
                 param.requires_grad = False
             for param in self.decoder.parameters():
@@ -405,4 +433,33 @@ class MultiModelVAE(torch.nn.Module):
             latent_out, mu, logvar = self.latent(enc_out, training=training)
             # Classifier
             classifier_out = self.classifier(mu)  # Deterministic
-            return classifier_out, latent_out, mu, logvar
+            if latent:
+                return classifier_out, latent_out, mu, logvar
+            else:
+                return classifier_out
+
+        elif regress:
+            # Unfreeze classifier and freeze the rest
+            assert self.num_regressor_parameters is not None, "Regressor not found"
+
+            if self.num_classes is not None:
+                for param in self.classifier.parameters():
+                    param.requires_grad = False
+            for param in self.regressor.parameters():
+                param.requires_grad = True
+            for param in self.encoder.parameters():
+                param.requires_grad = False
+            for param in self.decoder.parameters():
+                param.requires_grad = False
+            for param in self.latent.parameters():
+                param.requires_grad = False
+
+            # Encoder -->Latent --> Regressor
+            enc_out = self.encoder(data)
+            latent_out, mu, logvar = self.latent(enc_out, training=training)
+
+            regressor_out = self.regressor(mu)  # Deterministic
+            if latent:
+                return regressor_out, latent_out, mu, logvar
+            else:
+                return regressor_out

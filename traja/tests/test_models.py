@@ -75,21 +75,10 @@ def test_ae():
 
     model_save_path = './model.pt'
 
-    model = MultiModelAE(input_size=2,
-                         output_size=2,
-                         lstm_hidden_size=32,
-                          num_lstm_layers=2,
-                          num_classes=9,
-                          latent_size=10,
-                          dropout=0.1,
-                          num_classifier_layers=4,
-                          classifier_hidden_size=32,
-                          batch_size=batch_size,
-                          num_future=num_future,
-                          num_past=num_past,
-                          bidirectional=False,
-                          batch_first=True,
-                          reset_state=True)
+    model = MultiModelAE(input_size=2, num_past=num_past, batch_size=batch_size, num_future=num_future,
+                         lstm_hidden_size=32, num_lstm_layers=2, output_size=2, latent_size=10, batch_first=True,
+                         dropout=0.1, reset_state=True, bidirectional=False, num_classifier_layers=4,
+                         classifier_hidden_size=32, num_classes=9)
 
     # Model Trainer
     # Model types; "ae" or "vae"

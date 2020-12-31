@@ -231,22 +231,26 @@ class TimeSeriesDataset(Dataset):
         Dataset (torch.utils.data.Dataset): Pyptorch dataset object
     """
 
-    def __init__(self, data, target, category):
+    def __init__(self, data, target, category=None, parameters=None):
         r"""
         Args:
             data (array): Data
             target (array): Target
             category (array): Category
+            parameters (array): Parameters
         """
+
         self.data = data
         self.target = target
         self.category = category
+        self.parameters = parameters
 
     def __getitem__(self, index):
         x = self.data[index]
         y = self.target[index]
-        z = self.category[index]
-        return x, y, z
+        z = self.category[index] if self.category else torch.zeros(1)
+        w = self.parameters[index] if self.parameters else torch.zeros(1)
+        return x, y, z, w
 
     def __len__(self):
         return len(self.data)
