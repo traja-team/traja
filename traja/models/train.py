@@ -105,16 +105,17 @@ class HybridTrainer(object):
 
         self.model = model
 
-        # Classification task check
+        # Classification, regression task checks
         self.classify = True if model.model_type != 'lstm' and model.classifier_hidden_size is not None else False
+        self.regress = True if model.model_type != 'lstm' and model.regressor_hidden_size is not None else False
 
         # Model optimizer and the learning rate scheduler
         optimizer = Optimizer(
             self.model_type, self.model, self.optimizer_type, classify=self.classify
         )
 
-        self.forecasting_optimizers, self.classification_optimizers = optimizer.get_optimizers(lr=self.lr)
-        self.forecasting_schedulers, self.classification_schedulers = optimizer.get_lrschedulers(
+        self.forecasting_optimizers, self.classification_optimizers, self.regression_optimizers = optimizer.get_optimizers(lr=self.lr)
+        self.forecasting_schedulers, self.classification_schedulers, self.regression_schedulers = optimizer.get_lrschedulers(
             factor=self.lr_factor, patience=self.scheduler_patience
         )
 
@@ -137,7 +138,7 @@ class HybridTrainer(object):
         """
 
         assert model_save_path is not None, f"Model path {model_save_path} unknown"
-        assert training_mode in ['forecasting', 'classification'], f'Training mode {classification} unknown'
+        assert training_mode in ['forecasting', 'classification', 'regression'], f'Training mode {training_mode} unknown'
 
         self.model.to(device)
 
@@ -146,22 +147,27 @@ class HybridTrainer(object):
         for epoch in range(epochs):
             test_loss_forecasting = 0
             test_loss_classification = 0
+            test_loss_regression = 0
             if epoch > 0:  # Initial step is to test and set LR schduler
                 # Training
                 self.model.train()
                 total_loss = 0
-                for idx, (data, target, category) in enumerate(train_loader):
+                for idx, (data, target, category, parameters) in enumerate(train_loader):
                     # Reset optimizer states
                     for optimizer in self.forecasting_optimizers:
                         optimizer.zero_grad()
                     if self.classify:
                         for optimizer in self.classification_optimizers:
                             optimizer.zero_grad()
+                    if self.regress:
+                        for optimizer in self.regression_optimizers:
+                            optimizer.zero_grad()
 
-                    data, target, category = (
+                    data, target, category, parameters = (
                         data.float().to(device),
                         target.float().to(device),
                         category.to(device),
+                        parameters.to(device)
                     )
 
                     if training_mode == "forecasting":
@@ -198,6 +204,17 @@ class HybridTrainer(object):
                         loss.backward()
                         for optimizer in self.classification_optimizers:
                             optimizer.step()
+
+                    elif self.regress and training_mode == 'regression':
+                        regressor_out = self.model(data, training=True, regress=True, latent=False)
+                        loss = Criterion().regressor_criterion(
+                            regressor_out, parameters
+                        )
+
+                        loss.backward()
+                        for optimizer in self.regression_optimizers:
+                            optimizer.step()
+
                     total_loss += loss
 
                 print(
@@ -213,11 +230,12 @@ class HybridTrainer(object):
                         total = 0.0
                         correct = 0.0
                     self.model.eval()
-                    for idx, (data, target, category) in enumerate(list(test_loader)):
-                        data, target, category = (
+                    for idx, (data, target, category, parameters) in enumerate(list(test_loader)):
+                        data, target, category, parameters = (
                             data.float().to(device),
                             target.float().to(device),
                             category.to(device),
+                            parameters.to(device)
                         )
                         # Time series forecasting test
                         if self.model_type == 'ae' or self.model_type == 'lstm':
@@ -259,6 +277,12 @@ class HybridTrainer(object):
                             _, predicted = torch.max(classifier_out.data, 1)
                             correct += (predicted == (category - 1)).sum().item()
 
+                        if self.regress:
+                            regressor_out = self.model(data, training=True, regress=True, latent=False)
+                            test_loss_regression += Criterion().regressor_criterion(
+                                regressor_out, parameters
+                            )
+
                 test_loss_forecasting /= len(test_loader.dataset)
                 print(
                     f"====> Mean test set generator loss: {test_loss_forecasting:.4f}"
@@ -271,14 +295,19 @@ class HybridTrainer(object):
                             f"====> Mean test set classifier loss: {test_loss_classification:.4f}; accuracy: {accuracy:.2f}"
                         )
 
+                if self.regress:
+                    print(f'====> Mean test set regressor loss: {test_loss_regression:.4f}')
+
             # Scheduler metric is test set loss
             if training_mode == "forecasting":
                 for scheduler in self.forecasting_schedulers.values():
                     scheduler.step(test_loss_forecasting)
-            else:
-                if self.classify:
-                    for scheduler in self.classification_schedulers.values():
-                        scheduler.step(test_loss_classification)
+            elif training_mode == 'classification':
+                for scheduler in self.classification_schedulers.values():
+                    scheduler.step(test_loss_classification)
+            elif training_mode == 'regression':
+                for scheduler in self.regression_schedulers.values():
+                    scheduler.step(test_loss_regression)
 
         # Save the model at target path
         utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)

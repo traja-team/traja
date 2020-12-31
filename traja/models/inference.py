@@ -156,7 +156,8 @@ class Predictor:
         self.model_hyperparameters = model_hyperparameters
 
         if self.model_type == "ae":
-            self.model = MultiModelAE(**self.model_hyperparameters)
+            self.model = MultiModelAE(num_regressor_layers=2, regressor_hidden_size=32, num_regressor_parameters=3,
+                                      **self.model_hyperparameters)
 
         if self.model_type == "lstm":
             self.model = LSTM(**self.model_hyperparameters)
