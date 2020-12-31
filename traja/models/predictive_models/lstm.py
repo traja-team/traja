@@ -76,7 +76,9 @@ class LSTM(torch.nn.Module):
             .to(device),
         )
 
-    def forward(self, x):
+    def forward(self, x, training=True, classify=False, latent=False):
+        assert not classify, 'LSTM forecaster cannot classify!'
+        assert not latent, 'LSTM forecaster does not have a latent space!'
         # To feed the latent states into lstm decoder, repeat the tensor n_future times at second dim
         (h0, c0) = self._init_hidden()
 

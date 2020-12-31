@@ -354,7 +354,7 @@ class MultiModelVAE(torch.nn.Module):
                 dropout=self.dropout,
             )
 
-    def forward(self, data, training=True, classify=False):
+    def forward(self, data, training=True, classify=False, latent=True):
         """
         Parameters:
         -----------
@@ -382,7 +382,10 @@ class MultiModelVAE(torch.nn.Module):
             enc_out = self.encoder(data)
             latent_out, mu, logvar = self.latent(enc_out)
             decoder_out = self.decoder(latent_out)
-            return decoder_out, latent_out, mu, logvar
+            if latent:
+                return decoder_out, latent_out, mu, logvar
+            else:
+                return decoder_out
 
         else:
             # Unfreeze classifier and freeze the rest
