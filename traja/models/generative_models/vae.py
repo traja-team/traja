@@ -382,7 +382,7 @@ class MultiModelVAE(torch.nn.Module):
 
         assert not (classify and regress), 'Model cannot both classify and regress!'
 
-        if not classify or regress:
+        if not (classify or regress):
             # Set the classifier and regressor grads off
             if self.num_classes is not None:
                 for param in self.classifier.parameters():
