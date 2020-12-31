@@ -24,8 +24,9 @@ trainer = Trainer(model_type='vae',
 trainer.train_latent_model(train_dataloader, test_dataloader, model_save_path=PATH)"""
 
 import torch
-from traja.models.utils import TimeDistributed
 from torch import nn
+
+from traja.models.utils import TimeDistributed
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -46,16 +47,16 @@ class LSTMEncoder(torch.nn.Module):
         """
 
     def __init__(
-        self,
-        input_size: int,
-        num_past: int,
-        batch_size: int,
-        hidden_size: int,
-        num_lstm_layers: int,
-        batch_first: bool,
-        dropout: float,
-        reset_state: bool,
-        bidirectional: bool,
+            self,
+            input_size: int,
+            num_past: int,
+            batch_size: int,
+            hidden_size: int,
+            num_lstm_layers: int,
+            batch_first: bool,
+            dropout: float,
+            reset_state: bool,
+            bidirectional: bool,
     ):
         super(LSTMEncoder, self).__init__()
 
@@ -81,11 +82,11 @@ class LSTMEncoder(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
         )
 
 
@@ -116,7 +117,6 @@ class DisentangledAELatent(torch.nn.Module):
         return mu
 
     def forward(self, x, training=True):
-
         z_variables = self.latent(x)  # [batch_size, latent_size*2]
         mu, logvar = torch.chunk(z_variables, 2, dim=1)  # [batch_size,latent_size]
         # Reparameterize
@@ -127,7 +127,6 @@ class DisentangledAELatent(torch.nn.Module):
 
 
 class LSTMDecoder(torch.nn.Module):
-
     """ Implementation of Decoder network using LSTM layers
         input_size: The number of expected features in the input x
         num_future: Number of time steps to be predicted given the num_past steps
@@ -143,17 +142,17 @@ class LSTMDecoder(torch.nn.Module):
         """
 
     def __init__(
-        self,
-        batch_size: int,
-        num_future: int,
-        hidden_size: int,
-        num_lstm_layers: int,
-        output_size: int,
-        latent_size: int,
-        batch_first: bool,
-        dropout: float,
-        reset_state: bool,
-        bidirectional: bool,
+            self,
+            batch_size: int,
+            num_future: int,
+            hidden_size: int,
+            num_lstm_layers: int,
+            output_size: int,
+            latent_size: int,
+            batch_first: bool,
+            dropout: float,
+            reset_state: bool,
+            bidirectional: bool,
     ):
         super(LSTMDecoder, self).__init__()
         self.batch_size = batch_size
@@ -183,11 +182,11 @@ class LSTMDecoder(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
         )
 
     def forward(self, x, num_future=None):
@@ -222,13 +221,13 @@ class MLPClassifier(torch.nn.Module):
             """
 
     def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        num_classes: int,
-        latent_size: int,
-        num_classifier_layers: int,
-        dropout: float,
+            self,
+            input_size: int,
+            hidden_size: int,
+            num_classes: int,
+            latent_size: int,
+            num_classifier_layers: int,
+            dropout: float,
     ):
         super(MLPClassifier, self).__init__()
         self.latent_size = latent_size
@@ -257,7 +256,6 @@ class MLPClassifier(torch.nn.Module):
 
 
 class MultiModelVAE(torch.nn.Module):
-
     """Implementation of Multimodel Variational autoencoders; This Module wraps the Variational Autoencoder
     models [Encoder,Latent[Sampler],Decoder]. If classify=True, then the wrapper also include classification layers
 
@@ -275,25 +273,25 @@ class MultiModelVAE(torch.nn.Module):
     """
 
     def __init__(
-        self,
-        input_size: int,
-        num_past: int,
-        batch_size: int,
-        num_future: int,
-        lstm_hidden_size: int,
-        num_lstm_layers: int,
-        output_size: int,
-        latent_size: int,
-        batch_first: bool,
-        dropout: float,
-        reset_state: bool,
-        bidirectional: bool = False,
-        num_classifier_layers: int = None,
-        classifier_hidden_size: int = None,
-        num_classes: int = None,
-        num_regressor_layers: int = None,
-        regressor_hidden_size: int = None,
-        num_regressor_parameters: int = None,
+            self,
+            input_size: int,
+            num_past: int,
+            batch_size: int,
+            num_future: int,
+            lstm_hidden_size: int,
+            num_lstm_layers: int,
+            output_size: int,
+            latent_size: int,
+            batch_first: bool,
+            dropout: float,
+            reset_state: bool,
+            bidirectional: bool = False,
+            num_classifier_layers: int = None,
+            classifier_hidden_size: int = None,
+            num_classes: int = None,
+            num_regressor_layers: int = None,
+            regressor_hidden_size: int = None,
+            num_regressor_parameters: int = None,
     ):
 
         super(MultiModelVAE, self).__init__()

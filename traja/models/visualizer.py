@@ -1,18 +1,14 @@
-import networkx as nx
-import numpy as np
-import scipy
-from sklearn import neighbors
-from scipy.sparse import csgraph
-from sklearn.neighbors import radius_neighbors_graph
-from mpl_toolkits.mplot3d import Axes3D
-import plotly.express as px
-
-
-import matplotlib
-
 # matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import plotly.express as px
+import scipy
 from matplotlib import style
+from mpl_toolkits.mplot3d import Axes3D
+from scipy.sparse import csgraph
+from sklearn import neighbors
+from sklearn.neighbors import radius_neighbors_graph
 
 # plt.switch_backend("TkAgg")
 
@@ -292,7 +288,6 @@ if __name__ == "__main__":
 
 class Network:
     def __init__(self, activity, weights):
-
         pass
 
     def show(self):
@@ -307,4 +302,3 @@ class ShowManifold:
     def show(self):
         fig = None
         return fig
-
