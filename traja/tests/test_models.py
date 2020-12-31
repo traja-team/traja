@@ -1,6 +1,6 @@
 import pandas as pd
 from traja.datasets import dataset
-from traja.models.train import LSTMTrainer, HybridTrainer
+from traja.models.train import HybridTrainer
 from traja.models.generative_models.vae import MultiModelVAE
 from traja.models.predictive_models.ae import MultiModelAE
 from traja.models.predictive_models.lstm import LSTM
