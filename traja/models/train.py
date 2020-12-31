@@ -141,11 +141,6 @@ class HybridTrainer(object):
 
         self.model.to(device)
 
-
-        #forecasting_optimizers, classification_optimizers = self.model_optimizers.values()
-
-        #forecasting_schedulers, classification_schedulers = self.model_lrschedulers.values()
-
         train_loader, test_loader = dataloaders.values()
         # Training
         for epoch in range(epochs):
