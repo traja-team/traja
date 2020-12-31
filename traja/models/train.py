@@ -1,14 +1,10 @@
-from traja.models.generative_models.vae import MultiModelVAE
-from traja.models.predictive_models.ae import MultiModelAE
-from traja.models.predictive_models.lstm import LSTM
-from traja.models.predictive_models.irl import MultiModelIRL
-from traja.models.generative_models.vaegan import MultiModelVAEGAN
+import matplotlib.pyplot as plt
+import torch
+
 from . import utils
 from . import visualizer
 from .losses import Criterion
 from .optimizers import Optimizer
-import torch
-import matplotlib.pyplot as plt
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -49,17 +45,17 @@ class HybridTrainer(object):
     valid_models = ['ae', 'vae', 'lstm']
 
     def __init__(
-        self,
-        model: torch.nn.Module,
-        optimizer_type: str,
-        loss_type: str = "huber",
-        lr: float = 0.001,
-        lr_factor: float = 0.1,
-        scheduler_patience: int = 10,
+            self,
+            model: torch.nn.Module,
+            optimizer_type: str,
+            loss_type: str = "huber",
+            lr: float = 0.001,
+            lr_factor: float = 0.1,
+            scheduler_patience: int = 10,
     ):
 
         assert (
-            model.model_type in HybridTrainer.valid_models
+                model.model_type in HybridTrainer.valid_models
         ), "Model type is {model_type}, valid models are {}".format(
             HybridTrainer.valid_models
         )
@@ -114,7 +110,8 @@ class HybridTrainer(object):
             self.model_type, self.model, self.optimizer_type, classify=self.classify
         )
 
-        self.forecasting_optimizers, self.classification_optimizers, self.regression_optimizers = optimizer.get_optimizers(lr=self.lr)
+        self.forecasting_optimizers, self.classification_optimizers, self.regression_optimizers = optimizer.get_optimizers(
+            lr=self.lr)
         self.forecasting_schedulers, self.classification_schedulers, self.regression_schedulers = optimizer.get_lrschedulers(
             factor=self.lr_factor, patience=self.scheduler_patience
         )
@@ -138,7 +135,8 @@ class HybridTrainer(object):
         """
 
         assert model_save_path is not None, f"Model path {model_save_path} unknown"
-        assert training_mode in ['forecasting', 'classification', 'regression'], f'Training mode {training_mode} unknown'
+        assert training_mode in ['forecasting', 'classification',
+                                 'regression'], f'Training mode {training_mode} unknown'
 
         self.model.to(device)
 
@@ -268,8 +266,8 @@ class HybridTrainer(object):
 
                             test_loss_classification += (
                                 Criterion()
-                                .classifier_criterion(classifier_out, category - 1)
-                                .item()
+                                    .classifier_criterion(classifier_out, category - 1)
+                                    .item()
                             )
 
                             # Compute number of correct samples
@@ -332,14 +330,14 @@ class CustomTrainer:
     """
 
     def __init__(
-        self,
-        model: torch.nn.Module,
-        optimizer_type: None,
-        criterion: None,
-        epochs: int,
-        lr: float = 0.001,
-        lr_factor: float = 0.001,
-        scheduler_patience: int = 10,
+            self,
+            model: torch.nn.Module,
+            optimizer_type: None,
+            criterion: None,
+            epochs: int,
+            lr: float = 0.001,
+            lr_factor: float = 0.001,
+            scheduler_patience: int = 10,
     ):
         self.model = model
         self.optimizer_type = optimizer_type
@@ -495,7 +493,6 @@ class IRLTrainer:
 
 # TODO
 class Trainer:
-
     """Wraps all above Trainers. Instantiate and return the Trainer of model type """
 
     def __init__(self, *model_hyperparameters, **kwargs):
@@ -530,4 +527,3 @@ class Trainer:
 
         # Return the instance of the trainer
         return NotImplementedError
-

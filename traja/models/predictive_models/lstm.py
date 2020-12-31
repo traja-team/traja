@@ -1,5 +1,6 @@
 """Implementation of Multimodel LSTM"""
 import torch
+
 from traja.models.utils import TimeDistributed
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -25,17 +26,17 @@ class LSTM(torch.nn.Module):
     """
 
     def __init__(
-        self,
-        batch_size: int,
-        num_future: int,
-        hidden_size: int,
-        num_layers: int,
-        output_size: int,
-        input_size: int,
-        batch_first: bool,
-        dropout: float,
-        reset_state: bool,
-        bidirectional: bool,
+            self,
+            batch_size: int,
+            num_future: int,
+            hidden_size: int,
+            num_layers: int,
+            output_size: int,
+            input_size: int,
+            batch_first: bool,
+            dropout: float,
+            reset_state: bool,
+            bidirectional: bool,
     ):
         super(LSTM, self).__init__()
 
@@ -69,11 +70,11 @@ class LSTM(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
             torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
         )
 
     def forward(self, x, training=True, classify=False, regress=False, latent=False):

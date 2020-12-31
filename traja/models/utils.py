@@ -1,9 +1,7 @@
+import json
+import os
+
 import torch
-import matplotlib.pyplot as plt
-import numpy as np
-import collections
-from numpy import math
-import os, json
 
 
 class TimeDistributed(torch.nn.Module):
@@ -99,4 +97,3 @@ def read_hyperparameters(hyperparameter_json):
     """
     with open(hyperparameter_json) as f_in:
         return json.load(f_in)
-
