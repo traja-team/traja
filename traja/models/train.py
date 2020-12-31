@@ -161,6 +161,8 @@ class HybridTrainer(object):
                         for optimizer in self.regression_optimizers:
                             optimizer.zero_grad()
 
+                    if type(category) == list:
+                        category = category[0]
                     data, target, category, parameters = (
                         data.float().to(device),
                         target.float().to(device),
@@ -229,6 +231,9 @@ class HybridTrainer(object):
                         correct = 0.0
                     self.model.eval()
                     for idx, (data, target, category, parameters) in enumerate(test_loader):
+                        if type(category) == list:
+                            category = category[0]
+                        print(category)
                         data, target, category, parameters = (
                             data.float().to(device),
                             target.float().to(device),
