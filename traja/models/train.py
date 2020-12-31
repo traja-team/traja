@@ -264,7 +264,7 @@ class HybridTrainer(object):
             else:
                 if self.classify:
                     for scheduler in self.classification_schedulers.values():
-                        scheduler.step()
+                        scheduler.step(test_loss_classification)
 
         # Save the model at target path
         utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)
