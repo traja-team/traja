@@ -46,7 +46,7 @@ class HybridTrainer(object):
 
     """
 
-    valid_models = ["ae", "vae"]
+    valid_models = ['ae', 'vae', 'lstm']
 
     def __init__(
         self,
@@ -71,36 +71,50 @@ class HybridTrainer(object):
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
 
-        self.model_hyperparameters = {
-            "input_size": model.input_size,
-            "num_past": model.num_past,
-            "batch_size": model.batch_size,
-            "lstm_hidden_size": model.lstm_hidden_size,
-            "num_lstm_layers": model.num_lstm_layers,
-            "classifier_hidden_size": model.classifier_hidden_size,
-            "num_classifier_layers": model.num_classifier_layers,
-            "num_future": model.num_future,
-            "latent_size": model.latent_size,
-            "output_size": model.output_size,
-            "num_classes": model.num_classes,
-            "batch_first": model.batch_first,
-            "reset_state": model.reset_state,
-            "bidirectional": model.bidirectional,
-            "dropout": model.dropout,
-        }
+        if model.model_type == 'lstm':
+            self.model_hyperparameters = {
+                "input_size": model.input_size,
+                "batch_size": model.batch_size,
+                "hidden_size": model.hidden_size,
+                "num_future": model.num_future,
+                "num_layers": model.num_layers,
+                "output_size": model.output_size,
+                "batch_first": model.batch_first,
+                "reset_state": model.reset_state,
+                "bidirectional": model.bidirectional,
+                "dropout": model.dropout,
+            }
+        else:
+            self.model_hyperparameters = {
+                "input_size": model.input_size,
+                "num_past": model.num_past,
+                "batch_size": model.batch_size,
+                "lstm_hidden_size": model.lstm_hidden_size,
+                "num_lstm_layers": model.num_lstm_layers,
+                "classifier_hidden_size": model.classifier_hidden_size,
+                "num_classifier_layers": model.num_classifier_layers,
+                "num_future": model.num_future,
+                "latent_size": model.latent_size,
+                "output_size": model.output_size,
+                "num_classes": model.num_classes,
+                "batch_first": model.batch_first,
+                "reset_state": model.reset_state,
+                "bidirectional": model.bidirectional,
+                "dropout": model.dropout,
+            }
 
         self.model = model
 
         # Classification task check
-        self.classify = True if model.classifier_hidden_size is not None else False
+        self.classify = True if model.model_type != 'lstm' and model.classifier_hidden_size is not None else False
 
         # Model optimizer and the learning rate scheduler
         optimizer = Optimizer(
             self.model_type, self.model, self.optimizer_type, classify=self.classify
         )
 
-        self.model_optimizers = optimizer.get_optimizers(lr=self.lr)
-        self.model_lrschedulers = optimizer.get_lrschedulers(
+        self.forecasting_optimizers, self.classification_optimizers = optimizer.get_optimizers(lr=self.lr)
+        self.forecasting_schedulers, self.classification_schedulers = optimizer.get_lrschedulers(
             factor=self.lr_factor, patience=self.scheduler_patience
         )
 
@@ -127,8 +141,10 @@ class HybridTrainer(object):
 
         self.model.to(device)
 
-        encoder_optimizer, latent_optimizer, decoder_optimizer, classifier_optimizer = self.model_optimizers.values()
-        encoder_scheduler, latent_scheduler, decoder_scheduler, classifier_scheduler = self.model_lrschedulers.values()
+
+        #forecasting_optimizers, classification_optimizers = self.model_optimizers.values()
+
+        #forecasting_schedulers, classification_schedulers = self.model_lrschedulers.values()
 
         # Training
         for epoch in range(epochs):
@@ -140,15 +156,22 @@ class HybridTrainer(object):
                 total_loss = 0
                 for idx, (data, target, category) in enumerate(train_loader):
                     # Reset optimizer states
-                    encoder_optimizer.zero_grad()
-                    latent_optimizer.zero_grad()
-                    decoder_optimizer.zero_grad()
-                    classifier_optimizer.zero_grad()
+                    for optimizer in self.forecasting_optimizers:
+                        optimizer.zero_grad()
+                    if self.classify:
+                        for optimizer in self.classification_optimizers:
+                            optimizer.zero_grad()
+
+                    data, target, category = (
+                        data.float().to(device),
+                        target.float().to(device),
+                        category.to(device),
+                    )
 
                     if training_mode == "forecasting":
-                        if self.model_type == "ae":
-                            decoder_out, latent_out = self.model(
-                                data, training=True, classify=False
+                        if self.model_type == "ae" or self.model_type == 'lstm':
+                            decoder_out = self.model(
+                                data, training=True, classify=False, latent=False
                             )
                             loss = Criterion().ae_criterion(decoder_out, target)
                         else:  # vae
@@ -157,16 +180,15 @@ class HybridTrainer(object):
                             loss = Criterion().vae_criterion(decoder_out, target, mu, logvar)
 
                         loss.backward()
-                        encoder_optimizer.step()
-                        decoder_optimizer.step()
-                        latent_optimizer.step()
+                        for optimizer in self.forecasting_optimizers:
+                            optimizer.step()
 
                     elif self.classify and training_mode == "classification":
                         if self.model_type == "vae":
                             classifier_out, latent_out, mu, logvar = self.model(
                                 data, training=True, classify=True
                             )
-                        else:  # "ae"
+                        else:  # 'ae', 'lstm'
                             classifier_out = self.model(
                                 data, training=True, classify=True
                             )
@@ -175,7 +197,8 @@ class HybridTrainer(object):
                         )
 
                         loss.backward()
-                        classifier_optimizer.step()
+                        for optimizer in self.classification_optimizers:
+                            optimizer.step()
                     total_loss += loss
 
                 print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss / (idx + 1)))
@@ -190,9 +213,14 @@ class HybridTrainer(object):
                     for idx, (data, target, category) in enumerate(list(test_loader)):
                         data, target, category = data.float().to(device), target.float().to(device), category.to(device)
                         # Time series forecasting test
-                        if self.model_type == 'ae':
-                            out, latent = self.model(data, training=False, is_classification=False)
-                            test_loss_forecasting += Criterion().ae_criterion(out, target).item()
+                        if self.model_type == 'ae' or self.model_type == 'lstm':
+                            out = self.model(
+                                data, training=False, classify=False, latent=False
+                            )
+                            test_loss_forecasting += (
+                                Criterion().ae_criterion(out, target).item()
+                            )
+
                         else:
                             decoder_out, latent_out, mu, logvar = self.model(data, training=False,
                                                                              is_classification=False)
@@ -200,7 +228,7 @@ class HybridTrainer(object):
                         # Classification test
                         if self.classify:
                             category = category.long()
-                            if self.model_type == "ae":
+                            if self.model_type == 'ae' or self.model_type == 'lstm':
                                 classifier_out = self.model(
                                     data, training=False, classify=True
                                 )
@@ -230,12 +258,13 @@ class HybridTrainer(object):
                         )
 
             # Scheduler metric is test set loss
-            if training_mode == 'forecasting':
-                encoder_scheduler.step(test_loss_forecasting)
-                decoder_scheduler.step(test_loss_forecasting)
-                latent_scheduler.step(test_loss_forecasting)
+            if training_mode == "forecasting":
+                for scheduler in self.forecasting_schedulers.values():
+                    scheduler.step(test_loss_forecasting)
             else:
-                classifier_scheduler.step(test_loss_classification)
+                if self.classify:
+                    for scheduler in self.classification_schedulers.values():
+                        scheduler.step()
 
         # Save the model at target path
         utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)

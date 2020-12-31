@@ -38,7 +38,11 @@ class Optimizer:
         self.model = model
         self.optimizer_type = optimizer_type
         self.optimizers = {}
-        self.schedulers = {}
+        self.forecasting_schedulers = {}
+        self.classification_schedulers = {}
+
+        self.forecasting_keys = ['encoder', 'decoder', 'latent']
+        self.classification_keys = ['classifier']
 
     def get_optimizers(self, lr=0.0001):
         """Optimizers for each network in the model
@@ -52,24 +56,18 @@ class Optimizer:
         """
 
         if self.model_type in ["lstm", "custom"]:
-            self.optimizers = getattr(torch.optim, f"{self.optimizer_type}")(
+            self.optimizers['encoder'] = getattr(torch.optim, f"{self.optimizer_type}")(
                 self.model.parameters(), lr=lr
             )
 
         elif self.model_type in ["ae", "vae"]:
             keys = ["encoder", "decoder", "latent", "classifier"]
-            for network in keys:
-                if network != "classifier":
-                    self.optimizers[network] = getattr(
-                        torch.optim, f"{self.optimizer_type}"
-                    )(getattr(self.model, f"{network}").parameters(), lr=lr)
-
-            if self.classify:
-                self.optimizers["classifier"] = getattr(
+            for key in keys:
+                network = getattr(
                     torch.optim, f"{self.optimizer_type}"
-                )(getattr(self.model, "classifier").parameters(), lr=lr)
-            else:
-                self.optimizers["classifier"] = None
+                )(getattr(self.model, f"{key}").parameters(), lr=lr)
+                if network is not None:
+                    self.optimizers[key] = network
 
         elif self.model_type == "vaegan":
             return NotImplementedError
@@ -77,7 +75,9 @@ class Optimizer:
         else:  #  self.model_type == "irl":
             return NotImplementedError
 
-        return self.optimizers
+        forecasting_optimizers = [self.optimizers[key] for key in self.forecasting_keys if key in self.optimizers]
+        classification_optimizers = [self.optimizers[key] for key in self.classification_keys if key in self.optimizers]
+        return forecasting_optimizers, classification_optimizers
 
     def get_lrschedulers(self, factor: float, patience: int):
 
@@ -91,35 +91,31 @@ class Optimizer:
         Returns:
             [dict]: [description]
         """
-        if self.model_type in ["lstm", "custom"]:
-            assert not isinstance(self.optimizers, dict)
-            self.schedulers = ReduceLROnPlateau(
-                self.optimizers,
+
+        if self.model_type == "irl" or self.model_type == 'vaegan':
+            return NotImplementedError
+
+        forecasting_keys = [key for key in self.forecasting_keys if key in self.optimizers]
+        classification_keys = [key for key in self.classification_keys if key in self.optimizers]
+
+        for network in forecasting_keys:
+            self.forecasting_schedulers[network] = ReduceLROnPlateau(
+                self.optimizers[network],
                 mode="max",
                 factor=factor,
                 patience=patience,
                 verbose=True,
             )
-        elif self.model_type in ["ae", "vae"]:
-            for network in self.optimizers.keys():
-                if self.optimizers[network] is not None:
-                    self.schedulers[network] = ReduceLROnPlateau(
-                        self.optimizers[network],
-                        mode="max",
-                        factor=factor,
-                        patience=patience,
-                        verbose=True,
-                    )
-            if not self.classify:
-                self.schedulers["classifier"] = None
+        for network in classification_keys:
+            self.classification_schedulers[network] = ReduceLROnPlateau(
+                self.optimizers[network],
+                mode="max",
+                factor=factor,
+                patience=patience,
+                verbose=True,
+            )
 
-        elif self.model_type == "irl":
-            return NotImplementedError
-
-        else:  # self.model_type == 'vaegan':
-            return NotImplementedError
-
-        return self.schedulers
+        return self.forecasting_schedulers, self.classification_schedulers
 
 
 if __name__ == "__main__":
