@@ -77,7 +77,8 @@ def shuffle_split(train_data:np.array, target_data:np.array,target_category:np.a
     # Shuffle the IDs and the corresponding sequence , preserving the order
     train_data, target_data, target_category = shuffle(train_data, target_data, target_category)
 
-    assert train_ratio<=1.0,"Train data ratio should be less than or equal to 1 "
+    assert train_ratio > 0, "Train data ratio should be greater than zero"
+    assert train_ratio <= 1.0, "Train data ratio should be less than or equal to 1 "
     
     # Train test split
     split = int(train_ratio*len(train_data)) 
