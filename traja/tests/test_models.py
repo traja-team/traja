@@ -4,10 +4,10 @@ from traja.models.train import LSTMTrainer, HybridTrainer
 from traja.models.generative_models.vae import MultiModelVAE
 from traja.models.predictive_models.ae import MultiModelAE
 
-
 # Sample data
 data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
 df = pd.read_csv(data_url, error_bad_lines=False)
+
 
 def test_aevae():
     """
@@ -20,11 +20,11 @@ def test_aevae():
     num_past = 10
     num_future = 5
     # Prepare the dataloader
-    train_loader, test_loader = dataset.MultiModalDataLoader(df,
-                                                             batch_size=batch_size,
-                                                             n_past=num_past,
-                                                             n_future=num_future,
-                                                             num_workers=1)
+    data_loaders, scalers = dataset.MultiModalDataLoader(df,
+                                                         batch_size=batch_size,
+                                                         n_past=num_past,
+                                                         n_future=num_future,
+                                                         num_workers=1)
 
     model_save_path = './model.pt'
 
@@ -51,8 +51,8 @@ def test_aevae():
                             loss_type='huber')
 
     # Train the model
-    trainer.fit(train_loader, test_loader, model_save_path, epochs=10, training_mode='forecasting')
-    trainer.fit(train_loader, test_loader, model_save_path, epochs=10, training_mode='classification')
+    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
+    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='classification')
 
 
 def test_lstm():

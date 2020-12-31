@@ -360,6 +360,7 @@ class MultiModelAE(torch.nn.Module):
         -------
             decoder_out,latent_out or classifier out
         """
+
         if not classify:
             # Set the classifier grad off
             if self.num_classes is not None:

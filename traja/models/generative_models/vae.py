@@ -32,17 +32,17 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class LSTMEncoder(torch.nn.Module):
     """ Implementation of Encoder network using LSTM layers
-        :param input_size: The number of expected features in the input x
-        :param num_past: Number of time steps to look backwards to predict num_future steps forward
-        :param batch_size: Number of samples in a batch
-        :param hidden_size: The number of features in the hidden state h
-        :param num_lstm_layers: Number of layers in the LSTM model
+        input_size: The number of expected features in the input x
+        num_past: Number of time steps to look backwards to predict num_future steps forward
+        batch_size: Number of samples in a batch
+        hidden_size: The number of features in the hidden state h
+        num_lstm_layers: Number of layers in the LSTM model
 
-        :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
-        :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+        batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+        dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                         with dropout probability equal to dropout
-        :param reset_state: If True, will reset the hidden and cell state for each batch of data
-        :param bidirectional:  If True, becomes a bidirectional LSTM
+        reset_state: If True, will reset the hidden and cell state for each batch of data
+        bidirectional:  If True, becomes a bidirectional LSTM
         """
 
     def __init__(
@@ -129,17 +129,17 @@ class DisentangledAELatent(torch.nn.Module):
 class LSTMDecoder(torch.nn.Module):
 
     """ Implementation of Decoder network using LSTM layers
-        :param input_size: The number of expected features in the input x
-        :param num_future: Number of time steps to be predicted given the num_past steps
-        :param batch_size: Number of samples in a batch
-        :param hidden_size: The number of features in the hidden state h
-        :param num_lstm_layers: Number of layers in the LSTM model
-        :param output_size: Number of expectd features in the output x_
-        :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
-        :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+        input_size: The number of expected features in the input x
+        num_future: Number of time steps to be predicted given the num_past steps
+        batch_size: Number of samples in a batch
+        hidden_size: The number of features in the hidden state h
+        num_lstm_layers: Number of layers in the LSTM model
+        output_size: Number of expectd features in the output x_
+        batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+        dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                         with dropout probability equal to dropout
-        :param reset_state: If True, will reset the hidden and cell state for each batch of data
-        :param bidirectional:  If True, becomes a bidirectional LSTM
+        reset_state: If True, will reset the hidden and cell state for each batch of data
+        bidirectional:  If True, becomes a bidirectional LSTM
         """
 
     def __init__(
@@ -213,12 +213,12 @@ class LSTMDecoder(torch.nn.Module):
 
 class MLPClassifier(torch.nn.Module):
     """ MLP classifier: Classify the input data using the latent embeddings
-            :param input_size: The number of expected latent size
-            :param hidden_size: The number of features in the hidden state h
-            :param num_classes: Size of labels or the number of categories in the data
-            :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+            input_size: The number of expected latent size
+            hidden_size: The number of features in the hidden state h
+            num_classes: Size of labels or the number of categories in the data
+            dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                             with dropout probability equal to dropout
-            :param num_classifier_layers: Number of hidden layers in the classifier
+            num_classifier_layers: Number of hidden layers in the classifier
             """
 
     def __init__(
@@ -261,17 +261,17 @@ class MultiModelVAE(torch.nn.Module):
     """Implementation of Multimodel Variational autoencoders; This Module wraps the Variational Autoencoder
     models [Encoder,Latent[Sampler],Decoder]. If classify=True, then the wrapper also include classification layers
 
-    :param input_size: The number of expected features in the input x
-    :param num_future: Number of time steps to be predicted given the num_past steps
-    :param batch_size: Number of samples in a batch
-    :param hidden_size: The number of features in the hidden state h
-    :param num_lstm_layers: Number of layers in the LSTM model
-    :param output_size: Number of expectd features in the output x_
-    :param batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
-    :param dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+    input_size: The number of expected features in the input x
+    num_future: Number of time steps to be predicted given the num_past steps
+    batch_size: Number of samples in a batch
+    hidden_size: The number of features in the hidden state h
+    num_lstm_layers: Number of layers in the LSTM model
+    output_size: Number of expectd features in the output x_
+    batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+    dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                     with dropout probability equal to dropout
-    :param reset_state: If True, will reset the hidden and cell state for each batch of data
-    :param bidirectional:  If True, becomes a bidirectional LSTM
+    reset_state: If True, will reset the hidden and cell state for each batch of data
+    bidirectional:  If True, becomes a bidirectional LSTM
     """
 
     def __init__(
@@ -356,13 +356,16 @@ class MultiModelVAE(torch.nn.Module):
 
     def forward(self, data, training=True, classify=False):
         """
-        :param data: Train or test data
-        :param training: If Training= False, latents are deterministic
-        :param classify: If True, perform classification of input data using the latent embeddings
-        :return: decoder_out,latent_out or classifier out
+        Parameters:
+        -----------
+            data: Train or test data
+            training: If Training= False, latents are deterministic
+            classify: If True, perform classification of input data using the latent embeddings
+        Return:
+        ------- 
+            decoder_out,latent_out or classifier out
         """
         if not classify:
-
             # Set the classifier grad off
             if self.num_classes is not None:
                 for param in self.classifier.parameters():

@@ -107,15 +107,16 @@ class HybridTrainer(object):
     def __str__(self):
         return f"Training model type {self.model_type}"
 
-    def fit(self, train_loader, test_loader, model_save_path=None, training_mode='forecasting', epochs=50):
+    def fit(self, dataloaders, model_save_path=None, training_mode='forecasting', epochs=50):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseriesis_classification
         
         Parameters:
         -----------
-        train_loader: Dataloader object of train dataset with batch [data,target,category] as a tuple
-        test_loader: Dataloader object of test dataset with [data,target,category] as a tuple
+        dataloaders: Dictionary containing train and test dataloaders
+                train_loader: Dataloader object of train dataset with batch data [data,target,category]
+                test_loader: Dataloader object of test dataset with [data,target,category]
         model_save_path: Directory path to save the model
         training_mode: Type of training ('forecasting', 'classification')
         epochs: Number of epochs to train
@@ -139,6 +140,7 @@ class HybridTrainer(object):
             classifier_scheduler,
         ) = self.model_lrschedulers.values()
 
+        train_loader, test_loader = dataloaders.values()
         # Training
         for epoch in range(epochs):
             test_loss_forecasting = 0
@@ -381,17 +383,19 @@ class LSTMTrainer:
             factor=self.lr_factor, patience=self.scheduler_patience
         )
 
-    def fit(self, train_loader, test_loader, model_save_path):
+    def fit(self, dataloaders, model_save_path):
 
         """ Implements the batch wise training and testing for time series forecasting. 
         Args:
-            train_loader: Dataloader object of train dataset with batch data [data,target,category]
-            test_loader: Dataloader object of test dataset with [data,target,category]
+            dataloaders: Dictionary containing train and test dataloaders
+                train_loader: Dataloader object of train dataset with batch data [data,target,category]
+                test_loader: Dataloader object of test dataset with [data,target,category]
             model_save_path: Directory path to save the model
         Return: None"""
 
         assert self.model_type == "lstm"
         self.model.to(device)
+        train_loader, test_loader = dataloaders.values()
 
         for epoch in range(self.epochs):
             if epoch > 0:
@@ -477,13 +481,14 @@ class CustomTrainer:
         )
         self.viz = True
 
-    def fit(self, train_loader, test_loader, model_save_path):
+    def fit(self, dataloaders, model_save_path):
 
         """ Implements the batch wise training and testing for time series forecasting
             Save train, test and validation performance in forecasting/classification tasks as a performance.csv
         Args:
-            train_loader: Dataloader object of train dataset with batch data [data,target,category]
-            test_loader: Dataloader object of test dataset with [data,target,category]
+            dataloaders: Dictionary containing train and test dataloaders
+                train_loader: Dataloader object of train dataset with batch data [data,target,category]
+                test_loader: Dataloader object of test dataset with [data,target,category]
             model_save_path: Directory path to save the model
         Return:
             None
@@ -507,7 +512,7 @@ class CustomTrainer:
 
         # Training loop
         self.model.to(device)
-
+        train_loader, test_loader = dataloaders.values()
         for epoch in range(self.epochs):
             if epoch > 0:
                 self.model.train()
