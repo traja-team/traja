@@ -15,4 +15,3 @@ torch
 pytest
 h5py
 ipython
-rpy2
