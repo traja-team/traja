@@ -61,7 +61,7 @@ def save(model, hyperparameters, PATH=None):
             json.dump(hyperparameters, fp, sort_keys=False)
     if hyperdir == "":
         hyperdir = "."
-    print("Model and hyperparameters saved at {hyperdir}")
+    print(f"Model and hyperparameters saved at {hyperdir}")
 
 
 def load(model, PATH=None):
