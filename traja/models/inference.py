@@ -47,7 +47,7 @@ class Generator:
             self.model = model(**self.model_hyperparameters)
 
         (
-            self.generated_self.generated_categoryegory,
+            self.generated_category,
             self.target_data,
             self.target_data_,
             self.generated_data,
