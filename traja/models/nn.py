@@ -2,9 +2,9 @@
 """Pytorch visualization code modified from Chad Jensen's implementation
 (https://discuss.pytorch.org/t/lstm-for-sequence-prediction/22021/3)."""
 import logging
+
 import matplotlib.pyplot as plt
 import numpy as np
-from torch.utils.data import sampler
 
 try:
     import torch
@@ -17,11 +17,7 @@ import torch.optim as optim
 import os
 import pandas as pd
 from time import time
-from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime
-from sklearn.model_selection import train_test_split
-from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
-import torchvision.transforms as transforms
 
 nb_steps = 10
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

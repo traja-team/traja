@@ -1,12 +1,12 @@
 import torch
-from traja.models.utils import TimeDistributed
 from torch import nn
+
+from traja.models.utils import TimeDistributed
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class LSTMEncoder(torch.nn.Module):
-
     """ Implementation of Encoder network using LSTM layers
         Parameters:
         -----------
@@ -24,18 +24,17 @@ class LSTMEncoder(torch.nn.Module):
     """
 
     def __init__(
-        self,
-        input_size: int,
-        num_past: int,
-        batch_size: int,
-        hidden_size: int,
-        num_lstm_layers: int,
-        batch_first: bool,
-        dropout: float,
-        reset_state: bool,
-        bidirectional: bool,
+            self,
+            input_size: int,
+            num_past: int,
+            batch_size: int,
+            hidden_size: int,
+            num_lstm_layers: int,
+            batch_first: bool,
+            dropout: float,
+            reset_state: bool,
+            bidirectional: bool,
     ):
-
         super(LSTMEncoder, self).__init__()
 
         self.input_size = input_size
@@ -60,11 +59,11 @@ class LSTMEncoder(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
         )
 
     def forward(self, x):
@@ -92,7 +91,6 @@ class DisentangledAELatent(torch.nn.Module):
 
 
 class LSTMDecoder(torch.nn.Module):
-
     """ Implementation of Decoder network using LSTM layers
         Parameters:
         ------------
@@ -111,17 +109,17 @@ class LSTMDecoder(torch.nn.Module):
     """
 
     def __init__(
-        self,
-        batch_size: int,
-        num_future: int,
-        hidden_size: int,
-        num_lstm_layers: int,
-        output_size: int,
-        latent_size: int,
-        batch_first: bool,
-        dropout: float,
-        reset_state: bool,
-        bidirectional: bool,
+            self,
+            batch_size: int,
+            num_future: int,
+            hidden_size: int,
+            num_lstm_layers: int,
+            output_size: int,
+            latent_size: int,
+            batch_first: bool,
+            dropout: float,
+            reset_state: bool,
+            bidirectional: bool,
     ):
         super(LSTMDecoder, self).__init__()
         self.batch_size = batch_size
@@ -151,11 +149,11 @@ class LSTMDecoder(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-            .requires_grad_()
-            .to(device),
+                .requires_grad_()
+                .to(device),
         )
 
     def forward(self, x, num_future=None):
@@ -180,7 +178,6 @@ class LSTMDecoder(torch.nn.Module):
 
 
 class MLPClassifier(torch.nn.Module):
-
     """ MLP classifier: Classify the input data using the latent embeddings
         Parameters:
         -----------
@@ -193,13 +190,13 @@ class MLPClassifier(torch.nn.Module):
             """
 
     def __init__(
-        self,
-        input_size: int,
-        hidden_size: int,
-        num_classes: int,
-        latent_size: int,
-        num_classifier_layers: int,
-        dropout: float,
+            self,
+            input_size: int,
+            hidden_size: int,
+            num_classes: int,
+            latent_size: int,
+            num_classifier_layers: int,
+            dropout: float,
     ):
         super(MLPClassifier, self).__init__()
 
@@ -228,7 +225,6 @@ class MLPClassifier(torch.nn.Module):
 
 
 class MultiModelAE(torch.nn.Module):
-
     """Implementation of Multimodel  autoencoders; This Module wraps the  Autoencoder
     models [Encoder,Latent,Decoder]. If classify=True, then the wrapper also include classification layers
     
@@ -249,22 +245,25 @@ class MultiModelAE(torch.nn.Module):
     """
 
     def __init__(
-        self,
-        input_size: int,
-        num_past: int,
-        batch_size: int,
-        num_future: int,
-        lstm_hidden_size: int,
-        num_lstm_layers: int,
-        output_size: int,
-        latent_size: int,
-        batch_first: bool,
-        dropout: float,
-        reset_state: bool,
-        bidirectional: bool = False,
-        num_classifier_layers: int = None,
-        classifier_hidden_size: int = None,
-        num_classes: int = None,
+            self,
+            input_size: int,
+            num_past: int,
+            batch_size: int,
+            num_future: int,
+            lstm_hidden_size: int,
+            num_lstm_layers: int,
+            output_size: int,
+            latent_size: int,
+            batch_first: bool,
+            dropout: float,
+            reset_state: bool,
+            bidirectional: bool = False,
+            num_classifier_layers: int = None,
+            classifier_hidden_size: int = None,
+            num_classes: int = None,
+            num_regressor_layers: int = None,
+            regressor_hidden_size: int = None,
+            num_regressor_parameters: int = None,
     ):
 
         super(MultiModelAE, self).__init__()
@@ -283,6 +282,12 @@ class MultiModelAE(torch.nn.Module):
         self.dropout = dropout
         self.reset_state = reset_state
         self.bidirectional = bidirectional
+        self.num_regressor_layers = num_regressor_layers
+        self.regressor_hidden_size = regressor_hidden_size
+        self.num_regressor_parameters = num_regressor_parameters
+
+        # Let the trainer know what kind of model this is
+        self.model_type = 'ae'
 
         self.encoder = LSTMEncoder(
             input_size=self.input_size,
@@ -325,6 +330,16 @@ class MultiModelAE(torch.nn.Module):
                 dropout=self.dropout,
             )
 
+        if self.num_regressor_parameters is not None:
+            self.regressor = MLPClassifier(
+                input_size=self.latent_size,
+                hidden_size=self.regressor_hidden_size,
+                num_classes=self.num_regressor_parameters,
+                latent_size=self.latent_size,
+                num_classifier_layers=self.num_regressor_layers,
+                dropout=self.dropout,
+            )
+
     def get_ae_parameters(self):
         """
         Return:
@@ -346,7 +361,7 @@ class MultiModelAE(torch.nn.Module):
         assert self.classifier_hidden_size is not None, "Classifier not found"
         return [self.classifier.parameters()]
 
-    def forward(self, data, classify=False, training=True):
+    def forward(self, data, classify=False, regress=False, training=True, latent=True):
         """
         Parameters:
         -----------
@@ -357,11 +372,15 @@ class MultiModelAE(torch.nn.Module):
         -------
             decoder_out,latent_out or classifier out
         """
+        assert not (classify and regress), 'Model cannot both classify and regress!'
 
-        if not classify:
-            # Set the classifier grad off
+        if not (classify or regress):
+            # Set the classifier and regressor grads off
             if self.num_classes is not None:
                 for param in self.classifier.parameters():
+                    param.requires_grad = False
+            if self.num_regressor_parameters is not None:
+                for param in self.regressor.parameters():
                     param.requires_grad = False
 
             for param in self.encoder.parameters():
@@ -375,14 +394,20 @@ class MultiModelAE(torch.nn.Module):
             enc_out = self.encoder(data)
             latent_out = self.latent(enc_out)
             decoder_out = self.decoder(latent_out)
-            return decoder_out, latent_out
+            if latent:
+                return decoder_out, latent_out
+            else:
+                return decoder_out
 
-        else:  # Classify
+        elif classify:  # Classify
             # Unfreeze classifier and freeze the rest
             assert self.num_classifier_layers is not None, "Classifier not found"
 
             for param in self.classifier.parameters():
                 param.requires_grad = True
+            if self.num_regressor_parameters is not None:
+                for param in self.regressor.parameters():
+                    param.requires_grad = False
             for param in self.encoder.parameters():
                 param.requires_grad = False
             for param in self.decoder.parameters():
@@ -396,3 +421,26 @@ class MultiModelAE(torch.nn.Module):
 
             classifier_out = self.classifier(latent_out)  # Deterministic
             return classifier_out
+
+        elif regress:
+            # Unfreeze regressor and freeze the rest
+            assert self.num_regressor_layers is not None, "Regressor not found"
+
+            if self.num_classes is not None:
+                for param in self.classifier.parameters():
+                    param.requires_grad = False
+            for param in self.regressor.parameters():
+                param.requires_grad = True
+            for param in self.encoder.parameters():
+                param.requires_grad = False
+            for param in self.decoder.parameters():
+                param.requires_grad = False
+            for param in self.latent.parameters():
+                param.requires_grad = False
+
+            # Encoder-->Latent-->Regressor
+            enc_out = self.encoder(data)
+            latent_out = self.latent(enc_out)
+
+            regressor_out = self.regressor(latent_out)  # Deterministic
+            return regressor_out

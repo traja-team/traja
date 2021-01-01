@@ -1,8 +1,16 @@
 pandas
-numpy
+numpy==1.18.5
 matplotlib
 shapely
 psutil
 scipy
+sklearn
 sphinx-gallery
 fastdtw
+plotly
+networkx
+seaborn
+torch
+pytest
+h5py
+rpy2

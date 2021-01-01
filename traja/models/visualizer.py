@@ -1,32 +1,14 @@
-import os, sys
-from matplotlib.pyplot import figimage
-import networkx as nx
-import pandas as pd
-import numpy as np
-import scipy
-import sklearn
-from sklearn import neighbors
-from scipy.sparse import csgraph
-from sklearn.neighbors import radius_neighbors_graph
-from sklearn.neighbors import kneighbors_graph
-from mpl_toolkits.mplot3d import Axes3D
-import seaborn as sns
-import argparse, copy, h5py, os, sys, time, socket
-import tensorflow as tf
-import torch, torchvision, torch.nn as nn
-import torch.optim as optim
-import torchvision.transforms as transforms
-from matplotlib import ticker, colors
-import plotly.express as px
-
-
-import matplotlib
-
 # matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
-from matplotlib import cm
+import networkx as nx
+import numpy as np
+import plotly.express as px
+import scipy
 from matplotlib import style
+from mpl_toolkits.mplot3d import Axes3D
+from scipy.sparse import csgraph
+from sklearn import neighbors
+from sklearn.neighbors import radius_neighbors_graph
 
 # plt.switch_backend("TkAgg")
 
@@ -306,7 +288,6 @@ if __name__ == "__main__":
 
 class Network:
     def __init__(self, activity, weights):
-
         pass
 
     def show(self):
@@ -321,4 +302,3 @@ class ShowManifold:
     def show(self):
         fig = None
         return fig
-

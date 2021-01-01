@@ -1,10 +1,5 @@
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from traja.models.generative_models.vae import MultiModelVAE
-from traja.models.predictive_models.ae import MultiModelAE
-from traja.models.predictive_models.lstm import LSTM
-from traja.models.predictive_models.irl import MultiModelIRL
-from traja.models.generative_models.vaegan import MultiModelVAEGAN
 
 
 class Optimizer:
@@ -41,7 +36,13 @@ class Optimizer:
         self.optimizer_type = optimizer_type
         self.classify = classify
         self.optimizers = {}
-        self.schedulers = {}
+        self.forecasting_schedulers = {}
+        self.classification_schedulers = {}
+        self.regression_schedulers = {}
+
+        self.forecasting_keys = ['encoder', 'decoder', 'latent']
+        self.classification_keys = ['classifier']
+        self.regression_keys = ['regressor']
 
     def get_optimizers(self, lr=0.0001):
         """Optimizers for each network in the model
@@ -56,32 +57,29 @@ class Optimizer:
         """
 
         if self.model_type in ["lstm", "custom"]:
-            self.optimizers = getattr(torch.optim, f"{self.optimizer_type}")(
+            self.optimizers['encoder'] = getattr(torch.optim, f"{self.optimizer_type}")(
                 self.model.parameters(), lr=lr
             )
 
         elif self.model_type in ["ae", "vae"]:
-            keys = ["encoder", "decoder", "latent", "classifier"]
-            for network in keys:
-                if network != "classifier":
-                    self.optimizers[network] = getattr(
+            keys = ['encoder', 'decoder', 'latent', 'classifier', 'regressor']
+            for key in keys:
+                network = getattr(self.model, f"{key}", None)
+                if network is not None:
+                    self.optimizers[key] = getattr(
                         torch.optim, f"{self.optimizer_type}"
-                    )(getattr(self.model, f"{network}").parameters(), lr=lr)
-
-            if self.classify:
-                self.optimizers["classifier"] = getattr(
-                    torch.optim, f"{self.optimizer_type}"
-                )(getattr(self.model, "classifier").parameters(), lr=lr)
-            else:
-                self.optimizers["classifier"] = None
+                    )(network.parameters(), lr=lr)
 
         elif self.model_type == "vaegan":
             return NotImplementedError
 
-        else:  #  self.model_type == "irl":
+        else:  # self.model_type == "irl":
             return NotImplementedError
 
-        return self.optimizers
+        forecasting_optimizers = [self.optimizers[key] for key in self.forecasting_keys if key in self.optimizers]
+        classification_optimizers = [self.optimizers[key] for key in self.classification_keys if key in self.optimizers]
+        regression_optimizers = [self.optimizers[key] for key in self.regression_keys if key in self.optimizers]
+        return forecasting_optimizers, classification_optimizers, regression_optimizers
 
     def get_lrschedulers(self, factor: float, patience: int):
 
@@ -96,61 +94,38 @@ class Optimizer:
             [dict]: Learning rate schedulers
 
         """
-        if self.model_type in ["lstm", "custom"]:
-            assert not isinstance(self.optimizers, dict)
-            self.schedulers = ReduceLROnPlateau(
-                self.optimizers,
+
+        if self.model_type == "irl" or self.model_type == 'vaegan':
+            return NotImplementedError
+
+        forecasting_keys = [key for key in self.forecasting_keys if key in self.optimizers]
+        classification_keys = [key for key in self.classification_keys if key in self.optimizers]
+        regression_keys = [key for key in self.regression_keys if key in self.optimizers]
+
+        for network in forecasting_keys:
+            self.forecasting_schedulers[network] = ReduceLROnPlateau(
+                self.optimizers[network],
                 mode="max",
                 factor=factor,
                 patience=patience,
                 verbose=True,
             )
-        elif self.model_type in ["ae", "vae"]:
-            for network in self.optimizers.keys():
-                if self.optimizers[network] is not None:
-                    self.schedulers[network] = ReduceLROnPlateau(
-                        self.optimizers[network],
-                        mode="max",
-                        factor=factor,
-                        patience=patience,
-                        verbose=True,
-                    )
-            if not self.classify:
-                self.schedulers["classifier"] = None
+        for network in classification_keys:
+            self.classification_schedulers[network] = ReduceLROnPlateau(
+                self.optimizers[network],
+                mode="max",
+                factor=factor,
+                patience=patience,
+                verbose=True,
+            )
 
-        elif self.model_type == "irl":
-            return NotImplementedError
+        for network in regression_keys:
+            self.regression_schedulers[network] = ReduceLROnPlateau(
+                self.optimizers[network],
+                mode="max",
+                factor=factor,
+                patience=patience,
+                verbose=True,
+            )
 
-        else:  # self.model_type == 'vaegan':
-            return NotImplementedError
-
-        return self.schedulers
-
-
-if __name__ == "__main__":
-    # Test
-    model_type = "custom"
-    model = MultiModelAE(
-        input_size=2,
-        num_past=10,
-        batch_size=5,
-        num_future=5,
-        lstm_hidden_size=32,
-        num_lstm_layers=2,
-        classifier_hidden_size=32,
-        num_classifier_layers=4,
-        output_size=2,
-        num_classes=10,
-        latent_size=10,
-        batch_first=True,
-        dropout=0.2,
-        reset_state=True,
-        bidirectional=True,
-    )
-
-    # Get the optimizers
-    opt = Optimizer(model_type, model, optimizer_type="RMSprop")
-    model_optimizers = opt.get_optimizers(lr=0.1)
-    model_schedulers = opt.get_lrschedulers(factor=0.1, patience=10)
-
-    print(model_optimizers, model_schedulers)
+        return self.forecasting_schedulers, self.classification_schedulers, self.regression_schedulers
