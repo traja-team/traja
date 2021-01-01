@@ -46,7 +46,7 @@ class Generator:
             assert model is not None
             self.model = model(**self.model_hyperparameters)
 
-        (self.generated_category, self.generated_data,) = (None, None, None, None, None)
+        (self.generated_category, self.generated_data,) = (None, None)
 
     def generate(self, num_steps, classify=True, scaler=None):
 
