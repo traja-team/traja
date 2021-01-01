@@ -15,11 +15,11 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class Generator:
     def __init__(
-            self,
-            model_type: str = None,
-            model_path: str = None,
-            model_hyperparameters: dict = None,
-            model: torch.nn.Module = None,
+        self,
+        model_type: str = None,
+        model_path: str = None,
+        model_hyperparameters: dict = None,
+        model: torch.nn.Module = None,
     ):
         """Generate a batch of future steps from a random latent state of Multi variate multi label models 
 
@@ -56,8 +56,8 @@ class Generator:
                     self.model_hyperparameters["batch_size"],
                     self.model_hyperparameters["latent_size"],
                 )
-                    .normal_(mean=0, std=0.1)
-                    .to(device)
+                .normal_(mean=0, std=0.1)
+                .to(device)
             )
             # Generate trajectories from the noise
             self.generated_data = (
@@ -110,7 +110,7 @@ class Generator:
                         try:
                             label = "Animal ID {}".format(
                                 (
-                                        torch.max(self.generated_category, 1).indices + 1
+                                    torch.max(self.generated_category, 1).indices + 1
                                 ).detach()[i + j]
                             )
                         except Exception as error:
@@ -119,10 +119,10 @@ class Generator:
                         label = ""
                     ax[i, j].plot(
                         self.generated_data[:, 0][
-                        (i + j) * num_steps: (i + j) * num_steps + num_steps
+                            (i + j) * num_steps : (i + j) * num_steps + num_steps
                         ],
                         self.generated_data[:, 1][
-                        (i + j) * num_steps: (i + j) * num_steps + num_steps
+                            (i + j) * num_steps : (i + j) * num_steps + num_steps
                         ],
                         label=label,
                         color="g",
@@ -150,11 +150,11 @@ class Generator:
 
 class Predictor:
     def __init__(
-            self,
-            model_type: str = None,
-            model_path: str = None,
-            model_hyperparameters: dict = None,
-            model: torch.nn.Module = None,
+        self,
+        model_type: str = None,
+        model_path: str = None,
+        model_hyperparameters: dict = None,
+        model: torch.nn.Module = None,
     ):
         """Generate a batch of future steps from a random latent state of Multi variate multi label models 
 
@@ -170,8 +170,12 @@ class Predictor:
         self.model_hyperparameters = model_hyperparameters
 
         if self.model_type == "ae":
-            self.model = MultiModelAE(num_regressor_layers=2, regressor_hidden_size=32, num_regressor_parameters=3,
-                                      **self.model_hyperparameters)
+            self.model = MultiModelAE(
+                num_regressor_layers=2,
+                regressor_hidden_size=32,
+                num_regressor_parameters=3,
+                **self.model_hyperparameters,
+            )
 
         if self.model_type == "lstm":
             self.model = LSTM(**self.model_hyperparameters)
@@ -184,7 +188,7 @@ class Predictor:
             self.model = model(**self.model_hyperparameters)
 
         (
-            self.predicted_self.generated_categoryegory,
+            self.predicted_category,
             self.target_data,
             self.target_data_,
             self.predicted_data,
@@ -207,15 +211,13 @@ class Predictor:
 
         self.model.to(device)
         if self.model_type == "ae":
-            for data, target, self.generated_categoryegory in data_loader:
+            for data, target, self.generated_category in data_loader:
                 data, target = data.to(device), target.to(device)
-                enc_self.generated_data = self.model.encoder(data)
-                latent_self.generated_data = self.model.latent(enc_self.generated_data)
-                self.predicted_data = self.model.decoder(latent_self.generated_data)
+                self.predicted_data = self.model.encoder(data)
+                self.predicted_data = self.model.latent(self.generated_data)
+                self.predicted_data = self.model.decoder(self.generated_data)
                 if classify:
-                    self.predicted_self.generated_categoryegory = self.model.classifier(
-                        latent_self.generated_data
-                    )
+                    self.generated_category = self.model.classifier(self.predicted_data)
 
                 target = target.cpu().detach().numpy()
                 target = target.reshape(
@@ -238,7 +240,7 @@ class Predictor:
                 # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 predicted_data = np.array(
                     [
-                        self.predicted_data[i: i + num_steps]
+                        self.predicted_data[i : i + num_steps]
                         for i in range(0, len(self.predicted_data), num_steps)
                     ]
                 )
@@ -253,7 +255,7 @@ class Predictor:
                 # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 self.target_data = np.array(
                     [
-                        self.target_data[i: i + num_steps]
+                        self.target_data[i : i + num_steps]
                         for i in range(0, len(self.target_data), num_steps)
                     ]
                 )
@@ -274,22 +276,22 @@ class Predictor:
                     for j in range(5):
                         ax[i, j].plot(
                             predicted_data_[:, 0][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             predicted_data_[:, 1][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
-                            label=f"Predicted ID {self.predicted_self.generated_categoryegory[i + j]}",
+                            label=f"Predicted ID {self.generated_categoryegory[i+j]}",
                         )
 
                         ax[i, j].plot(
                             self.target_data_[:, 0][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             self.target_data_[:, 1][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
-                            label=f"Target ID {self.generated_categoryegory[i + j]}",
+                            label=f"Target ID {self.generated_category[i + j]}",
                             color="g",
                         )
                         ax[i, j].legend()
