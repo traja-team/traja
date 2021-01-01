@@ -189,14 +189,9 @@ class HybridTrainer(object):
                             optimizer.step()
 
                     elif training_mode == "classification":
-                        if self.model_type == "vae":
-                            classifier_out, latent_out, mu, logvar = self.model(
-                                data, training=True, classify=True
-                            )
-                        else:  # 'ae', 'lstm'
-                            classifier_out = self.model(
-                                data, training=True, classify=True
-                            )
+                        classifier_out = self.model(
+                            data, training=True, classify=True, latent=False
+                        )
                         loss = Criterion().classifier_criterion(
                             classifier_out, (category - 1).long()
                         )
