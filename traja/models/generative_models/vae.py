@@ -89,7 +89,6 @@ class LSTMEncoder(torch.nn.Module):
                 .to(device),
         )
 
-
     def forward(self, x):
         (h0, c0) = self._init_hidden()
         enc_output, _ = self.lstm_encoder(x, (h0.detach(), c0.detach()))
@@ -108,8 +107,9 @@ class DisentangledAELatent(torch.nn.Module):
         self.hidden_size = hidden_size
         self.dropout = dropout
         self.latent = torch.nn.Linear(self.hidden_size, self.latent_size * 2)
-   
-    def reparameterize(self, mu, logvar, training= True):
+
+    @staticmethod
+    def reparameterize(mu, logvar, training=True):
         if training:
             std = logvar.mul(0.5).exp_()
             eps = std.data.new(std.size()).normal_()
@@ -230,7 +230,7 @@ class MLPClassifier(torch.nn.Module):
             dropout: float,
     ):
         super(MLPClassifier, self).__init__()
-        self.latent_size = latent_size
+
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_classes = num_classes
@@ -398,11 +398,9 @@ class MultiModelVAE(torch.nn.Module):
             for param in self.latent.parameters():
                 param.requires_grad = True
 
-            # Encoder
+            # Encoder -->Latent --> Decoder
             enc_out = self.encoder(data)
-            # Latent
-            latent_out, mu, logvar = self.latent(enc_out, training=training)
-            # Decoder
+            latent_out, mu, logvar = self.latent(enc_out)
             decoder_out = self.decoder(latent_out)
             if latent:
                 return decoder_out, latent_out, mu, logvar
@@ -425,11 +423,10 @@ class MultiModelVAE(torch.nn.Module):
             for param in self.latent.parameters():
                 param.requires_grad = False
 
-            # Encoder
+            # Encoder -->Latent --> Classifier
             enc_out = self.encoder(data)
-            # Latent
             latent_out, mu, logvar = self.latent(enc_out, training=training)
-            # Classifier
+
             classifier_out = self.classifier(mu)  # Deterministic
             if latent:
                 return classifier_out, latent_out, mu, logvar

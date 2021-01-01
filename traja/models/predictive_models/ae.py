@@ -199,7 +199,7 @@ class MLPClassifier(torch.nn.Module):
             dropout: float,
     ):
         super(MLPClassifier, self).__init__()
-        self.latent_size = latent_size
+
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_classes = num_classes
