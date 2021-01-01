@@ -9,5 +9,4 @@ plotly
 networkx
 seaborn
 torch
-pytest
 h5py
