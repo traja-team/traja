@@ -11,6 +11,8 @@ class Optimizer:
         latent and classifier. In case of 'lstm', var optimizers is an optimizer for lstm and TimeDistributed(linear layer)
         :param model_type: Type of model 'ae', 'vae' or 'lstm'
         :param model: Model instance
+        :param classify: If True, will return the Optimizer and scheduler for classifier
+
         :param optimizer_type: Optimizer to be used; Should be one in ['Adam', 'Adadelta', 'Adagrad', 'AdamW', 'SparseAdam', 'RMSprop', 'Rprop',
                                        'LBFGS', 'ASGD', 'Adamax']
         """
@@ -32,6 +34,7 @@ class Optimizer:
         self.model_type = model_type
         self.model = model
         self.optimizer_type = optimizer_type
+        self.classify = classify
         self.optimizers = {}
         self.forecasting_schedulers = {}
         self.classification_schedulers = {}
@@ -49,7 +52,8 @@ class Optimizer:
             lr (float, optional): Optimizer learning rate. Defaults to 0.0001.
 
         Returns:
-            [type]: [description]
+            dict: Optimizers
+
         """
 
         if self.model_type in ["lstm", "custom"]:
@@ -87,7 +91,8 @@ class Optimizer:
             patience (int, optional): [description]. Defaults to 10.
 
         Returns:
-            [dict]: [description]
+            [dict]: Learning rate schedulers
+
         """
 
         if self.model_type == "irl" or self.model_type == 'vaegan':

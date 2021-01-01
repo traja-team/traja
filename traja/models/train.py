@@ -6,7 +6,7 @@ from . import visualizer
 from .losses import Criterion
 from .optimizers import Optimizer
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class HybridTrainer(object):
@@ -119,7 +119,7 @@ class HybridTrainer(object):
     def __str__(self):
         return f"Training model type {self.model_type}"
 
-    def fit(self, train_loader, test_loader, model_save_path=None, training_mode='forecasting', epochs=50):
+    def fit(self, dataloaders, model_save_path=None, training_mode='forecasting', epochs=50):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseriesis_classification
@@ -177,9 +177,12 @@ class HybridTrainer(object):
                             )
                             loss = Criterion().ae_criterion(decoder_out, target)
                         else:  # vae
-                            decoder_out, latent_out, mu, logvar = self.model(data, training=True,
-                                                                             is_classification=False)
-                            loss = Criterion().vae_criterion(decoder_out, target, mu, logvar)
+                            decoder_out, latent_out, mu, logvar = self.model(
+                                data, training=True, classify=False
+                            )
+                            loss = Criterion().vae_criterion(
+                                decoder_out, target, mu, logvar
+                            )
 
                         loss.backward()
                         for optimizer in self.forecasting_optimizers:
@@ -209,7 +212,11 @@ class HybridTrainer(object):
 
                     total_loss += loss
 
-                print('Epoch {} | {} loss {}'.format(epoch, training_mode, total_loss / (idx + 1)))
+                print(
+                    "Epoch {} | {} loss {}".format(
+                        epoch, training_mode, total_loss / (idx + 1)
+                    )
+                )
 
             # Testing
             if epoch % 10 == 0:
@@ -237,9 +244,13 @@ class HybridTrainer(object):
                             )
 
                         else:
-                            decoder_out, latent_out, mu, logvar = self.model(data, training=False,
-                                                                             is_classification=False)
-                            test_loss_forecasting += Criterion().vae_criterion(decoder_out, target, mu, logvar)
+                            decoder_out, latent_out, mu, logvar = self.model(
+                                data, training=False, classify=False
+                            )
+                            test_loss_forecasting += Criterion().vae_criterion(
+                                decoder_out, target, mu, logvar
+                            )
+
                         # Classification test
                         if self.classify:
                             category = category.long()
