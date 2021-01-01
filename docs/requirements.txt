@@ -4,7 +4,9 @@ matplotlib
 shapely
 scipy
 sklearn
+sphinx
 sphinx-gallery
+sphinx_rtd_theme
 fastdtw
 plotly
 networkx
@@ -12,4 +14,5 @@ seaborn
 torch
 pytest
 h5py
+ipython
 rpy2
