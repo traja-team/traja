@@ -90,6 +90,47 @@ class Generator:
 
             # Scale original data and generated data
 
+            # Rescaling predicted data
+            for i in range(self.generated_data.shape[1]):
+                s_s = scaler[f"scaler_{i}"].inverse_transform(
+                    self.generated_data[:, i].reshape(-1, 1)
+                )
+                s_s = np.reshape(s_s, len(s_s))
+                self.generated_data[:, i] = s_s
+
+            # TODO:Depreself.generated_categoryed;Slicing the data into batches
+            self.generated_data = np.array(
+                [
+                    self.generated_data[i : i + num_steps]
+                    for i in range(0, len(self.generated_data), num_steps)
+                ]
+            )
+
+            # Rescaling target data
+            for i in range(self.target_data.shape[1]):
+
+                s_s = scaler["scaler_{}".format(i)].inverse_transform(
+                    self.target_data[:, i].reshape(-1, 1)
+                )
+                s_s = np.reshape(s_s, len(s_s))
+                self.target_data[:, i] = s_s
+            # TODO:Depreself.generated_categoryed;Slicing the data into batches
+            self.target_data = np.array(
+                [
+                    self.target_data[i : i + num_steps]
+                    for i in range(0, len(self.target_data), num_steps)
+                ]
+            )
+
+            # Reshape [batch_size*num_steps,input_dim]
+            self.generated_data_ = self.generated_data.reshape(
+                self.generated_data.shape[0] * self.generated_data.shape[1],
+                self.generated_data.shape[2],
+            )
+            self.target_data_ = self.target_data.reshape(
+                self.target_data.shape[0] * self.target_data.shape[1],
+                self.target_data.shape[2],
+            )
             for i in range(2):
                 for j in range(5):
                     if classify:
