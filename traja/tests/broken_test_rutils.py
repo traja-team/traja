@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import numpy.testing as npt
-from rpy2 import rinterface
 from rpy2.rinterface import RRuntimeWarning
 
 import traja
