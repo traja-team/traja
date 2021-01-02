@@ -290,26 +290,65 @@ class MultiModalDataLoader:
         n_past: int,
         n_future: int,
         num_workers: int,
+        train_split_ratio: float,
+        validation_split_ratio: float = None,
     ):
+        self.df = df
+        self.batch_size = batch_size
+        self.n_past = n_past
+        self.n_future = n_future
+        self.num_workers = num_workers
+        self.train_split_ratio = train_split_ratio
+        self.validation_split_ratio = validation_split_ratio
+
+        if self.validation_split_ratio is not None:
+            # Prepare validation data before train and test and their splits
+            df_val = self.df.groupby("ID").tail(self.validation_split_ratio * len(df))
+
+            # Generate validation dataset
+            val_data, val_target, val_category = utils.generate_dataset(
+                df_val, self.n_past, self.n_future
+            )
+
+            # Scale validation data:
+            (val_x, self.val_x_scaler), (val_y, self.val_y_scaler) = (
+                utils.scale_data(val_data, sequence_length=self.n_past),
+                utils.scale_data(val_target, sequence_length=self.n_future),
+            )
+            # Generate Pytorch dataset
+            val_dataset = TimeSeriesDataset(val_x, val_y, val_category)
+
+            self.validation_loader = torch.utils.data.DataLoader(
+                dataset=val_dataset,
+                shuffle=False,
+                batch_size=self.batch_size,
+                sampler=None,
+                drop_last=True,
+                num_workers=self.num_workers,
+            )
+
+            # Create new df for train and test; Difference of df with df_val
+            df = df.loc[df.index.difference(df_val.index)]
 
         # Extract/generate data from the pandas df
         train_data, target_data, target_category = utils.generate_dataset(
-            df, n_past, n_future
+            df, self.n_past, self.n_future
         )
 
         # Shuffle and split the data
         [train_x, train_y, train_z], [test_x, test_y, test_z] = utils.shuffle_split(
-            train_data, target_data, target_category, train_ratio=0.75
+            train_data, target_data, target_category, train_split_ratio=0.75
         )
 
         # Scale data
+
         (train_x, self.train_x_scaler), (train_y, self.train_y_scaler) = (
-            utils.scale_data(train_x, sequence_length=n_past),
-            utils.scale_data(train_y, sequence_length=n_future),
+            utils.scale_data(train_x, sequence_length=self.n_past),
+            utils.scale_data(train_y, sequence_length=self.n_future),
         )
         (test_x, self.test_x_scaler), (test_y, self.test_y_scaler) = (
-            utils.scale_data(test_x, sequence_length=n_past),
-            utils.scale_data(test_y, sequence_length=n_future),
+            utils.scale_data(test_x, sequence_length=self.n_past),
+            utils.scale_data(test_y, sequence_length=self.n_future),
         )
 
         # Weighted Random Sampler
@@ -325,7 +364,7 @@ class MultiModalDataLoader:
         self.train_loader = torch.utils.data.DataLoader(
             dataset=train_dataset,
             shuffle=False,
-            batch_size=batch_size,
+            batch_size=self.batch_size,
             sampler=train_weighted_sampler,
             drop_last=True,
             num_workers=num_workers,
@@ -333,22 +372,38 @@ class MultiModalDataLoader:
         self.test_loader = torch.utils.data.DataLoader(
             dataset=test_dataset,
             shuffle=False,
-            batch_size=batch_size,
+            batch_size=self.batch_size,
             sampler=test_weighted_sampler,
             drop_last=True,
             num_workers=num_workers,
         )
+        if self.validation_split_ratio is not None:
 
-        self.dataloaders = {
-            "train_loader": self.train_loader,
-            "test_loader": self.test_loader,
-        }
-        self.scalers = {
-            "train_data_scaler": self.train_x_scaler,
-            "train_target_scaler": self.train_y_scaler,
-            "test_data_scaler": self.test_x_scaler,
-            "test_target_scaler": self.test_y_scaler,
-        }
+            self.dataloaders = {
+                "train_loader": self.train_loader,
+                "test_loader": self.test_loader,
+                "validation_loader": self.validation_loader,
+            }
+            self.scalers = {
+                "train_data_scaler": self.train_x_scaler,
+                "train_target_scaler": self.train_y_scaler,
+                "test_data_scaler": self.test_x_scaler,
+                "test_target_scaler": self.test_y_scaler,
+                "val_data_scaler": self.val_x_scaler,
+                "val_target_scaler": self.val_y_scaler,
+            }
+        else:
+
+            self.dataloaders = {
+                "train_loader": self.train_loader,
+                "test_loader": self.test_loader,
+            }
+            self.scalers = {
+                "train_data_scaler": self.train_x_scaler,
+                "train_target_scaler": self.train_y_scaler,
+                "test_data_scaler": self.test_x_scaler,
+                "test_target_scaler": self.test_y_scaler,
+            }
 
     def __new__(
         cls,
@@ -357,11 +412,21 @@ class MultiModalDataLoader:
         n_past: int,
         n_future: int,
         num_workers: int,
+        train_split_ratio: float,
+        validation_split_ratio: float = None,
     ):
         """Constructor of MultiModalDataLoader"""
         # Loader instance
         loader_instance = super(MultiModalDataLoader, cls).__new__(cls)
-        loader_instance.__init__(df, batch_size, n_past, n_future, num_workers)
+        loader_instance.__init__(
+            df,
+            batch_size,
+            n_past,
+            n_future,
+            num_workers,
+            train_split_ratio,
+            validation_split_ratio,
+        )
         # Return train and test loader attributes
         return loader_instance.dataloaders, loader_instance.scalers
 

@@ -39,19 +39,25 @@ def generate_dataset(df, n_past, n_future):
     Z: Sequence category"""
 
     # Split the dataframe with respect to IDs
-    series_ids = dict(tuple(df.groupby('ID')))  # Dict of ids as keys and x,y,id as values
+    series_ids = dict(
+        tuple(df.groupby("ID"))
+    )  # Dict of ids as keys and x,y,id as values
+
     train_data, target_data, target_category = list(), list(), list()
 
     for id in series_ids.keys():
         X, Y, Z = list(), list(), list()
-        # Drop the column ids and convert the pandas into arrays 
-        series = series_ids[id].drop(columns=['ID']).to_numpy()
+        # Drop the column ids and convert the pandas into arrays
+        series = series_ids[id].drop(columns=["ID"]).to_numpy()
         for window_start in range(len(series)):
             past_end = window_start + n_past
             future_end = past_end + n_future
             if not future_end > len(series):
                 # slicing the past and future parts of the window
-                past, future = series[window_start:past_end, :], series[past_end:future_end, :]
+                past, future = (
+                    series[window_start:past_end, :],
+                    series[past_end:future_end, :],
+                )
                 X.append(past)
                 Y.append(future)
                 # For each sequence length set target category
@@ -64,7 +70,12 @@ def generate_dataset(df, n_past, n_future):
     return train_data, target_data, target_category
 
 
-def shuffle_split(train_data: np.array, target_data: np.array, target_category: np.array, train_ratio: float):
+def shuffle_split(
+    train_data: np.array,
+    target_data: np.array,
+    target_category: np.array,
+    train_ratio: float,
+):
     """[summary]
 
     Args:
@@ -78,7 +89,9 @@ def shuffle_split(train_data: np.array, target_data: np.array, target_category: 
     """
 
     # Shuffle the IDs and the corresponding sequence , preserving the order
-    train_data, target_data, target_category = shuffle(train_data, target_data, target_category)
+    train_data, target_data, target_category = shuffle(
+        train_data, target_data, target_category
+    )
 
     assert train_ratio > 0, "Train data ratio should be greater than zero"
     assert train_ratio <= 1.0, "Train data ratio should be less than or equal to 1 "
@@ -115,10 +128,10 @@ def scale_data(data, sequence_length):
         scaler = MinMaxScaler(feature_range=(-1, 1))
         s_s = scaler.fit_transform(data[:, i].reshape(-1, 1))
         s_s = np.reshape(s_s, len(s_s))
-        scalers['scaler_' + str(i)] = scaler
+        scalers["scaler_" + str(i)] = scaler
         data[:, i] = s_s
     # Slice the data into batches
-    data = [data[i:i + sequence_length] for i in range(0, len(data), sequence_length)]
+    data = [data[i : i + sequence_length] for i in range(0, len(data), sequence_length)]
     return data, scalers
 
 
@@ -133,7 +146,7 @@ def weighted_random_samplers(train_z, test_z):
         [type]: [description]
     """
 
-    # Prepare weighted random sampler: 
+    # Prepare weighted random sampler:
     train_target_list = torch.tensor(train_z).type(torch.LongTensor)
     test_target_list = torch.tensor(test_z).type(torch.LongTensor)
 
@@ -142,11 +155,13 @@ def weighted_random_samplers(train_z, test_z):
     test_targets_, test_class_count = get_class_distribution(test_target_list)
 
     # Compute class weights
-    train_class_weights = 1. / torch.tensor(train_class_count, dtype=torch.float)
-    test_class_weights = 1. / torch.tensor(test_class_count, dtype=torch.float)
+    train_class_weights = 1.0 / torch.tensor(train_class_count, dtype=torch.float)
+    test_class_weights = 1.0 / torch.tensor(test_class_count, dtype=torch.float)
 
     # Assign weights to original target list
-    train_class_weights_all = train_class_weights[train_target_list - 1]  # Note the targets start from 1, to python idx
+    train_class_weights_all = train_class_weights[
+        train_target_list - 1
+    ]  # Note the targets start from 1, to python idx
     # to apply,-1
     test_class_weights_all = test_class_weights[test_target_list - 1]
 
@@ -154,11 +169,11 @@ def weighted_random_samplers(train_z, test_z):
     train_weighted_sampler = WeightedRandomSampler(
         weights=train_class_weights_all,
         num_samples=len(train_class_weights_all),
-        replacement=True
+        replacement=True,
     )
     test_weighted_sampler = WeightedRandomSampler(
         weights=test_class_weights_all,
         num_samples=len(test_class_weights_all),
-        replacement=True
+        replacement=True,
     )
     return train_weighted_sampler, test_weighted_sampler

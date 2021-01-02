@@ -42,20 +42,20 @@ class HybridTrainer(object):
 
     """
 
-    valid_models = ['ae', 'vae', 'lstm']
+    valid_models = ["ae", "vae", "lstm"]
 
     def __init__(
-            self,
-            model: torch.nn.Module,
-            optimizer_type: str,
-            loss_type: str = "huber",
-            lr: float = 0.001,
-            lr_factor: float = 0.1,
-            scheduler_patience: int = 10,
+        self,
+        model: torch.nn.Module,
+        optimizer_type: str,
+        loss_type: str = "huber",
+        lr: float = 0.001,
+        lr_factor: float = 0.1,
+        scheduler_patience: int = 10,
     ):
 
         assert (
-                model.model_type in HybridTrainer.valid_models
+            model.model_type in HybridTrainer.valid_models
         ), "Model type is {model_type}, valid models are {}".format(
             HybridTrainer.valid_models
         )
@@ -67,7 +67,7 @@ class HybridTrainer(object):
         self.lr_factor = lr_factor
         self.scheduler_patience = scheduler_patience
 
-        if model.model_type == 'lstm':
+        if model.model_type == "lstm":
             self.model_hyperparameters = {
                 "input_size": model.input_size,
                 "batch_size": model.batch_size,
@@ -100,26 +100,43 @@ class HybridTrainer(object):
             }
 
         self.model = model
-
+        self.validate = False
         # Classification, regression task checks
-        self.classify = True if model.model_type != 'lstm' and model.classifier_hidden_size is not None else False
-        self.regress = True if model.model_type != 'lstm' and model.regressor_hidden_size is not None else False
+        self.classify = (
+            True
+            if model.model_type != "lstm" and model.classifier_hidden_size is not None
+            else False
+        )
+        self.regress = (
+            True
+            if model.model_type != "lstm" and model.regressor_hidden_size is not None
+            else False
+        )
 
         # Model optimizer and the learning rate scheduler
         optimizer = Optimizer(
             self.model_type, self.model, self.optimizer_type, classify=self.classify
         )
 
-        self.forecasting_optimizers, self.classification_optimizers, self.regression_optimizers = optimizer.get_optimizers(
-            lr=self.lr)
-        self.forecasting_schedulers, self.classification_schedulers, self.regression_schedulers = optimizer.get_lrschedulers(
+        (
+            self.forecasting_optimizers,
+            self.classification_optimizers,
+            self.regression_optimizers,
+        ) = optimizer.get_optimizers(lr=self.lr)
+        (
+            self.forecasting_schedulers,
+            self.classification_schedulers,
+            self.regression_schedulers,
+        ) = optimizer.get_lrschedulers(
             factor=self.lr_factor, patience=self.scheduler_patience
         )
 
     def __str__(self):
         return f"Training model type {self.model_type}"
 
-    def fit(self, dataloaders, model_save_path=None, training_mode='forecasting', epochs=50):
+    def fit(
+        self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50
+    ):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseriesis_classification
@@ -135,12 +152,19 @@ class HybridTrainer(object):
         """
 
         assert model_save_path is not None, f"Model path {model_save_path} unknown"
-        assert training_mode in ['forecasting', 'classification',
-                                 'regression'], f'Training mode {training_mode} unknown'
+        assert training_mode in [
+            "forecasting",
+            "classification",
+            "regression",
+        ], f"Training mode {training_mode} unknown"
 
         self.model.to(device)
+        try:
+            train_loader, test_loader, validation_loader = dataloaders.values()
+            self.validate = True
+        except:
+            train_loader, test_loader = dataloaders.values()
 
-        train_loader, test_loader = dataloaders.values()
         # Training
         for epoch in range(epochs):
             test_loss_forecasting = 0
@@ -150,7 +174,9 @@ class HybridTrainer(object):
                 # Training
                 self.model.train()
                 total_loss = 0
-                for idx, (data, target, category, parameters) in enumerate(train_loader):
+                for idx, (data, target, category, parameters) in enumerate(
+                    train_loader
+                ):
                     # Reset optimizer states
                     for optimizer in self.forecasting_optimizers:
                         optimizer.zero_grad()
@@ -167,11 +193,11 @@ class HybridTrainer(object):
                         data.float().to(device),
                         target.float().to(device),
                         category.to(device),
-                        parameters.float().to(device)
+                        parameters.float().to(device),
                     )
 
                     if training_mode == "forecasting":
-                        if self.model_type == "ae" or self.model_type == 'lstm':
+                        if self.model_type == "ae" or self.model_type == "lstm":
                             decoder_out = self.model(
                                 data, training=True, classify=False, latent=False
                             )
@@ -200,8 +226,10 @@ class HybridTrainer(object):
                         for optimizer in self.classification_optimizers:
                             optimizer.step()
 
-                    elif training_mode == 'regression':
-                        regressor_out = self.model(data, training=True, regress=True, latent=False)
+                    elif training_mode == "regression":
+                        regressor_out = self.model(
+                            data, training=True, regress=True, latent=False
+                        )
                         loss = Criterion().regressor_criterion(
                             regressor_out, parameters
                         )
@@ -225,17 +253,19 @@ class HybridTrainer(object):
                         total = 0.0
                         correct = 0.0
                     self.model.eval()
-                    for idx, (data, target, category, parameters) in enumerate(test_loader):
+                    for idx, (data, target, category, parameters) in enumerate(
+                        test_loader
+                    ):
                         if type(category) == list:
                             category = category[0]
                         data, target, category, parameters = (
                             data.float().to(device),
                             target.float().to(device),
                             category.to(device),
-                            parameters.float().to(device)
+                            parameters.float().to(device),
                         )
                         # Time series forecasting test
-                        if self.model_type == 'ae' or self.model_type == 'lstm':
+                        if self.model_type == "ae" or self.model_type == "lstm":
                             out = self.model(
                                 data, training=False, classify=False, latent=False
                             )
@@ -254,7 +284,7 @@ class HybridTrainer(object):
                         # Classification test
                         if self.classify:
                             category = category.long()
-                            if self.model_type == 'ae' or self.model_type == 'lstm':
+                            if self.model_type == "ae" or self.model_type == "lstm":
                                 classifier_out = self.model(
                                     data, training=False, classify=True
                                 )
@@ -265,8 +295,8 @@ class HybridTrainer(object):
 
                             test_loss_classification += (
                                 Criterion()
-                                    .classifier_criterion(classifier_out, category - 1)
-                                    .item()
+                                .classifier_criterion(classifier_out, category - 1)
+                                .item()
                             )
 
                             # Compute number of correct samples
@@ -275,7 +305,9 @@ class HybridTrainer(object):
                             correct += (predicted == (category - 1)).sum().item()
 
                         if self.regress:
-                            regressor_out = self.model(data, training=True, regress=True, latent=False)
+                            regressor_out = self.model(
+                                data, training=True, regress=True, latent=False
+                            )
                             test_loss_regression += Criterion().regressor_criterion(
                                 regressor_out, parameters
                             )
@@ -293,18 +325,104 @@ class HybridTrainer(object):
                         )
 
                 if self.regress:
-                    print(f'====> Mean test set regressor loss: {test_loss_regression:.4f}')
+                    print(
+                        f"====> Mean test set regressor loss: {test_loss_regression:.4f}"
+                    )
 
             # Scheduler metric is test set loss
             if training_mode == "forecasting":
                 for scheduler in self.forecasting_schedulers.values():
                     scheduler.step(test_loss_forecasting)
-            elif training_mode == 'classification':
+            elif training_mode == "classification":
                 for scheduler in self.classification_schedulers.values():
                     scheduler.step(test_loss_classification)
-            elif training_mode == 'regression':
+            elif training_mode == "regression":
                 for scheduler in self.regression_schedulers.values():
                     scheduler.step(test_loss_regression)
+
+        # Perform model validation
+        if self.validate:
+            validation_loss_forecasting = 0.0
+            validation_loss_classification = 0.0
+            validation_loss_regression = 0.0
+            with torch.no_grad():
+                if self.classify:
+                    total = 0.0
+                    correct = 0.0
+                self.model.eval()
+                for idx, (data, target, category, parameters) in enumerate(test_loader):
+                    if type(category) == list:
+                        category = category[0]
+                    data, target, category, parameters = (
+                        data.float().to(device),
+                        target.float().to(device),
+                        category.to(device),
+                        parameters.float().to(device),
+                    )
+                    # Time series forecasting test
+                    if self.model_type == "ae" or self.model_type == "lstm":
+                        out = self.model(
+                            data, training=False, classify=False, latent=False
+                        )
+                        validation_loss_forecasting += (
+                            Criterion().ae_criterion(out, target).item()
+                        )
+
+                    else:
+                        decoder_out, latent_out, mu, logvar = self.model(
+                            data, training=False, classify=False
+                        )
+                        validation_loss_forecasting += Criterion().vae_criterion(
+                            decoder_out, target, mu, logvar
+                        )
+
+                    # Classification test
+                    if self.classify:
+                        category = category.long()
+                        if self.model_type == "ae" or self.model_type == "lstm":
+                            classifier_out = self.model(
+                                data, training=False, classify=True
+                            )
+                        else:
+                            classifier_out, latent_out, mu, logvar = self.model(
+                                data, training=False, classify=True
+                            )
+
+                        validation_loss_classification += (
+                            Criterion()
+                            .classifier_criterion(classifier_out, category - 1)
+                            .item()
+                        )
+
+                        # Compute number of correct samples
+                        total += category.size(0)
+                        _, predicted = torch.max(classifier_out.data, 1)
+                        correct += (predicted == (category - 1)).sum().item()
+
+                    if self.regress:
+                        regressor_out = self.model(
+                            data, training=True, regress=True, latent=False
+                        )
+                        validation_loss_regression += Criterion().regressor_criterion(
+                            regressor_out, parameters
+                        )
+
+                validation_loss_forecasting /= len(test_loader.dataset)
+                print(
+                    f"====> Mean Validation set generator loss: {validation_loss_forecasting:.4f}"
+                )
+                if self.classify:
+                    accuracy = correct / total
+                    if validation_loss_classification != 0:
+                        validation_loss_classification /= len(test_loader.dataset)
+                        print(
+                            f"====> Mean Validation set classifier loss: {validation_loss_classification:.4f}; accuracy: {accuracy:.4f}"
+                        )
+
+                if self.regress:
+                    print(
+                        f"====> Mean Validation set regressor loss: {validation_loss_regression:.4f}"
+                    )
 
         # Save the model at target path
         utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)
@@ -329,14 +447,14 @@ class CustomTrainer:
     """
 
     def __init__(
-            self,
-            model: torch.nn.Module,
-            optimizer_type: None,
-            criterion: None,
-            epochs: int,
-            lr: float = 0.001,
-            lr_factor: float = 0.001,
-            scheduler_patience: int = 10,
+        self,
+        model: torch.nn.Module,
+        optimizer_type: None,
+        criterion: None,
+        epochs: int,
+        lr: float = 0.001,
+        lr_factor: float = 0.001,
+        scheduler_patience: int = 10,
     ):
         self.model = model
         self.optimizer_type = optimizer_type
