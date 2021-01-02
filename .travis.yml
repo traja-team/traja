@@ -39,7 +39,7 @@ install:
 
 script:
  - cd docs && make doctest && cd ..
- - py.test . --cov-report term --cov=traja --ignore tests/test_rutils.py
+ - py.test . --cov-report term --cov=traja
 
 after_success:
  - codecov
