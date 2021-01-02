@@ -1,13 +1,12 @@
-import pandas as pd
 from traja.datasets import dataset
-from traja.models.train import HybridTrainer
+from traja.datasets.example import jaguar
 from traja.models.generative_models.vae import MultiModelVAE
 from traja.models.predictive_models.ae import MultiModelAE
 from traja.models.predictive_models.lstm import LSTM
+from traja.models.train import HybridTrainer
 
 # Sample data
-data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
-df = pd.read_csv(data_url, error_bad_lines=False)
+df = jaguar()
 
 
 def test_aevae():
@@ -116,13 +115,13 @@ def test_lstm():
     model = LSTM(input_size=2,
                  hidden_size=32,
                  num_layers=2,
-                         output_size=2,
-                          dropout=0.1,
-                          batch_size=batch_size,
-                          num_future=num_future,
-                          bidirectional=False,
-                          batch_first=True,
-                          reset_state=True)
+                 output_size=2,
+                 dropout=0.1,
+                 batch_size=batch_size,
+                 num_future=num_future,
+                 bidirectional=False,
+                 batch_first=True,
+                 reset_state=True)
 
     # Model Trainer
     trainer = HybridTrainer(model=model,
