@@ -16,6 +16,14 @@ class TrajaAccessor(object):
         self._validate(pandas_obj)
         self._obj = pandas_obj
 
+    __axes = ["x", "y"]
+
+    @staticmethod
+    def _set_axes(axes):
+        if len(axes) != 2:
+            raise ValueError("TrajaAccessor requires precisely two axes, got {}".format(len(axes)))
+        TrajaAccessor.__axes = axes
+
     def _strip(self, text):
         try:
             return text.strip()
@@ -24,15 +32,15 @@ class TrajaAccessor(object):
 
     @staticmethod
     def _validate(obj):
-        if "x" not in obj.columns or "y" not in obj.columns:
-            raise AttributeError("Must have 'x' and 'y'.")
+        if TrajaAccessor.__axes[0] not in obj.columns or TrajaAccessor.__axes[1] not in obj.columns:
+            raise AttributeError("Must have '{}' and '{}'.".format(*TrajaAccessor.__axes))
 
     @property
     def center(self):
         """Return the center point of this trajectory."""
         x = self._obj.x
         y = self._obj.y
-        return (float(x.mean()), float(y.mean()))
+        return float(x.mean()), float(y.mean())
 
     @property
     def bounds(self):

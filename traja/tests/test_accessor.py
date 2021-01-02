@@ -30,17 +30,17 @@ def test_xy():
     assert xy.shape == (20, 2)
 
 
-def test_calc_derivatives():
-    df.traja.calc_derivatives()
+#def test_calc_derivatives():
+#    df.traja.calc_derivatives()
 
 
-def test_get_derivatives():
-    df.traja.get_derivatives()
+#def test_get_derivatives():
+#    df.traja.get_derivatives()
 
 
-def test_speed_intervals():
-    si = df.traja.speed_intervals(faster_than=100)
-    assert isinstance(si, traja.TrajaDataFrame)
+#def test_speed_intervals():
+#    si = df.traja.speed_intervals(faster_than=100)
+#    assert isinstance(si, traja.TrajaDataFrame)
 
 
 def test_to_shapely():
