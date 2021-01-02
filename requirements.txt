@@ -1,6 +1,12 @@
-pandas
-numpy
+pandas>=1.2.0
+numpy==1.18.5
 matplotlib
 shapely
 scipy
+sklearn
 fastdtw
+plotly
+networkx
+seaborn
+torch
+h5py
