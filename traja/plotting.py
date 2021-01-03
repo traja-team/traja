@@ -5,6 +5,7 @@ from typing import Union, Optional, Tuple, List
 
 import matplotlib
 import matplotlib.pyplot as plt
+import torch
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib import dates as md
@@ -91,6 +92,36 @@ def predict(
         from traja.models.nn import TrajectoryLSTM
 
         TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
+
+
+def plot_prediction(model, dataset, index):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    fig, ax = plt.subplots(2, 1)
+    model = model.to(device)
+
+    data, target, category, parameters = dataset[index]
+    data = torch.tensor(data).unsqueeze(0).float().to(device)
+    prediction = model(data, latent=False)
+
+    pred = prediction.squeeze().cpu().detach().numpy()
+    real = target
+
+    target = torch.tensor(target)[0:1, :]
+    print(target.shape, data.shape)
+
+    data = torch.cat((data.squeeze().cpu(), target), dim=0)
+
+    data = data.detach().numpy()
+
+    ax[0].plot(data[:, 0], data[:, 1], label="History")
+    ax[0].plot(real[:, 0], real[:, 1], label="Real")
+    ax[0].plot(pred[:, 0], pred[:, 1], label="Pred")
+
+    ax[1].scatter(real[:, 0], real[:, 1], label="Real")
+    ax[1].scatter(pred[:, 0], pred[:, 1], label="Pred")
+
+    for a in ax:
+        a.legend()
 
 
 def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> Axes:
