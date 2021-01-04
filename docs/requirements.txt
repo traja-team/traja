@@ -13,5 +13,8 @@ networkx
 seaborn
 torch
 pytest
+pytest-cov
+codecov
+readline
 h5py
 ipython
