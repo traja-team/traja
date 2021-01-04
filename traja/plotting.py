@@ -288,7 +288,6 @@ def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollect
 
     return ax
 
-
 def plot(
     trj: TrajaDataFrame,
     n_coords: Optional[int] = None,
