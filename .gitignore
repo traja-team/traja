@@ -77,6 +77,8 @@ target/
 
 .DS_Store
 
+# Visualstudio code file
+.vscode
 # celery beat schedule file
 celerybeat-schedule
 
@@ -111,8 +113,17 @@ _build/
 
 # BUILD FILES
 *.zip
+hypers.json
+model
 
 docs/source/gallery
 docs/source/savefig
 docs/source/reference
-docs/source/autoexamples
+
+# Editor files
+*.swp
+*.swo
+
+
+# Model parameter files
+*.pt
