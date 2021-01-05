@@ -75,6 +75,7 @@ def shuffle_split(
     target_data: np.array,
     target_category: np.array,
     train_ratio: float,
+    split: bool = True,
 ):
     """[summary]
 
@@ -83,6 +84,7 @@ def shuffle_split(
         target_data (np.array): [description]
         target_category (np.array): [description]
         train_ratio (float): [description]
+        split (bool): If True, split the data into train and test, else only shuffle the dataset and return it for training 
 
     Returns:
         [type]: [description]
@@ -95,19 +97,21 @@ def shuffle_split(
 
     assert train_ratio > 0, "Train data ratio should be greater than zero"
     assert train_ratio <= 1.0, "Train data ratio should be less than or equal to 1 "
+    if split:
+        # Train test split
+        split = int(train_ratio * len(train_data))
 
-    # Train test split
-    split = int(train_ratio * len(train_data))
+        train_x = train_data[:split]
+        train_y = target_data[:split]
+        train_z = target_category[:split]
 
-    train_x = train_data[:split]
-    train_y = target_data[:split]
-    train_z = target_category[:split]
+        test_x = train_data[split:]
+        test_y = target_data[split:]
+        test_z = target_category[split:]
 
-    test_x = train_data[split:]
-    test_y = target_data[split:]
-    test_z = target_category[split:]
-
-    return [train_x, train_y, train_z], [test_x, test_y, test_z]
+        return [train_x, train_y, train_z], [test_x, test_y, test_z]
+    else:
+        return train_data, target_data, target_category
 
 
 def scale_data(data, sequence_length):
