@@ -54,7 +54,6 @@ If you use traja in your publications, please cite:
    Rediscretizing Trajectories <rediscretize>
    Collections / Scenes <collections>
    Predicting Trajectories <predictions>
-   R interface <rinterface>
 
 .. toctree::
    :maxdepth: 1
