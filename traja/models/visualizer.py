@@ -20,7 +20,7 @@ style.use("ggplot")
 
 
 def DisplayLatentDynamics(latent):
-    """Visualize the dynamics of combination of latents 
+    """Visualize the dynamics in latent space. Compatible only with the RNN latents 
     Args:
         latent(tensor): Each point in the list is latent's state at the end of a sequence of each batch.
         Latent shape (batch_size, latent_dim)
