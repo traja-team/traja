@@ -28,11 +28,12 @@ def get_class_distribution(targets):
     return targets_[0], targets_[1]
 
 
-def generate_dataset(df, n_past, n_future):
+def generate_dataset(df, n_past: int, n_future: int, stride: int = None, parameter_columns: list = list()):
     """
     df : Dataframe
     n_past: Number of past observations
     n_future: Number of future observations
+    stride: Size of the sliding window. Defaults to sequence_length
     Returns:
     X: Past steps
     Y: Future steps (Sequence target)
@@ -43,39 +44,49 @@ def generate_dataset(df, n_past, n_future):
         tuple(df.groupby("ID"))
     )  # Dict of ids as keys and x,y,id as values
 
-    train_data, target_data, target_category = list(), list(), list()
+    train_data, target_data, target_category, target_parameters = list(), list(), list(), list()
 
-    for id in series_ids.keys():
-        X, Y, Z = list(), list(), list()
+    if stride is None:
+        stride = n_past + n_future
+
+    assert n_past >= 1, 'n_past has to be positive!'
+    assert n_future >= 1, 'n_past has to be positive!'
+    assert stride >= 1, 'Stride has to be positive!'
+
+    for ID in series_ids.keys():
+        xx, yy, zz, ww = list(), list(), list(), list()
         # Drop the column ids and convert the pandas into arrays
-        series = series_ids[id].drop(columns=["ID"]).to_numpy()
-        for window_start in range(len(series)):
+        non_parameter_columns = [column for column in df.columns if column not in parameter_columns]
+        series = series_ids[ID].drop(columns=['ID'] + parameter_columns).to_numpy()
+        parameters = series_ids[ID].drop(columns=non_parameter_columns).to_numpy()[0, :]
+        window_start = 0
+        while window_start <= len(series):
             past_end = window_start + n_past
             future_end = past_end + n_future
-            if not future_end > len(series):
+            if not future_end >= len(series):
                 # slicing the past and future parts of the window
-                past, future = (
-                    series[window_start:past_end, :],
-                    series[past_end:future_end, :],
-                )
-                X.append(past)
-                Y.append(future)
+                past, future = series[window_start:past_end, :], series[past_end:future_end, :]
+                # past, future = series[window_start:future_end, :], series[past_end:future_end, :]
+                xx.append(past)
+                yy.append(future)
                 # For each sequence length set target category
-                Z.append(int(id))
+                zz.append(int(ID), )
+                ww.append(parameters)
+            window_start += stride
 
-        train_data.extend(np.array(X))
-        target_data.extend(np.array(Y))
-        target_category.extend(np.array(Z))
-
-    return train_data, target_data, target_category
+        train_data.extend(np.array(xx))
+        target_data.extend(np.array(yy))
+        target_category.extend(np.array(zz))
+        target_parameters.extend(np.array(ww))
+    return train_data, target_data, target_category, target_parameters
 
 
 def shuffle_split(
-    train_data: np.array,
-    target_data: np.array,
-    target_category: np.array,
-    train_ratio: float,
-    split: bool = True,
+        train_data: np.array,
+        target_data: np.array,
+        target_category: np.array,
+        train_ratio: float,
+        split: bool = True,
 ):
     """[summary]
 
@@ -135,7 +146,7 @@ def scale_data(data, sequence_length):
         scalers["scaler_" + str(i)] = scaler
         data[:, i] = s_s
     # Slice the data into batches
-    data = [data[i : i + sequence_length] for i in range(0, len(data), sequence_length)]
+    data = [data[i: i + sequence_length] for i in range(0, len(data), sequence_length)]
     return data, scalers
 
 
@@ -165,7 +176,7 @@ def weighted_random_samplers(train_z, test_z):
     # Assign weights to original target list
     train_class_weights_all = train_class_weights[
         train_target_list - 1
-    ]  # Note the targets start from 1, to python idx
+        ]  # Note the targets start from 1, to python idx
     # to apply,-1
     test_class_weights_all = test_class_weights[test_target_list - 1]
 

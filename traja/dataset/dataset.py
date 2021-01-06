@@ -15,13 +15,16 @@ import logging
 import os
 import math
 import numpy as np
+import sklearn
 import torch
+from sklearn.base import TransformerMixin
+from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset
 from collections import Counter
-from torch.utils.data.sampler import WeightedRandomSampler
+from torch.utils.data.sampler import WeightedRandomSampler, SubsetRandomSampler
 import pandas as pd
 from sklearn.utils import shuffle
-from traja.datasets import utils
+from traja.dataset import generator
 import random
 
 logger = logging.getLogger(__name__)
@@ -98,7 +101,7 @@ def poly_fit(traj, traj_len, threshold):
 
 
 class TrajectoryDataset(Dataset):
-    """Dataloader for the Trajectory datasets"""
+    """Dataloader for the Trajectory dataset"""
 
     def __init__(
         self,
@@ -232,25 +235,31 @@ class TimeSeriesDataset(Dataset):
         Dataset (torch.utils.data.Dataset): Pyptorch dataset object
     """
 
-    def __init__(self, data, target, category=None, parameters=None):
+    def __init__(self, data, target, category=None, parameters=None, scaler: TransformerMixin=None):
         r"""
         Args:
             data (array): Data
             target (array): Target
             category (array): Category
             parameters (array): Parameters
+            scaler (sklearn.base.TransformerMixin)
         """
 
         self.data = data
         self.target = target
         self.category = category
         self.parameters = parameters
+        self.scaler = scaler
 
     def __getitem__(self, index):
         x = self.data[index]
         y = self.target[index]
         z = self.category[index] if self.category else torch.zeros(1)
         w = self.parameters[index] if self.parameters else torch.zeros(1)
+
+        if self.scaler is not None:
+            x = torch.tensor(self.scaler.transform(x))
+            y = torch.tensor(self.scaler.transform(y))
         return x, y, z, w
 
     def __len__(self):
@@ -284,6 +293,7 @@ class MultiModalDataLoader:
                                       to include in the validation split. 
             num_target_categories: If validation_split_criteria is "category", then num_classes_in_validation_data should be not None. 
                                             N number of classes in dataset will be used in validation dataset
+            split_by_category (bool): Whether to split data based on the sequence's category (default) or ID
             scale (bool): If True, scale the input and target and return the corresponding scalers in a dict. 
 
         Usage:
@@ -298,9 +308,10 @@ class MultiModalDataLoader:
         n_past: int,
         n_future: int,
         num_workers: int,
-        train_split_ratio: float,
-        validation_split_ratio: float = None,
+        train_split_ratio: float = 0.4,
+        validation_split_ratio: float = 0.2,
         num_val_categories: int = None,
+        split_by_category: bool = True,
         scale: bool = True,
         test: bool = True,
     ):
@@ -312,6 +323,7 @@ class MultiModalDataLoader:
         self.test = test
         self.train_split_ratio = train_split_ratio
         self.validation_split_ratio = validation_split_ratio
+        self.split_by_category = split_by_category
         self.scale = scale
         self.num_val_categories = num_val_categories
 
@@ -325,123 +337,91 @@ class MultiModalDataLoader:
             assert (
                 self.validation_split_ratio is not None
             ), "Invalid validation argument, num_val_categories not supported for sequence based validation split"
-            self.set_validation()
+            #self.set_validation()
 
         # Train and test data from df-val_df
-        train_data, target_data, target_category = utils.generate_dataset(
-            self.df, self.n_past, self.n_future
-        )
+        train_data, target_data, target_category, target_parameters = generator.generate_dataset(self.df, self.n_past, self.n_future)
 
-        if test:
-            # Shuffle and split the data
-            [train_x, train_y, train_z], [test_x, test_y, test_z] = utils.shuffle_split(
-                train_data,
-                target_data,
-                target_category,
-                train_ratio=self.train_split_ratio,
-                split=True,
-            )
-        else:
-            [train_x, train_y, train_z] = utils.shuffle_split(
-                train_data, target_data, target_category, train_ratio=None, split=False
-            )
-
-        # Scale data
-        if self.scale and self.test:
-            (train_x, self.train_x_scaler), (train_y, self.train_y_scaler) = (
-                utils.scale_data(train_x, sequence_length=self.n_past),
-                utils.scale_data(train_y, sequence_length=self.n_future),
-            )
-
-            (test_x, self.test_x_scaler), (test_y, self.test_y_scaler) = (
-                utils.scale_data(test_x, sequence_length=self.n_past),
-                utils.scale_data(test_y, sequence_length=self.n_future),
-            )
-
-            # Weighted Random Sampler
-            (
-                train_weighted_sampler,
-                test_weighted_sampler,
-            ) = utils.weighted_random_samplers(train_z, test_z)
-
-        if self.scale and not self.test:
-            (train_x, self.train_x_scaler), (train_y, self.train_y_scaler) = (
-                utils.scale_data(train_x, sequence_length=self.n_past),
-                utils.scale_data(train_y, sequence_length=self.n_future),
-            )
-
-            # Weighted Random Sampler
-            (
-                train_weighted_sampler,
-                test_weighted_sampler,
-            ) = utils.weighted_random_samplers(train_z, test_z)
-
-        # Weighted Random Sampler
-        train_weighted_sampler, test_weighted_sampler = utils.weighted_random_samplers(
-            train_z, test_z
-        )
+        scaler = MinMaxScaler(feature_range=(-1, 1))
+        scaler.fit(np.vstack(train_data + target_data))
 
         # Dataset
-        train_dataset = TimeSeriesDataset(train_x, train_y, train_z)
-        test_dataset = TimeSeriesDataset(test_x, test_y, test_z)
+        dataset = TimeSeriesDataset(train_data, target_data, target_category, scaler=scaler)
+        indices = list(range(len(dataset)))
 
-        # Dataloader with weighted samplers
+        if self.split_by_category:
+            categories = list(set(target_category))
+            np.random.shuffle(categories)
+
+            train_split_index = round(train_split_ratio * len(categories))
+            validation_split_index = round((1 - validation_split_ratio) * len(categories))
+
+            train_categories = categories[:train_split_index]
+            test_categories = categories[train_split_index:validation_split_index]
+            validation_categories = categories[validation_split_index:]
+
+            train_indices = [index for index in indices if dataset[index][2] in train_categories]
+            test_indices = [index for index in indices if dataset[index][2] in test_categories]
+            validation_indices = [index for index in indices if dataset[index][2] in validation_categories]
+
+        else:
+            np.random.shuffle(indices)
+
+            train_split_index = round(train_split_ratio * len(indices))
+            validation_split_index = round((1 - validation_split_ratio) * len(indices))
+
+            train_indices = indices[:train_split_index]
+            test_indices = indices[train_split_index:validation_split_index]
+            validation_indices = indices[validation_split_index:]
+
+        np.random.shuffle(train_indices)
+        np.random.shuffle(test_indices)
+        np.random.shuffle(validation_indices)
+
+        train_sampler = SubsetRandomSampler(train_indices)
+        test_sampler = SubsetRandomSampler(test_indices)
+        validation_sampler = SubsetRandomSampler(validation_indices)
+
+
+        # Dataloader
         self.train_loader = torch.utils.data.DataLoader(
-            dataset=train_dataset,
+            dataset=dataset,
             shuffle=False,
             batch_size=self.batch_size,
-            sampler=train_weighted_sampler,
+            sampler=train_sampler,
             drop_last=True,
             num_workers=num_workers,
         )
         self.test_loader = torch.utils.data.DataLoader(
-            dataset=test_dataset,
+            dataset=dataset,
             shuffle=False,
             batch_size=self.batch_size,
-            sampler=test_weighted_sampler,
+            sampler=test_sampler,
             drop_last=True,
             num_workers=num_workers,
         )
-        if self.validation_split_ratio is not None and self.test:
+        self.validation_loader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            shuffle=False,
+            batch_size=self.batch_size,
+            sampler=validation_sampler,
+            drop_last=True,
+            num_workers=num_workers,
+        )
+        self.sequential_loader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            shuffle=False,
+            batch_size=self.batch_size,
+            drop_last=True,
+            num_workers=num_workers,
+        )
 
-            self.dataloaders = {
-                "train_loader": self.train_loader,
-                "test_loader": self.test_loader,
-                "validation_loader": self.validation_loader,
-            }
-            if self.scale:
-
-                self.scalers = {
-                    "train_data_scaler": self.train_x_scaler,
-                    "train_target_scaler": self.train_y_scaler,
-                    "test_data_scaler": self.test_x_scaler,
-                    "test_target_scaler": self.test_y_scaler,
-                    "val_data_scaler": self.val_x_scaler,
-                    "val_target_scaler": self.val_y_scaler,
-                }
-            else:
-                self.scalers = None
-                
-        elif self.test and self.validation_split_ratio is None:
-
-            self.dataloaders = {
-                "train_loader": self.train_loader,
-                "test_loader": self.test_loader,
-            }
-            if self.scale:
-
-                self.scalers = {
-                    "train_data_scaler": self.train_x_scaler,
-                    "train_target_scaler": self.train_y_scaler,
-                    "test_data_scaler": self.test_x_scaler,
-                    "test_target_scaler": self.test_y_scaler,
-                }
-            else:
-                self.scalers = None
-                
-        elif self.validation_split_ratio is not None and not self.test:
-             
-            
+        self.dataloaders = {
+            "train_loader": self.train_loader,
+            "test_loader": self.test_loader,
+            "validation_loader": self.validation_loader,
+            "sequential_loader": self.sequential_loader
+        }
             
 
     def set_validation(self):
@@ -463,14 +443,12 @@ class MultiModalDataLoader:
             )
 
         # Generate validation dataset
-        val_x, val_y, val_z = utils.generate_dataset(
-            self.df_val, self.n_past, self.n_future
-        )
+        val_x, val_y, val_z, val_w = generator.generate_dataset(self.df_val, self.n_past, self.n_future)
         if self.scale:
             # Scale validation data:
             (val_x, self.val_x_scaler), (val_y, self.val_y_scaler) = (
-                utils.scale_data(val_x, sequence_length=self.n_past),
-                utils.scale_data(val_y, sequence_length=self.n_future),
+                generator.scale_data(val_x, sequence_length=self.n_past),
+                generator.scale_data(val_y, sequence_length=self.n_future),
             )
         # Generate Pytorch dataset
         val_dataset = TimeSeriesDataset(val_x, val_y, val_z)
@@ -494,8 +472,8 @@ class MultiModalDataLoader:
         n_past: int,
         n_future: int,
         num_workers: int,
-        train_split_ratio: float,
-        validation_split_ratio: float = None,
+        train_split_ratio: float = 0.4,
+        validation_split_ratio: float = 0.2,
     ):
         """Constructor of MultiModalDataLoader"""
         # Loader instance
@@ -510,5 +488,5 @@ class MultiModalDataLoader:
             validation_split_ratio,
         )
         # Return train and test loader attributes
-        return loader_instance.dataloaders, loader_instance.scalers
+        return loader_instance.dataloaders
 

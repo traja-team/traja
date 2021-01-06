@@ -86,7 +86,7 @@ def predict(
     batch_size: int = 1,
     model="lstm",
 ):  # pragma: no cover
-    """Method for training and visualizing LSTM with trajectory datasets."""
+    """Method for training and visualizing LSTM with trajectory dataset."""
     if model == "lstm":
         from traja.models.nn import TrajectoryLSTM
 

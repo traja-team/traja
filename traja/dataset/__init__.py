@@ -3,26 +3,26 @@ import glob
 import os
 from typing import List
 import pandas as pd
-from traja.datasets import dataset
+from traja.dataset import dataset
 import traja
 
 
 def load_ped_datasets() -> List[str]:
-    """Returns paths after downloading pedestrian datasets."""
-    if not os.path.exists("datasets"):
+    """Returns paths after downloading pedestrian dataset."""
+    if not os.path.exists("dataset"):
         subprocess.call(
             ["wget", "https://www.dropbox.com/s/8n02xqv3l9q18r1/datasets.zip"]
         )
-        subprocess.call(["unzip", "-q", "datasets.zip"])
-        subprocess.call(["rm", "-rf", "datasets.zip"])
+        subprocess.call(["unzip", "-q", "dataset.zip"])
+        subprocess.call(["rm", "-rf", "dataset.zip"])
     else:
-        print("Directory 'datasets' exists, skipping download")
+        print("Directory 'dataset' exists, skipping download")
 
-    return glob.glob(f"datasets/*/*")
+    return glob.glob(f"dataset/*/*")
 
 
 def load_ped_data(dataset_name=None, aspaths=False) -> dict:
-    """Returns pedestrian (ETH, Zara1, Zara2, Univ, Hotel) datasets as dataframe or as paths.
+    """Returns pedestrian (ETH, Zara1, Zara2, Univ, Hotel) dataset as dataframe or as paths.
 
     Args:
         dataset_name: Optional(str) - returns specific dataset
@@ -68,7 +68,7 @@ def load_ped_data(dataset_name=None, aspaths=False) -> dict:
 
 def load_geolife(folder: str, as_traja=True, lat=(32, 48.0), lon=(114, 120)):
     """Read geolife data from folder. Default mask in UTM Zone 50 (Beijing)"""
-    import traja.datasets.geolife as geolife
+    import traja.dataset.geolife as geolife
 
     df = geolife.read_all_users(folder)
     if as_traja:
