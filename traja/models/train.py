@@ -159,11 +159,10 @@ class HybridTrainer(object):
         ], f"Training mode {training_mode} unknown"
 
         self.model.to(device)
-        try:
-            train_loader, test_loader, validation_loader = dataloaders.values()
-            self.validate = True
-        except:
-            train_loader, test_loader = dataloaders.values()
+
+        train_loader = dataloaders['train_loader']
+        test_loader = dataloaders['test_loader']
+        validation_loader = dataloaders['validation_loader']
 
         # Training
         for epoch in range(epochs):

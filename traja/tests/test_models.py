@@ -1,5 +1,5 @@
-from traja.datasets import dataset
-from traja.datasets.example import jaguar
+from traja.dataset import dataset
+from traja.dataset.example import jaguar
 from traja.models.generative_models.vae import MultiModelVAE
 from traja.models.predictive_models.ae import MultiModelAE
 from traja.models.predictive_models.lstm import LSTM
@@ -15,15 +15,20 @@ def test_aevae():
     classification networks
 
     """
+
+    # Sample data
+    df = jaguar()
+
     # Hyperparameters
     batch_size = 10
     num_past = 10
     num_future = 5
     # Prepare the dataloader
-    data_loaders, scalers = dataset.MultiModalDataLoader(df,
+    data_loaders = dataset.MultiModalDataLoader(df,
                                                          batch_size=batch_size,
                                                          n_past=num_past,
                                                          n_future=num_future,
+                                                        train_split_ratio=0.5,
                                                          num_workers=1)
 
     model_save_path = './model.pt'
@@ -61,16 +66,22 @@ def test_ae():
     classification networks
 
     """
+
+    # Sample data
+    df = jaguar()
+
     # Hyperparameters
     batch_size = 10
     num_past = 10
     num_future = 5
     # Prepare the dataloader
-    data_loaders, scalers = dataset.MultiModalDataLoader(df,
-                                                         batch_size=batch_size,
-                                                         n_past=num_past,
-                                                         n_future=num_future,
-                                                         num_workers=1)
+    data_loaders = dataset.MultiModalDataLoader(df,
+                                                batch_size=batch_size,
+                                                n_past=num_past,
+                                                n_future=num_future,
+                                                num_workers=1,
+                                                train_split_ratio=0.5,
+                                                validation_split_ratio=0.2)
 
     model_save_path = './model.pt'
 
@@ -94,6 +105,10 @@ def test_lstm():
     """
     Testing method for lstm model used for forecasting.
     """
+
+    # Sample data
+    df = jaguar()
+
     # Hyperparameters
     batch_size = 10
     num_past = 10
@@ -103,7 +118,7 @@ def test_lstm():
     assert num_past == num_future
 
     # Prepare the dataloader
-    data_loaders, scalers = dataset.MultiModalDataLoader(df,
+    data_loaders = dataset.MultiModalDataLoader(df,
                                                          batch_size=batch_size,
                                                          n_past=num_past,
                                                          n_future=num_future,

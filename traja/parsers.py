@@ -101,7 +101,7 @@ def read_file(
     stripped_cols = {c: lambda x: x.strip() for c in whitespace_cols}
     converters = {**stripped_cols, **kwargs.pop("converters", {})}
 
-    # Downcast to float32 # TODO: Benchmark float32 vs float64 for very big datasets
+    # Downcast to float32 # TODO: Benchmark float32 vs float64 for very big dataset
     float_cols = df_test.select_dtypes(include=[np.float]).columns
     float32_cols = {c: np.float32 for c in float_cols}
 

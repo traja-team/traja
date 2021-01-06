@@ -4,7 +4,7 @@ from .parsers import read_file, from_df
 from .plotting import *
 from .trajectory import *
 from traja import models
-from traja import datasets
+from traja import dataset
 
 import logging
 
