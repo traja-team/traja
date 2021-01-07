@@ -62,16 +62,14 @@ def verify_category_wise_sampled_dataloaders(dataloaders, train_split_ratio, val
     train_categories = []
     for data, target, categories, parameters in dataloaders['train_loader']:
         for category in categories:
-            print(category, 'train category')
             if category not in train_categories:
                 train_categories.append(category)
 
-    assert len(train_categories) == round(train_split_ratio * num_categories)
+    assert len(train_categories) == round(train_split_ratio * num_categories), 'Wrong number of training categories!'
 
     test_categories = []
     for data, target, categories, parameters in dataloaders['test_loader']:
         for category in categories:
-            print(category, 'test category')
             if category not in test_categories:
                 test_categories.append(category)
 
@@ -80,12 +78,11 @@ def verify_category_wise_sampled_dataloaders(dataloaders, train_split_ratio, val
     validation_categories = []
     for data, target, categories, parameters in dataloaders['validation_loader']:
         for category in categories:
-            print(category, 'val category')
             if category not in validation_categories:
                 validation_categories.append(category)
 
         assert category not in train_categories, 'Found validation data in train loader!'
         assert category not in test_categories, 'Found validation data in test loader!'
 
-    assert len(validation_categories) == round(validation_split_ratio * num_categories)
-    assert len(train_categories) + len(test_categories) + len(validation_categories) == num_categories
+    assert len(validation_categories) == round(validation_split_ratio * num_categories), 'Wrong number of validation categories!'
+    assert len(train_categories) + len(test_categories) + len(validation_categories) == num_categories, 'Wrong number of categories!'
