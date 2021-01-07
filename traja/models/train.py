@@ -45,17 +45,17 @@ class HybridTrainer(object):
     valid_models = ["ae", "vae", "lstm"]
 
     def __init__(
-        self,
-        model: torch.nn.Module,
-        optimizer_type: str,
-        loss_type: str = "huber",
-        lr: float = 0.001,
-        lr_factor: float = 0.1,
-        scheduler_patience: int = 10,
+            self,
+            model: torch.nn.Module,
+            optimizer_type: str,
+            loss_type: str = "huber",
+            lr: float = 0.001,
+            lr_factor: float = 0.1,
+            scheduler_patience: int = 10,
     ):
 
         assert (
-            model.model_type in HybridTrainer.valid_models
+                model.model_type in HybridTrainer.valid_models
         ), "Model type is {model_type}, valid models are {}".format(
             HybridTrainer.valid_models
         )
@@ -135,7 +135,7 @@ class HybridTrainer(object):
         return f"Training model type {self.model_type}"
 
     def fit(
-        self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50
+            self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50
     ):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
@@ -174,7 +174,7 @@ class HybridTrainer(object):
                 self.model.train()
                 total_loss = 0
                 for idx, (data, target, category, parameters) in enumerate(
-                    train_loader
+                        train_loader
                 ):
                     # Reset optimizer states
                     for optimizer in self.forecasting_optimizers:
@@ -253,7 +253,7 @@ class HybridTrainer(object):
                         correct = 0.0
                     self.model.eval()
                     for idx, (data, target, category, parameters) in enumerate(
-                        test_loader
+                            test_loader
                     ):
                         if type(category) == list:
                             category = category[0]
@@ -294,8 +294,8 @@ class HybridTrainer(object):
 
                             test_loss_classification += (
                                 Criterion()
-                                .classifier_criterion(classifier_out, category - 1)
-                                .item()
+                                    .classifier_criterion(classifier_out, category - 1)
+                                    .item()
                             )
 
                             # Compute number of correct samples
@@ -389,8 +389,8 @@ class HybridTrainer(object):
 
                         validation_loss_classification += (
                             Criterion()
-                            .classifier_criterion(classifier_out, category - 1)
-                            .item()
+                                .classifier_criterion(classifier_out, category - 1)
+                                .item()
                         )
 
                         # Compute number of correct samples
@@ -446,14 +446,14 @@ class CustomTrainer:
     """
 
     def __init__(
-        self,
-        model: torch.nn.Module,
-        optimizer_type: None,
-        criterion: None,
-        epochs: int,
-        lr: float = 0.001,
-        lr_factor: float = 0.001,
-        scheduler_patience: int = 10,
+            self,
+            model: torch.nn.Module,
+            optimizer_type: None,
+            criterion: None,
+            epochs: int,
+            lr: float = 0.001,
+            lr_factor: float = 0.001,
+            scheduler_patience: int = 10,
     ):
         self.model = model
         self.optimizer_type = optimizer_type

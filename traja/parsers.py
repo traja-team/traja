@@ -53,16 +53,16 @@ def from_df(df: pd.DataFrame, xcol=None, ycol=None, time_col=None, **kwargs):
 
 
 def read_file(
-    filepath: str,
-    id: Optional[str] = None,
-    xcol: Optional[str] = None,
-    ycol: Optional[str] = None,
-    parse_dates: Union[str, bool] = False,
-    xlim: Optional[tuple] = None,
-    ylim: Optional[tuple] = None,
-    spatial_units: str = "m",
-    fps: Optional[float] = None,
-    **kwargs,
+        filepath: str,
+        id: Optional[str] = None,
+        xcol: Optional[str] = None,
+        ycol: Optional[str] = None,
+        parse_dates: Union[str, bool] = False,
+        xlim: Optional[tuple] = None,
+        ylim: Optional[tuple] = None,
+        spatial_units: str = "m",
+        fps: Optional[float] = None,
+        **kwargs,
 ):
     """Convenience method wrapping pandas `read_csv` and initializing metadata.
 

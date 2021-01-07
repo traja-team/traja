@@ -7,10 +7,8 @@ from rpy2.rinterface import RRuntimeWarning
 import traja
 from traja import rutils
 
-
 warnings.filterwarnings("ignore", category=RRuntimeWarning, module="rpy2")
 warnings.filterwarnings("ignore", category=UserWarning, module="rpy2")
-
 
 df = traja.generate(n=20)
 
