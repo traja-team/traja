@@ -1,9 +1,9 @@
 import pandas as pd
+
 from traja.dataset import dataset
 
 
 def test_category_wise_sampling_few_categories():
-
     data = list()
     num_categories = 5
 
@@ -11,27 +11,26 @@ def test_category_wise_sampling_few_categories():
         for sequence in range(40 + int(category / 14)):
             data.append([sequence, sequence, category])
 
-    df = pd.DataFrame(data, columns = ['x', 'y', 'ID'])
+    df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
 
     # Hyperparameters
     batch_size = 1
     num_past = 10
     num_future = 5
     train_split_ratio = 0.5
-    validation_split_ratio=0.2
+    validation_split_ratio = 0.2
 
     dataloaders = dataset.MultiModalDataLoader(df,
-                                                batch_size=batch_size,
-                                                n_past=num_past,
-                                                n_future=num_future,
-                                                num_workers=1,
-                                                train_split_ratio=train_split_ratio,
-                                                validation_split_ratio=validation_split_ratio)
+                                               batch_size=batch_size,
+                                               n_past=num_past,
+                                               n_future=num_future,
+                                               num_workers=1,
+                                               train_split_ratio=train_split_ratio,
+                                               validation_split_ratio=validation_split_ratio)
     verify_category_wise_sampled_dataloaders(dataloaders, train_split_ratio, validation_split_ratio, num_categories)
 
 
 def test_category_wise_sampling():
-
     data = list()
     num_categories = 143
 
@@ -39,22 +38,22 @@ def test_category_wise_sampling():
         for sequence in range(40 + int(category / 14)):
             data.append([sequence, sequence, category])
 
-    df = pd.DataFrame(data, columns = ['x', 'y', 'ID'])
+    df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
 
     # Hyperparameters
     batch_size = 10
     num_past = 10
     num_future = 5
     train_split_ratio = 0.5
-    validation_split_ratio=0.2
+    validation_split_ratio = 0.2
 
     dataloaders = dataset.MultiModalDataLoader(df,
-                                                batch_size=batch_size,
-                                                n_past=num_past,
-                                                n_future=num_future,
-                                                num_workers=1,
-                                                train_split_ratio=train_split_ratio,
-                                                validation_split_ratio=validation_split_ratio)
+                                               batch_size=batch_size,
+                                               n_past=num_past,
+                                               n_future=num_future,
+                                               num_workers=1,
+                                               train_split_ratio=train_split_ratio,
+                                               validation_split_ratio=validation_split_ratio)
 
     verify_category_wise_sampled_dataloaders(dataloaders, train_split_ratio, validation_split_ratio, num_categories)
 

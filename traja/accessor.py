@@ -141,14 +141,14 @@ class TrajaAccessor(object):
         return traja.trajectory.rediscretize_points(self, _obj, R=R, **kwargs)
 
     def trip_grid(
-        self,
-        bins: Union[int, tuple] = 10,
-        log: bool = False,
-        spatial_units=None,
-        normalize: bool = False,
-        hist_only: bool = False,
-        plot: bool = True,
-        **kwargs,
+            self,
+            bins: Union[int, tuple] = 10,
+            log: bool = False,
+            spatial_units=None,
+            normalize: bool = False,
+            hist_only: bool = False,
+            plot: bool = True,
+            **kwargs,
     ):
         """Returns a 2D histogram of trip.
 
@@ -325,9 +325,9 @@ class TrajaAccessor(object):
         return derivs
 
     def speed_intervals(
-        self,
-        faster_than: Union[float, int] = None,
-        slower_than: Union[float, int] = None,
+            self,
+            faster_than: Union[float, int] = None,
+            slower_than: Union[float, int] = None,
     ):
         """Returns ``TrajaDataFrame`` with speed time intervals.
 

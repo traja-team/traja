@@ -1,8 +1,8 @@
 import warnings
 
+import matplotlib
 import numpy as np
 import numpy.testing as npt
-import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt

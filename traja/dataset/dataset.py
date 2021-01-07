@@ -12,20 +12,20 @@ Helpers:
 
 """
 import logging
-import os
 import math
+import os
+import random
+
 import numpy as np
+import pandas as pd
 import sklearn
 import torch
 from sklearn.base import TransformerMixin
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset
-from collections import Counter
-from torch.utils.data.sampler import WeightedRandomSampler, SubsetRandomSampler
-import pandas as pd
-from sklearn.utils import shuffle
+from torch.utils.data.sampler import SubsetRandomSampler
+
 from traja.dataset import generator
-import random
 
 logger = logging.getLogger(__name__)
 
@@ -104,14 +104,14 @@ class TrajectoryDataset(Dataset):
     """Dataloader for the Trajectory dataset"""
 
     def __init__(
-        self,
-        data_dir,
-        obs_len=8,
-        pred_len=12,
-        skip=1,
-        threshold=0.002,
-        min_ped=1,
-        delim="\t",
+            self,
+            data_dir,
+            obs_len=8,
+            pred_len=12,
+            skip=1,
+            threshold=0.002,
+            min_ped=1,
+            delim="\t",
     ):
         """
         Args:
@@ -151,7 +151,7 @@ class TrajectoryDataset(Dataset):
 
             for idx in range(0, num_sequences * self.skip + 1, skip):
                 curr_seq_data = np.concatenate(
-                    frame_data[idx : idx + self.seq_len], axis=0
+                    frame_data[idx: idx + self.seq_len], axis=0
                 )
                 peds_in_curr_seq = np.unique(curr_seq_data[:, 1])
                 curr_seq_rel = np.zeros((len(peds_in_curr_seq), 2, self.seq_len))
@@ -196,13 +196,13 @@ class TrajectoryDataset(Dataset):
         self.obs_traj = torch.from_numpy(seq_list[:, :, : self.obs_len]).type(
             torch.float
         )
-        self.pred_traj = torch.from_numpy(seq_list[:, :, self.obs_len :]).type(
+        self.pred_traj = torch.from_numpy(seq_list[:, :, self.obs_len:]).type(
             torch.float
         )
         self.obs_traj_rel = torch.from_numpy(seq_list_rel[:, :, : self.obs_len]).type(
             torch.float
         )
-        self.pred_traj_rel = torch.from_numpy(seq_list_rel[:, :, self.obs_len :]).type(
+        self.pred_traj_rel = torch.from_numpy(seq_list_rel[:, :, self.obs_len:]).type(
             torch.float
         )
         self.loss_mask = torch.from_numpy(loss_mask_list).type(torch.float)
@@ -235,7 +235,7 @@ class TimeSeriesDataset(Dataset):
         Dataset (torch.utils.data.Dataset): Pyptorch dataset object
     """
 
-    def __init__(self, data, target, category=None, parameters=None, scaler: TransformerMixin=None):
+    def __init__(self, data, target, category=None, parameters=None, scaler: TransformerMixin = None):
         r"""
         Args:
             data (array): Data
@@ -302,18 +302,18 @@ class MultiModalDataLoader:
         """
 
     def __init__(
-        self,
-        df: pd.DataFrame,
-        batch_size: int,
-        n_past: int,
-        n_future: int,
-        num_workers: int,
-        train_split_ratio: float = 0.4,
-        validation_split_ratio: float = 0.2,
-        num_val_categories: int = None,
-        split_by_category: bool = True,
-        scale: bool = True,
-        test: bool = True,
+            self,
+            df: pd.DataFrame,
+            batch_size: int,
+            n_past: int,
+            n_future: int,
+            num_workers: int,
+            train_split_ratio: float = 0.4,
+            validation_split_ratio: float = 0.2,
+            num_val_categories: int = None,
+            split_by_category: bool = True,
+            scale: bool = True,
+            test: bool = True,
     ):
         self.df = df
         self.batch_size = batch_size
@@ -329,18 +329,19 @@ class MultiModalDataLoader:
 
         if self.num_val_categories is not None:
             assert (
-                self.validation_split_ratio is not None
+                    self.validation_split_ratio is not None
             ), "Invalid validation argument, validation_split_ratio not supported for category based validation split"
 
             self.set_validation()
         if self.validation_split_ratio is not None:
             assert (
-                self.validation_split_ratio is not None
+                    self.validation_split_ratio is not None
             ), "Invalid validation argument, num_val_categories not supported for sequence based validation split"
-            #self.set_validation()
+            # self.set_validation()
 
         # Train and test data from df-val_df
-        train_data, target_data, target_category, target_parameters = generator.generate_dataset(self.df, self.n_past, self.n_future)
+        train_data, target_data, target_category, target_parameters = generator.generate_dataset(self.df, self.n_past,
+                                                                                                 self.n_future)
 
         scaler = MinMaxScaler(feature_range=(-1, 1))
         scaler.fit(np.vstack(train_data + target_data))
@@ -382,7 +383,6 @@ class MultiModalDataLoader:
         test_sampler = SubsetRandomSampler(test_indices)
         validation_sampler = SubsetRandomSampler(validation_indices)
 
-
         # Dataloader
         self.train_loader = torch.utils.data.DataLoader(
             dataset=dataset,
@@ -422,7 +422,6 @@ class MultiModalDataLoader:
             "validation_loader": self.validation_loader,
             "sequential_loader": self.sequential_loader
         }
-            
 
     def set_validation(self):
         """[summary]
@@ -466,14 +465,14 @@ class MultiModalDataLoader:
         self.df = self.df.loc[self.df.index.difference(self.df_val.index)]
 
     def __new__(
-        cls,
-        df: pd.DataFrame,
-        batch_size: int,
-        n_past: int,
-        n_future: int,
-        num_workers: int,
-        train_split_ratio: float = 0.4,
-        validation_split_ratio: float = 0.2,
+            cls,
+            df: pd.DataFrame,
+            batch_size: int,
+            n_past: int,
+            n_future: int,
+            num_workers: int,
+            train_split_ratio: float = 0.4,
+            validation_split_ratio: float = 0.2,
     ):
         """Constructor of MultiModalDataLoader"""
         # Loader instance
@@ -489,4 +488,3 @@ class MultiModalDataLoader:
         )
         # Return train and test loader attributes
         return loader_instance.dataloaders
-

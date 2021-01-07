@@ -20,9 +20,7 @@ except ModuleNotFoundError as e:
         raise ModuleNotFoundError(e)
 from rpy2.robjects.packages import importr
 
-
 __all__ = ["import_adehabitat", "import_trajr", "plot_ltraj", "to_trajr", "to_ltraj"]
-
 
 rpandas.activate()
 

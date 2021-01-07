@@ -1,10 +1,12 @@
-import subprocess
 import glob
 import os
+import subprocess
 from typing import List
+
 import pandas as pd
-from traja.dataset import dataset
+
 import traja
+from traja.dataset import dataset
 
 
 def load_ped_datasets() -> List[str]:
@@ -75,10 +77,10 @@ def load_geolife(folder: str, as_traja=True, lat=(32, 48.0), lon=(114, 120)):
         # Convert lat/long to utm coordinates
         if lat and lon:
             geomask = (
-                (df["lon"] > lon[0])
-                & (df["lon"] < lon[1])
-                & (df["lat"] > lat[0])
-                & (df["lat"] < lat[1])
+                    (df["lon"] > lon[0])
+                    & (df["lon"] < lon[1])
+                    & (df["lat"] > lat[0])
+                    & (df["lat"] < lat[1])
             )
             df = df[geomask]
         df = traja.to_utm(df)

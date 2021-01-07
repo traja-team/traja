@@ -25,11 +25,11 @@ def test_aevae():
     num_future = 5
     # Prepare the dataloader
     data_loaders = dataset.MultiModalDataLoader(df,
-                                                         batch_size=batch_size,
-                                                         n_past=num_past,
-                                                         n_future=num_future,
-                                                        train_split_ratio=0.5,
-                                                         num_workers=1)
+                                                batch_size=batch_size,
+                                                n_past=num_past,
+                                                n_future=num_future,
+                                                train_split_ratio=0.5,
+                                                num_workers=1)
 
     model_save_path = './model.pt'
 
@@ -119,10 +119,10 @@ def test_lstm():
 
     # Prepare the dataloader
     data_loaders = dataset.MultiModalDataLoader(df,
-                                                         batch_size=batch_size,
-                                                         n_past=num_past,
-                                                         n_future=num_future,
-                                                         num_workers=1)
+                                                batch_size=batch_size,
+                                                n_past=num_past,
+                                                n_future=num_future,
+                                                num_workers=1)
 
     model_save_path = './model.pt'
 
