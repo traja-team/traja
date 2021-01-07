@@ -4,6 +4,7 @@ import os
 from typing import List
 import pandas as pd
 from traja.datasets import dataset
+from traja.datasets import example
 import traja
 
 
