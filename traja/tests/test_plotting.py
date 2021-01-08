@@ -4,6 +4,12 @@ import matplotlib
 import numpy as np
 import numpy.testing as npt
 
+from traja.dataset import dataset
+from traja.dataset.example import jaguar
+from traja.models.generative_models.vae import MultiModelVAE
+from traja.models.train import HybridTrainer
+from traja.plotting import plot_prediction
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -119,3 +125,53 @@ def test_plot():
             ]
         ),
     )
+
+
+def test_plot_prediction():
+    # Hyperparameters
+    batch_size = 1
+    num_past = 10
+    num_future = 5
+
+    input_size = 2
+    lstm_hidden_size = 512
+    lstm_num_layers = 4
+    batch_first = True
+    reset_state = True
+    output_size = 2
+    num_classes = 9
+    latent_size = 20
+    dropout = 0.1
+    bidirectional = False
+
+    # Prepare the dataloader
+    df = jaguar()
+    data_loaders = dataset.MultiModalDataLoader(df,
+                                                batch_size=batch_size,
+                                                n_past=num_past,
+                                                n_future=num_future,
+                                                num_workers=1)
+
+    model = MultiModelVAE(input_size=input_size,
+                          output_size=output_size,
+                          lstm_hidden_size=lstm_hidden_size,
+                          num_lstm_layers=lstm_num_layers,
+                          num_classes=num_classes,
+                          latent_size=latent_size,
+                          dropout=dropout,
+                          num_classifier_layers=4,
+                          classifier_hidden_size=32,
+                          batch_size=batch_size,
+                          num_future=num_future,
+                          num_past=num_past,
+                          bidirectional=bidirectional,
+                          batch_first=batch_first,
+                          reset_state=reset_state)
+
+    trainer = HybridTrainer(model=model,
+                            optimizer_type='Adam',
+                            loss_type='huber')
+
+    model_save_path = './model.pt'
+
+    plot_prediction(model, data_loaders['test_loader'].dataset, 8)
