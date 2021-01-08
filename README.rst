@@ -141,7 +141,7 @@ Generate random walks with
     df = traja.generate(n=1000, step_length=2)
     df.traja.plot()
 
-.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_with_traja_003.png
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/walk_screenshot.png
    :alt: walk\_screenshot.png
 
 Rediscretize
