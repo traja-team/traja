@@ -68,13 +68,11 @@ sphinx_gallery_conf = {
     "doc_module": ("traja",),
     "reference_url": {
         "numpy": "http://docs.scipy.org/doc/numpy",
-        "scipy": "http://docs.scipy.org/doc/scipy/reference",
         "geopandas": "https://geopandas.readthedocs.io/en/latest/",
     },
     "sphinx_gallery": None,
     "backreferences_dir": "reference",
     "within_subsection_order": FileNameSortKey,
-    "expected_failing_examples": ["../examples/rinterface.py"],
 }
 
 # Napoleon settings

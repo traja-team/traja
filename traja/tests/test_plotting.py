@@ -20,15 +20,6 @@ def test_stylize_axes():
     traja.plotting.stylize_axes(collection.axes)
 
 
-def test_color_dark():
-    df = traja.generate(n=10)
-    index = pd.DatetimeIndex(range(10))
-    df.index = index
-    traja.plot(df, interactive=False)
-    ax = plt.gca()
-    traja.color_dark(df.x, ax)
-
-
 def test_sans_serif():
     traja.plotting.sans_serif()
 
@@ -64,8 +55,8 @@ def test_label_axes():
 
 
 def test_plot_actogram():
-    df = traja.generate(n=10)
-    index = pd.DatetimeIndex(range(10))
+    df = traja.generate(n=1000)
+    index = pd.date_range("2018-01-01", periods=1000, freq="T")
     df.index = index
     activity = traja.calc_displacement(df)
     activity.name = "activity"
