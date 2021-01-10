@@ -7,6 +7,7 @@ import pandas as pd
 
 import traja
 from traja.dataset import dataset
+from traja.dataset import example
 
 
 def load_ped_datasets() -> List[str]:
