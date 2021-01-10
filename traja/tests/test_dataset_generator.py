@@ -32,7 +32,7 @@ def test_category_wise_sampling_few_categories():
 
 def test_category_wise_sampling():
     data = list()
-    num_categories = 143
+    num_categories = 150
 
     for category in range(num_categories):
         for sequence in range(40):
@@ -44,8 +44,8 @@ def test_category_wise_sampling():
     batch_size = 10
     num_past = 10
     num_future = 5
-    train_split_ratio = 0.5
-    validation_split_ratio = 0.2
+    train_split_ratio = 0.333
+    validation_split_ratio = 0.333
 
     dataloaders = dataset.MultiModalDataLoader(df,
                                                batch_size=batch_size,
