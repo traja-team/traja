@@ -35,7 +35,7 @@ def test_category_wise_sampling():
     num_categories = 143
 
     for category in range(num_categories):
-        for sequence in range(40 + int(category / 14)):
+        for sequence in range(40):
             data.append([sequence, sequence, category])
 
     df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
