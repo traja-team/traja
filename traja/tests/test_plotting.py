@@ -129,9 +129,9 @@ def test_plot():
 
 def test_plot_prediction():
     # Hyperparameters
-    batch_size = 1
+    batch_size = 10
     num_past = 10
-    num_future = 5
+    num_future = 10
 
     input_size = 2
     lstm_hidden_size = 512
@@ -174,4 +174,4 @@ def test_plot_prediction():
 
     model_save_path = './model.pt'
 
-    plot_prediction(model, data_loaders['test_loader'].dataset, 8)
+    plot_prediction(model, data_loaders['sequential_test_loader'], 1)

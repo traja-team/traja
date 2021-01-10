@@ -93,13 +93,13 @@ def predict(
         TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
 
 
-def plot_prediction(model, dataset, index):
+def plot_prediction(model, dataloader, index):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     fig, ax = plt.subplots(2, 1)
     model = model.to(device)
 
-    data, target, category, parameters = dataset[index]
-    data = torch.tensor(data).unsqueeze(0).float().to(device)
+    data, target, category, parameters = list(iter(dataloader))[index]
+    data = data.float()
     prediction = model(data, latent=False)
 
     pred = prediction.squeeze().cpu().detach().numpy()
