@@ -26,6 +26,7 @@ from torch.utils.data import Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
 from traja.dataset import generator
+from traja.dataset.generator import get_indices_from_categories
 
 logger = logging.getLogger(__name__)
 
@@ -340,7 +341,7 @@ class MultiModalDataLoader:
             # self.set_validation()
 
         # Train and test data from df-val_df
-        train_data, target_data, target_category, target_parameters = generator.generate_dataset(self.df, self.n_past,
+        train_data, target_data, target_category, target_parameters, sequences_in_categories = generator.generate_dataset(self.df, self.n_past,
                                                                                                  self.n_future)
 
         scaler = MinMaxScaler(feature_range=(-1, 1))
@@ -348,7 +349,6 @@ class MultiModalDataLoader:
 
         # Dataset
         dataset = TimeSeriesDataset(train_data, target_data, target_category, scaler=scaler)
-        indices = list(range(len(dataset)))
 
         if self.split_by_category:
             categories = list(set(target_category))
@@ -357,15 +357,16 @@ class MultiModalDataLoader:
             train_split_index = round(train_split_ratio * len(categories))
             validation_split_index = round((1 - validation_split_ratio) * len(categories))
 
-            train_categories = categories[:train_split_index]
-            test_categories = categories[train_split_index:validation_split_index]
-            validation_categories = categories[validation_split_index:]
+            train_categories = np.sort(categories[:train_split_index])
+            test_categories = np.sort(categories[train_split_index:validation_split_index])
+            validation_categories = np.sort(categories[validation_split_index:])
 
-            train_indices = [index for index in indices if dataset[index][2] in train_categories]
-            test_indices = [index for index in indices if dataset[index][2] in test_categories]
-            validation_indices = [index for index in indices if dataset[index][2] in validation_categories]
+            train_indices = get_indices_from_categories(train_categories, sequences_in_categories)
+            test_indices = get_indices_from_categories(test_categories, sequences_in_categories)
+            validation_indices = get_indices_from_categories(validation_categories, sequences_in_categories)
 
         else:
+            indices = list(range(len(dataset)))
             np.random.shuffle(indices)
 
             train_split_index = round(train_split_ratio * len(indices))
