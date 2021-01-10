@@ -47,7 +47,7 @@ def generate_dataset(df, n_past: int, n_future: int, stride: int = None, paramet
     assert n_future >= 1, 'n_past has to be positive!'
     assert stride >= 1, 'Stride has to be positive!'
 
-    sequences_in_categories= list()
+    sequences_in_categories = list()
 
     for ID in series_ids.keys():
         xx, yy, zz, ww = list(), list(), list(), list()
