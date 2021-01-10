@@ -31,7 +31,7 @@ Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Co
     :target: https://mybinder.org/v2/gh/justinshenk/traja/master?filepath=demo.ipynb
 
 .. |Codecov| image:: https://codecov.io/gh/justinshenk/traja/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/justinshenk/traja
+  :target: https://codecov.io/gh/traja-team/traja
 
 .. |DOI| image:: https://zenodo.org/badge/166056696.svg
    :target: https://zenodo.org/badge/latestdoi/166056696
