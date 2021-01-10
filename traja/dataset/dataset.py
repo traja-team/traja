@@ -376,6 +376,9 @@ class MultiModalDataLoader:
             test_indices = indices[train_split_index:validation_split_index]
             validation_indices = indices[validation_split_index:]
 
+        sequential_train_sampler = SubsetRandomSampler(np.sort(train_indices))
+        sequential_test_sampler = SubsetRandomSampler(np.sort(test_indices))
+
         np.random.shuffle(train_indices)
         np.random.shuffle(test_indices)
         np.random.shuffle(validation_indices)
@@ -416,12 +419,30 @@ class MultiModalDataLoader:
             drop_last=True,
             num_workers=num_workers,
         )
+        self.sequential_train_loader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            shuffle=False,
+            batch_size=self.batch_size,
+            sampler=sequential_train_sampler,
+            drop_last=True,
+            num_workers=num_workers,
+        )
+        self.sequential_test_loader = torch.utils.data.DataLoader(
+            dataset=dataset,
+            shuffle=False,
+            batch_size=self.batch_size,
+            sampler=sequential_test_sampler,
+            drop_last=True,
+            num_workers=num_workers,
+        )
 
         self.dataloaders = {
             "train_loader": self.train_loader,
             "test_loader": self.test_loader,
             "validation_loader": self.validation_loader,
-            "sequential_loader": self.sequential_loader
+            "sequential_loader": self.sequential_loader,
+            "sequential_train_loader": self.sequential_train_loader,
+            "sequential_test_loader": self.sequential_test_loader
         }
 
     def set_validation(self):
