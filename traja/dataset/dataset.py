@@ -341,8 +341,9 @@ class MultiModalDataLoader:
             # self.set_validation()
 
         # Train and test data from df-val_df
-        train_data, target_data, target_category, target_parameters, sequences_in_categories = generator.generate_dataset(self.df, self.n_past,
-                                                                                                 self.n_future)
+        train_data, target_data, target_category, target_parameters, sequences_in_categories = generator.generate_dataset(
+            self.df, self.n_past,
+            self.n_future)
 
         scaler = MinMaxScaler(feature_range=(-1, 1))
         scaler.fit(np.vstack(train_data + target_data))
