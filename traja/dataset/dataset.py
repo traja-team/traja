@@ -497,6 +497,7 @@ class MultiModalDataLoader:
             n_past: int,
             n_future: int,
             num_workers: int,
+            stride: int = None,
             train_split_ratio: float = 0.4,
             validation_split_ratio: float = 0.2,
     ):
@@ -511,6 +512,7 @@ class MultiModalDataLoader:
             num_workers,
             train_split_ratio,
             validation_split_ratio,
+            stride = stride,
         )
         # Return train and test loader attributes
         return loader_instance.dataloaders
