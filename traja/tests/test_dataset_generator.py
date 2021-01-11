@@ -84,5 +84,7 @@ def verify_category_wise_sampled_dataloaders(dataloaders, train_split_ratio, val
         assert category not in train_categories, 'Found validation data in train loader!'
         assert category not in test_categories, 'Found validation data in test loader!'
 
-    assert len(validation_categories) == round(validation_split_ratio * num_categories), 'Wrong number of validation categories!'
-    assert len(train_categories) + len(test_categories) + len(validation_categories) == num_categories, 'Wrong number of categories!'
+    assert len(validation_categories) == round(
+        validation_split_ratio * num_categories), 'Wrong number of validation categories!'
+    assert len(train_categories) + len(test_categories) + len(
+        validation_categories) == num_categories, 'Wrong number of categories!'

@@ -7,8 +7,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from matplotlib import dates as md
 import torch
+from matplotlib import dates as md
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
@@ -916,7 +916,7 @@ def _process_after_plot_args(**after_plot_args):
 
 
 def color_dark(
-    series: pd.Series, ax: matplotlib.axes.Axes = None, start: int = 19, end: int = 7
+        series: pd.Series, ax: matplotlib.axes.Axes = None, start: int = 19, end: int = 7
 ):
     """Color dark phase in plot."""
     assert is_datetime_or_timedelta_dtype(
@@ -925,7 +925,7 @@ def color_dark(
 
     if not ax:
         ax = plt.gca()
-        
+
     # get boundaries for dark times
     dark_mask = (series.index.hour >= start) | (series.index.hour < end)
     run_values, run_starts, run_lengths = find_runs(dark_mask)
@@ -1020,8 +1020,8 @@ def plot_actogram(
     assert is_datetime_or_timedelta_dtype(
         series.index
     ), f"Series must have datetime index but has {type(series.index)}"
-    
-    after_plot_args, _ = _get_after_plot_args(**kwargs)    
+
+    after_plot_args, _ = _get_after_plot_args(**kwargs)
 
     ax = series.plot(ax=ax)
     ax.set_ylabel(series.name)
