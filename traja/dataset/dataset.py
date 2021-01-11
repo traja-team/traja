@@ -346,7 +346,7 @@ class MultiModalDataLoader:
 
         scaler = MinMaxScaler(feature_range=(-1, 1))
         scaler.fit(np.vstack(train_data + target_data))
-
+        self.scaler = scaler
         # Dataset
         dataset = TimeSeriesDataset(train_data, target_data, target_category, scaler=scaler)
 
@@ -509,4 +509,4 @@ class MultiModalDataLoader:
             validation_split_ratio,
         )
         # Return train and test loader attributes
-        return loader_instance.dataloaders
+        return loader_instance.dataloaders, loader_instance.scaler
