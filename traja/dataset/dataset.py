@@ -294,6 +294,7 @@ class MultiModalDataLoader:
                                       to include in the validation split. 
             num_target_categories: If validation_split_criteria is "category", then num_classes_in_validation_data should be not None. 
                                             N number of classes in dataset will be used in validation dataset
+            stride: Size of the sliding window. Defaults to sequence_length
             split_by_category (bool): Whether to split data based on the sequence's category (default) or ID
             scale (bool): If True, scale the input and target and return the corresponding scalers in a dict. 
 
@@ -312,6 +313,7 @@ class MultiModalDataLoader:
             train_split_ratio: float = 0.4,
             validation_split_ratio: float = 0.2,
             num_val_categories: int = None,
+            stride: int = None,
             split_by_category: bool = True,
             scale: bool = True,
             test: bool = True,
@@ -326,6 +328,7 @@ class MultiModalDataLoader:
         self.validation_split_ratio = validation_split_ratio
         self.split_by_category = split_by_category
         self.scale = scale
+        self.stride = stride
         self.num_val_categories = num_val_categories
 
         if self.num_val_categories is not None:
@@ -343,7 +346,7 @@ class MultiModalDataLoader:
         # Train and test data from df-val_df
         train_data, target_data, target_category, target_parameters, sequences_in_categories = generator.generate_dataset(
             self.df, self.n_past,
-            self.n_future)
+            self.n_future, stride=self.stride)
 
         scaler = MinMaxScaler(feature_range=(-1, 1))
         scaler.fit(np.vstack(train_data + target_data))
