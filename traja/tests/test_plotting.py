@@ -146,7 +146,7 @@ def test_plot_prediction():
 
     # Prepare the dataloader
     df = jaguar()
-    data_loaders = dataset.MultiModalDataLoader(df,
+    data_loaders, scalers = dataset.MultiModalDataLoader(df,
                                                 batch_size=batch_size,
                                                 n_past=num_past,
                                                 n_future=num_future,
