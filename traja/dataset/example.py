@@ -1,20 +1,22 @@
 import pandas as pd
+import numpy as np
+import traja
 
 default_cache_url = 'dataset_cache'
 
 
 def jaguar(cache_url=default_cache_url):
-    # Sample data
-    data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
-    df = pd.read_csv(data_url, error_bad_lines=False)
-    return df
+	# Sample data
+	data_url = "https://raw.githubusercontent.com/traja-team/traja-research/dataset_und_notebooks/dataset_analysis/jaguar5.csv"
+	df = pd.read_csv(data_url, error_bad_lines=False)
+	return df
 
 
 def Elk_in_southwestern_Alberta():
-	
+
 	"""
 	URL:- https://www.movebank.org/cms/webapp?gwt_fragment=page=studies,path=study933711994
-	
+
 	Licence Terms:- https://creativecommons.org/publicdomain/zero/1.0/
 
 	Boyce MS and Ciuti S (2020) Data from: Human selection of elk behavioural traits in a landscape of fear. 
@@ -39,15 +41,18 @@ def Elk_in_southwestern_Alberta():
 	Proceedings of the Royal Society B 279(1746): 4407-4416. https://doi.org/10.1098/rspb.2012.1483 
 	Ciuti S, Northrup JM, Muhly TB, Simi S, Musiani M, Pitt JA, Boyce MS (2012) Effects of humans on behaviour of wildlife exceed those of natural predators in a landscape of fear. 
 	PLoS ONE 7(11): e50611. https://doi.org/10.1371/journal.pone.0050611
-	
+
 	Principal Investigator Name: Mark S. Boyce
 	"""
+	df = pd.read_csv('traja/dataset/CSVs/Elk_in_southwestern_Alberta.csv',low_memory=False)
 
-	df = pd.read_csv('CSVs/Elk_in_southwestern_Alberta.csv')
+	unique_names = df["individual-local-identifier"].unique()
 	df = df[['location-long', 'location-lat', 'individual-local-identifier']]
 	df.rename(columns={'location-long': 'x', 'location-lat': 'y', 'individual-local-identifier': 'ID'}, inplace=True)
-	id_series = []
-	for ele in df["ID"]:
-    	id_series.append(np.where(unique_names == ele)[0][0])
-    df['ID'] = pd.Series(id_series)
-    return df
+
+	old_dict = dict(enumerate(unique_names.flatten(), 1)) 
+	new_dict = dict([(value, key) for key, value in old_dict.items()]) 
+	id_series = [new_dict[x] for x in df['ID']]
+
+	df['ID'] = pd.Series(id_series)
+	return df
