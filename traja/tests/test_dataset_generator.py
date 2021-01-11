@@ -20,7 +20,7 @@ def test_category_wise_sampling_few_categories():
     train_split_ratio = 0.5
     validation_split_ratio = 0.2
 
-    dataloaders = dataset.MultiModalDataLoader(df,
+    dataloaders, scalers = dataset.MultiModalDataLoader(df,
                                                batch_size=batch_size,
                                                n_past=num_past,
                                                n_future=num_future,
@@ -47,7 +47,7 @@ def test_category_wise_sampling():
     train_split_ratio = 0.333
     validation_split_ratio = 0.333
 
-    dataloaders = dataset.MultiModalDataLoader(df,
+    dataloaders, scalers = dataset.MultiModalDataLoader(df,
                                                batch_size=batch_size,
                                                n_past=num_past,
                                                n_future=num_future,

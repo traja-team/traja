@@ -24,7 +24,7 @@ def test_aevae():
     num_past = 10
     num_future = 5
     # Prepare the dataloader
-    data_loaders = dataset.MultiModalDataLoader(df,
+    data_loaders, scalers = dataset.MultiModalDataLoader(df,
                                                 batch_size=batch_size,
                                                 n_past=num_past,
                                                 n_future=num_future,
@@ -75,7 +75,7 @@ def test_ae():
     num_past = 10
     num_future = 5
     # Prepare the dataloader
-    data_loaders = dataset.MultiModalDataLoader(df,
+    data_loaders, scalers = dataset.MultiModalDataLoader(df,
                                                 batch_size=batch_size,
                                                 n_past=num_past,
                                                 n_future=num_future,
@@ -118,7 +118,7 @@ def test_lstm():
     assert num_past == num_future
 
     # Prepare the dataloader
-    data_loaders = dataset.MultiModalDataLoader(df,
+    data_loaders, scalers = dataset.MultiModalDataLoader(df,
                                                 batch_size=batch_size,
                                                 n_past=num_past,
                                                 n_future=num_future,
