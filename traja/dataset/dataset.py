@@ -295,7 +295,7 @@ class MultiModalDataLoader:
             num_target_categories: If validation_split_criteria is "category", then num_classes_in_validation_data should be not None. 
                                             N number of classes in dataset will be used in validation dataset
             stride: Size of the sliding window. Defaults to sequence_length
-            split_by_category (bool): Whether to split data based on the sequence's category (default) or ID
+            split_by_id (bool): Whether to split data based on the sequence's category (default) or ID
             scale (bool): If True, scale the input and target and return the corresponding scalers in a dict. 
 
         Usage:
@@ -314,7 +314,7 @@ class MultiModalDataLoader:
             validation_split_ratio: float = 0.2,
             num_val_categories: int = None,
             stride: int = None,
-            split_by_category: bool = True,
+            split_by_id: bool = True,
             scale: bool = True,
             test: bool = True,
     ):
@@ -326,7 +326,7 @@ class MultiModalDataLoader:
         self.test = test
         self.train_split_ratio = train_split_ratio
         self.validation_split_ratio = validation_split_ratio
-        self.split_by_category = split_by_category
+        self.split_by_id = split_by_id
         self.scale = scale
         self.stride = stride
         self.num_val_categories = num_val_categories
@@ -344,7 +344,7 @@ class MultiModalDataLoader:
             # self.set_validation()
 
         # Train and test data from df-val_df
-        train_data, target_data, target_category, target_parameters, sequences_in_categories = generator.generate_dataset(
+        train_data, target_data, target_ids, target_parameters, sequences_in_ids = generator.generate_dataset(
             self.df, self.n_past,
             self.n_future, stride=self.stride)
 
@@ -352,33 +352,46 @@ class MultiModalDataLoader:
         scaler.fit(np.vstack(train_data + target_data))
 
         # Dataset
-        dataset = TimeSeriesDataset(train_data, target_data, target_category, scaler=scaler)
+        dataset = TimeSeriesDataset(train_data, target_data, target_ids, scaler=scaler)
 
-        if self.split_by_category:
-            categories = list(set(target_category))
-            np.random.shuffle(categories)
+        if self.split_by_id:
+            ids = list(set(target_ids))
+            np.random.shuffle(ids)
 
-            train_split_index = round(train_split_ratio * len(categories))
-            validation_split_index = round((1 - validation_split_ratio) * len(categories))
+            train_split_index = round(train_split_ratio * len(ids))
+            validation_split_index = round((1 - validation_split_ratio) * len(ids))
 
-            train_categories = np.sort(categories[:train_split_index])
-            test_categories = np.sort(categories[train_split_index:validation_split_index])
-            validation_categories = np.sort(categories[validation_split_index:])
+            train_ids = np.sort(ids[:train_split_index])
+            test_ids = np.sort(ids[train_split_index:validation_split_index])
+            validation_ids = np.sort(ids[validation_split_index:])
 
-            train_indices = get_indices_from_categories(train_categories, sequences_in_categories)
-            test_indices = get_indices_from_categories(test_categories, sequences_in_categories)
-            validation_indices = get_indices_from_categories(validation_categories, sequences_in_categories)
+            train_indices = get_indices_from_categories(train_ids, sequences_in_ids)
+            test_indices = get_indices_from_categories(test_ids, sequences_in_ids)
+            validation_indices = get_indices_from_categories(validation_ids, sequences_in_ids)
 
         else:
-            indices = list(range(len(dataset)))
-            np.random.shuffle(indices)
+            if stride is None:
+                stride = n_past + n_future
 
-            train_split_index = round(train_split_ratio * len(indices))
-            validation_split_index = round((1 - validation_split_ratio) * len(indices))
+            sequence_length = n_past + n_future
+            train_indices = list()
+            test_indices = list()
+            validation_indices = list()
+            id_start_index = 0
+            for sequence_index, sequence_count in enumerate(sequences_in_ids):
+                overlap = math.ceil(sequence_length / stride)
 
-            train_indices = indices[:train_split_index]
-            test_indices = indices[train_split_index:validation_split_index]
-            validation_indices = indices[validation_split_index:]
+                start_test_index = round(sequence_count * train_split_ratio)
+                end_train_index = start_test_index - overlap
+
+                start_validation_index = round(sequence_count * (1 - validation_split_ratio))
+                end_test_index = start_validation_index - overlap
+
+                train_indices.extend(list(range(id_start_index, id_start_index + end_train_index)))
+                test_indices.extend(list(range(id_start_index + start_test_index, id_start_index + end_test_index)))
+                validation_indices.extend(list(range(id_start_index + start_validation_index, id_start_index + sequence_count)))
+
+                id_start_index += sequence_count
 
         sequential_train_sampler = SubsetRandomSampler(np.sort(train_indices))
         sequential_test_sampler = SubsetRandomSampler(np.sort(test_indices))
@@ -497,9 +510,11 @@ class MultiModalDataLoader:
             n_past: int,
             n_future: int,
             num_workers: int,
+            split_by_id: bool = True,
             stride: int = None,
             train_split_ratio: float = 0.4,
             validation_split_ratio: float = 0.2,
+            scale: bool = True,
     ):
         """Constructor of MultiModalDataLoader"""
         # Loader instance
@@ -510,9 +525,11 @@ class MultiModalDataLoader:
             n_past,
             n_future,
             num_workers,
-            train_split_ratio,
-            validation_split_ratio,
-            stride = stride,
+            train_split_ratio=train_split_ratio,
+            validation_split_ratio=validation_split_ratio,
+            split_by_id=split_by_id,
+            stride=stride,
+            scale=scale,
         )
         # Return train and test loader attributes
         return loader_instance.dataloaders
