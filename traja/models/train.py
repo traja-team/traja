@@ -313,7 +313,7 @@ class HybridTrainer(object):
 
                 test_loss_forecasting /= len(test_loader.dataset)
                 print(
-                    f"====> Mean test set generator loss: {test_loss_forecasting:.4f}"
+                    f"====> Mean test set forecasting loss: {test_loss_forecasting:.4f}"
                 )
                 if self.classify:
                     accuracy = correct / total
