@@ -23,7 +23,7 @@ import torch
 from sklearn.base import TransformerMixin
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset
-from torch.utils.data.sampler import SubsetRandomSampler
+from torch.utils.data.sampler import SubsetRandomSampler, SequentialSampler
 
 from traja.dataset import generator
 from traja.dataset.generator import get_indices_from_categories
@@ -397,8 +397,8 @@ class MultiModalDataLoader:
 
                 id_start_index += sequence_count
 
-        sequential_train_sampler = SubsetRandomSampler(np.sort(train_indices))
-        sequential_test_sampler = SubsetRandomSampler(np.sort(test_indices))
+        sequential_train_sampler = SequentialSampler(np.sort(train_indices[:]))
+        sequential_test_sampler = SequentialSampler(np.sort(test_indices[:]))
 
         np.random.shuffle(train_indices)
         np.random.shuffle(test_indices)
