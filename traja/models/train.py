@@ -246,7 +246,7 @@ class HybridTrainer(object):
                 )
 
             # Testing
-            if epoch % 10 == 0:
+            if epoch % 10 == 9:
                 with torch.no_grad():
                     if self.classify:
                         total = 0.0
