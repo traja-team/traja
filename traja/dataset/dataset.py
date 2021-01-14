@@ -296,7 +296,8 @@ class MultiModalDataLoader:
                                             N number of classes in dataset will be used in validation dataset
             stride: Size of the sliding window. Defaults to sequence_length
             split_by_id (bool): Whether to split data based on the sequence's category (default) or ID
-            scale (bool): If True, scale the input and target and return the corresponding scalers in a dict. 
+            scale (bool): If True, scale the input and target and return the corresponding scalers in a dict.
+            parameter_columns (list): Columns in data frame with regression parameters.
 
         Usage:
         ------
@@ -317,6 +318,7 @@ class MultiModalDataLoader:
             split_by_id: bool = True,
             scale: bool = True,
             test: bool = True,
+            parameter_columns: list = (),
     ):
         self.df = df
         self.batch_size = batch_size
@@ -346,7 +348,9 @@ class MultiModalDataLoader:
         # Train and test data from df-val_df
         train_data, target_data, target_ids, target_parameters, sequences_in_ids = generator.generate_dataset(
             self.df, self.n_past,
-            self.n_future, stride=self.stride)
+            self.n_future, stride=self.stride,
+            parameter_columns=parameter_columns
+        )
 
         scaler = MinMaxScaler(feature_range=(-1, 1))
         scaler.fit(np.vstack(train_data + target_data))
@@ -515,6 +519,7 @@ class MultiModalDataLoader:
             train_split_ratio: float = 0.4,
             validation_split_ratio: float = 0.2,
             scale: bool = True,
+            parameter_columns: list = list(),
     ):
         """Constructor of MultiModalDataLoader"""
         # Loader instance
@@ -530,6 +535,7 @@ class MultiModalDataLoader:
             split_by_id=split_by_id,
             stride=stride,
             scale=scale,
+            parameter_columns=parameter_columns,
         )
         # Return train and test loader attributes
         return loader_instance.dataloaders

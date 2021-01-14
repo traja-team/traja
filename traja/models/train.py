@@ -241,7 +241,7 @@ class HybridTrainer(object):
 
                 print(
                     "Epoch {} | {} loss {}".format(
-                        epoch, training_mode, total_loss / (idx + 1)
+                        epoch, training_mode, total_loss
                     )
                 )
 
