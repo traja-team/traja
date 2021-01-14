@@ -165,7 +165,7 @@ class HybridTrainer(object):
         validation_loader = dataloaders['validation_loader']
 
         # Training
-        for epoch in range(epochs):
+        for epoch in range(epochs + 1):
             test_loss_forecasting = 0
             test_loss_classification = 0
             test_loss_regression = 0
@@ -305,7 +305,7 @@ class HybridTrainer(object):
 
                         if self.regress:
                             regressor_out = self.model(
-                                data, training=True, regress=True, latent=False
+                                data, training=False, regress=True, latent=False
                             )
                             test_loss_regression += Criterion().regressor_criterion(
                                 regressor_out, parameters
