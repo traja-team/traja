@@ -225,7 +225,6 @@ class MLPClassifier(torch.nn.Module):
             input_size: int,
             hidden_size: int,
             num_classes: int,
-            latent_size: int,
             num_classifier_layers: int,
             dropout: float,
     ):
@@ -238,21 +237,73 @@ class MLPClassifier(torch.nn.Module):
         self.dropout = dropout
 
         # Classifier layers
-        self.hidden = nn.ModuleList([nn.Linear(self.input_size, self.hidden_size)])
-        self.hidden.extend(
-            [
-                nn.Linear(self.hidden_size, self.hidden_size)
-                for _ in range(1, self.num_classifier_layers - 1)
-            ]
-        )
-        self.hidden = nn.Sequential(*self.hidden)
-        self.out = nn.Linear(self.hidden_size, self.num_classes)
-        self.dropout = torch.nn.Dropout(p=dropout)
+        layers = list()
+
+        layers.append(nn.Linear(self.input_size, self.hidden_size))
+        layers.append(nn.ReLU())
+        torch.nn.Dropout(p=dropout)
+
+        for layer in range(1, self.num_classifier_layers):
+            layers.append(nn.Linear(self.hidden_size, self.hidden_size))
+            layers.append(nn.ReLU())
+            torch.nn.Dropout(p=dropout)
+
+        layers.append(nn.Linear(self.hidden_size, self.num_classes))
+
+        self.hidden = nn.Sequential(*layers)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        x = self.dropout(self.hidden(x))
-        out = self.out(x)
-        return out
+        x = self.hidden(x)
+        output = self.sigmoid(x)
+        return output
+
+
+class MLPRegressor(torch.nn.Module):
+    """ MLP regressor: Regress the input data using the latent embeddings
+            input_size: The number of expected latent size
+            hidden_size: The number of features in the hidden state h
+            num_classes: Size of labels or the number of categories in the data
+            dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                            with dropout probability equal to dropout
+            num_classifier_layers: Number of hidden layers in the classifier
+            """
+
+    def __init__(
+            self,
+            input_size: int,
+            hidden_size: int,
+            num_classes: int,
+            num_classifier_layers: int,
+            dropout: float,
+    ):
+        super(MLPRegressor, self).__init__()
+
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_classes = num_classes
+        self.num_classifier_layers = num_classifier_layers
+        self.dropout = dropout
+
+        # Classifier layers
+        layers = list()
+
+        layers.append(nn.Linear(self.input_size, self.hidden_size))
+        layers.append(nn.ReLU())
+        torch.nn.Dropout(p=dropout)
+
+        for layer in range(1, self.num_classifier_layers):
+            layers.append(nn.Linear(self.hidden_size, self.hidden_size))
+            layers.append(nn.ReLU())
+            torch.nn.Dropout(p=dropout)
+
+        layers.append(nn.Linear(self.hidden_size, self.num_classes))
+
+        self.hidden = nn.Sequential(*layers)
+
+    def forward(self, x):
+        output = self.hidden(x)
+        return output
 
 
 class MultiModelVAE(torch.nn.Module):
@@ -353,17 +404,15 @@ class MultiModelVAE(torch.nn.Module):
                 input_size=self.latent_size,
                 hidden_size=self.classifier_hidden_size,
                 num_classes=self.num_classes,
-                latent_size=self.latent_size,
                 num_classifier_layers=self.num_classifier_layers,
                 dropout=self.dropout,
             )
 
         if self.num_regressor_parameters is not None:
-            self.regressor = MLPClassifier(
+            self.regressor = MLPRegressor(
                 input_size=self.latent_size,
                 hidden_size=self.regressor_hidden_size,
                 num_classes=self.num_regressor_parameters,
-                latent_size=self.latent_size,
                 num_classifier_layers=self.num_regressor_layers,
                 dropout=self.dropout,
             )
