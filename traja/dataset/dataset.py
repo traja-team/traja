@@ -356,7 +356,7 @@ class MultiModalDataLoader:
         scaler.fit(np.vstack(train_data + target_data))
 
         # Dataset
-        dataset = TimeSeriesDataset(train_data, target_data, target_ids, scaler=scaler)
+        dataset = TimeSeriesDataset(train_data, target_data, target_ids, target_parameters, scaler=scaler)
 
         if self.split_by_id:
             ids = list(set(target_ids))
