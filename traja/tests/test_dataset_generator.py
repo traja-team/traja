@@ -230,12 +230,12 @@ def test_sequential_data_loader_indices_are_sequential():
     df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
 
     # Hyperparameters
-    batch_size = 1
+    batch_size = 18
     num_past = 13
     num_future = 8
     train_split_ratio = 0.5
     validation_split_ratio = 0.2
-    stride=1
+    stride = 1
 
     dataloaders = dataset.MultiModalDataLoader(df,
                                                batch_size=batch_size,
@@ -247,5 +247,17 @@ def test_sequential_data_loader_indices_are_sequential():
                                                stride=stride)
 
     current_id = 0
-    for data, target, id, parameters in dataloaders['sequential_train_data']:
-        pass
+    for data, target, ids, parameters in dataloaders['sequential_train_loader']:
+        for id in ids:
+            id = int(id)
+            if id > current_id:
+                current_id = id
+            assert id == current_id, 'IDs in sequential train loader should increase monotonically!'
+
+    current_id = 0
+    for data, target, ids, parameters in dataloaders['sequential_test_loader']:
+        for id in ids:
+            id = int(id)
+            if id > current_id:
+                current_id = id
+            assert id == current_id, 'IDs in sequential test loader should increase monotonically!'
