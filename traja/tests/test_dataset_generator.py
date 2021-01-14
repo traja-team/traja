@@ -64,6 +64,70 @@ def test_time_based_sampling_dataloaders_do_not_overlap():
                 assert sample[0] == 1
 
 
+def test_time_based_sampling_dataloaders_with_short_stride_do_not_overlap():
+    data = list()
+    num_ids = 140
+    sequence_length = 2000
+
+    # Hyperparameters
+    batch_size = 15
+    num_past = 10
+    num_future = 5
+    train_split_ratio = 0.498
+    validation_split_ratio = 0.25
+
+    stride = 5
+
+    split_by_id = False  # The test condition
+
+    # The train[0] column should contain only 1s, the test column should contain 2s and the
+    # validation column set should contain 3s.
+    # When scaled, this translates to -1., 0 and 1. respectively.
+    for sample_id in range(num_ids):
+        for element in range(round(sequence_length * train_split_ratio) - 6):
+            data.append([1, element, sample_id])
+        for element in range(round(sequence_length * (1 - train_split_ratio - validation_split_ratio)) + -4):
+            data.append([2, element, sample_id])
+        for element in range(round(sequence_length * validation_split_ratio) + 10):
+            data.append([3, element, sample_id])
+
+    df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
+
+    dataloaders = dataset.MultiModalDataLoader(df,
+                                               batch_size=batch_size,
+                                               n_past=num_past,
+                                               n_future=num_future,
+                                               num_workers=1,
+                                               train_split_ratio=train_split_ratio,
+                                               validation_split_ratio=validation_split_ratio,
+                                               split_by_id=split_by_id,
+                                               stride=stride)
+
+    for data, target, category, parameters in dataloaders['train_loader']:
+        for sequence in data:
+            for sample in sequence:
+                assert sample[0] == -1.
+        for sequence in target:
+            for sample in sequence:
+                assert sample[0] == -1.
+
+    for data, target, category, parameters in dataloaders['test_loader']:
+        for sequence in data:
+            for sample in sequence:
+                assert sample[0] == 0
+        for sequence in target:
+            for sample in sequence:
+                assert sample[0] == 0
+
+    for data, target, category, parameters in dataloaders['validation_loader']:
+        for sequence in data:
+            for sample in sequence:
+                assert sample[0] == 1
+        for sequence in target:
+            for sample in sequence:
+                assert sample[0] == 1
+
+
 def test_time_based_weighted_sampling_dataloaders_do_not_overlap():
     pass
 
@@ -153,3 +217,35 @@ def verify_id_wise_sampled_dataloaders_do_not_overlap(dataloaders, train_split_r
         validation_split_ratio * num_ids), 'Wrong number of validation categories!'
     assert len(train_categories) + len(test_categories) + len(
         validation_categories) == num_ids, 'Wrong number of categories!'
+
+
+def test_sequential_data_loader_indices_are_sequential():
+    data = list()
+    num_ids = 46
+
+    for sample_id in range(num_ids):
+        for sequence in range(40 + int(sample_id / 14)):
+            data.append([sequence, sequence, sample_id])
+
+    df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
+
+    # Hyperparameters
+    batch_size = 1
+    num_past = 13
+    num_future = 8
+    train_split_ratio = 0.5
+    validation_split_ratio = 0.2
+    stride=1
+
+    dataloaders = dataset.MultiModalDataLoader(df,
+                                               batch_size=batch_size,
+                                               n_past=num_past,
+                                               n_future=num_future,
+                                               num_workers=1,
+                                               train_split_ratio=train_split_ratio,
+                                               validation_split_ratio=validation_split_ratio,
+                                               stride=stride)
+
+    current_id = 0
+    for data, target, id, parameters in dataloaders['sequential_train_data']:
+        pass
