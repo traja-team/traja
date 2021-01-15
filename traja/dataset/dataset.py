@@ -352,8 +352,11 @@ class MultiModalDataLoader:
             parameter_columns=parameter_columns
         )
 
-        scaler = MinMaxScaler(feature_range=(-1, 1))
-        scaler.fit(np.vstack(train_data + target_data))
+        if self.scale:
+            scaler = MinMaxScaler(feature_range=(-1, 1))
+            scaler.fit(np.vstack(train_data + target_data))
+        else:
+            scaler = None
 
         # Dataset
         dataset = TimeSeriesDataset(train_data, target_data, target_ids, target_parameters, scaler=scaler)
@@ -397,8 +400,9 @@ class MultiModalDataLoader:
 
                 id_start_index += sequence_count
 
-        sequential_train_sampler = SequentialSampler(np.sort(train_indices[:]))
-        sequential_test_sampler = SequentialSampler(np.sort(test_indices[:]))
+        sequential_train_dataset = torch.utils.data.Subset(dataset, np.sort(train_indices[:]))
+        sequential_test_dataset = torch.utils.data.Subset(dataset, np.sort(test_indices[:]))
+        sequential_validation_dataset = torch.utils.data.Subset(dataset, np.sort(validation_indices[:]))
 
         np.random.shuffle(train_indices)
         np.random.shuffle(test_indices)
@@ -441,18 +445,23 @@ class MultiModalDataLoader:
             num_workers=num_workers,
         )
         self.sequential_train_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
+            dataset=sequential_train_dataset,
             shuffle=False,
             batch_size=self.batch_size,
-            sampler=sequential_train_sampler,
             drop_last=True,
             num_workers=num_workers,
         )
         self.sequential_test_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
+            dataset=sequential_test_dataset,
             shuffle=False,
             batch_size=self.batch_size,
-            sampler=sequential_test_sampler,
+            drop_last=True,
+            num_workers=num_workers,
+        )
+        self.sequential_validation_loader = torch.utils.data.DataLoader(
+            dataset=sequential_validation_dataset,
+            shuffle=False,
+            batch_size=self.batch_size,
             drop_last=True,
             num_workers=num_workers,
         )
@@ -463,7 +472,8 @@ class MultiModalDataLoader:
             "validation_loader": self.validation_loader,
             "sequential_loader": self.sequential_loader,
             "sequential_train_loader": self.sequential_train_loader,
-            "sequential_test_loader": self.sequential_test_loader
+            "sequential_test_loader": self.sequential_test_loader,
+            "sequential_validation_loader": self.sequential_validation_loader
         }
 
     def set_validation(self):
