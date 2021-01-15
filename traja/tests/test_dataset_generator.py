@@ -236,6 +236,7 @@ def verify_id_wise_sampled_dataloaders_do_not_overlap(dataloaders, train_split_r
     assert len(train_ids) + len(test_ids) + len(
         validation_ids) == num_ids, 'Wrong number of ids!'
 
+    # We check that all sample IDs are present in the sequential samplers and vice versa
     train_sequential_sample_ids = []
     for data, target, ids, parameters in dataloaders['sequential_train_loader']:
         for index, sequence_id in enumerate(ids):
@@ -273,6 +274,27 @@ def verify_id_wise_sampled_dataloaders_do_not_overlap(dataloaders, train_split_r
     assert len(validation_sample_ids) == len(validation_sequential_sample_ids), 'validation and sequential_validation loaders have different lengths!'
     for index in range(len(validation_sample_ids)):
         assert validation_sample_ids[index] == validation_sequential_sample_ids[index], f'Index {validation_sample_ids[index]} is not equal to {validation_sequential_sample_ids[index]}!'
+
+    # Check that all indices belong to precisely one loader
+    # Note that (because some samples are dropped and because we only check the first value in data)
+    # not all indices are in a loader.
+    train_index = 0
+    test_index = 0
+    validation_index = 0
+    for index in range(len(train_sample_ids) + len(test_sample_ids) + len(validation_sample_ids)):
+        if train_sample_ids[train_index] < index:
+            train_index += 1
+        if test_sample_ids[test_index] < index:
+            test_index += 1
+        if validation_sample_ids[validation_index] < index:
+            validation_index += 1
+        index_is_in_train = train_sample_ids[train_index] == index
+        index_is_in_test = test_sample_ids[test_index] == index
+        index_is_in_validation = validation_sample_ids[validation_index] == index
+
+        assert not (index_is_in_train and index_is_in_test), f'Index {index} is in both the train and test loaders!'
+        assert not (index_is_in_train and index_is_in_validation), f'Index {index} is in both the train and validation loaders!'
+        assert not (index_is_in_test and index_is_in_validation), f'Index {index} is in both the test and validation loaders!'
 
 
 def test_sequential_data_loader_indices_are_sequential():
