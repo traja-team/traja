@@ -418,6 +418,12 @@ class MultiModelVAE(torch.nn.Module):
             )
 
     def reset_classifier(self, classifier_hidden_size: int, num_classifier_layers: int):
+        """Reset the classifier, with a new hidden size and depth.
+        This is useful when parameter searching.
+
+        classifier_hidden_size: The number of units in each classifier layer
+        num_classifier_layers: Number of layers in the classifier
+        """
         self.classifier_hidden_size = classifier_hidden_size
         self.num_classifier_layers = num_classifier_layers
 
@@ -430,6 +436,12 @@ class MultiModelVAE(torch.nn.Module):
         )
 
     def reset_regressor(self, regressor_hidden_size: int, num_regressor_layers: int):
+        """Reset the regressor, with a new hidden size and depth.
+        This is useful when parameter searching.
+
+        regressor_hidden_size: The number of units in each classifier layer
+        num_regressor_layers: Number of layers in the classifier
+        """
         self.num_regressor_layers = num_regressor_layers
         self.regressor_hidden_size = regressor_hidden_size
 
