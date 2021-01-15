@@ -417,6 +417,30 @@ class MultiModelVAE(torch.nn.Module):
                 dropout=self.dropout,
             )
 
+    def reset_classifier(self, classifier_hidden_size: int, num_classifier_layers: int):
+        self.classifier_hidden_size = classifier_hidden_size
+        self.num_classifier_layers = num_classifier_layers
+
+        self.classifier = MLPClassifier(
+            input_size=self.latent_size,
+            hidden_size=self.classifier_hidden_size,
+            num_classes=self.num_classes,
+            num_classifier_layers=self.num_classifier_layers,
+            dropout=self.dropout,
+        )
+
+    def reset_regressor(self, regressor_hidden_size: int, num_regressor_layers: int):
+        self.num_regressor_layers = num_regressor_layers
+        self.regressor_hidden_size = regressor_hidden_size
+
+        self.regressor = MLPRegressor(
+            input_size=self.latent_size,
+            hidden_size=self.regressor_hidden_size,
+            num_classes=self.num_regressor_parameters,
+            num_classifier_layers=self.num_regressor_layers,
+            dropout=self.dropout,
+        )
+
     def forward(self, data, training=True, classify=False, regress=False, latent=True):
         """
         Parameters:
