@@ -88,13 +88,14 @@ def plot_prediction(model, dataloader, index):
     data = data.float().to(device)
     prediction = model(data, latent=False)
 
-    pred = prediction.squeeze().to(device).detach().numpy()
-    real = target.to(device)
+    # Send tensors to CPU so numpy can work with them
+    pred = prediction.squeeze().cpu().detach().numpy()
+    real = target.cpu()
 
     target = torch.tensor(target)[0:1, :]
     print(target.shape, data.shape)
 
-    data = torch.cat((data.squeeze().to(device), target), dim=0)
+    data = torch.cat((data.squeeze().cpu(), target), dim=0)
 
     data = data.detach().numpy()
 
