@@ -48,7 +48,7 @@ __all__ = [
     "plot_transition_matrix",
     "plot_xy",
     "polar_bar",
-    "predict",
+    "plot_prediction",
     "sans_serif",
     "stylize_axes",
     "trip_grid",
@@ -79,36 +79,22 @@ def _rolling(df, window, step):
         count += step
 
 
-def predict(
-        xy: np.ndarray,
-        nb_steps: int = 10,
-        epochs: int = 1000,
-        batch_size: int = 1,
-        model="lstm",
-):  # pragma: no cover
-    """Method for training and visualizing LSTM with trajectory dataset."""
-    if model == "lstm":
-        from traja.models.nn import TrajectoryLSTM
-
-        TrajectoryLSTM(xy, nb_steps=nb_steps, epochs=epochs, batch_size=batch_size)
-
-
 def plot_prediction(model, dataloader, index):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     fig, ax = plt.subplots(2, 1)
     model = model.to(device)
 
     data, target, category, parameters = list(iter(dataloader))[index]
-    data = data.float()
+    data = data.float().to(device)
     prediction = model(data, latent=False)
 
-    pred = prediction.squeeze().cpu().detach().numpy()
-    real = target
+    pred = prediction.squeeze().to(device).detach().numpy()
+    real = target.to(device)
 
     target = torch.tensor(target)[0:1, :]
     print(target.shape, data.shape)
 
-    data = torch.cat((data.squeeze().cpu(), target), dim=0)
+    data = torch.cat((data.squeeze().to(device), target), dim=0)
 
     data = data.detach().numpy()
 
