@@ -1,5 +1,6 @@
 import pandas as pd
 
+import traja
 from traja.dataset import dataset
 from traja.dataset.example import jaguar
 from traja.models.generative_models.vae import MultiModelVAE
@@ -31,7 +32,8 @@ def test_aevae_jaguar():
                                                 n_past=num_past,
                                                 n_future=num_future,
                                                 train_split_ratio=0.5,
-                                                num_workers=1)
+                                                num_workers=1,
+                                                split_by_id=False)
 
     model_save_path = './model.pt'
 
@@ -60,6 +62,18 @@ def test_aevae_jaguar():
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='classification')
+
+    scaler = data_loaders['train_loader'].dataset.scaler
+
+    # Load the trained model given the path
+    model_path = './model.pt'
+    hyperparams = './hypers.json'
+    model_hyperparameters = traja.models.read_hyperparameters(hyperparams)
+
+    # For prebuild traja generative models
+    generator = traja.models.inference.Generator(model_type='vae', model_hyperparameters=model_hyperparameters,
+                                                 model_path=model_path, model=None)
+    out = generator.generate(num_future, classify=False, scaler=scaler, plot_data=False)
 
 
 def test_ae_jaguar():

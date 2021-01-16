@@ -46,7 +46,7 @@ class Generator:
 
         (self.generated_category, self.generated_data,) = (None, None)
 
-    def generate(self, num_steps, classify=True, scaler=None):
+    def generate(self, num_steps, classify=True, scaler=None, plot_data=True):
 
         self.model.to(device)
         if self.model_type == "vae":
@@ -77,18 +77,10 @@ class Generator:
                 except Exception as error:
                     print("Classifier not found: " + repr(error))
 
-            fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=True)
-            fig.set_size_inches(20, 5)
-
             # Scale original data and generated data
 
             # Rescaling predicted data
-            for i in range(self.generated_data.shape[1]):
-                s_s = scaler.inverse_transform(
-                    self.generated_data[:, i].reshape(-1, 1)
-                )
-                s_s = np.reshape(s_s, len(s_s))
-                self.generated_data[:, i] = s_s
+            self.generated_data = scaler.inverse_transform(self.generated_data)
 
             # TODO:Depreself.generated_categoryed;Slicing the data into batches
             self.generated_data = np.array(
@@ -104,31 +96,35 @@ class Generator:
                 self.generated_data.shape[2],
             )
 
-            for i in range(2):
-                for j in range(5):
-                    if classify:
-                        try:
-                            label = "Animal ID {}".format(
-                                (
-                                        torch.max(self.generated_category, 1).indices + 1
-                                ).detach()[i + j]
-                            )
-                        except Exception as error:
-                            print("Classifier not found:" + repr(error))
-                    else:
-                        label = ""
-                    ax[i, j].plot(
-                        self.generated_data[:, 0][
-                        (i + j) * num_steps: (i + j) * num_steps + num_steps
-                        ],
-                        self.generated_data[:, 1][
-                        (i + j) * num_steps: (i + j) * num_steps + num_steps
-                        ],
-                        label=label,
-                        color="g",
-                    )
-                    ax[i, j].legend()
-            plt.show()
+            if plot_data:
+                fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=True)
+                fig.set_size_inches(20, 5)
+
+                for i in range(2):
+                    for j in range(5):
+                        if classify:
+                            try:
+                                label = "Animal ID {}".format(
+                                    (
+                                            torch.max(self.generated_category, 1).indices + 1
+                                    ).detach()[i + j]
+                                )
+                            except Exception as error:
+                                print("Classifier not found:" + repr(error))
+                        else:
+                            label = ""
+                        ax[i, j].plot(
+                            self.generated_data[:, 0][
+                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                            ],
+                            self.generated_data[:, 1][
+                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                            ],
+                            label=label,
+                            color="g",
+                        )
+                        ax[i, j].legend()
+                plt.show()
 
             return self.generated_data
 
