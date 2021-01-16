@@ -10,19 +10,6 @@ from torch.utils.data.sampler import WeightedRandomSampler
 logger = logging.getLogger(__name__)
 
 
-def get_class_distribution(targets):
-    """Compute class distribution, returns number of classes and their count in the targets
-
-    Args:
-        targets ([type]): [description]
-
-    Returns:
-        [type]: [description]
-    """
-    targets_ = np.unique(targets, return_counts=True)
-    return targets_[0], targets_[1]
-
-
 def generate_dataset(df, n_past: int, n_future: int, stride: int = None, parameter_columns: list = list()):
     """
     df : Dataframe
