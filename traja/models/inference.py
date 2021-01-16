@@ -84,7 +84,7 @@ class Generator:
 
             # Rescaling predicted data
             for i in range(self.generated_data.shape[1]):
-                s_s = scaler[f"scaler_{i}"].inverse_transform(
+                s_s = scaler.inverse_transform(
                     self.generated_data[:, i].reshape(-1, 1)
                 )
                 s_s = np.reshape(s_s, len(s_s))
@@ -231,7 +231,7 @@ class Predictor:
 
                 # Rescaling predicted data
                 for i in range(self.predicted_data.shape[1]):
-                    s_s = scaler[f"scaler_{i}"].inverse_transform(
+                    s_s = scaler.inverse_transform(
                         self.predicted_data[:, i].reshape(-1, 1)
                     )
                     s_s = np.reshape(s_s, len(s_s))
@@ -247,7 +247,7 @@ class Predictor:
                 # Rescaling target data
                 self.target_data = target.copy()
                 for i in range(self.target_data.shape[1]):
-                    s_s = scaler["scaler_{}".format(i)].inverse_transform(
+                    s_s = scaler.inverse_transform(
                         self.target_data[:, i].reshape(-1, 1)
                     )
                     s_s = np.reshape(s_s, len(s_s))
