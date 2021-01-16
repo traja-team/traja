@@ -4,5 +4,5 @@ from traja.models.predictive_models.ae import MultiModelAE
 from traja.models.predictive_models.irl import MultiModelIRL
 from traja.models.predictive_models.lstm import LSTM
 from .inference import *
-from .utils import TimeDistributed, read_hyperparameters, save, load
 from .train import HybridTrainer
+from .utils import TimeDistributed, read_hyperparameters, save, load

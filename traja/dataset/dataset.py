@@ -13,7 +13,6 @@ Helpers:
 """
 import logging
 import math
-import random
 from collections import defaultdict
 
 import numpy as np
@@ -195,8 +194,10 @@ class MultiModalDataLoader:
                     list(range(id_start_index + start_validation_index, id_start_index + sequence_count)))
 
                 train_weights[sequence_index] = 1.0 / end_train_index if end_train_index > 0 else 0
-                test_weights[sequence_index] = 1.0 / (end_test_index - start_test_index) if (end_test_index - start_test_index) > 0 else 0
-                validation_weights[sequence_index] = 1.0 / (sequence_count - start_validation_index) if (sequence_count - start_validation_index) > 0 else 0
+                test_weights[sequence_index] = 1.0 / (end_test_index - start_test_index) if (
+                                                                                                    end_test_index - start_test_index) > 0 else 0
+                validation_weights[sequence_index] = 1.0 / (sequence_count - start_validation_index) if (
+                                                                                                                sequence_count - start_validation_index) > 0 else 0
 
                 id_start_index += sequence_count
 
