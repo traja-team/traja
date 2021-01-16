@@ -2,10 +2,6 @@ import logging
 from collections import defaultdict
 
 import numpy as np
-import torch
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.utils import shuffle
-from torch.utils.data.sampler import WeightedRandomSampler
 
 logger = logging.getLogger(__name__)
 
