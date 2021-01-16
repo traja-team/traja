@@ -4,6 +4,7 @@ import traja
 from traja.dataset import dataset
 from traja.dataset.example import jaguar
 from traja.models.generative_models.vae import MultiModelVAE
+from traja.models.losses import Criterion
 from traja.models.predictive_models.ae import MultiModelAE
 from traja.models.predictive_models.lstm import LSTM
 from traja.models.train import HybridTrainer
@@ -162,7 +163,7 @@ def test_lstm_jaguar():
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
 
 
-def test_aevae_regression_network_trains():
+def test_aevae_regression_network_converges():
     """
     Test Autoencoder and variational auto encoder models for training/testing/generative network and
     classification networks
@@ -170,12 +171,12 @@ def test_aevae_regression_network_trains():
     """
 
     data = list()
-    num_ids = 9
+    num_ids = 3
 
     for sample_id in range(num_ids):
-        for sequence in range(40 + int(sample_id / 14)):
-            parameter_one = 0.2 * (sample_id % 5)
-            parameter_two = 91.235 * (sample_id % 5)
+        for sequence in range(70 + sample_id * 4):
+            parameter_one = 0.2 * sample_id
+            parameter_two = 91.235 * sample_id
             data.append([sequence, sequence, sample_id, parameter_one, parameter_two])
     # Sample data
     df = pd.DataFrame(data, columns=['x', 'y', 'ID', 'parameter_one', 'parameter_two'])
@@ -183,7 +184,7 @@ def test_aevae_regression_network_trains():
     parameter_columns = ['parameter_one', 'parameter_two']
 
     # Hyperparameters
-    batch_size = 10
+    batch_size = 1
     num_past = 10
     num_future = 5
     # Prepare the dataloader
@@ -191,9 +192,12 @@ def test_aevae_regression_network_trains():
                                                 batch_size=batch_size,
                                                 n_past=num_past,
                                                 n_future=num_future,
-                                                train_split_ratio=0.5,
+                                                train_split_ratio=0.333,
+                                                validation_split_ratio=0.333,
                                                 num_workers=1,
-                                                parameter_columns=parameter_columns)
+                                                parameter_columns=parameter_columns,
+                                                split_by_id=False,
+                                                stride=1)
 
     model_save_path = './model.pt'
 
@@ -219,6 +223,24 @@ def test_aevae_regression_network_trains():
                             optimizer_type='Adam',
                             loss_type='huber')
 
+
+    criterion = Criterion()
+    loss_pre_training = 0.
+    for data, _, _, parameters in data_loaders['train_loader']:
+        prediction = model(data.float(), regress=True, latent=False)
+        loss_pre_training += criterion.regressor_criterion(prediction, parameters)
+
+    print(f'Loss pre training: {loss_pre_training}')
+
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='regression')
+
+    loss_post_training = 0.
+    for data, _, _, parameters in data_loaders['train_loader']:
+        prediction = model(data.float(), regress=True, latent=False)
+        loss_post_training += criterion.regressor_criterion(prediction, parameters)
+
+    print(f'Loss post training: {loss_post_training}')
+    assert loss_post_training < loss_pre_training
+
