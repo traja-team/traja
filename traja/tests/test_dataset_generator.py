@@ -216,7 +216,7 @@ def test_id_wise_sampling_with_short_sequences_does_not_divide_by_zero():
     df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
 
     # Hyperparameters
-    batch_size = 10
+    batch_size = 1
     num_past = 10
     num_future = 5
     train_split_ratio = 0.333
@@ -249,7 +249,7 @@ def test_id_wise_sampling_does_not_put_id_in_multiple_dataloaders():
     df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
 
     # Hyperparameters
-    batch_size = 1
+    batch_size = 10
     num_past = 10
     num_future = 5
     train_split_ratio = 0.333
