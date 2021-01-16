@@ -79,25 +79,29 @@ def _rolling(df, window, step):
         count += step
 
 
-def plot_prediction(model, dataloader, index):
+def plot_prediction(model, dataloader, index, scaler=None):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    fig, ax = plt.subplots(2, 1)
+    fig, ax = plt.subplots(2, 1, figsize=(10, 10))
     model = model.to(device)
+    batch_size = model.batch_size
+    num_past = model.num_past
+    input_size = model.input_size
 
     data, target, category, parameters = list(iter(dataloader))[index]
     data = data.float().to(device)
     prediction = model(data, latent=False)
 
     # Send tensors to CPU so numpy can work with them
-    pred = prediction.squeeze().cpu().detach().numpy()
+    pred = prediction[batch_size - 1:batch_size, :].cpu().squeeze().detach().numpy()
+    target = target.clone().detach()[batch_size - 1:batch_size, :].squeeze()
     real = target.cpu()
 
-    target = torch.tensor(target)[0:1, :]
-    print(target.shape, data.shape)
+    data = data.cpu().reshape(batch_size * num_past, input_size).detach().numpy()
 
-    data = torch.cat((data.squeeze().cpu(), target), dim=0)
-
-    data = data.detach().numpy()
+    if scaler:
+        data = scaler.inverse_transform(data)
+        real = scaler.inverse_transform(real)
+        pred = scaler.inverse_transform(pred)
 
     ax[0].plot(data[:, 0], data[:, 1], label="History")
     ax[0].plot(real[:, 0], real[:, 1], label="Real")
@@ -108,6 +112,7 @@ def plot_prediction(model, dataloader, index):
 
     for a in ax:
         a.legend()
+    plt.show()
 
 
 def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> Axes:
