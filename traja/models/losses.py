@@ -62,11 +62,3 @@ class Criterion:
 
         loss = self.mse_loss(predicted, target)
         return loss
-
-    def lstm_criterion(self, predicted, target):
-
-        loss = self.huber_loss(predicted, target)
-        return loss
-
-    def vaegan_criterion(self):
-        return NotImplementedError
