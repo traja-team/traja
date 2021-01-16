@@ -23,7 +23,7 @@ class HybridTrainer(object):
         lstm_hidden_size: The number of features in the hidden state h
         num_lstm_layers: Number of layers in the LSTM model
         reset_state: If True, will reset the hidden and cell state for each batch of data
-        num_classes: Number of categories/labels
+        num_classes: Number of sequence_ids/labels
         latent_size: Latent space dimension
         dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                     with dropout probability equal to dropout

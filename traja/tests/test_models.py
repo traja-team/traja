@@ -1,10 +1,11 @@
+import pandas as pd
+
 from traja.dataset import dataset
 from traja.dataset.example import jaguar
 from traja.models.generative_models.vae import MultiModelVAE
 from traja.models.predictive_models.ae import MultiModelAE
 from traja.models.predictive_models.lstm import LSTM
 from traja.models.train import HybridTrainer
-import pandas as pd
 
 # Sample data
 df = jaguar()

@@ -105,7 +105,7 @@ def read_file(
     float_cols = df_test.select_dtypes(include=[np.float]).columns
     float32_cols = {c: np.float32 for c in float_cols}
 
-    # Convert string columns to categories
+    # Convert string columns to sequence_ids
     string_cols = [c for c in df_test if df_test[c].dtype == str]
     category_cols = {c: "category" for c in string_cols}
     dtype = {**float32_cols, **category_cols, **kwargs.pop("dtype", {})}

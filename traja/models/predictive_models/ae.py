@@ -183,7 +183,7 @@ class MLPClassifier(torch.nn.Module):
         -----------
             input_size: The number of expected latent size
             hidden_size: The number of features in the hidden state h
-            num_classes: Size of labels or the number of categories in the data
+            num_classes: Size of labels or the number of sequence_ids in the data
             dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                         with dropout probability equal to dropout
             num_classifier_layers: Number of hidden layers in the classifier
