@@ -94,8 +94,6 @@ class MultiModalDataLoader:
                                       to include in the train split. 
             validation_split_ratio (float): Should be between 0.0 and 1.0 and represent the proportion of the dataset 
                                       to include in the validation split. 
-            num_target_categories: If validation_split_criteria is "category", then num_classes_in_validation_data should be not None. 
-                                            N number of classes in dataset will be used in validation dataset
             stride: Size of the sliding window. Defaults to sequence_length
             split_by_id (bool): Whether to split data based on the sequence's category (default) or ID
             scale (bool): If True, scale the input and target and return the corresponding scalers in a dict.
@@ -117,7 +115,6 @@ class MultiModalDataLoader:
             num_workers: int,
             train_split_ratio: float = 0.4,
             validation_split_ratio: float = 0.2,
-            num_val_categories: int = None,
             stride: int = None,
             split_by_id: bool = True,
             scale: bool = True,
@@ -136,19 +133,6 @@ class MultiModalDataLoader:
         self.split_by_id = split_by_id
         self.scale = scale
         self.stride = stride
-        self.num_val_categories = num_val_categories
-
-        if self.num_val_categories is not None:
-            assert (
-                    self.validation_split_ratio is not None
-            ), "Invalid validation argument, validation_split_ratio not supported for category based validation split"
-
-            self.set_validation()
-        if self.validation_split_ratio is not None:
-            assert (
-                    self.validation_split_ratio is not None
-            ), "Invalid validation argument, num_val_categories not supported for sequence based validation split"
-            # self.set_validation()
 
         # Train and test data from df-val_df
         train_data, target_data, target_ids, target_parameters, samples_in_sequence_id = generator.generate_dataset(
@@ -319,47 +303,6 @@ class MultiModalDataLoader:
             "sequential_test_loader": self.sequential_test_loader,
             "sequential_validation_loader": self.sequential_validation_loader
         }
-
-    def set_validation(self):
-        """[summary]
-
-        Args:
-            target_categories (list, optional): [description]. Defaults to None.
-        """
-
-        if self.validation_split_ratio is None and self.num_val_categories is not None:
-            max_ID = self.df["ID"].max()
-            val_categories = random.sample(range(1, max_ID), self.num_val_categories)
-            self.df_val = self.df.loc[self.df["ID"].isin(val_categories)]
-
-        if self.validation_split_ratio is not None and self.num_val_categories is None:
-            # Prepare validation data before train and test and their splits
-            self.df_val = self.df.groupby("ID").tail(
-                self.validation_split_ratio * len(self.df)
-            )
-
-        # Generate validation dataset
-        val_x, val_y, val_z, val_w = generator.generate_dataset(self.df_val, self.n_past, self.n_future)
-        if self.scale:
-            # Scale validation data:
-            (val_x, self.val_x_scaler), (val_y, self.val_y_scaler) = (
-                generator.scale_data(val_x, sequence_length=self.n_past),
-                generator.scale_data(val_y, sequence_length=self.n_future),
-            )
-        # Generate Pytorch dataset
-        val_dataset = TimeSeriesDataset(val_x, val_y, val_z)
-
-        self.validation_loader = torch.utils.data.DataLoader(
-            dataset=val_dataset,
-            shuffle=False,
-            batch_size=self.batch_size,
-            sampler=None,
-            drop_last=True,
-            num_workers=self.num_workers,
-        )
-
-        # Create new df for train and test; Difference of df with df_val
-        self.df = self.df.loc[self.df.index.difference(self.df_val.index)]
 
     def __new__(
             cls,
