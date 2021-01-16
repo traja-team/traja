@@ -196,13 +196,13 @@ class HybridTrainer(object):
                             decoder_out = self.model(
                                 data, training=True, classify=False, latent=False
                             )
-                            loss = Criterion().forecasting_criterion(decoder_out, target)
+                            loss = Criterion().forecasting_criterion(decoder_out, target, loss_type=self.loss_type)
                         else:  # vae
                             decoder_out, latent_out, mu, logvar = self.model(
                                 data, training=True, classify=False
                             )
                             loss = Criterion().forecasting_criterion(
-                                decoder_out, target, mu=mu, logvar=logvar
+                                decoder_out, target, mu=mu, logvar=logvar, loss_type=self.loss_type
                             )
 
                         loss.backward()
@@ -265,7 +265,7 @@ class HybridTrainer(object):
                                 data, training=False, classify=False, latent=False
                             )
                             test_loss_forecasting += (
-                                Criterion().forecasting_criterion(out, target).item()
+                                Criterion().forecasting_criterion(out, target, loss_type=self.loss_type).item()
                             )
 
                         else:
@@ -273,7 +273,7 @@ class HybridTrainer(object):
                                 data, training=False, classify=False, latent=True
                             )
                             test_loss_forecasting += Criterion().forecasting_criterion(
-                                decoder_out, target, mu=mu, logvar=logvar
+                                decoder_out, target, mu=mu, logvar=logvar, loss_type=self.loss_type
                             )
 
                         # Classification test
@@ -358,7 +358,7 @@ class HybridTrainer(object):
                         data, training=False, classify=False, latent=False
                     )
                     validation_loss_forecasting += (
-                        Criterion().forecasting_criterion(out, target).item()
+                        Criterion().forecasting_criterion(out, target, loss_type=self.loss_type).item()
                     )
 
                 else:
@@ -366,7 +366,7 @@ class HybridTrainer(object):
                         data, training=False, classify=False
                     )
                     validation_loss_forecasting += Criterion().forecasting_criterion(
-                        decoder_out, target, mu=mu, logvar=logvar
+                        decoder_out, target, mu=mu, logvar=logvar, loss_type=self.loss_type
                     )
 
                 # Classification test
