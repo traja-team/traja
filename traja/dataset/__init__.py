@@ -1,2 +1,2 @@
-from .dataset import TimeSeriesDataset, MultiModalDataLoader
 from . import example
+from .dataset import TimeSeriesDataset, MultiModalDataLoader

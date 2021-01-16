@@ -3,14 +3,11 @@ import pandas as pd
 import traja
 from traja.dataset import dataset
 from traja.dataset.example import jaguar
-from traja.models.generative_models.vae import MultiModelVAE
+from traja.models import LSTM
+from traja.models import MultiModelAE
+from traja.models import MultiModelVAE
 from traja.models.losses import Criterion
-from traja.models.predictive_models.ae import MultiModelAE
-from traja.models.predictive_models.lstm import LSTM
 from traja.models.train import HybridTrainer
-
-# Sample data
-df = jaguar()
 
 
 def test_aevae_jaguar():
@@ -76,6 +73,8 @@ def test_aevae_jaguar():
                                                  model_path=model_path, model=None)
     out = generator.generate(num_future, classify=False, scaler=scaler, plot_data=False)
 
+    trainer.validate(data_loaders['validation_loader'])
+
 
 def test_ae_jaguar():
     """
@@ -116,6 +115,8 @@ def test_ae_jaguar():
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='classification')
+
+    trainer.validate(data_loaders['sequential_validation_loader'])
 
 
 def test_lstm_jaguar():
@@ -221,8 +222,7 @@ def test_aevae_regression_network_converges():
     # Model types; "ae" or "vae"
     trainer = HybridTrainer(model=model,
                             optimizer_type='Adam',
-                            loss_type='huber')
-
+                            loss_type='mse')
 
     criterion = Criterion()
     loss_pre_training = 0.
@@ -243,4 +243,3 @@ def test_aevae_regression_network_converges():
 
     print(f'Loss post training: {loss_post_training}')
     assert loss_post_training < loss_pre_training
-

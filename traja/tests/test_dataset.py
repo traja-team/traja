@@ -486,9 +486,9 @@ def verify_sequential_id_sampled_sequential_dataloaders_equal_dataloaders(datalo
 
         assert not (index_is_in_train and index_is_in_test), f'Index {index} is in both the train and test loaders!'
         assert not (
-                    index_is_in_train and index_is_in_validation), f'Index {index} is in both the train and validation loaders!'
+                index_is_in_train and index_is_in_validation), f'Index {index} is in both the train and validation loaders!'
         assert not (
-                    index_is_in_test and index_is_in_validation), f'Index {index} is in both the test and validation loaders!'
+                index_is_in_test and index_is_in_validation), f'Index {index} is in both the test and validation loaders!'
 
 
 def verify_that_indices_belong_to_precisely_one_loader(train_sample_ids, test_sample_ids, validation_sample_ids):
@@ -511,9 +511,9 @@ def verify_that_indices_belong_to_precisely_one_loader(train_sample_ids, test_sa
 
         assert not (index_is_in_train and index_is_in_test), f'Index {index} is in both the train and test loaders!'
         assert not (
-                    index_is_in_train and index_is_in_validation), f'Index {index} is in both the train and validation loaders!'
+                index_is_in_train and index_is_in_validation), f'Index {index} is in both the train and validation loaders!'
         assert not (
-                    index_is_in_test and index_is_in_validation), f'Index {index} is in both the test and validation loaders!'
+                index_is_in_test and index_is_in_validation), f'Index {index} is in both the test and validation loaders!'
 
 
 def test_sequential_data_loader_indices_are_sequential():
