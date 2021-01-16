@@ -78,4 +78,24 @@ via :class:`~traja.models.predictive_models.lstm.LSTM`.
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
 
+After training, you can determine the network's final performance with test data, if you want to pick
+the best model, or with validation data, if you want to determine the performance of your model.
+
+The data_loaders dictionary contains the 'sequential_test_loader' and 'sequential_validation_loader,
+that preserve the order of the original data. The dictionary also contains the 'test_loader' and
+'validation_loader' data loaders, where the order of the time series is randomised.
+
+.. code-block:: python
+    validation_loader = data_loaders['sequential_validation_loader']
+
+    trainer.validate(validation_loader)
+
+Finally, you can display your training results using the built-in plotting libraries.
+
+.. code-block:: python
+    from traja.plotting import plot_prediction
+
+    batch_index = 0  # The batch you want to plot
+    plot_prediction(model, validation_loader, batch_index)
+
 .. image:: _static/rnn_prediction.png
