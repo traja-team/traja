@@ -128,6 +128,70 @@ def test_time_based_sampling_dataloaders_with_short_stride_do_not_overlap():
                 assert sample[0] == 1
 
 
+def test_time_based_sampling_dataloaders_with_stride_one_do_not_overlap():
+    data = list()
+    num_ids = 2
+    sequence_length = 200
+
+    # Hyperparameters
+    batch_size = 15
+    num_past = 10
+    num_future = 5
+    train_split_ratio = 0.5
+    validation_split_ratio = 0.25
+
+    stride = 1
+
+    split_by_id = False  # The test condition
+
+    # The train[0] column should contain only 1s, the test column should contain 2s and the
+    # validation column set should contain 3s.
+    # When scaled, this translates to -1., 0 and 1. respectively.
+    for sample_id in range(num_ids):
+        for element in range(round(sequence_length * train_split_ratio) - 8):
+            data.append([1, element, sample_id])
+        for element in range(round(sequence_length * (1 - train_split_ratio - validation_split_ratio)) - 4):
+            data.append([2, element, sample_id])
+        for element in range(round(sequence_length * validation_split_ratio) + 12):
+            data.append([3, element, sample_id])
+
+    df = pd.DataFrame(data, columns=['x', 'y', 'ID'])
+
+    dataloaders = dataset.MultiModalDataLoader(df,
+                                               batch_size=batch_size,
+                                               n_past=num_past,
+                                               n_future=num_future,
+                                               num_workers=4,
+                                               train_split_ratio=train_split_ratio,
+                                               validation_split_ratio=validation_split_ratio,
+                                               split_by_id=split_by_id,
+                                               stride=stride)
+
+    for data, target, ids, parameters in dataloaders['train_loader']:
+        for sequence in data:
+            for sample in sequence:
+                assert sample[0] == -1.
+        for sequence in target:
+            for sample in sequence:
+                assert sample[0] == -1.
+
+    for data, target, ids, parameters in dataloaders['test_loader']:
+        for sequence in data:
+            for sample in sequence:
+                assert sample[0] == 0
+        for sequence in target:
+            for sample in sequence:
+                assert sample[0] == 0
+
+    for data, target, ids, parameters in dataloaders['validation_loader']:
+        for sequence in data:
+            for sample in sequence:
+                assert sample[0] == 1
+        for sequence in target:
+            for sample in sequence:
+                assert sample[0] == 1
+
+
 def test_time_based_weighted_sampling_dataloaders_do_not_overlap():
     data = list()
     num_ids = 232
