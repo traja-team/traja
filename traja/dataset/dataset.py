@@ -15,6 +15,7 @@ import logging
 import math
 import os
 import random
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -23,10 +24,10 @@ import torch
 from sklearn.base import TransformerMixin
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset
-from torch.utils.data.sampler import SubsetRandomSampler, SequentialSampler
+from torch.utils.data.sampler import SubsetRandomSampler, WeightedRandomSampler
 
 from traja.dataset import generator
-from traja.dataset.generator import get_indices_from_categories
+from traja.dataset.generator import get_indices_from_sequence_ids
 
 logger = logging.getLogger(__name__)
 
@@ -298,6 +299,8 @@ class MultiModalDataLoader:
             split_by_id (bool): Whether to split data based on the sequence's category (default) or ID
             scale (bool): If True, scale the input and target and return the corresponding scalers in a dict.
             parameter_columns (list): Columns in data frame with regression parameters.
+            weighted_sampling (bool): Whether to weigh the likelihood of picking each sample by the sequence length.
+                                      This balances the accuracy if trajectories have different lengths.
 
         Usage:
         ------
@@ -319,6 +322,7 @@ class MultiModalDataLoader:
             scale: bool = True,
             test: bool = True,
             parameter_columns: list = (),
+            weighted_sampling: bool = False,
     ):
         self.df = df
         self.batch_size = batch_size
@@ -346,7 +350,7 @@ class MultiModalDataLoader:
             # self.set_validation()
 
         # Train and test data from df-val_df
-        train_data, target_data, target_ids, target_parameters, sequences_in_ids = generator.generate_dataset(
+        train_data, target_data, target_ids, target_parameters, samples_in_sequence_id = generator.generate_dataset(
             self.df, self.n_past,
             self.n_future, stride=self.stride,
             parameter_columns=parameter_columns
@@ -361,6 +365,11 @@ class MultiModalDataLoader:
         # Dataset
         dataset = TimeSeriesDataset(train_data, target_data, target_ids, target_parameters, scaler=scaler)
 
+        # We initialise sample weights in case we need them to weigh samples.
+        train_weights = defaultdict(float)
+        test_weights = defaultdict(float)
+        validation_weights = defaultdict(float)
+
         if self.split_by_id:
             ids = list(set(target_ids))
             np.random.shuffle(ids)
@@ -372,11 +381,12 @@ class MultiModalDataLoader:
             test_ids = np.sort(ids[train_split_index:validation_split_index])
             validation_ids = np.sort(ids[validation_split_index:])
 
-            train_indices = get_indices_from_categories(train_ids, sequences_in_ids)
-            test_indices = get_indices_from_categories(test_ids, sequences_in_ids)
-            validation_indices = get_indices_from_categories(validation_ids, sequences_in_ids)
+            train_indices, train_weights = get_indices_from_sequence_ids(train_ids, samples_in_sequence_id)
+            test_indices, test_weights = get_indices_from_sequence_ids(test_ids, samples_in_sequence_id)
+            validation_indices, validation_weights = get_indices_from_sequence_ids(validation_ids,
+                                                                                   samples_in_sequence_id)
 
-        else:
+        else:  # Do not sample by sequence ID
             if stride is None:
                 stride = n_past + n_future
 
@@ -385,7 +395,7 @@ class MultiModalDataLoader:
             test_indices = list()
             validation_indices = list()
             id_start_index = 0
-            for sequence_index, sequence_count in enumerate(sequences_in_ids):
+            for sequence_index, sequence_count in enumerate(samples_in_sequence_id):
                 overlap = math.ceil(sequence_length / stride)
 
                 start_test_index = round(sequence_count * train_split_ratio)
@@ -396,7 +406,12 @@ class MultiModalDataLoader:
 
                 train_indices.extend(list(range(id_start_index, id_start_index + end_train_index)))
                 test_indices.extend(list(range(id_start_index + start_test_index, id_start_index + end_test_index)))
-                validation_indices.extend(list(range(id_start_index + start_validation_index, id_start_index + sequence_count)))
+                validation_indices.extend(
+                    list(range(id_start_index + start_validation_index, id_start_index + sequence_count)))
+
+                train_weights[sequence_index] = 1.0 / end_train_index if end_train_index > 0 else 0
+                test_weights[sequence_index] = 1.0 / (end_test_index - start_test_index) if (end_test_index - start_test_index) > 0 else 0
+                validation_weights[sequence_index] = 1.0 / (sequence_count - start_validation_index) if (sequence_count - start_validation_index) > 0 else 0
 
                 id_start_index += sequence_count
 
@@ -404,17 +419,45 @@ class MultiModalDataLoader:
         sequential_test_dataset = torch.utils.data.Subset(dataset, np.sort(test_indices[:]))
         sequential_validation_dataset = torch.utils.data.Subset(dataset, np.sort(validation_indices[:]))
 
-        np.random.shuffle(train_indices)
-        np.random.shuffle(test_indices)
-        np.random.shuffle(validation_indices)
+        if weighted_sampling:
+            train_index_weights = list()
+            test_index_weights = list()
+            validation_index_weights = list()
 
-        train_sampler = SubsetRandomSampler(train_indices)
-        test_sampler = SubsetRandomSampler(test_indices)
-        validation_sampler = SubsetRandomSampler(validation_indices)
+            for data, target, sequence_id, parameters in sequential_train_dataset:
+                train_index_weights.append(train_weights[sequence_id])
+            for data, target, sequence_id, parameters in sequential_test_dataset:
+                test_index_weights.append(test_weights[sequence_id])
+            for data, target, sequence_id, parameters in sequential_validation_dataset:
+                validation_index_weights.append(validation_weights[sequence_id])
+
+            train_dataset = sequential_train_dataset
+            test_dataset = sequential_test_dataset
+            validation_dataset = sequential_validation_dataset
+
+            train_sampler = WeightedRandomSampler(weights=train_index_weights, num_samples=len(train_index_weights),
+                                                  replacement=True)
+            test_sampler = WeightedRandomSampler(weights=test_index_weights, num_samples=len(test_index_weights),
+                                                 replacement=True)
+            validation_sampler = WeightedRandomSampler(weights=validation_index_weights,
+                                                       num_samples=len(validation_index_weights), replacement=True)
+
+        else:
+            train_dataset = dataset
+            test_dataset = dataset
+            validation_dataset = dataset
+
+            np.random.shuffle(train_indices)
+            np.random.shuffle(test_indices)
+            np.random.shuffle(validation_indices)
+
+            train_sampler = SubsetRandomSampler(train_indices)
+            test_sampler = SubsetRandomSampler(test_indices)
+            validation_sampler = SubsetRandomSampler(validation_indices)
 
         # Dataloader
         self.train_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
+            dataset=train_dataset,
             shuffle=False,
             batch_size=self.batch_size,
             sampler=train_sampler,
@@ -422,7 +465,7 @@ class MultiModalDataLoader:
             num_workers=num_workers,
         )
         self.test_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
+            dataset=test_dataset,
             shuffle=False,
             batch_size=self.batch_size,
             sampler=test_sampler,
@@ -430,7 +473,7 @@ class MultiModalDataLoader:
             num_workers=num_workers,
         )
         self.validation_loader = torch.utils.data.DataLoader(
-            dataset=dataset,
+            dataset=validation_dataset,
             shuffle=False,
             batch_size=self.batch_size,
             sampler=validation_sampler,
@@ -530,6 +573,7 @@ class MultiModalDataLoader:
             validation_split_ratio: float = 0.2,
             scale: bool = True,
             parameter_columns: list = list(),
+            weighted_sampling: bool = False,
     ):
         """Constructor of MultiModalDataLoader"""
         # Loader instance
@@ -546,6 +590,7 @@ class MultiModalDataLoader:
             stride=stride,
             scale=scale,
             parameter_columns=parameter_columns,
+            weighted_sampling=weighted_sampling,
         )
         # Return train and test loader attributes
         return loader_instance.dataloaders
