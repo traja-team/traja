@@ -365,6 +365,8 @@ class MultiModelVAE(torch.nn.Module):
         self.regressor_hidden_size = regressor_hidden_size
         self.num_regressor_parameters = num_regressor_parameters
 
+        self.latent_output_disabled = False  # Manually override latent output
+
         # Let the trainer know what kind of model this is
         self.model_type = 'vae'
 
@@ -453,6 +455,17 @@ class MultiModelVAE(torch.nn.Module):
             dropout=self.dropout,
         )
 
+    def disable_latent_output(self):
+        """Disable latent output, to make the VAE behave like a standard autoencoder while training.
+        This modifies the training loss computed. """
+        self.latent_output_disabled = True
+
+    def enable_latent_output(self):
+        """Enable latent output, to make the VAE behave like a variational autoencoder while training.
+        This modifies the training loss computed.
+        NOTE: By default, latent output is enabled."""
+        self.latent_output_disabled = False
+
     def forward(self, data, training=True, classify=False, regress=False, latent=True):
         """
         Parameters:
@@ -539,6 +552,11 @@ class MultiModelVAE(torch.nn.Module):
             latent_out, mu, logvar = self.latent(enc_out, training=training)
 
             regressor_out = self.regressor(mu)  # Deterministic
+
+            if self.latent_output_disabled:
+                mu = None
+                logvar = None
+
             if latent:
                 return regressor_out, latent_out, mu, logvar
             else:
