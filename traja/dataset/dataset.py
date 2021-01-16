@@ -93,7 +93,7 @@ class MultiModalDataLoader:
             train_split_ratio (float):Should be between 0.0 and 1.0 and represent the proportion of the dataset-validation_dataset 
                                       to include in the train split. 
             validation_split_ratio (float): Should be between 0.0 and 1.0 and represent the proportion of the dataset 
-                                      to include in the validation split. 
+                                      to include in the validation split.
             stride: Size of the sliding window. Defaults to sequence_length
             split_by_id (bool): Whether to split data based on the sequence's category (default) or ID
             scale (bool): If True, scale the input and target and return the corresponding scalers in a dict.

@@ -42,6 +42,7 @@ class LSTM(torch.nn.Module):
 
         self.batch_size = batch_size
         self.input_size = input_size
+        self.num_past = num_future  # num_past and num_future are equal
         self.num_future = num_future
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -87,6 +88,6 @@ class LSTM(torch.nn.Module):
         # Decoder input Shape(batch_size, num_futures, latent_size)
         out, (dec_hidden, dec_cell) = self.lstm(x, (h0.detach(), c0.detach()))
 
-        # Map the decoder output: Shape(batch_size, sequence_len, hidden_dim) to Time Dsitributed Linear Layer
+        # Map the decoder output: Shape(batch_size, sequence_len, hidden_dim) to Time Distributed Linear Layer
         out = self.output(out)
         return out
