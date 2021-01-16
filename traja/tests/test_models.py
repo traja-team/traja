@@ -225,7 +225,7 @@ def test_aevae_regression_network_converges():
                           bidirectional=False,
                           batch_first=True,
                           reset_state=True)
-    
+
     # Test resetting the regressor, to make sure this function works
     model.reset_regressor(regressor_hidden_size=32, num_regressor_layers=4)
 
