@@ -83,11 +83,9 @@ def get_indices_from_sequence_ids(sequence_ids: list, samples_in_sequence_id: li
             break
         if sequence_index == sequence_id:
             # The weight is simply one over the number of samples in this sequence.
-            if samples_in_sequence_id[sequence_index]:
-                weights[sequence_id] = 1.0 / samples_in_sequence_id[sequence_index]
-            else:
-                weights[sequence_id] = 0
-            indices += list(range(start_index, start_index + samples_in_sequence_id[sequence_index]))
+            # We can never divide by zero - empty categories are implicitly excluded
+            weights[sequence_id] = 1.0 / samples_in_sequence_id[sequence_id]
+            indices += list(range(start_index, start_index + samples_in_sequence_id[sequence_id]))
         start_index += samples_in_sequence_id[sequence_index]
         sequence_index += 1
     return indices, weights
