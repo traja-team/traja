@@ -14,9 +14,6 @@ class Criterion:
         self.mse_loss = torch.nn.MSELoss()
         self.crossentropy_loss = torch.nn.CrossEntropyLoss()
 
-    def RMSELoss(self, predicted, target):
-        return torch.sqrt(self.mse_loss(predicted, target))
-
     def forecasting_criterion(self, predicted, target, mu=None, logvar=None, loss_type="huber"):
         """ Time series forecasting model loss function
         Provides loss functions huber, manhattan, mse. Adds KL divergence if mu and logvar specified.
