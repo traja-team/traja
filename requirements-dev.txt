@@ -12,3 +12,4 @@ seaborn
 torch
 pytest
 h5py
+clint

@@ -127,3 +127,7 @@ docs/source/reference
 
 # Model parameter files
 *.pt
+
+
+#dataset CSV folder
+traja/dataset/CSVs

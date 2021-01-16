@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
-import traja
+import requests
+import os
+from clint.textui import progress
 
 default_cache_url = 'dataset_cache'
 
@@ -19,7 +21,7 @@ def Elk_in_southwestern_Alberta():
 
 	Licence Terms:- https://creativecommons.org/publicdomain/zero/1.0/
 
-	Boyce MS and Ciuti S (2020) Data from: Human selection of elk behavioural traits in a landscape of fear. 
+	Citation:- Boyce MS and Ciuti S (2020) Data from: Human selection of elk behavioural traits in a landscape of fear. 
 	Movebank Data Repository. <a href="https://www.doi.org/10.5441/001/1.j484vk24" target="_blank">https://www.doi.org/10.5441/001/1.j484vk24</a>
 	Paton DG, Ciuti S, Quinn M, Boyce MS (2017) Hunting exacerbates the response to human disturbance in large herbivores while migrating through a road network. 
 	Ecosphere 8(6): e01841. https://doi.org/10.1002/ecs2.1841
@@ -44,7 +46,24 @@ def Elk_in_southwestern_Alberta():
 
 	Principal Investigator Name: Mark S. Boyce
 	"""
-	df = pd.read_csv('traja/dataset/CSVs/Elk_in_southwestern_Alberta.csv',low_memory=False)
+
+	csv_folder = os.path.join("traja", "dataset", "CSVs")
+	store_csv_here = os.path.join(csv_folder, "Elk_in_southwestern_Alberta.csv")
+	
+	if not os.path.exists(csv_folder):
+		os.makedirs(csv_folder)
+
+	if not os.path.exists(store_csv_here):
+		url = "https://traja-datasets.s3.eu-central-1.amazonaws.com/movebank/Elk-in-southwestern-Alberta/Elk_in_southwestern_Alberta.csv"
+		response = requests.get(url, stream=True)
+		with open(store_csv_here, 'wb') as f:
+			total_length = int(response.headers.get('content-length'))
+			for chunk in progress.bar(response.iter_content(chunk_size=1024), expected_size=(total_length/1024) + 1): 
+				if chunk:
+					f.write(chunk)
+					f.flush()
+	
+	df = pd.read_csv(store_csv_here,low_memory=False)
 
 	unique_names = df["individual-local-identifier"].unique()
 	df = df[['location-long', 'location-lat', 'individual-local-identifier']]
