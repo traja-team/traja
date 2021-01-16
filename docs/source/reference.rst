@@ -52,7 +52,7 @@ The following methods are available via :mod:`traja.plotting`:
 
 .. automethod:: traja.plotting.polar_bar
 
-.. automethod:: traja.plotting.predict
+.. automethod:: traja.plotting.plot_prediction
 
 .. automethod:: traja.plotting.sans_serif
 
