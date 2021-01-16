@@ -58,7 +58,6 @@ def test_aevae_jaguar():
     # Test that we can reset the classifier
     model.reset_classifier(classifier_hidden_size=32, num_classifier_layers=4)
 
-
     # Model Trainer
     # Model types; "ae" or "vae"
     trainer = HybridTrainer(model=model,
