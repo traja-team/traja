@@ -37,26 +37,26 @@ class TimeSeriesDataset(Dataset):
         Dataset (torch.utils.data.Dataset): Pyptorch dataset object
     """
 
-    def __init__(self, data, target, category=None, parameters=None, scaler: TransformerMixin = None):
+    def __init__(self, data, target, sequence_id=None, parameters=None, scaler: TransformerMixin = None):
         r"""
         Args:
             data (array): Data
             target (array): Target
-            category (array): Category
+            sequence_id (array): Sequence ID
             parameters (array): Parameters
             scaler (sklearn.base.TransformerMixin)
         """
 
         self.data = data
         self.target = target
-        self.category = category
+        self.sequence_id = sequence_id
         self.parameters = parameters
         self.scaler = scaler
 
     def __getitem__(self, index):
         x = self.data[index]
         y = self.target[index]
-        z = self.category[index] if self.category else torch.zeros(1)
+        z = self.sequence_id[index] if self.sequence_id else torch.zeros(1)
         w = self.parameters[index] if self.parameters else torch.zeros(1)
 
         if self.scaler is not None:
@@ -72,14 +72,14 @@ class MultiModalDataLoader:
     """
     MultiModalDataLoader wraps the following data preparation steps,
     
-    1. Data generator: Extract x and y time series and corresponding ID (category) in the dataset. This process split the dataset into 
+    1. Data generator: Extract x and y time series and corresponding ID (sequence_id) in the dataset. This process split the dataset into
                         i) Train samples with sequence length equals n_past
                         ii) Target samples with sequence length equals n_future 
-                        iii) Target category(ID) of both train and target data
-    2. Data scalling: Scale the train and target data columns between the range (-1,1) using MinMaxScalers; TODO: It is more optimal to scale data for each ID(category)
-    3. Data shuffling: Shuffle the order of samples in the dataset without loosing the train<->target<->category combination
-    4. Create train test split: Split the shuffled batches into train (data, target, category) and test(data, target, category)
-    5. Weighted Random sampling: Apply weights with respect to category counts in the dataset: category_sample_weight = 1/num_category_samples; This avoid model overfit to category appear often in the dataset 
+                        iii) Target sequence_id(ID) of both train and target data
+    2. Data scalling: Scale the train and target data columns between the range (-1,1) using MinMaxScalers; TODO: It is more optimal to scale data for each ID(sequence_id)
+    3. Data shuffling: Shuffle the order of samples in the dataset without loosing the train<->target<->sequence_id combination
+    4. Create train test split: Split the shuffled batches into train (data, target, sequence_id) and test(data, target, sequence_id)
+    5. Weighted Random sampling: Apply weights with respect to sequence_id counts in the dataset: category_sample_weight = 1/num_category_samples; This avoid model overfit to sequence_id appear often in the dataset
     6. Create pytorch Dataset instances
     7. Returns the train and test data loader instances along with their scalers as a dictionaries given the dataset instances and batch size
 
@@ -94,7 +94,8 @@ class MultiModalDataLoader:
             validation_split_ratio (float): Should be between 0.0 and 1.0 and represent the proportion of the dataset 
                                       to include in the validation split.
             stride: Size of the sliding window. Defaults to sequence_length
-            split_by_id (bool): Whether to split data based on the sequence's category (default) or ID
+            split_by_id (bool): Whether to split data based on the sequence's ID (default) or split each sequence
+                                length-wise.
             scale (bool): If True, scale the input and target and return the corresponding scalers in a dict.
             parameter_columns (list): Columns in data frame with regression parameters.
             weighted_sampling (bool): Whether to weigh the likelihood of picking each sample by the sequence length.
