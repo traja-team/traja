@@ -1,6 +1,5 @@
-import copy
 import logging
-from typing import Optional, List, Union, Tuple
+from typing import Optional, Union, Tuple
 
 import numpy as np
 import pandas as pd
@@ -163,10 +162,10 @@ class TrajaCollection(TrajaDataFrame):
     ]
 
     def __init__(
-        self,
-        trjs: Union[TrajaDataFrame, pd.DataFrame, dict],
-        id_col: Optional[str] = None,
-        **kwargs,
+            self,
+            trjs: Union[TrajaDataFrame, pd.DataFrame, dict],
+            id_col: Optional[str] = None,
+            **kwargs,
     ):
         """Initialize with trajectories with x, y, and time columns.
 
@@ -243,10 +242,10 @@ class TrajaCollection(TrajaDataFrame):
 
 class StaticObject(object):
     def __init__(
-        self,
-        x: Optional[float] = None,
-        y: Optional[float] = None,
-        bounding_box: Tuple[float] = None,
+            self,
+            x: Optional[float] = None,
+            y: Optional[float] = None,
+            bounding_box: Tuple[float] = None,
     ):
         ...
         pass
