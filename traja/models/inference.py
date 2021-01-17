@@ -15,11 +15,11 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class Generator:
     def __init__(
-        self,
-        model_type: str = None,
-        model_path: str = None,
-        model_hyperparameters: dict = None,
-        model: torch.nn.Module = None,
+            self,
+            model_type: str = None,
+            model_path: str = None,
+            model_hyperparameters: dict = None,
+            model: torch.nn.Module = None,
     ):
         """Generate a batch of future steps from a random latent state of Multi variate multi label models 
 
@@ -46,7 +46,7 @@ class Generator:
 
         (self.generated_category, self.generated_data,) = (None, None)
 
-    def generate(self, num_steps, classify=True, scaler=None):
+    def generate(self, num_steps, classify=True, scaler=None, plot_data=True):
 
         self.model.to(device)
         if self.model_type == "vae":
@@ -56,8 +56,8 @@ class Generator:
                     self.model_hyperparameters["batch_size"],
                     self.model_hyperparameters["latent_size"],
                 )
-                .normal_(mean=0, std=0.1)
-                .to(device)
+                    .normal_(mean=0, std=0.1)
+                    .to(device)
             )
             # Generate trajectories from the noise
             self.generated_data = (
@@ -77,23 +77,15 @@ class Generator:
                 except Exception as error:
                     print("Classifier not found: " + repr(error))
 
-            fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=True)
-            fig.set_size_inches(20, 5)
-
             # Scale original data and generated data
 
             # Rescaling predicted data
-            for i in range(self.generated_data.shape[1]):
-                s_s = scaler[f"scaler_{i}"].inverse_transform(
-                    self.generated_data[:, i].reshape(-1, 1)
-                )
-                s_s = np.reshape(s_s, len(s_s))
-                self.generated_data[:, i] = s_s
+            self.generated_data = scaler.inverse_transform(self.generated_data)
 
             # TODO:Depreself.generated_categoryed;Slicing the data into batches
             self.generated_data = np.array(
                 [
-                    self.generated_data[i : i + num_steps]
+                    self.generated_data[i: i + num_steps]
                     for i in range(0, len(self.generated_data), num_steps)
                 ]
             )
@@ -104,31 +96,35 @@ class Generator:
                 self.generated_data.shape[2],
             )
 
-            for i in range(2):
-                for j in range(5):
-                    if classify:
-                        try:
-                            label = "Animal ID {}".format(
-                                (
-                                    torch.max(self.generated_category, 1).indices + 1
-                                ).detach()[i + j]
-                            )
-                        except Exception as error:
-                            print("Classifier not found:" + repr(error))
-                    else:
-                        label = ""
-                    ax[i, j].plot(
-                        self.generated_data[:, 0][
-                            (i + j) * num_steps : (i + j) * num_steps + num_steps
-                        ],
-                        self.generated_data[:, 1][
-                            (i + j) * num_steps : (i + j) * num_steps + num_steps
-                        ],
-                        label=label,
-                        color="g",
-                    )
-                    ax[i, j].legend()
-            plt.show()
+            if plot_data:
+                fig, ax = plt.subplots(nrows=2, ncols=5, figsize=(16, 5), sharey=True)
+                fig.set_size_inches(20, 5)
+
+                for i in range(2):
+                    for j in range(5):
+                        if classify:
+                            try:
+                                label = "Animal ID {}".format(
+                                    (
+                                            torch.max(self.generated_category, 1).indices + 1
+                                    ).detach()[i + j]
+                                )
+                            except Exception as error:
+                                print("Classifier not found:" + repr(error))
+                        else:
+                            label = ""
+                        ax[i, j].plot(
+                            self.generated_data[:, 0][
+                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                            ],
+                            self.generated_data[:, 1][
+                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                            ],
+                            label=label,
+                            color="g",
+                        )
+                        ax[i, j].legend()
+                plt.show()
 
             return self.generated_data
 
@@ -150,11 +146,11 @@ class Generator:
 
 class Predictor:
     def __init__(
-        self,
-        model_type: str = None,
-        model_path: str = None,
-        model_hyperparameters: dict = None,
-        model: torch.nn.Module = None,
+            self,
+            model_type: str = None,
+            model_path: str = None,
+            model_hyperparameters: dict = None,
+            model: torch.nn.Module = None,
     ):
         """Generate a batch of future steps from a random latent state of Multi variate multi label models 
 
@@ -231,7 +227,7 @@ class Predictor:
 
                 # Rescaling predicted data
                 for i in range(self.predicted_data.shape[1]):
-                    s_s = scaler[f"scaler_{i}"].inverse_transform(
+                    s_s = scaler.inverse_transform(
                         self.predicted_data[:, i].reshape(-1, 1)
                     )
                     s_s = np.reshape(s_s, len(s_s))
@@ -240,14 +236,14 @@ class Predictor:
                 # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 predicted_data = np.array(
                     [
-                        self.predicted_data[i : i + num_steps]
+                        self.predicted_data[i: i + num_steps]
                         for i in range(0, len(self.predicted_data), num_steps)
                     ]
                 )
                 # Rescaling target data
                 self.target_data = target.copy()
                 for i in range(self.target_data.shape[1]):
-                    s_s = scaler["scaler_{}".format(i)].inverse_transform(
+                    s_s = scaler.inverse_transform(
                         self.target_data[:, i].reshape(-1, 1)
                     )
                     s_s = np.reshape(s_s, len(s_s))
@@ -255,7 +251,7 @@ class Predictor:
                 # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 self.target_data = np.array(
                     [
-                        self.target_data[i : i + num_steps]
+                        self.target_data[i: i + num_steps]
                         for i in range(0, len(self.target_data), num_steps)
                     ]
                 )
@@ -276,20 +272,20 @@ class Predictor:
                     for j in range(5):
                         ax[i, j].plot(
                             predicted_data_[:, 0][
-                                (i + j) * num_steps : (i + j) * num_steps + num_steps
+                            (i + j) * num_steps: (i + j) * num_steps + num_steps
                             ],
                             predicted_data_[:, 1][
-                                (i + j) * num_steps : (i + j) * num_steps + num_steps
+                            (i + j) * num_steps: (i + j) * num_steps + num_steps
                             ],
-                            label=f"Predicted ID {self.generated_categoryegory[i+j]}",
+                            label=f"Predicted ID {self.generated_categoryegory[i + j]}",
                         )
 
                         ax[i, j].plot(
                             self.target_data_[:, 0][
-                                (i + j) * num_steps : (i + j) * num_steps + num_steps
+                            (i + j) * num_steps: (i + j) * num_steps + num_steps
                             ],
                             self.target_data_[:, 1][
-                                (i + j) * num_steps : (i + j) * num_steps + num_steps
+                            (i + j) * num_steps: (i + j) * num_steps + num_steps
                             ],
                             label=f"Target ID {self.generated_category[i + j]}",
                             color="g",

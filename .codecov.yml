@@ -1,3 +1,0 @@
-ignore:
-  - "test_*.py"
-  - "traja-gui.py*"

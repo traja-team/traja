@@ -14,26 +14,9 @@ class Criterion:
         self.mse_loss = torch.nn.MSELoss()
         self.crossentropy_loss = torch.nn.CrossEntropyLoss()
 
-    def RMSELoss(self, predicted, target):
-        return torch.sqrt(self.mse_loss(predicted, target))
-
-    def ae_criterion(self, predicted, target, loss_type="huber"):
-        """ Implements the Autoencoder loss for time series forecasting
-        :param predicted: Predicted time series by the model
-        :param target: Target time series
-        :param loss_type: Type of criterion; Defaults: 'huber'
-        :return:
-        """
-
-        if loss_type == "huber":
-            loss = self.huber_loss(predicted, target)
-            return loss
-        else:  # Root MSE
-            return torch.sqrt(torch.mean((predicted - target) ** 2))
-
-    def vae_criterion(self, predicted, target, mu, logvar, loss_type="huber"):
-        """ Time series generative model loss function
-        Provides both vae loss functions (huber, manhattan, mse)
+    def forecasting_criterion(self, predicted, target, mu=None, logvar=None, loss_type="huber"):
+        """ Time series forecasting model loss function
+        Provides loss functions huber, manhattan, mse. Adds KL divergence if mu and logvar specified.
         and ae loss functions (huber_ae, manhattan_ae, mse_ae).
         :param predicted: Predicted time series by the model
         :param target: Target time series
@@ -43,20 +26,17 @@ class Criterion:
         :return: Reconstruction loss + KLD loss (if not ae)
         """
 
-        KLD = -0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp())
+        if mu is not None and logvar is not None:
+            kld = -0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp())
+        else:
+            kld = 0
 
         if loss_type == "huber":
-            loss = self.huber_loss(predicted, target) + KLD
+            loss = self.huber_loss(predicted, target) + kld
         elif loss_type == "manhattan":
-            loss = self.manhattan_loss(predicted, target) + KLD
+            loss = self.manhattan_loss(predicted, target) + kld
         elif loss_type == "mse":
-            loss = self.mse_loss(predicted, target) + KLD
-        elif loss_type == "huber_ae":
-            loss = self.huber_loss(predicted, target)
-        elif loss_type == "manhattan_ae":
-            loss = self.manhattan_loss(predicted, target)
-        elif loss_type == "mse_ae":
-            loss = self.mse_loss(predicted, target)
+            loss = self.mse_loss(predicted, target) + kld
         else:
             raise Exception("Loss type '{}' is unknown!".format(loss_type))
         return loss
@@ -82,11 +62,3 @@ class Criterion:
 
         loss = self.mse_loss(predicted, target)
         return loss
-
-    def lstm_criterion(self, predicted, target):
-
-        loss = self.huber_loss(predicted, target)
-        return loss
-
-    def vaegan_criterion(self):
-        return NotImplementedError
