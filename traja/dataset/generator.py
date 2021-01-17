@@ -50,7 +50,7 @@ def generate_dataset(df, n_past: int, n_future: int, stride: int = None, paramet
                 # past, future = series[window_start:future_end, :], series[past_end:future_end, :]
                 xx.append(past)
                 yy.append(future)
-                # For each sequence length set target category
+                # For each sequence length set target sequence_id
                 zz.append(int(ID), )
                 ww.append(parameters)
                 sequences_in_category += 1
