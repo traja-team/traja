@@ -37,26 +37,26 @@ class TimeSeriesDataset(Dataset):
         Dataset (torch.utils.data.Dataset): Pyptorch dataset object
     """
 
-    def __init__(self, data, target, sequence_id=None, parameters=None, scaler: TransformerMixin = None):
+    def __init__(self, data, target, sequence_ids=None, parameters=None, scaler: TransformerMixin = None):
         r"""
         Args:
             data (array): Data
             target (array): Target
-            sequence_id (array): Sequence ID
+            sequence_ids (array): Sequence ID
             parameters (array): Parameters
             scaler (sklearn.base.TransformerMixin)
         """
 
         self.data = data
         self.target = target
-        self.sequence_id = sequence_id
+        self.sequence_ids = sequence_ids
         self.parameters = parameters
         self.scaler = scaler
 
     def __getitem__(self, index):
         x = self.data[index]
         y = self.target[index]
-        z = self.sequence_id[index] if self.sequence_id else torch.zeros(1)
+        z = self.sequence_ids[index] if self.sequence_ids else torch.zeros(1)
         w = self.parameters[index] if self.parameters else torch.zeros(1)
 
         if self.scaler is not None:
