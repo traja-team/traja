@@ -37,13 +37,14 @@ class TimeSeriesDataset(Dataset):
         Dataset (torch.utils.data.Dataset): Pyptorch dataset object
     """
 
-    def __init__(self, data, target, sequence_ids=None, parameters=None, scaler: TransformerMixin = None):
+    def __init__(self, data, target, sequence_ids=None, parameters=None, classes=None, scaler: TransformerMixin = None):
         r"""
         Args:
             data (array): Data
             target (array): Target
             sequence_ids (array): Sequence ID
             parameters (array): Parameters
+            classes (array): Sequence classes
             scaler (sklearn.base.TransformerMixin)
         """
 
@@ -51,6 +52,7 @@ class TimeSeriesDataset(Dataset):
         self.target = target
         self.sequence_ids = sequence_ids
         self.parameters = parameters
+        self.classes = classes
         self.scaler = scaler
 
     def __getitem__(self, index):
