@@ -56,15 +56,15 @@ class TimeSeriesDataset(Dataset):
         self.scaler = scaler
 
     def __getitem__(self, index):
-        x = self.data[index]
-        y = self.target[index]
-        z = self.sequence_ids[index] if self.sequence_ids else torch.zeros(1)
-        w = self.parameters[index] if self.parameters else torch.zeros(1)
+        data = self.data[index]
+        target = self.target[index]
+        ids = self.sequence_ids[index] if self.sequence_ids else torch.zeros(1)
+        parameters = self.parameters[index] if self.parameters else torch.zeros(1)
 
         if self.scaler is not None:
-            x = torch.tensor(self.scaler.transform(x))
-            y = torch.tensor(self.scaler.transform(y))
-        return x, y, z, w
+            data = torch.tensor(self.scaler.transform(data))
+            target = torch.tensor(self.scaler.transform(target))
+        return data, target, ids, parameters
 
     def __len__(self):
         return len(self.data)
