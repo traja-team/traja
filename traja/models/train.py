@@ -169,7 +169,7 @@ class HybridTrainer(object):
                 # Training
                 self.model.train()
                 total_loss = 0
-                for idx, (data, target, ids, parameters) in enumerate(
+                for idx, (data, target, ids, parameters, classes) in enumerate(
                         train_loader
                 ):
                     # Reset optimizer states
@@ -248,7 +248,7 @@ class HybridTrainer(object):
                         total = 0.0
                         correct = 0.0
                     self.model.eval()
-                    for idx, (data, target, ids, parameters) in enumerate(
+                    for idx, (data, target, ids, parameters, classes) in enumerate(
                             test_loader
                     ):
                         if type(ids) == list:
@@ -343,7 +343,7 @@ class HybridTrainer(object):
                 total = 0.0
                 correct = 0.0
             self.model.eval()
-            for idx, (data, target, ids, parameters) in enumerate(validation_loader):
+            for idx, (data, target, ids, parameters, classes) in enumerate(validation_loader):
                 if type(ids) == list:
                     ids = ids[0]
                 data, target, ids, parameters = (

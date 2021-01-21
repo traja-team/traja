@@ -60,11 +60,12 @@ class TimeSeriesDataset(Dataset):
         target = self.target[index]
         ids = self.sequence_ids[index] if self.sequence_ids else torch.zeros(1)
         parameters = self.parameters[index] if self.parameters else torch.zeros(1)
+        classes = self.classes[index] if self.classes else torch.zeros(1)
 
         if self.scaler is not None:
             data = torch.tensor(self.scaler.transform(data))
             target = torch.tensor(self.scaler.transform(target))
-        return data, target, ids, parameters
+        return data, target, ids, parameters, classes
 
     def __len__(self):
         return len(self.data)
@@ -213,11 +214,11 @@ class MultiModalDataLoader:
             test_index_weights = list()
             validation_index_weights = list()
 
-            for data, target, sequence_id, parameters in sequential_train_dataset:
+            for data, target, sequence_id, parameters, classes in sequential_train_dataset:
                 train_index_weights.append(train_weights[sequence_id])
-            for data, target, sequence_id, parameters in sequential_test_dataset:
+            for data, target, sequence_id, parameters, classes in sequential_test_dataset:
                 test_index_weights.append(test_weights[sequence_id])
-            for data, target, sequence_id, parameters in sequential_validation_dataset:
+            for data, target, sequence_id, parameters, classes in sequential_validation_dataset:
                 validation_index_weights.append(validation_weights[sequence_id])
 
             train_dataset = sequential_train_dataset

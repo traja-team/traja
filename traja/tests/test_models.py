@@ -240,7 +240,7 @@ def test_aevae_regression_network_converges():
 
     criterion = Criterion()
     loss_pre_training = 0.
-    for data, _, _, parameters in data_loaders['train_loader']:
+    for data, _, _, parameters, classes in data_loaders['train_loader']:
         prediction = model(data.float(), regress=True, latent=False)
         loss_pre_training += criterion.regressor_criterion(prediction, parameters)
 
@@ -251,7 +251,7 @@ def test_aevae_regression_network_converges():
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='regression')
 
     loss_post_training = 0.
-    for data, _, _, parameters in data_loaders['train_loader']:
+    for data, _, _, parameters, classes in data_loaders['train_loader']:
         prediction = model(data.float(), regress=True, latent=False)
         loss_post_training += criterion.regressor_criterion(prediction, parameters)
 
@@ -324,7 +324,7 @@ def test_ae_regression_network_converges():
 
     criterion = Criterion()
     loss_pre_training = 0.
-    for data, _, _, parameters in data_loaders['train_loader']:
+    for data, _, _, parameters, classes in data_loaders['train_loader']:
         prediction = model(data.float(), regress=True, latent=False)
         loss_pre_training += criterion.regressor_criterion(prediction, parameters)
 
@@ -335,7 +335,7 @@ def test_ae_regression_network_converges():
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='regression')
 
     loss_post_training = 0.
-    for data, _, _, parameters in data_loaders['train_loader']:
+    for data, _, _, parameters, classes in data_loaders['train_loader']:
         prediction = model(data.float(), regress=True, latent=False)
         loss_post_training += criterion.regressor_criterion(prediction, parameters)
 
