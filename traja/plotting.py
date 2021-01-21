@@ -87,7 +87,7 @@ def plot_prediction(model, dataloader, index, scaler=None):
     num_past = model.num_past
     input_size = model.input_size
 
-    data, target, category, parameters = list(iter(dataloader))[index]
+    data, target, category, parameters, classes = list(iter(dataloader))[index]
     data = data.float().to(device)
     prediction = model(data, latent=False)
 
