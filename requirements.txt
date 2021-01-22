@@ -10,3 +10,5 @@ networkx
 seaborn
 torch
 h5py
+clint
+requests
