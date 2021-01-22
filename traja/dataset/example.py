@@ -1,13 +1,10 @@
 import pandas as pd
-import numpy as np
 import requests
 import os
 from clint.textui import progress
+import tempfile
 
 default_cache_url = 'dataset_cache'
-
-default_cache_url = 'dataset_cache'
-
 
 def jaguar(cache_url=default_cache_url):
     # Sample data
@@ -45,7 +42,7 @@ def Elk_in_southwestern_Alberta():
     Principal Investigator Name: Mark S. Boyce
     """
 
-    csv_folder = os.path.join("traja", "dataset", "CSVs")
+    csv_folder = tempfile.mkdtemp()
     store_csv_here = os.path.join(csv_folder, "Elk_in_southwestern_Alberta.csv")
 
     if not os.path.exists(csv_folder):

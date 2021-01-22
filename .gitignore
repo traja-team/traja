@@ -127,3 +127,7 @@ docs/source/reference
 
 # Model parameter files
 *.pt
+
+#Ignore all CSV Files to be tracked
+*.csv
+traja/dataset/CSVs
