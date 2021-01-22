@@ -22,7 +22,7 @@ def generate_dataset(df, n_past: int, n_future: int, stride: int = None, paramet
         tuple(df.groupby("ID"))
     )  # Dict of ids as keys and x,y,id as values
 
-    train_data, target_data, target_category, target_parameters = list(), list(), list(), list()
+    train_data, target_data, target_category, target_parameters, target_classes = list(), list(), list(), list(), list()
 
     if stride is None:
         stride = n_past + n_future
@@ -33,12 +33,17 @@ def generate_dataset(df, n_past: int, n_future: int, stride: int = None, paramet
 
     samples_in_sequence_id = list()
 
+    class_column = ['class'] if 'class' in df.columns else []
+    if not class_column:
+        target_classes = None
+
     for ID in sequence_ids.keys():
-        xx, yy, zz, ww = list(), list(), list(), list()
+        xx, yy, zz, ww, cc = list(), list(), list(), list(), list()
         # Drop the column ids and convert the pandas into arrays
-        non_parameter_columns = [column for column in df.columns if column not in parameter_columns]
-        series = sequence_ids[ID].drop(columns=['ID'] + parameter_columns).to_numpy()
-        parameters = sequence_ids[ID].drop(columns=non_parameter_columns).to_numpy()[0, :]
+        data_columns = [column for column in df.columns if column not in parameter_columns + class_column]
+        series = sequence_ids[ID].drop(columns=['ID'] + class_column + parameter_columns).to_numpy()
+        parameters = sequence_ids[ID].drop(columns=data_columns).to_numpy()[0, :]
+        classes = sequence_ids[ID][class_column].to_numpy()[0, :]
         window_start = 0
         sequences_in_category = 0
         while window_start <= len(series):
@@ -53,6 +58,8 @@ def generate_dataset(df, n_past: int, n_future: int, stride: int = None, paramet
                 # For each sequence length set target sequence_id
                 zz.append(int(ID), )
                 ww.append(parameters)
+                if class_column:
+                    cc.append(classes)
                 sequences_in_category += 1
             window_start += stride
 
@@ -60,8 +67,10 @@ def generate_dataset(df, n_past: int, n_future: int, stride: int = None, paramet
         target_data.extend(np.array(yy))
         target_category.extend(np.array(zz))
         target_parameters.extend(np.array(ww))
+        if class_column:
+            target_classes.extend(np.array(cc))
         samples_in_sequence_id.append(sequences_in_category)
-    return train_data, target_data, target_category, target_parameters, samples_in_sequence_id
+    return train_data, target_data, target_category, target_parameters, target_classes, samples_in_sequence_id
 
 
 def get_indices_from_sequence_ids(sequence_ids: list, samples_in_sequence_id: list):

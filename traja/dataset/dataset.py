@@ -138,7 +138,7 @@ class MultiModalDataLoader:
         self.stride = stride
 
         # Train and test data from df-val_df
-        train_data, target_data, target_ids, target_parameters, samples_in_sequence_id = generator.generate_dataset(
+        train_data, target_data, target_ids, target_parameters, target_classes, samples_in_sequence_id = generator.generate_dataset(
             self.df, self.n_past,
             self.n_future, stride=self.stride,
             parameter_columns=parameter_columns
@@ -151,7 +151,7 @@ class MultiModalDataLoader:
             scaler = None
 
         # Dataset
-        dataset = TimeSeriesDataset(train_data, target_data, target_ids, target_parameters, scaler=scaler)
+        dataset = TimeSeriesDataset(train_data, target_data, target_ids, target_parameters, target_classes, scaler=scaler)
 
         # We initialise sample weights in case we need them to weigh samples.
         train_weights = defaultdict(float)
