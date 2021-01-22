@@ -214,7 +214,7 @@ class HybridTrainer(object):
                             data, training=True, classify=True, latent=False
                         )
                         loss = Criterion().classifier_criterion(
-                            classifier_out, (ids - 1).long()
+                            classifier_out, classes
                         )
 
                         loss.backward()
@@ -285,14 +285,14 @@ class HybridTrainer(object):
 
                             test_loss_classification += (
                                 Criterion()
-                                    .classifier_criterion(classifier_out, ids - 1)
+                                    .classifier_criterion(classifier_out, classes)
                                     .item()
                             )
 
                             # Compute number of correct samples
                             total += ids.size(0)
                             _, predicted = torch.max(classifier_out.data, 1)
-                            correct += (predicted == (ids - 1)).sum().item()
+                            correct += (predicted == classes).sum().item()
 
                         if self.regress:
                             regressor_out = self.model(
@@ -378,14 +378,14 @@ class HybridTrainer(object):
 
                     validation_loss_classification += (
                         Criterion()
-                            .classifier_criterion(classifier_out, ids - 1)
+                            .classifier_criterion(classifier_out, classes)
                             .item()
                     )
 
                     # Compute number of correct samples
                     total += ids.size(0)
                     _, predicted = torch.max(classifier_out.data, 1)
-                    correct += (predicted == (ids - 1)).sum().item()
+                    correct += (predicted == classes).sum().item()
 
                 if self.regress:
                     regressor_out = self.model(
