@@ -411,3 +411,5 @@ class HybridTrainer(object):
                 print(
                     f"====> Mean Validation set regressor loss: {validation_loss_regression:.4f}"
                 )
+
+        return validation_loss_forecasting, validation_loss_regression, validation_loss_classification
