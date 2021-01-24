@@ -41,11 +41,8 @@ def test_aevae_jaguar():
                           output_size=2,
                           lstm_hidden_size=32,
                           num_lstm_layers=2,
-                          num_classes=9,
                           latent_size=10,
                           dropout=0.1,
-                          num_classifier_layers=4,
-                          classifier_hidden_size=32,
                           batch_size=batch_size,
                           num_future=num_future,
                           num_past=num_past,
@@ -57,9 +54,6 @@ def test_aevae_jaguar():
     model.disable_latent_output()
     model.enable_latent_output()
 
-    # Test that we can reset the classifier
-    model.reset_classifier(classifier_hidden_size=32, num_classifier_layers=4)
-
     # Model Trainer
     # Model types; "ae" or "vae"
     trainer = HybridTrainer(model=model,
@@ -68,7 +62,6 @@ def test_aevae_jaguar():
 
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
-    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='classification')
 
     scaler = data_loaders['train_loader'].dataset.scaler
 
@@ -112,11 +105,7 @@ def test_ae_jaguar():
 
     model = MultiModelAE(input_size=2, num_past=num_past, batch_size=batch_size, num_future=num_future,
                          lstm_hidden_size=32, num_lstm_layers=2, output_size=2, latent_size=10, batch_first=True,
-                         dropout=0.1, reset_state=True, bidirectional=False, num_classifier_layers=4,
-                         classifier_hidden_size=32, num_classes=9)
-
-    # Test that we can reset the classifier
-    model.reset_classifier(classifier_hidden_size=32, num_classifier_layers=4)
+                         dropout=0.1, reset_state=True, bidirectional=False)
 
 
     # Model Trainer
@@ -127,7 +116,6 @@ def test_ae_jaguar():
 
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
-    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='classification')
 
     trainer.validate(data_loaders['sequential_validation_loader'])
 
@@ -415,10 +403,8 @@ def test_ae_classification_network_converges():
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting')
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='classification')
 
-    loss_post_training = 0.
-    for data, _, _, _, classes in data_loaders['train_loader']:
-        prediction = model(data.float(), classify=True, latent=False)
-        loss_post_training += criterion.classifier_criterion(prediction, classes)
+    _, _, loss_classification = trainer.validate(data_loaders['train_loader'])
+    loss_post_training = loss_classification
 
     print(f'Loss post training: {loss_post_training}')
     assert loss_post_training < loss_pre_training
