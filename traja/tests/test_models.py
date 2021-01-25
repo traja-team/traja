@@ -391,20 +391,15 @@ def test_ae_classification_network_converges():
                             optimizer_type='Adam',
                             loss_type='mse')
 
-    criterion = Criterion()
-    loss_pre_training = 0.
-    for data, _, _, _, classes in data_loaders['train_loader']:
-        prediction = model(data.float(), classify=True, latent=False)
-        loss_pre_training += criterion.classifier_criterion(prediction, classes)
+    _, _, classification_loss_pre_training = trainer.validate(data_loaders['train_loader'])
 
-    print(f'Loss pre training: {loss_pre_training}')
+    print(f'Loss pre training: {classification_loss_pre_training}')
 
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting')
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='classification')
 
-    _, _, loss_classification = trainer.validate(data_loaders['train_loader'])
-    loss_post_training = loss_classification
+    _, _, classification_loss_post_training = trainer.validate(data_loaders['train_loader'])
 
-    print(f'Loss post training: {loss_post_training}')
-    assert loss_post_training < loss_pre_training
+    print(f'Loss post training: {classification_loss_post_training}')
+    assert classification_loss_post_training < classification_loss_pre_training
