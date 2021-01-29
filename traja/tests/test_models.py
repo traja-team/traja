@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 import traja
@@ -8,8 +9,6 @@ from traja.models import MultiModelAE
 from traja.models import MultiModelVAE
 from traja.models.losses import Criterion
 from traja.models.train import HybridTrainer
-
-import numpy as np
 
 
 def test_aevae_jaguar():
@@ -106,7 +105,6 @@ def test_ae_jaguar():
     model = MultiModelAE(input_size=2, num_past=num_past, batch_size=batch_size, num_future=num_future,
                          lstm_hidden_size=32, num_lstm_layers=2, output_size=2, latent_size=10, batch_first=True,
                          dropout=0.1, reset_state=True, bidirectional=False)
-
 
     # Model Trainer
     # Model types; "ae" or "vae"
@@ -287,19 +285,19 @@ def test_ae_regression_network_converges():
 
     model = MultiModelAE(input_size=2,
                          output_size=2,
-                          lstm_hidden_size=32,
-                          num_lstm_layers=2,
-                          num_regressor_parameters=len(parameter_columns),
-                          latent_size=10,
-                          dropout=0.1,
-                          num_regressor_layers=4,
-                          regressor_hidden_size=32,
-                          batch_size=batch_size,
-                          num_future=num_future,
-                          num_past=num_past,
-                          bidirectional=False,
-                          batch_first=True,
-                          reset_state=True)
+                         lstm_hidden_size=32,
+                         num_lstm_layers=2,
+                         num_regressor_parameters=len(parameter_columns),
+                         latent_size=10,
+                         dropout=0.1,
+                         num_regressor_layers=4,
+                         regressor_hidden_size=32,
+                         batch_size=batch_size,
+                         num_future=num_future,
+                         num_past=num_past,
+                         bidirectional=False,
+                         batch_first=True,
+                         reset_state=True)
 
     # Test resetting the regressor, to make sure this function works
     model.reset_regressor(regressor_hidden_size=32, num_regressor_layers=4)
@@ -416,7 +414,6 @@ def test_ae_classification_network_converges():
     # Sample data
     df = pd.DataFrame(data, columns=['x', 'y', 'ID', 'class'])
 
-
     # Hyperparameters
     batch_size = 2
     num_past = 10
@@ -490,7 +487,6 @@ def test_vae_classification_network_converges():
     # Sample data
     df = pd.DataFrame(data, columns=['x', 'y', 'ID', 'class'])
 
-
     # Hyperparameters
     batch_size = 2
     num_past = 10
@@ -509,20 +505,20 @@ def test_vae_classification_network_converges():
     model_save_path = './model.pt'
 
     model = MultiModelVAE(input_size=2,
-                         output_size=2,
-                         lstm_hidden_size=32,
-                         num_lstm_layers=2,
-                         num_classes=2,
-                         latent_size=10,
-                         dropout=0.1,
-                         num_classifier_layers=4,
-                         classifier_hidden_size=32,
-                         batch_size=batch_size,
-                         num_future=num_future,
-                         num_past=num_past,
-                         bidirectional=False,
-                         batch_first=True,
-                         reset_state=True)
+                          output_size=2,
+                          lstm_hidden_size=32,
+                          num_lstm_layers=2,
+                          num_classes=2,
+                          latent_size=10,
+                          dropout=0.1,
+                          num_classifier_layers=4,
+                          classifier_hidden_size=32,
+                          batch_size=batch_size,
+                          num_future=num_future,
+                          num_past=num_past,
+                          bidirectional=False,
+                          batch_first=True,
+                          reset_state=True)
 
     # Test resetting the classifier, to make sure this function works
     model.reset_classifier(classifier_hidden_size=32, num_classifier_layers=4)
