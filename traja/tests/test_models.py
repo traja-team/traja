@@ -226,25 +226,18 @@ def test_aevae_regression_network_converges():
                             optimizer_type='Adam',
                             loss_type='mse')
 
-    criterion = Criterion()
-    loss_pre_training = 0.
-    for data, _, _, parameters, classes in data_loaders['train_loader']:
-        prediction = model(data.float(), regress=True, latent=False)
-        loss_pre_training += criterion.regressor_criterion(prediction, parameters)
+    _, regression_lost_pre_training, _ = trainer.validate(data_loaders['train_loader'])
 
-    print(f'Loss pre training: {loss_pre_training}')
+    print(f'Loss pre training: {regression_lost_pre_training}')
 
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting')
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='regression')
 
-    loss_post_training = 0.
-    for data, _, _, parameters, classes in data_loaders['train_loader']:
-        prediction = model(data.float(), regress=True, latent=False)
-        loss_post_training += criterion.regressor_criterion(prediction, parameters)
+    _, regression_lost_post_training, _ = trainer.validate(data_loaders['train_loader'])
 
-    print(f'Loss post training: {loss_post_training}')
-    assert loss_post_training < loss_pre_training
+    print(f'Loss post training: {regression_lost_post_training}')
+    assert regression_lost_post_training < regression_lost_pre_training
 
 
 def test_ae_regression_network_converges():
