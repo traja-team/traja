@@ -495,7 +495,7 @@ class MultiModelVAEGenerator(torch.nn.Module):
         pass
 
 
-class VAEGANTrainer:
+class MultiModelVAEGAN:
     """Wrap all the above defined model classes and train the model with respect to the defined loss function
 
         Args:
@@ -933,26 +933,4 @@ class VAEGANTrainer:
                 print(f"====> Test set Generator loss: {test_loss_forecasting:.4f}")
                 print(f"Discriminator loss: {test_loss_forecasting:.4f}")
                 print(f"Classifier loss: {test_loss_classification:.4f}")
-
-
-if __name__ == "__main__":
-
-    input_size = 2
-    lstm_hidden_size = 512
-    lstm_num_layers = 4
-    num_layers = lstm_num_layers
-    hidden_size = lstm_hidden_size  # For classifiers too
-    batch_first = True
-    reset_state = True
-    output_size = 2
-    num_classes = 9
-    latent_size = 20
-    dropout = 0.1
-    bidirectional = False
-    epochs = (
-        20  # *2 first half for training the generative model and other for classifier
-    )
-    batch_size = 32
-    sequence_length = 10
-    num_future = 5
 
