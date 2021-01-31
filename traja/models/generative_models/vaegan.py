@@ -536,6 +536,7 @@ class MultiModelVAEGAN:
         sequence_length: int,
         num_future: int,
     ):
+        super(MultiModelVAEGAN,self).__init__()
         self.input_size = input_size
         self.lstm_hidden_size = lstm_hidden_size
         self.lstm_num_layers = lstm_num_layers
