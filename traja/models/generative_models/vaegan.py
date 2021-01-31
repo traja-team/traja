@@ -89,7 +89,7 @@ class LSTMEncoder(torch.nn.Module):
         num_past: Number of time steps to look backwards to predict num_future steps forward
         batch_size: Number of samples in a batch
         hidden_size: The number of features in the hidden state h
-        num_lstm_layers: Number of layers in the LSTM model
+        num_layers: Number of layers in the LSTM model
 
         batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
         dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
@@ -104,19 +104,20 @@ class LSTMEncoder(torch.nn.Module):
         num_past: int,
         batch_size: int,
         hidden_size: int,
-        num_lstm_layers: int,
+        num_layers: int,
         batch_first: bool,
         dropout: float,
         reset_state: bool,
         bidirectional: bool,
     ):
+
         super(LSTMEncoder, self).__init__()
 
         self.input_size = input_size
         self.num_past = num_past
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.num_lstm_layers = num_lstm_layers
+        self.num_layers = num_layers
         self.batch_first = batch_first
         self.dropout = dropout
         self.reset_state = reset_state
@@ -125,7 +126,7 @@ class LSTMEncoder(torch.nn.Module):
         self.lstm_encoder = torch.nn.LSTM(
             input_size=input_size,
             hidden_size=self.hidden_size,
-            num_layers=num_lstm_layers,
+            num_layers=num_layers,
             dropout=dropout,
             bidirectional=self.bidirectional,
             batch_first=True,
@@ -133,10 +134,10 @@ class LSTMEncoder(torch.nn.Module):
 
     def _init_hidden(self):
         return (
-            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
+            torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
             .requires_grad_()
             .to(device),
-            torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
+            torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
             .requires_grad_()
             .to(device),
         )
@@ -500,8 +501,8 @@ class MultiModelVAEGAN:
         Args:
             input_size: The number of expected features in the input x
             output_size: Output feature dimension
-            lstm_hidden_size: The number of features in the hidden state h
-            num_lstm_layers: Number of layers in the LSTM model
+            hidden_size: The number of features in the hidden state h
+            num_layers: Number of layers in the LSTM model
             reset_state: If True, will reset the hidden and cell state for each batch of data
             num_classes: Number of categories/labels
             latent_size: Latent space dimension
@@ -525,8 +526,8 @@ class MultiModelVAEGAN:
     def __init__(
         self,
         input_size: int,
-        lstm_hidden_size: int,
-        lstm_num_layers: int,
+        hidden_size: int,
+        num_layers: int,
         num_classes: int,
         latent_size: int,
         dropout: float,
@@ -537,8 +538,8 @@ class MultiModelVAEGAN:
     ):
         super(MultiModelVAEGAN, self).__init__()
         self.input_size = input_size
-        self.lstm_hidden_size = lstm_hidden_size
-        self.lstm_num_layers = lstm_num_layers
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
         self.num_classes = num_classes
         self.latent_size = latent_size
         self.dropout = dropout
@@ -554,9 +555,9 @@ class MultiModelVAEGAN:
             input_size=self.input_size,
             sequence_length=self.sequence_length,
             batch_size=self.batch_size,
-            hidden_size=self.lstm_hidden_size,
+            hidden_size=self.hidden_size,
             num_future=self.num_future,
-            num_layers=self.lstm_num_layers,
+            num_layers=self.num_layers,
             latent_size=self.latent_size,
             output_size=self.output_size,
             num_classes=self.num_classes,
