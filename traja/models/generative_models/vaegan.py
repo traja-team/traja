@@ -437,7 +437,6 @@ class MultiModelVAEGenerator(torch.nn.Module):
         output_size: int,
         num_classes: int,
         latent_size: int,
-        batch_first: bool,
         dropout: float,
         reset_state: bool,
         bidirectional: bool,
