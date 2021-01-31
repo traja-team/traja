@@ -525,16 +525,16 @@ class VAEGANTrainer:
 
     def __init__(
         self,
-        input_size,
-        lstm_hidden_size,
-        lstm_num_layers,
-        num_classes,
-        latent_size,
-        dropout,
-        epochs,
-        batch_size,
-        sequence_length,
-        num_future,
+        input_size: int,
+        lstm_hidden_size: int,
+        lstm_num_layers: int,
+        num_classes: int,
+        latent_size: int,
+        dropout: float,
+        epochs: int,
+        batch_size: int,
+        sequence_length: int,
+        num_future: int,
     ):
         self.input_size = input_size
         self.lstm_hidden_size = lstm_hidden_size
