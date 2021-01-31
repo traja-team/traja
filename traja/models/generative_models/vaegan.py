@@ -369,7 +369,7 @@ class LSTMDiscriminator(torch.nn.Module):
         super(LSTMDiscriminator, self).__init__()
 
         self.batch_size = batch_size
-        self.sequence_length = sequence_length
+        self.sequence_length = self.sequence_length
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.output_size = output_size
@@ -460,7 +460,6 @@ class MultiModelVAEGenerator(torch.nn.Module):
         # Network instances in the model
         self.encoder = LSTMEncoder(
             input_size=self.input_size,
-            sequence_length=self.sequence_length,
             batch_size=self.batch_size,
             hidden_size=self.hidden_size,
             num_layers=self.num_layers,
@@ -536,7 +535,7 @@ class MultiModelVAEGAN:
         sequence_length: int,
         num_future: int,
     ):
-        super(MultiModelVAEGAN,self).__init__()
+        super(MultiModelVAEGAN, self).__init__()
         self.input_size = input_size
         self.lstm_hidden_size = lstm_hidden_size
         self.lstm_num_layers = lstm_num_layers
