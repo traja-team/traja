@@ -3,6 +3,7 @@ from torch import nn
 from traja.models.utils import TimeDistributed
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.utils.data import Dataset, DataLoader, Sampler
 
 torch.autograd.set_detect_anomaly(True)
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -174,11 +175,11 @@ class Sampler(torch.nn.Module):
         return eps.mul(std).add_(mu)
 
 
-class DisentangledAELatent(torch.nn.Module):
+class DisentangledLatent(torch.nn.Module):
     """Dense Dientangled Latent Layer between encoder and decoder"""
 
     def __init__(self, hidden_size: int, latent_size: int, dropout: float):
-        super(DisentangledAELatent, self).__init__()
+        super(DisentangledLatent, self).__init__()
         self.latent_size = latent_size
         self.hidden_size = hidden_size
         self.dropout = dropout
@@ -411,13 +412,8 @@ class LSTMDiscriminator(torch.nn.Module):
         # Encoder
         _init_hidden = self._init_hidden()
         lstm_out, _states = self.lstm(x)
-        # lstm_out,_states = self.lstm(x,_init_hidden) # shape(lstm_out)-->[batch_size,seq_len,hidden_dim]
-
         # Flatten the lstm output
         lstm_out = lstm_out[:, -1, :]  # batch_size, hidden_dim
-        # fc1 =  self.relu(self.fc1(lstm_out))
-        # fc2 =  self.relu(self.fc2(fc1))
-        # fc3 =  self.relu(self.fc3(fc2))
 
         fc1 = self.fc1(lstm_out)
         fc2 = self.fc2(fc1)
@@ -496,25 +492,7 @@ class MultiModelVAEGenerator(torch.nn.Module):
         self.sampler = Sampler()
 
     def forward(self):
-        return NotImplemented
-
-
-input_size = 2
-lstm_hidden_size = 512
-lstm_num_layers = 4
-num_layers = lstm_num_layers
-hidden_size = lstm_hidden_size  # For classifiers too
-batch_first = True
-reset_state = True
-output_size = 2
-num_classes = 9
-latent_size = 20
-dropout = 0.1
-bidirectional = False
-epochs = 20  # *2 first half for training the generative model and other for classifier
-batch_size = batch_size
-sequence_length = num_past
-num_future = 5
+        pass
 
 
 class VAEGANTrainer:
@@ -670,7 +648,7 @@ class VAEGANTrainer:
         # Discriminator loss constants
         self.gamma = 1.0
 
-    def train(self, train_loader, test_loader):
+    def fit(self, train_loader, test_loader):
 
         for epoch in range(
             epochs * 2
@@ -861,7 +839,7 @@ class VAEGANTrainer:
                         # (1) Feed data to encoder
                         encoder_out = self.generator.encoder(data)
                         # (2) Latent without sampling
-                        z, zp, mu, logvar = self.generator.latent(enc_out)
+                        z, zp, mu, logvar = self.generator.latent(encoder_out)
                         # (3) Feed the latent vector to classifier
                         classifier_out = self.classifier(z.detach())
                         # (4) Cross entropy loss
@@ -955,4 +933,26 @@ class VAEGANTrainer:
                 print(f"====> Test set Generator loss: {test_loss_forecasting:.4f}")
                 print(f"Discriminator loss: {test_loss_forecasting:.4f}")
                 print(f"Classifier loss: {test_loss_classification:.4f}")
+
+
+if __name__ == "__main__":
+
+    input_size = 2
+    lstm_hidden_size = 512
+    lstm_num_layers = 4
+    num_layers = lstm_num_layers
+    hidden_size = lstm_hidden_size  # For classifiers too
+    batch_first = True
+    reset_state = True
+    output_size = 2
+    num_classes = 9
+    latent_size = 20
+    dropout = 0.1
+    bidirectional = False
+    epochs = (
+        20  # *2 first half for training the generative model and other for classifier
+    )
+    batch_size = 32
+    sequence_length = 10
+    num_future = 5
 
