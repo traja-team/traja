@@ -441,6 +441,7 @@ class MultiModelVAEGenerator(torch.nn.Module):
         dropout: float,
         reset_state: bool,
         bidirectional: bool,
+        batch_first: bool = True,
     ):
 
         super(MultiModelVAEGenerator, self).__init__()
@@ -461,11 +462,11 @@ class MultiModelVAEGenerator(torch.nn.Module):
         # Network instances in the model
         self.encoder = LSTMEncoder(
             input_size=self.input_size,
-            sequence_length = self.sequence_length,
+            sequence_length=self.sequence_length,
             batch_size=self.batch_size,
             hidden_size=self.hidden_size,
             num_layers=self.num_layers,
-            batch_first=self.batch_first,
+            batch_first=True,
             dropout=self.dropout,
             reset_state=True,
             bidirectional=self.bidirectional,
