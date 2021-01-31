@@ -86,7 +86,7 @@ class LSTMEncoder(torch.nn.Module):
 class LSTMEncoder(torch.nn.Module):
     """ Implementation of Encoder network using LSTM layers
         input_size: The number of expected features in the input x
-        num_past: Number of time steps to look backwards to predict num_future steps forward
+        sequence_length: Number of time steps to look backwards to predict num_future steps forward
         batch_size: Number of samples in a batch
         hidden_size: The number of features in the hidden state h
         num_layers: Number of layers in the LSTM model
@@ -101,7 +101,7 @@ class LSTMEncoder(torch.nn.Module):
     def __init__(
         self,
         input_size: int,
-        num_past: int,
+        sequence_length: int,
         batch_size: int,
         hidden_size: int,
         num_layers: int,
@@ -114,7 +114,7 @@ class LSTMEncoder(torch.nn.Module):
         super(LSTMEncoder, self).__init__()
 
         self.input_size = input_size
-        self.num_past = num_past
+        self.sequence_length = sequence_length
         self.batch_size = batch_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -461,6 +461,7 @@ class MultiModelVAEGenerator(torch.nn.Module):
         # Network instances in the model
         self.encoder = LSTMEncoder(
             input_size=self.input_size,
+            sequence_length = self.sequence_length,
             batch_size=self.batch_size,
             hidden_size=self.hidden_size,
             num_layers=self.num_layers,
@@ -511,7 +512,7 @@ class MultiModelVAEGAN:
             num_classifier_layers: Number of layers in the classifier
             batch_size: Number of samples in a batch 
             num_future: Number of time steps to be predicted forward
-            num_past: Number of past time steps otherwise, length of sequences in each batch of data.
+            sequence_length: Number of past time steps otherwise, length of sequences in each batch of data.
             bidirectional:  If True, becomes a bidirectional LSTM
             batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
             loss_type: Type of reconstruction loss to apply, 'huber' or 'rmse'. Default:'huber'
