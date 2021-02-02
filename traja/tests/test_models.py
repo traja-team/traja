@@ -159,8 +159,17 @@ def test_lstm_jaguar():
     trainer = HybridTrainer(model=model,
                             optimizer_type='Adam',
                             loss_type='huber')
+
+    forecasting_loss_pre_training, _, _ = trainer.validate(data_loaders['train_loader'])
+    print(f'Loss post training: {forecasting_loss_pre_training}')
+
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting')
+
+    forecasting_loss_post_training, _, _ = trainer.validate(data_loaders['train_loader'])
+
+    print(f'Loss post training: {forecasting_loss_post_training}')
+    assert forecasting_loss_post_training < forecasting_loss_pre_training
 
 
 def test_aevae_regression_network_converges():
