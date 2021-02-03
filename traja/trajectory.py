@@ -30,7 +30,7 @@ __all__ = [
     "calc_displacement",
     "calc_heading",
     "calc_turn_angle",
-    "calculate_flow_angles",
+    "calc_flow_angles",
     "cartesian_to_polar",
     "coords_to_flow",
     "distance_between",
@@ -436,7 +436,7 @@ def _bins_to_tuple(trj, bins: Union[int, Tuple[int, int]] = 10):
     return bins
 
 
-def calculate_flow_angles(grid_indices: np.ndarray):
+def calc_flow_angles(grid_indices: np.ndarray):
     """Calculate average flow between grid indices."""
 
     bins = (grid_indices[:, 0].max(), grid_indices[:, 1].max())
@@ -1268,7 +1268,7 @@ def coords_to_flow(trj: TrajaDataFrame, bins: Union[int, tuple] = None):
     else:
         grid_indices = trj[["xbin", "ybin"]]
 
-    U, V = traja.calculate_flow_angles(grid_indices.values)
+    U, V = traja.calc_flow_angles(grid_indices.values)
 
     return X, Y, U, V
 
