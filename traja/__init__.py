@@ -9,7 +9,7 @@ from traja import datasets
 import logging
 
 __author__ = "justinshenk"
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 logging.basicConfig(level=logging.INFO)
 
