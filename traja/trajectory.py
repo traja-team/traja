@@ -30,6 +30,7 @@ __all__ = [
     "calc_derivatives",
     "calc_displacement",
     "calc_heading",
+    "calc_laterality",
     "calc_turn_angle",
     "calc_flow_angles",
     "cartesian_to_polar",
@@ -435,6 +436,36 @@ def _bins_to_tuple(trj, bins: Union[int, Tuple[int, int]] = 10):
 
     assert len(bins) == 2, f"bins should be length 2 but is {len(bins)}"
     return bins
+
+
+def calc_laterality(trj: TrajaDataFrame, dist_thresh:float, angle_thresh:float=30, ):
+    """Calculate laterality of a trajectory. 
+
+    Laterality is the preference for left or right turning. It is calculated
+    with the number of left and right turns.
+
+    Args:
+        trj: Trajectory
+        angle_thresh: angle threshold (from angle to 90 degrees)
+        dist_thresh: distance for a step to count as a turn
+
+    Returns:
+        right_turns (int)
+        left_turns (int)
+
+    """
+    # get turn angle w.r.t. x axis
+    turn_angle = calc_turn_angle(trj)
+
+    distance = step_lengths(trj)
+    distance_mask = distance > dist_thresh
+    angle_mask = ((turn_angle > angle_thresh) & (turn_angle < 90)) | ((turn_angle < -angle_thresh) & (turn_angle > -90))
+
+    turns = turn_angle[distance_mask & angle_mask].dropna()
+    left_turns = turns[turn_angle>0].shape[0]
+    right_turns = turns[turn_angle<0].shape[0]
+
+    return right_turns, left_turns
 
 
 def calc_flow_angles(grid_indices: np.ndarray):
