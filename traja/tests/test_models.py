@@ -7,7 +7,6 @@ from traja.dataset.example import jaguar
 from traja.models import LSTM
 from traja.models import MultiModelAE
 from traja.models import MultiModelVAE
-from traja.models.losses import Criterion
 from traja.models.train import HybridTrainer
 
 
