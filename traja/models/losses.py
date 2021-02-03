@@ -49,7 +49,8 @@ class Criterion:
         :return: Cross entropy loss
         """
 
-        loss = self.crossentropy_loss(predicted, target)
+        #_, predicted = torch.max(predicted.data, 1)
+        loss = self.crossentropy_loss(predicted, target.view(-1))
         return loss
 
     def regressor_criterion(self, predicted, target):

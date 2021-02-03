@@ -169,7 +169,7 @@ class HybridTrainer(object):
                 # Training
                 self.model.train()
                 total_loss = 0
-                for idx, (data, target, ids, parameters) in enumerate(
+                for idx, (data, target, ids, parameters, classes) in enumerate(
                         train_loader
                 ):
                     # Reset optimizer states
@@ -214,7 +214,7 @@ class HybridTrainer(object):
                             data, training=True, classify=True, latent=False
                         )
                         loss = Criterion().classifier_criterion(
-                            classifier_out, (ids - 1).long()
+                            classifier_out, classes
                         )
 
                         loss.backward()
@@ -248,7 +248,7 @@ class HybridTrainer(object):
                         total = 0.0
                         correct = 0.0
                     self.model.eval()
-                    for idx, (data, target, ids, parameters) in enumerate(
+                    for idx, (data, target, ids, parameters, classes) in enumerate(
                             test_loader
                     ):
                         if type(ids) == list:
@@ -285,14 +285,14 @@ class HybridTrainer(object):
 
                             test_loss_classification += (
                                 Criterion()
-                                    .classifier_criterion(classifier_out, ids - 1)
+                                    .classifier_criterion(classifier_out, classes)
                                     .item()
                             )
 
                             # Compute number of correct samples
                             total += ids.size(0)
                             _, predicted = torch.max(classifier_out.data, 1)
-                            correct += (predicted == (ids - 1)).sum().item()
+                            correct += (predicted == classes).sum().item()
 
                         if self.regress:
                             regressor_out = self.model(
@@ -343,7 +343,7 @@ class HybridTrainer(object):
                 total = 0.0
                 correct = 0.0
             self.model.eval()
-            for idx, (data, target, ids, parameters) in enumerate(validation_loader):
+            for idx, (data, target, ids, parameters, classes) in enumerate(validation_loader):
                 if type(ids) == list:
                     ids = ids[0]
                 data, target, ids, parameters = (
@@ -378,14 +378,14 @@ class HybridTrainer(object):
 
                     validation_loss_classification += (
                         Criterion()
-                            .classifier_criterion(classifier_out, ids - 1)
+                            .classifier_criterion(classifier_out, classes)
                             .item()
                     )
 
                     # Compute number of correct samples
                     total += ids.size(0)
                     _, predicted = torch.max(classifier_out.data, 1)
-                    correct += (predicted == (ids - 1)).sum().item()
+                    correct += (predicted == classes).sum().item()
 
                 if self.regress:
                     regressor_out = self.model(
@@ -411,3 +411,5 @@ class HybridTrainer(object):
                 print(
                     f"====> Mean Validation set regressor loss: {validation_loss_regression:.4f}"
                 )
+
+        return validation_loss_forecasting, validation_loss_regression, validation_loss_classification

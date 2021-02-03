@@ -9,6 +9,8 @@ from traja.models import MultiModelVAE
 from traja.models.losses import Criterion
 from traja.models.train import HybridTrainer
 
+import numpy as np
+
 
 def test_aevae_jaguar():
     """
@@ -39,11 +41,8 @@ def test_aevae_jaguar():
                           output_size=2,
                           lstm_hidden_size=32,
                           num_lstm_layers=2,
-                          num_classes=9,
                           latent_size=10,
                           dropout=0.1,
-                          num_classifier_layers=4,
-                          classifier_hidden_size=32,
                           batch_size=batch_size,
                           num_future=num_future,
                           num_past=num_past,
@@ -55,9 +54,6 @@ def test_aevae_jaguar():
     model.disable_latent_output()
     model.enable_latent_output()
 
-    # Test that we can reset the classifier
-    model.reset_classifier(classifier_hidden_size=32, num_classifier_layers=4)
-
     # Model Trainer
     # Model types; "ae" or "vae"
     trainer = HybridTrainer(model=model,
@@ -66,7 +62,6 @@ def test_aevae_jaguar():
 
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
-    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='classification')
 
     scaler = data_loaders['train_loader'].dataset.scaler
 
@@ -110,11 +105,7 @@ def test_ae_jaguar():
 
     model = MultiModelAE(input_size=2, num_past=num_past, batch_size=batch_size, num_future=num_future,
                          lstm_hidden_size=32, num_lstm_layers=2, output_size=2, latent_size=10, batch_first=True,
-                         dropout=0.1, reset_state=True, bidirectional=False, num_classifier_layers=4,
-                         classifier_hidden_size=32, num_classes=9)
-
-    # Test that we can reset the classifier
-    model.reset_classifier(classifier_hidden_size=32, num_classifier_layers=4)
+                         dropout=0.1, reset_state=True, bidirectional=False)
 
 
     # Model Trainer
@@ -125,7 +116,6 @@ def test_ae_jaguar():
 
     # Train the model
     trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
-    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='classification')
 
     trainer.validate(data_loaders['sequential_validation_loader'])
 
@@ -240,7 +230,7 @@ def test_aevae_regression_network_converges():
 
     criterion = Criterion()
     loss_pre_training = 0.
-    for data, _, _, parameters in data_loaders['train_loader']:
+    for data, _, _, parameters, classes in data_loaders['train_loader']:
         prediction = model(data.float(), regress=True, latent=False)
         loss_pre_training += criterion.regressor_criterion(prediction, parameters)
 
@@ -251,7 +241,7 @@ def test_aevae_regression_network_converges():
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='regression')
 
     loss_post_training = 0.
-    for data, _, _, parameters in data_loaders['train_loader']:
+    for data, _, _, parameters, classes in data_loaders['train_loader']:
         prediction = model(data.float(), regress=True, latent=False)
         loss_post_training += criterion.regressor_criterion(prediction, parameters)
 
@@ -261,9 +251,7 @@ def test_aevae_regression_network_converges():
 
 def test_ae_regression_network_converges():
     """
-    Test Autoencoder and variational auto encoder models for training/testing/generative network and
-    classification networks
-
+    Test that Autoencoder and variational auto encoder models for regression networks converge
     """
 
     data = list()
@@ -324,7 +312,7 @@ def test_ae_regression_network_converges():
 
     criterion = Criterion()
     loss_pre_training = 0.
-    for data, _, _, parameters in data_loaders['train_loader']:
+    for data, _, _, parameters, classes in data_loaders['train_loader']:
         prediction = model(data.float(), regress=True, latent=False)
         loss_pre_training += criterion.regressor_criterion(prediction, parameters)
 
@@ -335,9 +323,88 @@ def test_ae_regression_network_converges():
     trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='regression')
 
     loss_post_training = 0.
-    for data, _, _, parameters in data_loaders['train_loader']:
+    for data, _, _, parameters, classes in data_loaders['train_loader']:
         prediction = model(data.float(), regress=True, latent=False)
         loss_post_training += criterion.regressor_criterion(prediction, parameters)
+
+    print(f'Loss post training: {loss_post_training}')
+    assert loss_post_training < loss_pre_training
+
+
+def test_ae_classification_network_converges():
+    """
+    Test that Autoencoder and variational auto encoder models for classification networks converge
+    """
+
+    data = list()
+    num_ids = 8
+
+    for sample_id in range(num_ids):
+        sample_class = sample_id % 2
+        for sequence in range(70 + sample_id * 4):
+            xx = sample_class * np.sin(sequence / 20.0) + (sample_class - 1) * sequence
+            yy = sample_class * np.cos(sequence / 20.0) + (sample_class - 1) * sequence
+            data.append([xx, yy, sample_id, sample_class])
+    # Sample data
+    df = pd.DataFrame(data, columns=['x', 'y', 'ID', 'class'])
+
+
+    # Hyperparameters
+    batch_size = 2
+    num_past = 10
+    num_future = 5
+    # Prepare the dataloader
+    data_loaders = dataset.MultiModalDataLoader(df,
+                                                batch_size=batch_size,
+                                                n_past=num_past,
+                                                n_future=num_future,
+                                                train_split_ratio=0.333,
+                                                validation_split_ratio=0.333,
+                                                num_workers=1,
+                                                split_by_id=False,
+                                                stride=1)
+
+    model_save_path = './model.pt'
+
+    model = MultiModelAE(input_size=2,
+                         output_size=2,
+                         lstm_hidden_size=32,
+                         num_lstm_layers=2,
+                         num_classes=2,
+                         latent_size=10,
+                         dropout=0.1,
+                         num_classifier_layers=4,
+                         classifier_hidden_size=32,
+                         batch_size=batch_size,
+                         num_future=num_future,
+                         num_past=num_past,
+                         bidirectional=False,
+                         batch_first=True,
+                         reset_state=True)
+
+    # Test resetting the classifier, to make sure this function works
+    model.reset_classifier(classifier_hidden_size=32, num_classifier_layers=4)
+
+    # Model Trainer
+    # Model types; "ae" or "vae"
+    trainer = HybridTrainer(model=model,
+                            optimizer_type='Adam',
+                            loss_type='mse')
+
+    criterion = Criterion()
+    loss_pre_training = 0.
+    for data, _, _, _, classes in data_loaders['train_loader']:
+        prediction = model(data.float(), classify=True, latent=False)
+        loss_pre_training += criterion.classifier_criterion(prediction, classes)
+
+    print(f'Loss pre training: {loss_pre_training}')
+
+    # Train the model
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting')
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='classification')
+
+    _, _, loss_classification = trainer.validate(data_loaders['train_loader'])
+    loss_post_training = loss_classification
 
     print(f'Loss post training: {loss_post_training}')
     assert loss_post_training < loss_pre_training

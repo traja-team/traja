@@ -39,7 +39,7 @@ def test_time_based_sampling_dataloaders_do_not_overlap():
                                                validation_split_ratio=validation_split_ratio,
                                                split_by_id=split_by_id)
 
-    for data, target, ids, parameters in dataloaders['train_loader']:
+    for data, target, ids, parameters, classes in dataloaders['train_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == -1.
@@ -47,7 +47,7 @@ def test_time_based_sampling_dataloaders_do_not_overlap():
             for sample in sequence:
                 assert sample[0] == -1.
 
-    for data, target, ids, parameters in dataloaders['test_loader']:
+    for data, target, ids, parameters, classes in dataloaders['test_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == 0
@@ -55,7 +55,7 @@ def test_time_based_sampling_dataloaders_do_not_overlap():
             for sample in sequence:
                 assert sample[0] == 0
 
-    for data, target, ids, parameters in dataloaders['validation_loader']:
+    for data, target, ids, parameters, classes in dataloaders['validation_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == 1
@@ -103,7 +103,7 @@ def test_time_based_sampling_dataloaders_with_short_stride_do_not_overlap():
                                                split_by_id=split_by_id,
                                                stride=stride)
 
-    for data, target, ids, parameters in dataloaders['train_loader']:
+    for data, target, ids, parameters, classes in dataloaders['train_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == -1.
@@ -111,7 +111,7 @@ def test_time_based_sampling_dataloaders_with_short_stride_do_not_overlap():
             for sample in sequence:
                 assert sample[0] == -1.
 
-    for data, target, ids, parameters in dataloaders['test_loader']:
+    for data, target, ids, parameters, classes in dataloaders['test_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == 0
@@ -119,7 +119,7 @@ def test_time_based_sampling_dataloaders_with_short_stride_do_not_overlap():
             for sample in sequence:
                 assert sample[0] == 0
 
-    for data, target, ids, parameters in dataloaders['validation_loader']:
+    for data, target, ids, parameters, classes in dataloaders['validation_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == 1
@@ -167,7 +167,7 @@ def test_time_based_sampling_dataloaders_with_stride_one_do_not_overlap():
                                                split_by_id=split_by_id,
                                                stride=stride)
 
-    for data, target, ids, parameters in dataloaders['train_loader']:
+    for data, target, ids, parameters, classes in dataloaders['train_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == -1.
@@ -175,7 +175,7 @@ def test_time_based_sampling_dataloaders_with_stride_one_do_not_overlap():
             for sample in sequence:
                 assert sample[0] == -1.
 
-    for data, target, ids, parameters in dataloaders['test_loader']:
+    for data, target, ids, parameters, classes in dataloaders['test_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == 0
@@ -183,7 +183,7 @@ def test_time_based_sampling_dataloaders_with_stride_one_do_not_overlap():
             for sample in sequence:
                 assert sample[0] == 0
 
-    for data, target, ids, parameters in dataloaders['validation_loader']:
+    for data, target, ids, parameters, classes in dataloaders['validation_loader']:
         for sequence in data:
             for sample in sequence:
                 assert sample[0] == 1
@@ -367,7 +367,7 @@ def test_id_wise_weighted_sampling_does_not_put_id_in_multiple_dataloaders():
 
 def extract_sample_ids_from_dataloader(dataloader):
     sample_ids = list()
-    for data, target, ids, parameters in dataloader:
+    for data, target, ids, parameters, classes in dataloader:
         for index, sequence_id in enumerate(ids):
             sample_ids.append(int(data[index][0][1]))
     return sample_ids
@@ -377,7 +377,7 @@ def verify_id_wise_sampled_dataloaders_do_not_overlap(dataloaders, train_split_r
                                                       expect_all_ids=True):
     train_ids = []  # We check that the sequence IDs are not mixed
     train_sample_ids = []  # We also check that the sample IDs do not overlap
-    for data, target, ids, parameters in dataloaders['train_loader']:
+    for data, target, ids, parameters, classes in dataloaders['train_loader']:
         for index, sequence_id in enumerate(ids):
             sequence_id = int(sequence_id)
             if sequence_id not in train_ids:
@@ -386,7 +386,7 @@ def verify_id_wise_sampled_dataloaders_do_not_overlap(dataloaders, train_split_r
 
     test_ids = []
     test_sample_ids = []
-    for data, target, ids, parameters in dataloaders['test_loader']:
+    for data, target, ids, parameters, classes in dataloaders['test_loader']:
         for index, sequence_id in enumerate(ids):
             sequence_id = int(sequence_id)
             if sequence_id not in test_ids:
@@ -397,7 +397,7 @@ def verify_id_wise_sampled_dataloaders_do_not_overlap(dataloaders, train_split_r
 
     validation_ids = []
     validation_sample_ids = []
-    for data, target, ids, parameters in dataloaders['validation_loader']:
+    for data, target, ids, parameters, classes in dataloaders['validation_loader']:
         for index, sequence_id in enumerate(ids):
             sequence_id = int(sequence_id)
             if sequence_id not in validation_ids:
@@ -425,7 +425,7 @@ def verify_sequential_id_sampled_sequential_dataloaders_equal_dataloaders(datalo
 
     # We check that all sample IDs are present in the sequential samplers and vice versa
     train_sequential_sample_ids = []
-    for data, target, ids, parameters in dataloaders['sequential_train_loader']:
+    for data, target, ids, parameters, classes in dataloaders['sequential_train_loader']:
         for index, sequence_id in enumerate(ids):
             sequence_id = int(sequence_id)
             train_sequential_sample_ids.append(int(data[index][0][1]))
@@ -439,7 +439,7 @@ def verify_sequential_id_sampled_sequential_dataloaders_equal_dataloaders(datalo
             index], f'Index {train_sample_ids[index]} is not equal to {train_sequential_sample_ids[index]}!'
 
     test_sequential_sample_ids = []
-    for data, target, ids, parameters in dataloaders['sequential_test_loader']:
+    for data, target, ids, parameters, classes in dataloaders['sequential_test_loader']:
         for index, sequence_id in enumerate(ids):
             sequence_id = int(sequence_id)
             test_sequential_sample_ids.append(int(data[index][0][1]))
@@ -453,7 +453,7 @@ def verify_sequential_id_sampled_sequential_dataloaders_equal_dataloaders(datalo
             index], f'Index {test_sample_ids[index]} is not equal to {test_sequential_sample_ids[index]}!'
 
     validation_sequential_sample_ids = []
-    for data, target, ids, parameters in dataloaders['sequential_validation_loader']:
+    for data, target, ids, parameters, classes in dataloaders['sequential_validation_loader']:
         for index, sequence_id in enumerate(ids):
             sequence_id = int(sequence_id)
             validation_sequential_sample_ids.append(int(data[index][0][1]))
@@ -544,7 +544,7 @@ def test_sequential_data_loader_indices_are_sequential():
                                                stride=stride)
 
     current_id = 0
-    for data, target, ids, parameters in dataloaders['sequential_train_loader']:
+    for data, target, ids, parameters, classes in dataloaders['sequential_train_loader']:
         for id in ids:
             id = int(id)
             if id > current_id:
@@ -552,7 +552,7 @@ def test_sequential_data_loader_indices_are_sequential():
             assert id == current_id, 'IDs in sequential train loader should increase monotonically!'
 
     current_id = 0
-    for data, target, ids, parameters in dataloaders['sequential_test_loader']:
+    for data, target, ids, parameters, classes in dataloaders['sequential_test_loader']:
         for id in ids:
             id = int(id)
             if id > current_id:
