@@ -12,9 +12,7 @@ from traja.models.train import HybridTrainer
 
 def test_aevae_jaguar():
     """
-    Test Autoencoder and variational auto encoder models for training/testing/generative network and
-    classification networks
-
+    Test variational autoencoder forecasting with the Jaguar dataset
     """
 
     # Sample data
