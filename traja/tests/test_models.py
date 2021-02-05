@@ -76,9 +76,7 @@ def test_aevae_jaguar():
 
 def test_ae_jaguar():
     """
-    Test Autoencoder and variational auto encoder models for training/testing/generative network and
-    classification networks
-
+    Test autoencoder forecasting with the Jaguar dataset
     """
 
     # Sample data
