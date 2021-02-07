@@ -50,7 +50,7 @@ class TrajaAccessor(object):
         return (xlim, ylim)
 
     def night(self, begin: str = "19:00", end: str = "7:00"):
-        """Get nighttime datasets between `begin` and `end`.
+        """Get nighttime dataset between `begin` and `end`.
 
         Args:
           begin (str):  (Default value = '19:00')
@@ -63,7 +63,7 @@ class TrajaAccessor(object):
         return self.between(begin, end)
 
     def day(self, begin: str = "7:00", end: str = "19:00"):
-        """Get daytime datasets between `begin` and `end`.
+        """Get daytime dataset between `begin` and `end`.
 
         Args:
           begin (str):  (Default value = '7:00')
@@ -141,14 +141,14 @@ class TrajaAccessor(object):
         return traja.trajectory.rediscretize_points(self, _obj, R=R, **kwargs)
 
     def trip_grid(
-        self,
-        bins: Union[int, tuple] = 10,
-        log: bool = False,
-        spatial_units=None,
-        normalize: bool = False,
-        hist_only: bool = False,
-        plot: bool = True,
-        **kwargs,
+            self,
+            bins: Union[int, tuple] = 10,
+            log: bool = False,
+            spatial_units=None,
+            normalize: bool = False,
+            hist_only: bool = False,
+            plot: bool = True,
+            **kwargs,
     ):
         """Returns a 2D histogram of trip.
 
@@ -325,9 +325,9 @@ class TrajaAccessor(object):
         return derivs
 
     def speed_intervals(
-        self,
-        faster_than: Union[float, int] = None,
-        slower_than: Union[float, int] = None,
+            self,
+            faster_than: Union[float, int] = None,
+            slower_than: Union[float, int] = None,
     ):
         """Returns ``TrajaDataFrame`` with speed time intervals.
 

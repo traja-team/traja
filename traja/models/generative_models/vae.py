@@ -1,31 +1,11 @@
 """ This module implement the Variational Autoencoder model for 
 both forecasting and classification of time series data.
-
-```USAGE``` to train AE model:
-trainer = Trainer(model_type='vae',
-                 device=device,
-                 input_size=input_size, 
-                 output_size=output_size, 
-                 lstm_hidden_size=lstm_hidden_size, 
-                 lstm_num_layers=lstm_num_layers,
-                 reset_state=True,
-                 num_classes=num_classes,
-                 latent_size=latent_size,
-                 dropout=0.1,
-                 num_layers=num_layers,
-                 epochs=epochs,
-                 batch_size=batch_size,
-                 num_future=num_future,
-                 num_past=num_past,
-                 bidirectional =False,
-                 batch_first =True,
-                 loss_type = 'huber')
-
-trainer.train_latent_model(train_dataloader, test_dataloader, model_save_path=PATH)"""
+"""
 
 import torch
-from torch import nn
 
+from traja.models.base_models.MLPClassifier import MLPClassifier
+from traja.models.base_models.MLPRegressor import MLPRegressor
 from traja.models.utils import TimeDistributed
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -210,51 +190,6 @@ class LSTMDecoder(torch.nn.Module):
         return output
 
 
-class MLPClassifier(torch.nn.Module):
-    """ MLP classifier: Classify the input data using the latent embeddings
-            input_size: The number of expected latent size
-            hidden_size: The number of features in the hidden state h
-            num_classes: Size of labels or the number of categories in the data
-            dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
-                            with dropout probability equal to dropout
-            num_classifier_layers: Number of hidden layers in the classifier
-            """
-
-    def __init__(
-            self,
-            input_size: int,
-            hidden_size: int,
-            num_classes: int,
-            latent_size: int,
-            num_classifier_layers: int,
-            dropout: float,
-    ):
-        super(MLPClassifier, self).__init__()
-
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.num_classes = num_classes
-        self.num_classifier_layers = num_classifier_layers
-        self.dropout = dropout
-
-        # Classifier layers
-        self.hidden = nn.ModuleList([nn.Linear(self.input_size, self.hidden_size)])
-        self.hidden.extend(
-            [
-                nn.Linear(self.hidden_size, self.hidden_size)
-                for _ in range(1, self.num_classifier_layers - 1)
-            ]
-        )
-        self.hidden = nn.Sequential(*self.hidden)
-        self.out = nn.Linear(self.hidden_size, self.num_classes)
-        self.dropout = torch.nn.Dropout(p=dropout)
-
-    def forward(self, x):
-        x = self.dropout(self.hidden(x))
-        out = self.out(x)
-        return out
-
-
 class MultiModelVAE(torch.nn.Module):
     """Implementation of Multimodel Variational autoencoders; This Module wraps the Variational Autoencoder
     models [Encoder,Latent[Sampler],Decoder]. If classify=True, then the wrapper also include classification layers
@@ -314,6 +249,8 @@ class MultiModelVAE(torch.nn.Module):
         self.regressor_hidden_size = regressor_hidden_size
         self.num_regressor_parameters = num_regressor_parameters
 
+        self.latent_output_disabled = False  # Manually override latent output
+
         # Let the trainer know what kind of model this is
         self.model_type = 'vae'
 
@@ -352,21 +289,66 @@ class MultiModelVAE(torch.nn.Module):
             self.classifier = MLPClassifier(
                 input_size=self.latent_size,
                 hidden_size=self.classifier_hidden_size,
-                num_classes=self.num_classes,
-                latent_size=self.latent_size,
-                num_classifier_layers=self.num_classifier_layers,
+                output_size=self.num_classes,
+                num_layers=self.num_classifier_layers,
                 dropout=self.dropout,
             )
 
         if self.num_regressor_parameters is not None:
-            self.regressor = MLPClassifier(
+            self.regressor = MLPRegressor(
                 input_size=self.latent_size,
                 hidden_size=self.regressor_hidden_size,
-                num_classes=self.num_regressor_parameters,
-                latent_size=self.latent_size,
-                num_classifier_layers=self.num_regressor_layers,
+                output_size=self.num_regressor_parameters,
+                num_layers=self.num_regressor_layers,
                 dropout=self.dropout,
             )
+
+    def reset_classifier(self, classifier_hidden_size: int, num_classifier_layers: int):
+        """Reset the classifier, with a new hidden size and depth.
+        This is useful when parameter searching.
+
+        classifier_hidden_size: The number of units in each classifier layer
+        num_layers: Number of layers in the classifier
+        """
+        self.classifier_hidden_size = classifier_hidden_size
+        self.num_classifier_layers = num_classifier_layers
+
+        self.classifier = MLPClassifier(
+            input_size=self.latent_size,
+            hidden_size=self.classifier_hidden_size,
+            output_size=self.num_classes,
+            num_layers=self.num_classifier_layers,
+            dropout=self.dropout,
+        )
+
+    def reset_regressor(self, regressor_hidden_size: int, num_regressor_layers: int):
+        """Reset the regressor, with a new hidden size and depth.
+        This is useful when parameter searching.
+
+        regressor_hidden_size: The number of units in each classifier layer
+        num_regressor_layers: Number of layers in the classifier
+        """
+        self.num_regressor_layers = num_regressor_layers
+        self.regressor_hidden_size = regressor_hidden_size
+
+        self.regressor = MLPRegressor(
+            input_size=self.latent_size,
+            hidden_size=self.regressor_hidden_size,
+            output_size=self.num_regressor_parameters,
+            num_layers=self.num_regressor_layers,
+            dropout=self.dropout,
+        )
+
+    def disable_latent_output(self):
+        """Disable latent output, to make the VAE behave like a standard autoencoder while training.
+        This modifies the training loss computed. """
+        self.latent_output_disabled = True
+
+    def enable_latent_output(self):
+        """Enable latent output, to make the VAE behave like a variational autoencoder while training.
+        This modifies the training loss computed.
+        NOTE: By default, latent output is enabled."""
+        self.latent_output_disabled = False
 
     def forward(self, data, training=True, classify=False, regress=False, latent=True):
         """
@@ -454,6 +436,11 @@ class MultiModelVAE(torch.nn.Module):
             latent_out, mu, logvar = self.latent(enc_out, training=training)
 
             regressor_out = self.regressor(mu)  # Deterministic
+
+            if self.latent_output_disabled:
+                mu = None
+                logvar = None
+
             if latent:
                 return regressor_out, latent_out, mu, logvar
             else:

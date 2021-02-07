@@ -1,15 +1,15 @@
+import logging
+
+from traja import dataset
+from traja import models
 from .accessor import TrajaAccessor
 from .frame import TrajaDataFrame, TrajaCollection
 from .parsers import read_file, from_df
 from .plotting import *
 from .trajectory import *
-from traja import models
-from traja import datasets
-
-import logging
 
 __author__ = "justinshenk"
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
 logging.basicConfig(level=logging.INFO)
 

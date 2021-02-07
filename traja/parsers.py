@@ -53,16 +53,16 @@ def from_df(df: pd.DataFrame, xcol=None, ycol=None, time_col=None, **kwargs):
 
 
 def read_file(
-    filepath: str,
-    id: Optional[str] = None,
-    xcol: Optional[str] = None,
-    ycol: Optional[str] = None,
-    parse_dates: Union[str, bool] = False,
-    xlim: Optional[tuple] = None,
-    ylim: Optional[tuple] = None,
-    spatial_units: str = "m",
-    fps: Optional[float] = None,
-    **kwargs,
+        filepath: str,
+        id: Optional[str] = None,
+        xcol: Optional[str] = None,
+        ycol: Optional[str] = None,
+        parse_dates: Union[str, bool] = False,
+        xlim: Optional[tuple] = None,
+        ylim: Optional[tuple] = None,
+        spatial_units: str = "m",
+        fps: Optional[float] = None,
+        **kwargs,
 ):
     """Convenience method wrapping pandas `read_csv` and initializing metadata.
 
@@ -101,11 +101,11 @@ def read_file(
     stripped_cols = {c: lambda x: x.strip() for c in whitespace_cols}
     converters = {**stripped_cols, **kwargs.pop("converters", {})}
 
-    # Downcast to float32 # TODO: Benchmark float32 vs float64 for very big datasets
+    # Downcast to float32 # TODO: Benchmark float32 vs float64 for very big dataset
     float_cols = df_test.select_dtypes(include=[np.float]).columns
     float32_cols = {c: np.float32 for c in float_cols}
 
-    # Convert string columns to categories
+    # Convert string columns to sequence_ids
     string_cols = [c for c in df_test if df_test[c].dtype == str]
     category_cols = {c: "category" for c in string_cols}
     dtype = {**float32_cols, **category_cols, **kwargs.pop("dtype", {})}

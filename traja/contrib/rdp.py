@@ -105,10 +105,10 @@ def _rdp_iter(M, start_index, last_index, epsilon, dist=pldist):
 
 
 def rdp_iter(
-    M: Union[list, np.ndarray],
-    epsilon: float,
-    dist: Callable = pldist,
-    return_mask: bool = False,
+        M: Union[list, np.ndarray],
+        epsilon: float,
+        dist: Callable = pldist,
+        return_mask: bool = False,
 ):
     """
     Simplifies a given array of points.
@@ -135,11 +135,11 @@ def rdp_iter(
 
 
 def rdp(
-    M: Union[list, np.ndarray],
-    epsilon: float = 0,
-    dist: Callable = pldist,
-    algo: str = "iter",
-    return_mask: bool = False,
+        M: Union[list, np.ndarray],
+        epsilon: float = 0,
+        dist: Callable = pldist,
+        algo: str = "iter",
+        return_mask: bool = False,
 ):
     """
     Simplifies a given array of points using the Ramer-Douglas-Peucker
