@@ -68,6 +68,14 @@ def load_ped_data(dataset_name=None, aspaths=False) -> dict:
 
 def load_geolife(folder: str, as_traja=True, lat=(32, 48.0), lon=(114, 120)):
     """Read geolife data from folder. Default mask in UTM Zone 50 (Beijing)"""
+    try:
+        import pyproj
+    except ImportError:
+        raise ImportError(
+            """Mising pyproj
+            Please download it with pip install pyproj
+    """
+        )
     import traja.datasets.geolife as geolife
 
     df = geolife.read_all_users(folder)
@@ -81,5 +89,9 @@ def load_geolife(folder: str, as_traja=True, lat=(32, 48.0), lon=(114, 120)):
                 & (df["lat"] < lat[1])
             )
             df = df[geomask]
-        df = traja.to_utm(df)
+        proj = pyproj.Proj(proj='utm', zone=50, ellps='WGS84')
+        x, y = proj(df["lon"].tolist(), df["lat"].tolist())
+        df["x"] = x
+        df["y"] = y
+
     return df
