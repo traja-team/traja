@@ -7,7 +7,9 @@ from traja.datasets import dataset
 import traja
 
 
-def load_ped_datasets() -> List[str]:
+"""Convenience module for downloading pedestrian-related datasets."""
+
+def ped_datasets() -> List[str]:
     """Returns paths after downloading pedestrian datasets."""
     if not os.path.exists("datasets"):
         subprocess.call(
@@ -39,7 +41,7 @@ def load_ped_data(dataset_name=None, aspaths=False) -> dict:
 
     Paths are .txt files with format <frame_id> <ped_id> <x> <y>.
     """
-    paths = load_ped_datasets()
+    paths = ped_datasets()
 
     if dataset_name:
         # Get subset of data

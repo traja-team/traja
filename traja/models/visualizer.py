@@ -20,7 +20,7 @@ style.use("ggplot")
 
 
 def DisplayLatentDynamics(latent):
-    """Visualize the dynamics of combination of latents 
+    """Visualize the dynamics in latent space. Compatible only with the RNN latents 
     Args:
         latent(tensor): Each point in the list is latent's state at the end of a sequence of each batch.
         Latent shape (batch_size, latent_dim)
@@ -262,7 +262,7 @@ class SpectralEmbedding(object):
 
 if __name__ == "__main__":
     # create the coordinates
-    numebr_of_points = 21
+    number_of_points = 21
     small_range = -1.0
     large_range = 1.0
 
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     ycoordinates = np.linspace(small_range, large_range, num=numebr_of_points)
 
     xcoord_mesh, ycoord_mesh = np.meshgrid(xcoordinates, ycoordinates)
-    inds = np.array(range(numebr_of_points ** 2))
+    inds = np.array(range(number_of_points ** 2))
     s1 = xcoord_mesh.ravel()[inds]
     s2 = ycoord_mesh.ravel()[inds]
     coordinate = np.c_[s1, s2]
@@ -280,9 +280,9 @@ if __name__ == "__main__":
         " to ",
         large_range,
         " with ",
-        numebr_of_points,
+        number_of_points,
         " total number of coordinate: ",
-        numebr_of_points ** 2,
+        number_of_points ** 2,
     )
 
 
