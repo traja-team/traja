@@ -17,7 +17,7 @@ via :class:`~traja.models.predictive_models.lstm.LSTM`.
 
     import traja
 
-    df = traja.datasets.example.jaguar()
+    df = traja.dataset.example.jaguar()
 
 .. note::
     LSTMs work better with data between -1 and 1. Therefore the data loader
