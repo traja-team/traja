@@ -288,7 +288,6 @@ def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollect
 
     return ax
 
-
 def plot(
     trj: TrajaDataFrame,
     n_coords: Optional[int] = None,
@@ -891,7 +890,7 @@ def _process_after_plot_args(**after_plot_args):
 
 
 def color_dark(
-    series: pd.Series, ax: matplotlib.axes.Axes, start: int = 19, end: int = 7
+    series: pd.Series, ax: matplotlib.axes.Axes = None, start: int = 19, end: int = 7
 ):
     """Color dark phase in plot.
     Args:
@@ -935,7 +934,6 @@ def find_runs(x: pd.Series) -> (np.ndarray, np.ndarray, np.ndarray):
     # handle empty array
     if n == 0:
         return np.array([]), np.array([]), np.array([])
-
     else:
         # find run starts
         loc_run_start = np.empty(n, dtype=bool)
@@ -999,10 +997,12 @@ def plot_actogram(
        Curr Protoc Mouse Biol. 2015;5(3):271-281. Published 2015 Sep 1. doi:10.1002/9780470942390.mo140229
 
     """
-    after_plot_args, _ = _get_after_plot_args(**kwargs)
+    assert isinstance(series, pd.Series)
     assert is_datetime_or_timedelta_dtype(
         series.index
     ), f"Series must have datetime index but has {type(series.index)}"
+    
+    after_plot_args, _ = _get_after_plot_args(**kwargs)    
 
     ax = series.plot(ax=ax)
     ax.set_ylabel(series.name)
