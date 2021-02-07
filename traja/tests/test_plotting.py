@@ -26,6 +26,14 @@ def test_stylize_axes():
     traja.plotting.stylize_axes(collection.axes)
 
 
+def test_color_dark():
+    df = traja.generate(n=10)
+    index = pd.DatetimeIndex(range(10))
+    df.index = index
+    ax = plt.gca()
+    traja.color_dark(df.x, ax)
+
+
 def test_sans_serif():
     traja.plotting.sans_serif()
 
