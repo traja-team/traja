@@ -1,14 +1,13 @@
 name: traja
 channels:
-  - r
+  - pytorch
+ - defaults
 dependencies:
-  - r-essentials
-  - r-base
   - pip:
-    - rpy2
     - sphinx-gallery
     - sphinx
     - scikit-learn
     - fastdtw
     - tzlocal
     - seaborn
+    - pytorch>=1.7.0
