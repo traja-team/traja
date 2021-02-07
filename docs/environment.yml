@@ -1,13 +1,14 @@
 name: traja
 channels:
   - pytorch
- - defaults
+  - conda-forge
+  - defaults
 dependencies:
-  - pip:
-    - sphinx-gallery
-    - sphinx
-    - scikit-learn
-    - fastdtw
-    - tzlocal
-    - seaborn
-    - pytorch>=1.7.0
+  - python=3.7
+  - sphinx-gallery
+  - sphinx
+  - scikit-learn
+  - fastdtw
+  - tzlocal
+  - seaborn
+  - pytorch>=1.7.0
