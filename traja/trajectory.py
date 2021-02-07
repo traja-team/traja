@@ -51,7 +51,6 @@ __all__ = [
     "speed_intervals",
     "step_lengths",
     "to_shapely",
-    "to_utm",
     "traj_from_coords",
     "transition_matrix",
     "transitions",
