@@ -5,7 +5,6 @@ import pandas as pd
 
 import traja
 
-
 df = traja.generate(n=20)
 
 

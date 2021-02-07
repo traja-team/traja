@@ -73,7 +73,6 @@ sphinx_gallery_conf = {
     "sphinx_gallery": None,
     "backreferences_dir": "reference",
     "within_subsection_order": FileNameSortKey,
-    "expected_failing_examples": ["../examples/rinterface.py"],
 }
 
 # Napoleon settings
@@ -179,7 +178,7 @@ man_pages = [(master_doc, "traja", "traja Documentation", [author], 1)]
 
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
-#  dir menu entry, description, category)
+#  dir menu entry, description, sequence_id)
 texinfo_documents = [
     (
         master_doc,

@@ -30,8 +30,8 @@ Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Co
 .. |Binder| image:: https://mybinder.org/badge_logo.svg
     :target: https://mybinder.org/v2/gh/justinshenk/traja/master?filepath=demo.ipynb
 
-.. |Codecov| image:: https://codecov.io/gh/justinshenk/traja/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/justinshenk/traja
+.. |Codecov| image:: https://codecov.io/gh/traja-team/traja/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/traja-team/traja
 
 .. |DOI| image:: https://zenodo.org/badge/166056696.svg
    :target: https://zenodo.org/badge/latestdoi/166056696
@@ -90,8 +90,6 @@ or with pip
 
 ``pip install traja``.
 
-Run the graphical user interface with ``python traja-gui.py``.
-
 Import traja into your Python script or via the Python command-line with
 ``import traja``.
 
@@ -101,7 +99,7 @@ Trajectories with traja
 Traja stores trajectories in pandas DataFrames, allowing any pandas
 functions to be used.
 
-Load trajectory with x,y and time coordinates:
+Load trajectory with x, y and time coordinates:
 
 .. code-block:: python
 
@@ -131,6 +129,8 @@ Analyze Trajectory
    "``resample_time``", "Resample to consistent step_time intervals"
    "``rediscretize_points``", "Rediscretize points to given step length"
    
+For up-to-date documentation, see `https://traja.readthedocs.io <https://traja.readthedocs.io>`_.
+
 Random walk
 -----------
 
@@ -141,21 +141,8 @@ Generate random walks with
     df = traja.generate(n=1000, step_length=2)
     df.traja.plot()
 
-.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_with_traja_003.png
+.. image:: https://raw.githubusercontent.com/justinshenk/traja/master/docs/source/_static/walk_screenshot.png
    :alt: walk\_screenshot.png
-
-Rediscretize
-------------
-Rediscretize the trajectory into consistent step lengths with ``traja.trajectory.rediscretize`` where the ``R`` parameter is
-the new step length.
-
-.. code-block:: python
-
-    rt = df.traja.rediscretize(R=5000)
-    rt.traja.plot()
-
-.. image:: https://traja.readthedocs.io/en/latest/_images/sphx_glr_plot_with_traja_004.png
-   :alt: rediscretized
 
 
 Resample time
