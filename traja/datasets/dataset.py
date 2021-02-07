@@ -1,15 +1,27 @@
 """
 Modified from https://github.com/agrimgupta92/sgan/blob/master/sgan/data/trajectories.py.
 
+This module contains:
+
+Classes:
+1. Pytorch Time series dataset class instance
+2. Weighted train and test dataset loader with respect to class distribution
+
+Helpers:
+1. Class distribution in the dataset
+
 """
 import logging
 import os
 import math
-
 import numpy as np
-
 import torch
 from torch.utils.data import Dataset
+from collections import Counter
+from torch.utils.data.sampler import WeightedRandomSampler
+import pandas as pd
+from sklearn.utils import shuffle
+from traja.datasets import utils
 
 logger = logging.getLogger(__name__)
 
@@ -210,3 +222,146 @@ class TrajectoryDataset(Dataset):
             self.loss_mask[start:end, :],
         ]
         return out
+
+
+class TimeSeriesDataset(Dataset):
+    r"""Pytorch Dataset object
+
+    Args:
+        Dataset (torch.utils.data.Dataset): Pyptorch dataset object
+    """
+
+    def __init__(self, data, target, category=None, parameters=None):
+        r"""
+        Args:
+            data (array): Data
+            target (array): Target
+            category (array): Category
+            parameters (array): Parameters
+        """
+
+        self.data = data
+        self.target = target
+        self.category = category
+        self.parameters = parameters
+
+    def __getitem__(self, index):
+        x = self.data[index]
+        y = self.target[index]
+        z = self.category[index] if self.category else torch.zeros(1)
+        w = self.parameters[index] if self.parameters else torch.zeros(1)
+        return x, y, z, w
+
+    def __len__(self):
+        return len(self.data)
+
+
+class MultiModalDataLoader:
+    """
+    MultiModalDataLoader wraps the following data preparation steps,
+    
+    1. Data generator: Extract x and y time series and corresponding ID (category) in the dataset. This process split the dataset into 
+                        i) Train samples with sequence length equals n_past
+                        ii) Target samples with sequence length equals n_future 
+                        iii) Target category(ID) of both train and target data
+    2. Data scalling: Scale the train and target data columns between the range (-1,1) using MinMaxScalers; TODO: It is more optimal to scale data for each ID(category)
+    3. Data shuffling: Shuffle the order of samples in the dataset without loosing the train<->target<->category combination
+    4. Create train test split: Split the shuffled batches into train (data, target, category) and test(data, target, category)
+    5. Weighted Random sampling: Apply weights with respect to category counts in the dataset: category_sample_weight = 1/num_category_samples; This avoid model overfit to category appear often in the dataset 
+    6. Create pytorch Dataset instances
+    7. Returns the train and test data loader instances along with their scalers as a dictionaries given the dataset instances and batch size
+
+        Args:
+            df (pd.DataFrame): Dataset
+            batch_size (int): Number of samples per batch of data
+            n_past (int): Input sequence length. Number of time steps from the past. 
+            n_future (int): Target sequence length. Number of time steps to the future. 
+            num_workers (int): Number of cpu subprocess occupied during data loading process
+        
+        Usage:
+        ------
+        dataloaders, scalers = MultiModalDataLoader(df = data_frame, batch_size=32, n_past = 20, n_future = 10, num_workers=4)
+        """
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        batch_size: int,
+        n_past: int,
+        n_future: int,
+        num_workers: int,
+    ):
+
+        # Extract/generate data from the pandas df
+        train_data, target_data, target_category = utils.generate_dataset(
+            df, n_past, n_future
+        )
+
+        # Shuffle and split the data
+        [train_x, train_y, train_z], [test_x, test_y, test_z] = utils.shuffle_split(
+            train_data, target_data, target_category, train_ratio=0.75
+        )
+
+        # Scale data
+        (train_x, self.train_x_scaler), (train_y, self.train_y_scaler) = (
+            utils.scale_data(train_x, sequence_length=n_past),
+            utils.scale_data(train_y, sequence_length=n_future),
+        )
+        (test_x, self.test_x_scaler), (test_y, self.test_y_scaler) = (
+            utils.scale_data(test_x, sequence_length=n_past),
+            utils.scale_data(test_y, sequence_length=n_future),
+        )
+
+        # Weighted Random Sampler
+        train_weighted_sampler, test_weighted_sampler = utils.weighted_random_samplers(
+            train_z, test_z
+        )
+
+        # Dataset
+        train_dataset = TimeSeriesDataset(train_x, train_y, train_z)
+        test_dataset = TimeSeriesDataset(test_x, test_y, test_z)
+
+        # Dataloader with weighted samplers
+        self.train_loader = torch.utils.data.DataLoader(
+            dataset=train_dataset,
+            shuffle=False,
+            batch_size=batch_size,
+            sampler=train_weighted_sampler,
+            drop_last=True,
+            num_workers=num_workers,
+        )
+        self.test_loader = torch.utils.data.DataLoader(
+            dataset=test_dataset,
+            shuffle=False,
+            batch_size=batch_size,
+            sampler=test_weighted_sampler,
+            drop_last=True,
+            num_workers=num_workers,
+        )
+
+        self.dataloaders = {
+            "train_loader": self.train_loader,
+            "test_loader": self.test_loader,
+        }
+        self.scalers = {
+            "train_data_scaler": self.train_x_scaler,
+            "train_target_scaler": self.train_y_scaler,
+            "test_data_scaler": self.test_x_scaler,
+            "test_target_scaler": self.test_y_scaler,
+        }
+
+    def __new__(
+        cls,
+        df: pd.DataFrame,
+        batch_size: int,
+        n_past: int,
+        n_future: int,
+        num_workers: int,
+    ):
+        """Constructor of MultiModalDataLoader"""
+        # Loader instance
+        loader_instance = super(MultiModalDataLoader, cls).__new__(cls)
+        loader_instance.__init__(df, batch_size, n_past, n_future, num_workers)
+        # Return train and test loader attributes
+        return loader_instance.dataloaders, loader_instance.scalers
+

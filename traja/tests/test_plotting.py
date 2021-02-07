@@ -63,8 +63,8 @@ def test_label_axes():
 
 
 def test_plot_actogram():
-    df = traja.generate(n=10)
-    index = pd.DatetimeIndex(range(10))
+    df = traja.generate(n=1000)
+    index = pd.date_range("2018-01-01", periods=1000, freq="T")
     df.index = index
     activity = traja.calc_displacement(df)
     activity.name = "activity"
