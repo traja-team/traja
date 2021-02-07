@@ -893,20 +893,34 @@ def _process_after_plot_args(**after_plot_args):
 def color_dark(
     series: pd.Series, ax: matplotlib.axes.Axes, start: int = 19, end: int = 7
 ):
-    """Color dark phase in plot."""
+    """Color dark phase in plot.
+    Args:
+    
+        series (pd.Series) - Time-series variable
+        ax (:class: `~matplotlib.axes.Axes`): axis to plot on (eg, `plt.gca()`)
+        start (int): start of dark period/night
+        end (hour): end of dark period/day
+    Returns:
+
+        ax (:class:`~matplotlib.axes._subplots.AxesSubplot`): Axes of plot
+    """    
     assert is_datetime_or_timedelta_dtype(
         series.index
     ), f"Series must have datetime index but has {type(series.index)}"
 
-    dark_mask = (series.index.hour >= start) | (series.index.hour < end)
-    run_values, run_starts, run_lengths = find_runs(dark_mask)
+    pd.plotting.register_matplotlib_converters() # prevents type error with axvspan
 
+    dark_mask = (series.index.hour >= start) | (series.index.hour < end)
+    run_values, run_starts, run_lengths = find_runs(dark_mask)    
     for idx, is_dark in enumerate(run_values):
         if is_dark:
             start = run_starts[idx]
             end = run_starts[idx] + run_lengths[idx] - 1
             ax.axvspan(series.index[start], series.index[end], alpha=0.5, color="gray")
-
+    
+    fig = plt.gcf()
+    fig.autofmt_xdate()
+    return ax
 
 def find_runs(x: pd.Series) -> (np.ndarray, np.ndarray, np.ndarray):
     """Find runs of consecutive items in an array.

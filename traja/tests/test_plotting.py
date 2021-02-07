@@ -24,7 +24,6 @@ def test_color_dark():
     df = traja.generate(n=10)
     index = pd.DatetimeIndex(range(10))
     df.index = index
-    traja.plot(df, interactive=False)
     ax = plt.gca()
     traja.color_dark(df.x, ax)
 
