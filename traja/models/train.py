@@ -292,7 +292,8 @@ class HybridTrainer(object):
                             # Compute number of correct samples
                             total += ids.size(0)
                             _, predicted = torch.max(classifier_out.data, 1)
-                            correct += (predicted == classes.T).sum().item()
+
+                            correct += (predicted.cpu() == classes.cpu().T).sum().item()
 
                         if self.regress:
                             regressor_out = self.model(
@@ -385,7 +386,7 @@ class HybridTrainer(object):
                     # Compute number of correct samples
                     total += ids.size(0)
                     _, predicted = torch.max(classifier_out.data, 1)
-                    correct += (predicted == classes.T).sum().item()
+                    correct += (predicted.cpu() == classes.cpu().T).sum().item()
 
                 if self.regress:
                     regressor_out = self.model(
