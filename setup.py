@@ -39,7 +39,7 @@ setup(
     author="Justin Shenk",
     author_email="shenkjustin@gmail.com",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     install_requires=requirements,
     extras_require=extras_requirements,
     classifiers=[
