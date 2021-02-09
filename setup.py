@@ -55,7 +55,7 @@ setup(
         "Topic :: Software Development :: Libraries",
     ],
     python_requires=">= 3.6",
-        project_urls={
+    project_urls={
         "Bug Tracker": "https://github.com/traja-team/traja/issues",
         "Documentation": "https://traja.rtfd.io/en/latest/",
         "Source Code": "https://github.com/traja-team/traja",

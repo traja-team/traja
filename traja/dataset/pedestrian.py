@@ -9,6 +9,7 @@ import traja
 
 """Convenience module for downloading pedestrian-related datasets."""
 
+
 def ped_datasets() -> List[str]:
     """Returns paths after downloading pedestrian datasets."""
     if not os.path.exists("datasets"):

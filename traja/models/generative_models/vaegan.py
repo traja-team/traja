@@ -10,7 +10,6 @@ import torch
 
 
 class MultiModelVAEGAN(torch.nn.Module):
-
     def __init__(self, *model_hyperparameters, **kwargs):
         super(MultiModelVAEGAN, self).__init__()
 

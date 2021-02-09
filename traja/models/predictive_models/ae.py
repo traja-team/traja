@@ -8,33 +8,33 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class LSTMEncoder(torch.nn.Module):
-    """ Implementation of Encoder network using LSTM layers
-        Parameters:
-        -----------
-            input_size: The number of expected features in the input x
-            num_past: Number of time steps to look backwards to predict num_future steps forward
-            batch_size: Number of samples in a batch
-            hidden_size: The number of features in the hidden state h
-            num_lstm_layers: Number of layers in the LSTM model
+    """Implementation of Encoder network using LSTM layers
+    Parameters:
+    -----------
+        input_size: The number of expected features in the input x
+        num_past: Number of time steps to look backwards to predict num_future steps forward
+        batch_size: Number of samples in a batch
+        hidden_size: The number of features in the hidden state h
+        num_lstm_layers: Number of layers in the LSTM model
 
-            batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
-            dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
-                        with dropout probability equal to dropout
-            reset_state: If True, will reset the hidden and cell state for each batch of data
-            bidirectional:  If True, becomes a bidirectional LSTM
+        batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+        dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                    with dropout probability equal to dropout
+        reset_state: If True, will reset the hidden and cell state for each batch of data
+        bidirectional:  If True, becomes a bidirectional LSTM
     """
 
     def __init__(
-            self,
-            input_size: int,
-            num_past: int,
-            batch_size: int,
-            hidden_size: int,
-            num_lstm_layers: int,
-            batch_first: bool,
-            dropout: float,
-            reset_state: bool,
-            bidirectional: bool,
+        self,
+        input_size: int,
+        num_past: int,
+        batch_size: int,
+        hidden_size: int,
+        num_lstm_layers: int,
+        batch_first: bool,
+        dropout: float,
+        reset_state: bool,
+        bidirectional: bool,
     ):
         super(LSTMEncoder, self).__init__()
 
@@ -60,11 +60,11 @@ class LSTMEncoder(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-                .requires_grad_()
-                .to(device),
+            .requires_grad_()
+            .to(device),
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-                .requires_grad_()
-                .to(device),
+            .requires_grad_()
+            .to(device),
         )
 
     def forward(self, x):
@@ -92,35 +92,35 @@ class DisentangledAELatent(torch.nn.Module):
 
 
 class LSTMDecoder(torch.nn.Module):
-    """ Implementation of Decoder network using LSTM layers
-        Parameters:
-        ------------
-            input_size: The number of expected features in the input x
-            num_future: Number of time steps to be predicted given the num_past steps
-            batch_size: Number of samples in a batch
-            hidden_size: The number of features in the hidden state h
-            num_lstm_layers: Number of layers in the LSTM model
-            output_size: Number of expectd features in the output x_
-            batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
-            dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
-                        with dropout probability equal to dropout
-            reset_state: If True, will reset the hidden and cell state for each batch of data
-            bidirectional:  If True, becomes a bidirectional LSTM
+    """Implementation of Decoder network using LSTM layers
+    Parameters:
+    ------------
+        input_size: The number of expected features in the input x
+        num_future: Number of time steps to be predicted given the num_past steps
+        batch_size: Number of samples in a batch
+        hidden_size: The number of features in the hidden state h
+        num_lstm_layers: Number of layers in the LSTM model
+        output_size: Number of expectd features in the output x_
+        batch_first: If True, then the input and output tensors are provided as (batch, seq, feature)
+        dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
+                    with dropout probability equal to dropout
+        reset_state: If True, will reset the hidden and cell state for each batch of data
+        bidirectional:  If True, becomes a bidirectional LSTM
 
     """
 
     def __init__(
-            self,
-            batch_size: int,
-            num_future: int,
-            hidden_size: int,
-            num_lstm_layers: int,
-            output_size: int,
-            latent_size: int,
-            batch_first: bool,
-            dropout: float,
-            reset_state: bool,
-            bidirectional: bool,
+        self,
+        batch_size: int,
+        num_future: int,
+        hidden_size: int,
+        num_lstm_layers: int,
+        output_size: int,
+        latent_size: int,
+        batch_first: bool,
+        dropout: float,
+        reset_state: bool,
+        bidirectional: bool,
     ):
         super(LSTMDecoder, self).__init__()
         self.batch_size = batch_size
@@ -150,11 +150,11 @@ class LSTMDecoder(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-                .requires_grad_()
-                .to(device),
+            .requires_grad_()
+            .to(device),
             torch.zeros(self.num_lstm_layers, self.batch_size, self.hidden_size)
-                .requires_grad_()
-                .to(device),
+            .requires_grad_()
+            .to(device),
         )
 
     def forward(self, x, num_future=None):
@@ -181,7 +181,7 @@ class LSTMDecoder(torch.nn.Module):
 class MultiModelAE(torch.nn.Module):
     """Implementation of Multimodel  autoencoders; This Module wraps the  Autoencoder
     models [Encoder,Latent,Decoder]. If classify=True, then the wrapper also include classification layers
-    
+
     Parameters:
     -----------
         input_size: The number of expected features in the input x
@@ -195,29 +195,29 @@ class MultiModelAE(torch.nn.Module):
                     with dropout probability equal to dropout
         reset_state: If True, will reset the hidden and cell state for each batch of data
         bidirectional:  If True, becomes a bidirectional LSTM
-    
+
     """
 
     def __init__(
-            self,
-            input_size: int,
-            num_past: int,
-            batch_size: int,
-            num_future: int,
-            lstm_hidden_size: int,
-            num_lstm_layers: int,
-            output_size: int,
-            latent_size: int,
-            batch_first: bool,
-            dropout: float,
-            reset_state: bool,
-            bidirectional: bool = False,
-            num_classifier_layers: int = None,
-            classifier_hidden_size: int = None,
-            num_classes: int = None,
-            num_regressor_layers: int = None,
-            regressor_hidden_size: int = None,
-            num_regressor_parameters: int = None,
+        self,
+        input_size: int,
+        num_past: int,
+        batch_size: int,
+        num_future: int,
+        lstm_hidden_size: int,
+        num_lstm_layers: int,
+        output_size: int,
+        latent_size: int,
+        batch_first: bool,
+        dropout: float,
+        reset_state: bool,
+        bidirectional: bool = False,
+        num_classifier_layers: int = None,
+        classifier_hidden_size: int = None,
+        num_classes: int = None,
+        num_regressor_layers: int = None,
+        regressor_hidden_size: int = None,
+        num_regressor_parameters: int = None,
     ):
 
         super(MultiModelAE, self).__init__()
@@ -241,7 +241,7 @@ class MultiModelAE(torch.nn.Module):
         self.num_regressor_parameters = num_regressor_parameters
 
         # Let the trainer know what kind of model this is
-        self.model_type = 'ae'
+        self.model_type = "ae"
 
         self.encoder = LSTMEncoder(
             input_size=self.input_size,
@@ -343,7 +343,7 @@ class MultiModelAE(torch.nn.Module):
     def get_classifier_parameters(self):
         """
         Return:
-        ------- 
+        -------
             Tuple of parameters of classifier network
         """
         assert self.classifier_hidden_size is not None, "Classifier not found"
@@ -360,7 +360,7 @@ class MultiModelAE(torch.nn.Module):
         -------
             decoder_out,latent_out or classifier out
         """
-        assert not (classify and regress), 'Model cannot both classify and regress!'
+        assert not (classify and regress), "Model cannot both classify and regress!"
 
         if not (classify or regress):
             # Set the classifier and regressor grads off
