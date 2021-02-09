@@ -14,13 +14,14 @@ from sklearn.neighbors import radius_neighbors_graph
 
 
 np.set_printoptions(
-    suppress=True, precision=3,
+    suppress=True,
+    precision=3,
 )
 style.use("ggplot")
 
 
 def DisplayLatentDynamics(latent):
-    """Visualize the dynamics in latent space. Compatible only with the RNN latents 
+    """Visualize the dynamics in latent space. Compatible only with the RNN latents
     Args:
         latent(tensor): Each point in the list is latent's state at the end of a sequence of each batch.
         Latent shape (batch_size, latent_dim)
@@ -36,7 +37,9 @@ def DisplayLatentDynamics(latent):
         latents[f"{i}"] = latent[:, i].cpu().detach().numpy()
     fig = px.scatter_matrix(latents)
     fig.update_layout(
-        autosize=False, width=1600, height=1000,
+        autosize=False,
+        width=1600,
+        height=1000,
     )
     return fig.show()
 
@@ -115,15 +118,15 @@ class LocalLinearEmbedding(object):
 
     def local_linear_embedding(self, X, d, k, alpha=0.1):
         """
-            Local Linear Embeddings
+        Local Linear Embeddings
 
-            :param X: numpy.ndarray - input data matrix mxD , m data points with D dimensions
-            :param d: int - target dimensions
-            :param k: int -number of neighbors
-            :param alpha: float - Tikhonov coefficient regularization
+        :param X: numpy.ndarray - input data matrix mxD , m data points with D dimensions
+        :param d: int - target dimensions
+        :param k: int -number of neighbors
+        :param alpha: float - Tikhonov coefficient regularization
 
-            :return Y: numpy.ndarray - matrix m row, d attributes are reduced dimensional
-            """
+        :return Y: numpy.ndarray - matrix m row, d attributes are reduced dimensional
+        """
         # Find the nearest neighbor
         x_neighbors = neighbors.kneighbors_graph(X, n_neighbors=k)
 
@@ -196,13 +199,13 @@ class SpectralEmbedding(object):
 
     def spectral_embedding(self, X, rad):
         """
-            Spectral Clustering
+        Spectral Clustering
 
-            :param X: numpy.ndarray - input data matrix mxn , m data points with n dimensions
-            :param rad: float -radius for neighbor search
+        :param X: numpy.ndarray - input data matrix mxn , m data points with n dimensions
+        :param rad: float -radius for neighbor search
 
-            :return Y: numpy.ndarray - matrix m row, d attributes are reduced dimensional
-            """
+        :return Y: numpy.ndarray - matrix m row, d attributes are reduced dimensional
+        """
         # Get the adjacency matrix/nearest neighbor graph; neighbors within the radius of 0.4
         A = radius_neighbors_graph(
             X.T,

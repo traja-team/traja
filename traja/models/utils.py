@@ -44,7 +44,7 @@ def save(model, hyperparameters, PATH=None):
         model (torch.nn.Module): Trained Model
         hyperparameters(dict): Hyperparameters of the model
         PATH (str): Directory path to save the trained model and its hyperparameters
-    Returns: 
+    Returns:
     ---------
         None
     """
@@ -93,7 +93,7 @@ def read_hyperparameters(hyperparameter_json):
         hyperparameter_json (json): Json file containing the hyperparameters of the trained model
 
     Returns:
-        [dict]: Python dictionary of the hyperparameters 
+        [dict]: Python dictionary of the hyperparameters
     """
     with open(hyperparameter_json) as f_in:
         return json.load(f_in)

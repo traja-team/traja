@@ -14,8 +14,10 @@ class Criterion:
         self.mse_loss = torch.nn.MSELoss()
         self.crossentropy_loss = torch.nn.CrossEntropyLoss()
 
-    def forecasting_criterion(self, predicted, target, mu=None, logvar=None, loss_type="huber"):
-        """ Time series forecasting model loss function
+    def forecasting_criterion(
+        self, predicted, target, mu=None, logvar=None, loss_type="huber"
+    ):
+        """Time series forecasting model loss function
         Provides loss functions huber, manhattan, mse. Adds KL divergence if mu and logvar specified.
         and ae loss functions (huber_ae, manhattan_ae, mse_ae).
         :param predicted: Predicted time series by the model
@@ -49,7 +51,7 @@ class Criterion:
         :return: Cross entropy loss
         """
 
-        #_, predicted = torch.max(predicted.data, 1)
+        # _, predicted = torch.max(predicted.data, 1)
         loss = self.crossentropy_loss(predicted, target.view(-1))
         return loss
 

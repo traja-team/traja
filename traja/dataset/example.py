@@ -1,6 +1,6 @@
 import pandas as pd
 
-default_cache_url = 'dataset_cache'
+default_cache_url = "dataset_cache"
 
 
 def jaguar(cache_url=default_cache_url):
