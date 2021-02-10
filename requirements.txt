@@ -2,7 +2,7 @@ pandas>=1.2.0
 numpy==1.18.5
 matplotlib
 shapely
-scipy
+scipy>=1.4.1
 sklearn
 fastdtw
 plotly
@@ -10,3 +10,4 @@ networkx
 seaborn
 torch
 h5py
+numba>=0.50.0
