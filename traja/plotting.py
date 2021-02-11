@@ -8,10 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
+
 from matplotlib import dates as md
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import Axes3D
 from pandas.core.dtypes.common import (
     is_datetime_or_timedelta_dtype,
     is_datetime64_any_dtype,
@@ -75,7 +77,7 @@ def _rolling(df, window, step):
     count = 0
     df_length = len(df)
     while count < (df_length - window):
-        yield count, df[count: window + count]
+        yield count, df[count : window + count]
         count += step
 
 
@@ -92,8 +94,8 @@ def plot_prediction(model, dataloader, index, scaler=None):
     prediction = model(data, latent=False)
 
     # Send tensors to CPU so numpy can work with them
-    pred = prediction[batch_size - 1:batch_size, :].cpu().squeeze().detach().numpy()
-    target = target.clone().detach()[batch_size - 1:batch_size, :].squeeze()
+    pred = prediction[batch_size - 1 : batch_size, :].cpu().squeeze().detach().numpy()
+    target = target.clone().detach()[batch_size - 1 : batch_size, :].squeeze()
     real = target.cpu()
 
     data = data.cpu().reshape(batch_size * num_past, input_size).detach().numpy()
@@ -158,7 +160,7 @@ def bar_plot(trj: TrajaDataFrame, bins: Union[int, tuple] = None, **kwargs) -> A
 def plot_rolling_hull(trj: TrajaDataFrame, window=100, step=20, areas=False, **kwargs):
     """Plot rolling convex hull of trajectory. If `areas` is True, only
     areas over time is plotted.
-    
+
     """
     hulls = []
 
@@ -183,7 +185,7 @@ def plot_rolling_hull(trj: TrajaDataFrame, window=100, step=20, areas=False, **k
         plt.ylim = ylim
         for idx, hull in enumerate(hulls):
             if hasattr(
-                    hull, "exterior"
+                hull, "exterior"
             ):  # Occassionally a Point object without it reaches
                 plt.plot(*hull.exterior.xy, alpha=idx / len(hulls), c="k", **kwargs)
         ax = plt.gca()
@@ -274,7 +276,7 @@ def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollect
 
     .. note::
         Takes a while to plot large trajectories. Consider using first::
-        
+
             rt = trj.traja.rediscretize(R=1.) # Replace R with appropriate step length
             rt.traja.plot_3d()
 
@@ -293,7 +295,7 @@ def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollect
     NPOINTS = len(trj)
     ax.set_prop_cycle(color=[cm(1.0 * i / (NPOINTS - 1)) for i in range(NPOINTS - 1)])
     for i in range(NPOINTS - 1):
-        ax.plot(trj.x[i: i + 2], trj.y[i: i + 2], trj.index[i: i + 2])
+        ax.plot(trj.x[i : i + 2], trj.y[i : i + 2], trj.index[i : i + 2])
 
     dist = kwargs.pop("dist", None)
     if dist:
@@ -308,12 +310,12 @@ def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollect
 
 
 def plot(
-        trj: TrajaDataFrame,
-        n_coords: Optional[int] = None,
-        show_time: bool = False,
-        accessor: Optional[traja.TrajaAccessor] = None,
-        ax=None,
-        **kwargs,
+    trj: TrajaDataFrame,
+    n_coords: Optional[int] = None,
+    show_time: bool = False,
+    accessor: Optional[traja.TrajaAccessor] = None,
+    ax=None,
+    **kwargs,
 ) -> matplotlib.collections.PathCollection:
     """Plot trajectory for single animal over period.
 
@@ -452,17 +454,17 @@ def plot(
     elif time_col and is_datetime:
         cbar_labels = (
             trj[time_col]
-                .iloc[indices]
-                .dt.strftime("%Y-%m-%d %H:%M:%S")
-                .values.astype(str)
+            .iloc[indices]
+            .dt.strftime("%Y-%m-%d %H:%M:%S")
+            .values.astype(str)
         )
     else:
         # Convert frames to time
         if time_col:
-            cbar_labels = trj[time_col][indices].values
+            cbar_labels = trj[time_col].iloc[indices].values
         else:
             cbar_labels = trj.index[indices].values
-        cbar_labels = np.round(cbar_labels, 6)
+            cbar_labels = np.round(cbar_labels, 6)
         if fps != None and fps > 0 and fps != 1 and show_time:
             cbar_labels = cbar_labels / fps
 
@@ -482,7 +484,7 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
         coord - choice of 'x' or 'y'
         fs - Sampling frequency
         interactive - Plot immediately
-    
+
     Returns:
         Figure
 
@@ -498,15 +500,15 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
 
 
 def plot_autocorrelation(
-        trj: TrajaDataFrame,
-        coord: str = "y",
-        unit: str = "Days",
-        sample_rate: float = 3.0,
-        xmax: int = 1000,
-        interactive: bool = True,
+    trj: TrajaDataFrame,
+    coord: str = "y",
+    unit: str = "Days",
+    sample_rate: float = 3.0,
+    xmax: int = 1000,
+    interactive: bool = True,
 ):
     """Plot autocorrelation of given coordinate.
-    
+
     Args:
         trj - Trajectory
         coord - 'x' or 'y'
@@ -514,10 +516,10 @@ def plot_autocorrelation(
         sample_rate - sample rate
         xmax - max xaxis value
         interactive - Plot immediately
-    
+
     Returns:
         Matplotlib Figure
-    
+
     """
     from statsmodels import api as sm
 
@@ -534,10 +536,10 @@ def plot_autocorrelation(
 
 
 def plot_collection(
-        trjs: Union[pd.DataFrame, TrajaDataFrame],
-        id_col: str = "id",
-        colors: Optional[Union[dict, List[str]]] = None,
-        **kwargs,
+    trjs: Union[pd.DataFrame, TrajaDataFrame],
+    id_col: str = "id",
+    colors: Optional[Union[dict, List[str]]] = None,
+    **kwargs,
 ):
     """Plot trajectories of multiple subjects identified by `id`.
 
@@ -621,10 +623,10 @@ def _label_axes(trj: TrajaDataFrame, ax) -> Axes:
 
 
 def plot_quiver(
-        trj: TrajaDataFrame,
-        bins: Optional[Union[int, tuple]] = None,
-        quiverplot_kws: dict = {},
-        **kwargs,
+    trj: TrajaDataFrame,
+    bins: Optional[Union[int, tuple]] = None,
+    quiverplot_kws: dict = {},
+    **kwargs,
 ) -> Axes:
     """Plot average flow from each grid cell to neighbor.
 
@@ -653,14 +655,14 @@ def plot_quiver(
 
 
 def plot_contour(
-        trj: TrajaDataFrame,
-        bins: Optional[Union[int, tuple]] = None,
-        filled: bool = True,
-        quiver: bool = True,
-        contourplot_kws: dict = {},
-        contourfplot_kws: dict = {},
-        quiverplot_kws: dict = {},
-        **kwargs,
+    trj: TrajaDataFrame,
+    bins: Optional[Union[int, tuple]] = None,
+    filled: bool = True,
+    quiver: bool = True,
+    contourplot_kws: dict = {},
+    contourfplot_kws: dict = {},
+    quiverplot_kws: dict = {},
+    **kwargs,
 ) -> Axes:
     """Plot average flow from each grid cell to neighbor.
 
@@ -699,10 +701,10 @@ def plot_contour(
 
 
 def plot_surface(
-        trj: TrajaDataFrame,
-        bins: Optional[Union[int, tuple]] = None,
-        cmap: str = "jet",
-        **surfaceplot_kws: dict,
+    trj: TrajaDataFrame,
+    bins: Optional[Union[int, tuple]] = None,
+    cmap: str = "jet",
+    **surfaceplot_kws: dict,
 ) -> Figure:
     """Plot surface of flow from each grid cell to neighbor in 3D.
 
@@ -739,13 +741,13 @@ def plot_surface(
 
 
 def plot_stream(
-        trj: TrajaDataFrame,
-        bins: Optional[Union[int, tuple]] = None,
-        cmap: str = "jet",
-        contourfplot_kws: dict = {},
-        contourplot_kws: dict = {},
-        streamplot_kws: dict = {},
-        **kwargs,
+    trj: TrajaDataFrame,
+    bins: Optional[Union[int, tuple]] = None,
+    cmap: str = "jet",
+    contourfplot_kws: dict = {},
+    contourplot_kws: dict = {},
+    streamplot_kws: dict = {},
+    **kwargs,
 ) -> Figure:
     """Plot average flow from each grid cell to neighbor.
 
@@ -781,15 +783,15 @@ def plot_stream(
 
 
 def plot_flow(
-        trj: TrajaDataFrame,
-        kind: str = "quiver",
-        *args,
-        contourplot_kws: dict = {},
-        contourfplot_kws: dict = {},
-        streamplot_kws: dict = {},
-        quiverplot_kws: dict = {},
-        surfaceplot_kws: dict = {},
-        **kwargs,
+    trj: TrajaDataFrame,
+    kind: str = "quiver",
+    *args,
+    contourplot_kws: dict = {},
+    contourfplot_kws: dict = {},
+    streamplot_kws: dict = {},
+    quiverplot_kws: dict = {},
+    surfaceplot_kws: dict = {},
+    **kwargs,
 ) -> Figure:
     """Plot average flow from each grid cell to neighbor.
 
@@ -836,13 +838,13 @@ def _get_after_plot_args(**kwargs: dict) -> (dict, dict):
 
 
 def trip_grid(
-        trj: TrajaDataFrame,
-        bins: Union[tuple, int] = 10,
-        log: bool = False,
-        spatial_units: str = None,
-        normalize: bool = False,
-        hist_only: bool = False,
-        **kwargs,
+    trj: TrajaDataFrame,
+    bins: Union[tuple, int] = 10,
+    log: bool = False,
+    spatial_units: str = None,
+    normalize: bool = False,
+    hist_only: bool = False,
+    **kwargs,
 ) -> Tuple[np.ndarray, PathCollection]:
     """Generate a heatmap of time spent by point-to-cell gridding.
 
@@ -908,12 +910,24 @@ def _process_after_plot_args(**after_plot_args):
 
 
 def color_dark(
-        series: pd.Series, ax: matplotlib.axes.Axes = None, start: int = 19, end: int = 7
+    series: pd.Series, ax: matplotlib.axes.Axes = None, start: int = 19, end: int = 7
 ):
-    """Color dark phase in plot."""
+    """Color dark phase in plot.
+    Args:
+
+        series (pd.Series) - Time-series variable
+        ax (:class: `~matplotlib.axes.Axes`): axis to plot on (eg, `plt.gca()`)
+        start (int): start of dark period/night
+        end (hour): end of dark period/day
+    Returns:
+
+        ax (:class:`~matplotlib.axes._subplots.AxesSubplot`): Axes of plot
+    """
     assert is_datetime_or_timedelta_dtype(
         series.index
     ), f"Series must have datetime index but has {type(series.index)}"
+
+    pd.plotting.register_matplotlib_converters()  # prevents type error with axvspan
 
     if not ax:
         ax = plt.gca()
@@ -921,14 +935,14 @@ def color_dark(
     # get boundaries for dark times
     dark_mask = (series.index.hour >= start) | (series.index.hour < end)
     run_values, run_starts, run_lengths = find_runs(dark_mask)
-
-    # highlighting    
     for idx, is_dark in enumerate(run_values):
         if is_dark:
             start = run_starts[idx]
             end = run_starts[idx] + run_lengths[idx] - 1
             ax.axvspan(series.index[start], series.index[end], alpha=0.5, color="gray")
 
+    fig = plt.gcf()
+    fig.autofmt_xdate()
     return ax
 
 
@@ -998,7 +1012,7 @@ def plot_xy(xy: np.ndarray, *args: Optional, **kwargs: Optional):
 
 
 def plot_actogram(
-        series: pd.Series, dark=(19, 7), ax: matplotlib.axes.Axes = None, **kwargs
+    series: pd.Series, dark=(19, 7), ax: matplotlib.axes.Axes = None, **kwargs
 ):
     """Plot activity or displacement as an actogram.
 
@@ -1024,12 +1038,12 @@ def plot_actogram(
 
 
 def _polar_bar(
-        radii: np.ndarray,
-        theta: np.ndarray,
-        bin_size: int = 2,
-        ax: Optional[matplotlib.axes.Axes] = None,
-        overlap: bool = True,
-        **kwargs: str,
+    radii: np.ndarray,
+    theta: np.ndarray,
+    bin_size: int = 2,
+    ax: Optional[matplotlib.axes.Axes] = None,
+    overlap: bool = True,
+    **kwargs: str,
 ) -> Axes:
     after_plot_args, kwargs = _get_after_plot_args(**kwargs)
 
@@ -1063,13 +1077,13 @@ def _polar_bar(
 
 
 def polar_bar(
-        trj: TrajaDataFrame,
-        feature: str = "turn_angle",
-        bin_size: int = 2,
-        threshold: float = 0.001,
-        overlap: bool = True,
-        ax: Optional[matplotlib.axes.Axes] = None,
-        **plot_kws: str,
+    trj: TrajaDataFrame,
+    feature: str = "turn_angle",
+    bin_size: int = 2,
+    threshold: float = 0.001,
+    overlap: bool = True,
+    ax: Optional[matplotlib.axes.Axes] = None,
+    **plot_kws: str,
 ) -> Axes:
     """Plot polar bar chart.
 
@@ -1100,7 +1114,7 @@ def polar_bar(
     trj = trj[pd.notnull(trj.displacement)]
 
     assert (
-            len(trj) > 0
+        len(trj) > 0
     ), f"Dataframe is empty after filtering for step distance threshold {threshold}"
 
     ax = _polar_bar(
@@ -1115,11 +1129,11 @@ def polar_bar(
 
 
 def plot_clustermap(
-        displacements: List[pd.Series],
-        rule: Optional[str] = None,
-        nr_steps=None,
-        colors: Optional[List[Union[int, str]]] = None,
-        **kwargs,
+    displacements: List[pd.Series],
+    rule: Optional[str] = None,
+    nr_steps=None,
+    colors: Optional[List[Union[int, str]]] = None,
+    **kwargs,
 ):
     """Plot cluster map / dendrogram of trajectories with DatetimeIndex.
 
@@ -1185,18 +1199,18 @@ def _get_markov_edges(Q: pd.DataFrame, greater_than=0.1):
 
 
 def plot_transition_graph(
-        data: Union[pd.DataFrame, traja.TrajaDataFrame, np.ndarray],
-        outpath="markov.dot",
-        interactive=True,
+    data: Union[pd.DataFrame, traja.TrajaDataFrame, np.ndarray],
+    outpath="markov.dot",
+    interactive=True,
 ):
     """Plot transition graph with networkx.
 
     Args:
         data (trajectory or transition_matrix)
-    
-    .. note::        
+
+    .. note::
         Modified from http://www.blackarbs.com/blog/introduction-hidden-markov-models-python-networkx-sklearn/2/9/2017
-    
+
     """
     try:
         import networkx as nx
@@ -1206,9 +1220,9 @@ def plot_transition_graph(
         raise ImportError(f"{e} - please install it with pip")
 
     if (
-            isinstance(data, (traja.TrajaDataFrame))
-            or isinstance(data, pd.DataFrame)
-            and "x" in data
+        isinstance(data, (traja.TrajaDataFrame))
+        or isinstance(data, pd.DataFrame)
+        and "x" in data
     ):
         transition_matrix = traja.transitions(data)
         edges_wts = _get_markov_edges(pd.DataFrame(transition_matrix))
@@ -1244,12 +1258,12 @@ def plot_transition_graph(
 
 
 def plot_transition_matrix(
-        data: Union[pd.DataFrame, traja.TrajaDataFrame, np.ndarray],
-        interactive=True,
-        **kwargs,
+    data: Union[pd.DataFrame, traja.TrajaDataFrame, np.ndarray],
+    interactive=True,
+    **kwargs,
 ) -> matplotlib.image.AxesImage:
     """Plot transition matrix.
-    
+
     Args:
         data (trajectory or square transition matrix)
         interactive (bool): show plot
@@ -1257,7 +1271,7 @@ def plot_transition_matrix(
 
     Returns:
         axesimage (matplotlib.image.AxesImage)
-    
+
     """
     if isinstance(data, np.ndarray):
         if data.shape[0] != data.shape[1]:

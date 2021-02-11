@@ -29,8 +29,9 @@ __all__ = [
     "calc_derivatives",
     "calc_displacement",
     "calc_heading",
+    "calc_laterality",
     "calc_turn_angle",
-    "calculate_flow_angles",
+    "calc_flow_angles",
     "cartesian_to_polar",
     "coords_to_flow",
     "distance_between",
@@ -51,7 +52,6 @@ __all__ = [
     "speed_intervals",
     "step_lengths",
     "to_shapely",
-    "to_utm",
     "traj_from_coords",
     "transition_matrix",
     "transitions",
@@ -197,7 +197,7 @@ def length(trj: TrajaDataFrame) -> float:
 
 
 def expected_sq_displacement(
-        trj: TrajaDataFrame, n: int = 0, eqn1: bool = True
+    trj: TrajaDataFrame, n: int = 0, eqn1: bool = True
 ) -> float:
     """Expected displacement.
 
@@ -218,15 +218,15 @@ def expected_sq_displacement(
         # Eqn 1
         alpha = np.arctan2(s, c)
         gamma = ((1 - c) ** 2 - s2) * np.cos((n + 1) * alpha) - 2 * s * (
-                1 - c
+            1 - c
         ) * np.sin((n + 1) * alpha)
         esd = (
-                n * l2
-                + 2 * l ** 2 * ((c - c ** 2 - s2) * n - c) / ((1 - c) ** 2 + s2)
-                + 2
-                * l ** 2
-                * ((2 * s2 + (c + s2) ** ((n + 1) / 2)) / ((1 - c) ** 2 + s2) ** 2)
-                * gamma
+            n * l2
+            + 2 * l ** 2 * ((c - c ** 2 - s2) * n - c) / ((1 - c) ** 2 + s2)
+            + 2
+            * l ** 2
+            * ((2 * s2 + (c + s2) ** ((n + 1) / 2)) / ((1 - c) ** 2 + s2) ** 2)
+            * gamma
         )
         return abs(esd)
     else:
@@ -236,30 +236,14 @@ def expected_sq_displacement(
         return esd
 
 
-def to_utm(trj, lat="lat", lon="lon"):
-    """Convert lat/lon to UTM coordinates"""
-    try:
-        import pyproj
-    except ImportError:
-        raise ImportError(
-            """Mising pyproj
-            Please download it with pip install pyproj
-    """
-        )
-    x, y = proj(trj[lon].tolist(), trj[lat].tolist())
-    trj["x"] = x
-    trj["y"] = y
-    return trj
-
-
 def traj_from_coords(
-        track: Union[np.ndarray, pd.DataFrame],
-        x_col=1,
-        y_col=2,
-        time_col: Optional[str] = None,
-        fps: Union[float, int] = 4,
-        spatial_units: str = "m",
-        time_units: str = "s",
+    track: Union[np.ndarray, pd.DataFrame],
+    x_col=1,
+    y_col=2,
+    time_col: Optional[str] = None,
+    fps: Union[float, int] = 4,
+    spatial_units: str = "m",
+    time_units: str = "s",
 ) -> TrajaDataFrame:
     """Create TrajaDataFrame from coordinates.
 
@@ -436,7 +420,43 @@ def _bins_to_tuple(trj, bins: Union[int, Tuple[int, int]] = 10):
     return bins
 
 
-def calculate_flow_angles(grid_indices: np.ndarray):
+def calc_laterality(
+    trj: TrajaDataFrame,
+    dist_thresh: float,
+    angle_thresh: float = 30,
+):
+    """Calculate laterality of a trajectory.
+
+    Laterality is the preference for left or right turning. It is calculated
+    with the number of left and right turns.
+
+    Args:
+        trj: Trajectory
+        angle_thresh: angle threshold (from angle to 90 degrees)
+        dist_thresh: distance for a step to count as a turn
+
+    Returns:
+        right_turns (int)
+        left_turns (int)
+
+    """
+    # get turn angle w.r.t. x axis
+    turn_angle = calc_turn_angle(trj)
+
+    distance = step_lengths(trj)
+    distance_mask = distance > dist_thresh
+    angle_mask = ((turn_angle > angle_thresh) & (turn_angle < 90)) | (
+        (turn_angle < -angle_thresh) & (turn_angle > -90)
+    )
+
+    turns = turn_angle[distance_mask & angle_mask].dropna()
+    left_turns = turns[turn_angle > 0].shape[0]
+    right_turns = turns[turn_angle < 0].shape[0]
+
+    return right_turns, left_turns
+
+
+def calc_flow_angles(grid_indices: np.ndarray):
     """Calculate average flow between grid indices."""
 
     bins = (grid_indices[:, 0].max(), grid_indices[:, 1].max())
@@ -509,11 +529,11 @@ def _grid_coords1D(grid_indices: np.ndarray):
 
 def transitions(trj: TrajaDataFrame, **kwargs):
     """Get first-order Markov model for transitions between grid cells.
-    
+
     Args:
         trj (trajectory)
         kwargs: kwargs to :func:`traja.grid_coordinates`
-    
+
     """
     if "xbin" not in trj.columns or "ybin" not in trj.columns:
         grid_indices = grid_coordinates(trj, **kwargs)
@@ -528,11 +548,11 @@ def transitions(trj: TrajaDataFrame, **kwargs):
 
 
 def grid_coordinates(
-        trj: TrajaDataFrame,
-        bins: Union[int, tuple] = None,
-        xlim: tuple = None,
-        ylim: tuple = None,
-        assign: bool = False,
+    trj: TrajaDataFrame,
+    bins: Union[int, tuple] = None,
+    xlim: tuple = None,
+    ylim: tuple = None,
+    assign: bool = False,
 ):
     """Returns ``DataFrame`` of trajectory discretized into 2D lattice grid coordinates.
     Args:
@@ -577,17 +597,17 @@ def grid_coordinates(
 
 
 def generate(
-        n: int = 1000,
-        random: bool = True,
-        step_length: int = 2,
-        angular_error_sd: float = 0.5,
-        angular_error_dist: Callable = None,
-        linear_error_sd: float = 0.2,
-        linear_error_dist: Callable = None,
-        fps: float = 50,
-        spatial_units: str = "m",
-        seed: int = None,
-        **kwargs,
+    n: int = 1000,
+    random: bool = True,
+    step_length: int = 2,
+    angular_error_sd: float = 0.5,
+    angular_error_dist: Callable = None,
+    linear_error_sd: float = 0.2,
+    linear_error_dist: Callable = None,
+    fps: float = 50,
+    spatial_units: str = "m",
+    seed: int = None,
+    **kwargs,
 ):
     """Generates a trajectory.
 
@@ -684,7 +704,7 @@ def generate(
 
 
 def _resample_time(
-        trj: TrajaDataFrame, step_time: Union[float, int, str], errors="coerce"
+    trj: TrajaDataFrame, step_time: Union[float, int, str], errors="coerce"
 ):
     if not is_datetime_or_timedelta_dtype(trj.index):
         raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
@@ -697,8 +717,8 @@ def _resample_time(
                 trj = trj.loc[~trj.index.duplicated(keep="first")]
                 df = (
                     trj.resample(step_time)
-                        .bfill(limit=1)
-                        .interpolate(method="spline", order=2)
+                    .bfill(limit=1)
+                    .interpolate(method="spline", order=2)
                 )
             else:
                 logger.error("Error: duplicate time indices")
@@ -720,20 +740,20 @@ def resample_time(trj: TrajaDataFrame, step_time: str, new_fps: Optional[bool] =
         trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
 
 
-    .. doctest::  
+    .. doctest::
 
         >>> from traja import generate, resample_time
         >>> df = generate()
         >>> resampled = resample_time(df, '50L') # 50 milliseconds
         >>> resampled.head() # doctest: +NORMALIZE_WHITESPACE
                                          x         y
-        time                                        
+        time
         1970-01-01 00:00:00.000   0.000000  0.000000
         1970-01-01 00:00:00.050   0.919113  4.022971
         1970-01-01 00:00:00.100  -1.298510  5.423373
         1970-01-01 00:00:00.150  -6.057524  4.708803
         1970-01-01 00:00:00.200 -10.347759  2.108385
-        
+
     """
     time_col = _get_time_col(trj)
     if time_col == "index" and is_datetime64_any_dtype(trj.index):
@@ -844,7 +864,7 @@ def rediscretize_points(trj: TrajaDataFrame, R: Union[float, int], time_out=Fals
 
 
 def _rediscretize_points(
-        trj: TrajaDataFrame, R: Union[float, int], time_out=False
+    trj: TrajaDataFrame, R: Union[float, int], time_out=False
 ) -> dict:
     """Helper function for :func:`traja.trajectory.rediscretize`.
 
@@ -877,7 +897,7 @@ def _rediscretize_points(
         # Find the first point `curr_ind` for which |points[curr_ind] - p_0| >= R
         curr_ind = np.NaN
         for i in range(
-                candidate_start, n_points
+            candidate_start, n_points
         ):  # range of search space for next point
             d = np.linalg.norm(points[i] - result[step_nr])
             if d >= R:
@@ -1099,7 +1119,7 @@ def calc_heading(trj: TrajaDataFrame):
 
 
 def speed_intervals(
-        trj: TrajaDataFrame, faster_than: float = None, slower_than: float = None
+    trj: TrajaDataFrame, faster_than: float = None, slower_than: float = None
 ) -> pd.DataFrame:
     """Calculate speed time intervals.
 
@@ -1155,13 +1175,13 @@ def speed_intervals(
     if len(start_frames) > 0 or len(stop_frames) > 0:
         # Assume interval started at beginning of trajectory, since we don't know what happened before that
         if len(stop_frames) > 0 and (
-                len(start_frames) == 0 or stop_frames[0] < start_frames[0]
+            len(start_frames) == 0 or stop_frames[0] < start_frames[0]
         ):
             start_frames = np.append(1, start_frames)
         # Similarly, assume that interval can't extend past end of trajectory
         if (
-                len(stop_frames) == 0
-                or start_frames[len(start_frames) - 1] > stop_frames[len(stop_frames) - 1]
+            len(stop_frames) == 0
+            or start_frames[len(start_frames) - 1] > stop_frames[len(stop_frames) - 1]
         ):
             stop_frames = np.append(stop_frames, len(speed) - 1)
 
@@ -1213,12 +1233,12 @@ def get_derivatives(trj: TrajaDataFrame):
         # Convert to float divisible series
         # TODO: Add support for other time units
         t = t.dt.total_seconds()
-    v = d[1: len(d)] / t.diff()
+    v = d[1 : len(d)] / t.diff()
     v.rename("speed")
-    vt = t[1: len(t)].rename("speed_times")
+    vt = t[1 : len(t)].rename("speed_times")
     # Calculate linear acceleration
     a = v.diff() / vt.diff().rename("acceleration")
-    at = vt[1: len(vt)].rename("accleration_times")
+    at = vt[1 : len(vt)].rename("accleration_times")
 
     data = dict(speed=v, speed_times=vt, acceleration=a, acceleration_times=at)
     derivs = derivs.merge(pd.DataFrame(data), left_index=True, right_index=True)
@@ -1230,9 +1250,9 @@ def get_derivatives(trj: TrajaDataFrame):
 
 def _get_xylim(trj: TrajaDataFrame) -> Tuple[Tuple, Tuple]:
     if (
-            "xlim" in trj.__dict__
-            and "ylim" in trj.__dict__
-            and isinstance(trj.xlim, (list, tuple))
+        "xlim" in trj.__dict__
+        and "ylim" in trj.__dict__
+        and isinstance(trj.xlim, (list, tuple))
     ):
         return trj.xlim, trj.ylim
     else:
@@ -1268,7 +1288,7 @@ def coords_to_flow(trj: TrajaDataFrame, bins: Union[int, tuple] = None):
     else:
         grid_indices = trj[["xbin", "ybin"]]
 
-    U, V = traja.calculate_flow_angles(grid_indices.values)
+    U, V = traja.calc_flow_angles(grid_indices.values)
 
     return X, Y, U, V
 

@@ -1,4 +1,5 @@
-# matplotlib.use("TKAgg")
+""" This module contains classes and methods for dimensionality reduction
+techniques and visualization API"""
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -10,24 +11,23 @@ from scipy.sparse import csgraph
 from sklearn import neighbors
 from sklearn.neighbors import radius_neighbors_graph
 
-# plt.switch_backend("TkAgg")
-
-
 np.set_printoptions(
-    suppress=True, precision=3,
+    suppress=True,
+    precision=3,
 )
 style.use("ggplot")
 
 
-def DisplayLatentDynamics(latent):
-    """Visualize the dynamics in latent space. Compatible only with the RNN latents 
+def display_latent_dynamics(latent):
+
+    """Visualize the dynamics in latent space. Compatible only with the RNN latents
     Args:
-        latent(tensor): Each point in the list is latent's state at the end of a sequence of each batch.
+        latent(tensor): Each point in the list is latent's state at the end
+                        of a sequence of each batch.
         Latent shape (batch_size, latent_dim)
     Return: Relative plots of latent unit activations
-    Usage:
-    ======
-    DisplayLatentDynamics(latent)
+    ..doctest::
+        >> display_latent_dynamics(latent)
     """
 
     latents = {}
@@ -36,35 +36,37 @@ def DisplayLatentDynamics(latent):
         latents[f"{i}"] = latent[:, i].cpu().detach().numpy()
     fig = px.scatter_matrix(latents)
     fig.update_layout(
-        autosize=False, width=1600, height=1000,
+        autosize=False,
+        width=1600,
+        height=1000,
     )
     return fig.show()
 
 
 class DirectedNetwork(object):
+    """Wrapper to plot show the activation of Recurrent networks at each time step"""
+
     def __init__(self):
-        super().__init__()
         pass
 
     def show(self, states, weight, fig):
         """
+        Args:
+            states (array): Recurrent network states
 
-        :param states: list - Hidden states
-        :param weight: numpy.ndarray - Array of connection weights
-        :param fig: Figure number
+            weight (array): Tensor of connection weights
 
-        :return: boolean: Figure close status : Open - False/ Close - True
+            fig (int): Figure number
 
+        Return:
+            Boolean: Figure close status : Open - False/ Close - True
         """
+        assert type(states, np.array)
         np.random.seed(70001)
         # Set up hidden states
         state_dict = {i: states[i] for i in range(0, len(states))}
-
-        # Set up links
-        self_connections = [weight[i][i] for i in range(len(weight))]
-
         # Intialize graph
-        G = nx.from_numpy_matrix(
+        _g = nx.from_numpy_matrix(
             weight, create_using=nx.MultiDiGraph, parallel_edges=True
         )
 
@@ -72,7 +74,7 @@ class DirectedNetwork(object):
         edge_colors_ = [float("%.8f" % j) for i in edge_colors for j in i]
 
         # Set up nodes
-        neuron_color = [state_dict.get(node, 0.25) for node in G.nodes()]
+        neuron_color = [state_dict.get(node, 0.25) for node in _g.nodes()]
 
         # Set colrmap
         vmin = np.min(states)
@@ -80,7 +82,7 @@ class DirectedNetwork(object):
         cmap = plt.cm.coolwarm
         edge_cmap = plt.cm.Spectral
         nx.draw(
-            G,
+            _g,
             with_labels=True,
             cmap=cmap,
             node_color=neuron_color,
@@ -92,9 +94,8 @@ class DirectedNetwork(object):
             connectionstyle="arc3, rad=0.3",
         )
 
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
-        sm.set_array([])
-        cbar = plt.colorbar(sm, orientation="vertical", pad=0.1)
+        _sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
+        _sm.set_array([])
 
         # State of streaming plot
         if plt.fignum_exists(fig.number):
@@ -107,75 +108,76 @@ class DirectedNetwork(object):
         else:
             return True
 
-
 class LocalLinearEmbedding(object):
-    def __init__(self):
-        super(LocalLinearEmbedding, self).__init__()
-        pass
+    """Perform Local Linear Embeddings of the input data"""
 
-    def local_linear_embedding(self, X, d, k, alpha=0.1):
+    def local_linear_embedding(self, _x, _d, _k, alpha=0.1):
+
         """
-            Local Linear Embeddings
+        Args:
+            _x(numpy.ndarray): Input data matrix mxD , m data points with D dimensions
 
-            :param X: numpy.ndarray - input data matrix mxD , m data points with D dimensions
-            :param d: int - target dimensions
-            :param k: int -number of neighbors
-            :param alpha: float - Tikhonov coefficient regularization
+            _d(int): Target dimensions
 
-            :return Y: numpy.ndarray - matrix m row, d attributes are reduced dimensional
-            """
+            _k(int): Number of neighbors
+
+            alpha(float): Tikhonov coefficient regularization
+
+        Returns:
+            y(numpy.ndarray): matrix m row, d attributes are reduced dimensional
+        """
         # Find the nearest neighbor
-        x_neighbors = neighbors.kneighbors_graph(X, n_neighbors=k)
+        x_neighbors = neighbors.kneighbors_graph(_x, n_neighbors=_k)
 
-        m = len(X)
+        _m = len(_x)
 
         # Init weights
-        W = np.zeros(shape=(m, m))
+        _w = np.zeros(shape=(_m, _m))
 
         for i, nbor_row in enumerate(x_neighbors):
             # Get the kneighboring indexes of i
             k_indices = nbor_row.indices
 
             # Calculate the Z matrix
-            Z_i = X[k_indices] - X[i]
+            z_i = _x[k_indices] - _x[i]
 
             # Calculate the matrix G
-            G_i = Z_i @ Z_i.T
+            g_i = z_i @ z_i.T
 
             # Weights between neigbors
-            w_i = scipy.linalg.pinv(G_i + alpha * np.eye(k)) @ np.ones(k)
-            W[i, k_indices] = w_i / w_i.sum()
+            w_i = scipy.linalg.pinv(g_i + alpha * np.eye(_k)) @ np.ones(_k)
+            _w[i, k_indices] = w_i / w_i.sum()
 
         # Calculate matrix M
-        M = (np.eye(m) - W).T @ (np.eye(m) - W)
-        M = M.T
+        _m = (np.eye(_m) - _w).T @ (np.eye(_m) - _w)
+        _m = _m.T
 
         # Calculate Eigen vectors
-        _, vectors = scipy.linalg.eigh(M, eigvals=(0, d))
+        _, vectors = scipy.linalg.eigh(_m, eigvals=(0, _d))
 
         # Return the vectors and discard the first column of the matrix
         return vectors[:, 1:]
 
-    def show(self, pc, fig2):
-        """[summary]
+    def show(self, p_c, fig2):
 
+        """
         Args:
-            pc ([type]): [description]
-            fig2 ([type]): [description]
+            p_c (array): First three principle components of the data array
+            fig2 (matplotlib.pyplot):  Figure instance
         """
 
-        ax = Axes3D(fig2)
-        f = ax.scatter(pc[:, 0], pc[:, 1], pc[:, 2], s=40, c=pc[:, 2])
-        for i in range(len(pc)):
-            ax.plot3D(
-                pc[i:, 0],
-                pc[i:, 1],
-                pc[i:, 2],
-                alpha=i / len(pc),
+        ax_ = Axes3D(fig2)
+        _f = ax_.scatter(p_c[:, 0], p_c[:, 1], p_c[:, 2], s=40, c=p_c[:, 2])
+        for i in range(len(p_c)):
+            ax_.plot3D(
+                p_c[i:, 0],
+                p_c[i:, 1],
+                p_c[i:, 2],
+                alpha=i / len(p_c),
                 color="red",
                 linewidth=1,
             )
-        fig2.colorbar(f)
+        fig2.colorbar(_f)
         #         plt.pause(0.0001)
         # State of streaming plot
         if plt.fignum_exists(fig2.number):
@@ -190,22 +192,19 @@ class LocalLinearEmbedding(object):
 
 
 class SpectralEmbedding(object):
-    def __init__(self):
-        super(SpectralEmbedding, self).__init__()
-        pass
-
-    def spectral_embedding(self, X, rad):
+    """Spectral Clustering is a non-linear dimensionality reduction technique"""
+    def spectral_embedding(self, _x, rad):
         """
-            Spectral Clustering
+        Args:
+            _x(numpy.ndarray): Input data matrix mxn , m data points with n dimensions
+            rad(float): Radius for neighbor search
 
-            :param X: numpy.ndarray - input data matrix mxn , m data points with n dimensions
-            :param rad: float -radius for neighbor search
-
-            :return Y: numpy.ndarray - matrix m row, d attributes are reduced dimensional
-            """
+        Returns:
+            Y(numpy.ndarray): matrix m row, d attributes are reduced dimensional
+        """
         # Get the adjacency matrix/nearest neighbor graph; neighbors within the radius of 0.4
-        A = radius_neighbors_graph(
-            X.T,
+        _a = radius_neighbors_graph(
+            _x.T,
             rad,
             mode="distance",
             metric="minkowski",
@@ -213,14 +212,14 @@ class SpectralEmbedding(object):
             metric_params=None,
             include_self=False,
         )
-        A = A.toarray()
+        _a = _a.toarray()
 
         # Find the laplacian of the neighbour graph
         # L = D - A ; where D is the diagonal degree matrix
-        L = csgraph.laplacian(A, normed=False)
+        _l = csgraph.laplacian(_a, normed=False)
         # Embedd the data points i low dimension using the Eigen values/vectos
         # of the laplacian graph to get the most optimal partition of the graph
-        eigval, eigvec = np.linalg.eig(L)
+        eigval, eigvec = np.linalg.eig(_l)
         # the second smallest eigenvalue represents sparsest cut of the graph.
         np.where(eigval == np.partition(eigval, 1)[1])
         # Partition the graph using the smallest eigen value
@@ -229,24 +228,24 @@ class SpectralEmbedding(object):
         y_spec[y_spec > 0] = 1
         return y_spec
 
-    def show(self, X, spec_embed, fig3):
-        """[summary]
+    def show(self, _x, spec_embed, fig3):
+        """Plot spectral embeddings
 
         Args:
-            X ([type]): [description]
-            spec_embed ([type]): [description]
-            fig3 ([type]): [description]
+            _x (array): Data array
+            spec_embed (array): Spectral embeddings
+            fig3 (matplotlib.pyplot): Figure instance
 
         Returns:
-            [type]: [description]
+            plot: Spectral embeddings in 3d plot
         """
 
         ax3 = fig3.add_subplot()
-        X = X.T
-        fi = ax3.scatter(x=X[:, 0], y=X[:, 1], c=spec_embed, s=30, cmap=plt.cm.Spectral)
-        for i in range(len(X[:, 0])):
-            ax3.annotate(i, (X[:, 0][i], X[:, 1][i]))
-        fig3.colorbar(fi)
+        _x = _x.T
+        f_i = ax3.scatter(x=_x[:, 0], y=_x[:, 1], c=spec_embed, s=30, cmap=plt.cm.Spectral)
+        for i in range(len(_x[:, 0])):
+            ax3.annotate(i, (_x[:, 0][i], _x[:, 1][i]))
+        fig3.colorbar(f_i)
 
         # State of streaming plot
         if plt.fignum_exists(fig3.number):
@@ -258,47 +257,3 @@ class SpectralEmbedding(object):
             return False
         else:
             return True
-
-
-if __name__ == "__main__":
-    # create the coordinates
-    number_of_points = 21
-    small_range = -1.0
-    large_range = 1.0
-
-    xcoordinates = np.linspace(small_range, large_range, num=numebr_of_points)
-    ycoordinates = np.linspace(small_range, large_range, num=numebr_of_points)
-
-    xcoord_mesh, ycoord_mesh = np.meshgrid(xcoordinates, ycoordinates)
-    inds = np.array(range(number_of_points ** 2))
-    s1 = xcoord_mesh.ravel()[inds]
-    s2 = ycoord_mesh.ravel()[inds]
-    coordinate = np.c_[s1, s2]
-    print(
-        "From ",
-        small_range,
-        " to ",
-        large_range,
-        " with ",
-        number_of_points,
-        " total number of coordinate: ",
-        number_of_points ** 2,
-    )
-
-
-class Network:
-    def __init__(self, activity, weights):
-        pass
-
-    def show(self):
-        fig = None
-        return fig
-
-
-class ShowManifold:
-    def __init__(self, inputs, manifold):
-        pass
-
-    def show(self):
-        fig = None
-        return fig
