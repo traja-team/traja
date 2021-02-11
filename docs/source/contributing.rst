@@ -196,7 +196,7 @@ To run *traja* in an development environment, you must first install
 (executed after your development environment has been activated)::
 
     conda install -c conda-forge shapely
-    pip install requirements-dev.txt
+    pip install requirements/dev.txt
 
 This should install all necessary dependencies.
 

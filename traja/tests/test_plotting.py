@@ -26,6 +26,19 @@ def test_stylize_axes():
     traja.plotting.stylize_axes(collection.axes)
 
 
+def test_color_dark():
+    df = traja.generate(n=10)
+    index = pd.DatetimeIndex(range(10))
+    df.index = index
+    ax = plt.gca()
+    try:
+        traja.color_dark(df.x, ax)
+    except ValueError as e:
+        # catch unexplained datetime value error in travis
+        if "view limit minimum" in str(e):
+            pass
+
+
 def test_sans_serif():
     traja.plotting.sans_serif()
 
@@ -146,32 +159,30 @@ def test_plot_prediction():
 
     # Prepare the dataloader
     df = jaguar()
-    data_loaders = dataset.MultiModalDataLoader(df,
-                                                batch_size=batch_size,
-                                                n_past=num_past,
-                                                n_future=num_future,
-                                                num_workers=1)
+    data_loaders = dataset.MultiModalDataLoader(
+        df, batch_size=batch_size, n_past=num_past, n_future=num_future, num_workers=1
+    )
 
-    model = MultiModelVAE(input_size=input_size,
-                          output_size=output_size,
-                          lstm_hidden_size=lstm_hidden_size,
-                          num_lstm_layers=lstm_num_layers,
-                          num_classes=num_classes,
-                          latent_size=latent_size,
-                          dropout=dropout,
-                          num_classifier_layers=4,
-                          classifier_hidden_size=32,
-                          batch_size=batch_size,
-                          num_future=num_future,
-                          num_past=num_past,
-                          bidirectional=bidirectional,
-                          batch_first=batch_first,
-                          reset_state=reset_state)
+    model = MultiModelVAE(
+        input_size=input_size,
+        output_size=output_size,
+        lstm_hidden_size=lstm_hidden_size,
+        num_lstm_layers=lstm_num_layers,
+        num_classes=num_classes,
+        latent_size=latent_size,
+        dropout=dropout,
+        num_classifier_layers=4,
+        classifier_hidden_size=32,
+        batch_size=batch_size,
+        num_future=num_future,
+        num_past=num_past,
+        bidirectional=bidirectional,
+        batch_first=batch_first,
+        reset_state=reset_state,
+    )
 
-    trainer = HybridTrainer(model=model,
-                            optimizer_type='Adam',
-                            loss_type='huber')
+    trainer = HybridTrainer(model=model, optimizer_type="Adam", loss_type="huber")
 
-    model_save_path = './model.pt'
+    model_save_path = "./model.pt"
 
-    plot_prediction(model, data_loaders['sequential_test_loader'], 1)
+    plot_prediction(model, data_loaders["sequential_test_loader"], 1)
