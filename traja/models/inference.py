@@ -134,19 +134,6 @@ class Generator:
         elif self.model_type == "vaegan" or "custom":
             return NotImplementedError
 
-    # TODO: State space models
-    def generate_timeseries(self, num_steps):
-        """Recurrently generate time series for infinite time steps.
-
-        Args:
-            num_steps ([type]): [description]
-
-        Returns:
-            [type]: [description]
-        """
-        return NotImplementedError
-
-
 class Predictor:
     def __init__(
         self,
@@ -158,7 +145,7 @@ class Predictor:
         """Generate a batch of future steps from a random latent state of Multi variate multi label models
 
         Args:
-            model_type (str, optional): Type of model ['ae','irl','lstm','custom']. Defaults to None.
+            model_type (str, optional): Type of model ['ae','lstm','custom']. Defaults to None.
             model_path (str, optional): [description]. Defaults to None.
             model_hyperparameters (dict, optional): [description]. Defaults to None.
             model (torch.nn.Module, optional): Custom model from user. Defaults to None
@@ -178,9 +165,6 @@ class Predictor:
 
         if self.model_type == "lstm":
             self.model = LSTM(**self.model_hyperparameters)
-
-        if self.model_type == "irl":
-            self.model = MultiModelIRL(**self.model_hyperparameters)
 
         if self.model_type == "custom":
             assert model is not None
@@ -236,7 +220,6 @@ class Predictor:
                     s_s = np.reshape(s_s, len(s_s))
                     self.predicted_data[:, i] = s_s
 
-                # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 predicted_data = np.array(
                     [
                         self.predicted_data[i : i + num_steps]
@@ -251,7 +234,6 @@ class Predictor:
                     )
                     s_s = np.reshape(s_s, len(s_s))
                     self.target_data[:, i] = s_s
-                # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 self.target_data = np.array(
                     [
                         self.target_data[i : i + num_steps]
@@ -298,7 +280,6 @@ class Predictor:
                         plt.autoscale(True, axis="y", tight=False)
                 plt.show()
 
-                # TODO: Convert predicted_data Tensor into Traja dataframe
                 return predicted_data
 
         elif self.model_type == "vaegan" or "custom":
