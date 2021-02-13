@@ -1,0 +1,14 @@
+pandas>=1.2.0
+numpy==1.18.5
+matplotlib
+shapely
+psutil
+scipy
+scikit-learn
+fastdtw
+plotly
+networkx
+seaborn
+torch
+pytest==6.2.2
+h5py

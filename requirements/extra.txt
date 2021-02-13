@@ -5,3 +5,4 @@ plotly
 pytest
 h5py
 ipython
+pre-commit
