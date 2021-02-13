@@ -7,11 +7,11 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class LSTM(torch.nn.Module):
-    """ Deep LSTM network. This implementation
+    """Deep LSTM network. This implementation
     returns output_size outputs.
     Args:
         input_size: The number of expected features in the input `x`
-        batch_size: 
+        batch_size:
         sequence_length: The number of in each sample
         hidden_size: The number of features in the hidden state `h`
         num_layers: Number of recurrent layers. E.g., setting ``num_layers=2``
@@ -26,17 +26,17 @@ class LSTM(torch.nn.Module):
     """
 
     def __init__(
-            self,
-            batch_size: int,
-            num_future: int,
-            hidden_size: int,
-            num_layers: int,
-            output_size: int,
-            input_size: int,
-            batch_first: bool,
-            dropout: float,
-            reset_state: bool,
-            bidirectional: bool,
+        self,
+        batch_size: int,
+        num_future: int,
+        hidden_size: int,
+        num_layers: int,
+        output_size: int,
+        input_size: int,
+        batch_first: bool,
+        dropout: float,
+        reset_state: bool,
+        bidirectional: bool,
     ):
         super(LSTM, self).__init__()
 
@@ -53,7 +53,7 @@ class LSTM(torch.nn.Module):
         self.bidirectional = bidirectional
 
         # Let the trainer know what kind of model this is
-        self.model_type = 'lstm'
+        self.model_type = "lstm"
 
         # RNN decoder
         self.lstm = torch.nn.LSTM(
@@ -71,17 +71,17 @@ class LSTM(torch.nn.Module):
     def _init_hidden(self):
         return (
             torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
-                .requires_grad_()
-                .to(device),
+            .requires_grad_()
+            .to(device),
             torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
-                .requires_grad_()
-                .to(device),
+            .requires_grad_()
+            .to(device),
         )
 
     def forward(self, x, training=True, classify=False, regress=False, latent=False):
-        assert not classify, 'LSTM forecaster cannot classify!'
-        assert not regress, 'LSTM forecaster cannot regress!'
-        assert not latent, 'LSTM forecaster does not have a latent space!'
+        assert not classify, "LSTM forecaster cannot classify!"
+        assert not regress, "LSTM forecaster cannot regress!"
+        assert not latent, "LSTM forecaster does not have a latent space!"
         # To feed the latent states into lstm decoder, repeat the tensor n_future times at second dim
         (h0, c0) = self._init_hidden()
 

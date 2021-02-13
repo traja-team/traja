@@ -7,7 +7,6 @@ import torch
 from traja.models.generative_models.vae import MultiModelVAE
 from traja.models.generative_models.vaegan import MultiModelVAEGAN
 from traja.models.predictive_models.ae import MultiModelAE
-from traja.models.predictive_models.irl import MultiModelIRL
 from traja.models.predictive_models.lstm import LSTM
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -15,13 +14,13 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class Generator:
     def __init__(
-            self,
-            model_type: str = None,
-            model_path: str = None,
-            model_hyperparameters: dict = None,
-            model: torch.nn.Module = None,
+        self,
+        model_type: str = None,
+        model_path: str = None,
+        model_hyperparameters: dict = None,
+        model: torch.nn.Module = None,
     ):
-        """Generate a batch of future steps from a random latent state of Multi variate multi label models 
+        """Generate a batch of future steps from a random latent state of Multi variate multi label models
 
         Args:
             model_type (str, optional): Type of model ['vae','vaegan','custom']. Defaults to None.
@@ -44,7 +43,10 @@ class Generator:
             assert model is not None
             self.model = model(**self.model_hyperparameters)
 
-        (self.generated_category, self.generated_data,) = (None, None)
+        (
+            self.generated_category,
+            self.generated_data,
+        ) = (None, None)
 
     def generate(self, num_steps, classify=True, scaler=None, plot_data=True):
 
@@ -56,8 +58,8 @@ class Generator:
                     self.model_hyperparameters["batch_size"],
                     self.model_hyperparameters["latent_size"],
                 )
-                    .normal_(mean=0, std=0.1)
-                    .to(device)
+                .normal_(mean=0, std=0.1)
+                .to(device)
             )
             # Generate trajectories from the noise
             self.generated_data = (
@@ -85,7 +87,7 @@ class Generator:
             # TODO:Depreself.generated_categoryed;Slicing the data into batches
             self.generated_data = np.array(
                 [
-                    self.generated_data[i: i + num_steps]
+                    self.generated_data[i : i + num_steps]
                     for i in range(0, len(self.generated_data), num_steps)
                 ]
             )
@@ -106,7 +108,8 @@ class Generator:
                             try:
                                 label = "Animal ID {}".format(
                                     (
-                                            torch.max(self.generated_category, 1).indices + 1
+                                        torch.max(self.generated_category, 1).indices
+                                        + 1
                                     ).detach()[i + j]
                                 )
                             except Exception as error:
@@ -115,10 +118,10 @@ class Generator:
                             label = ""
                         ax[i, j].plot(
                             self.generated_data[:, 0][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             self.generated_data[:, 1][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             label=label,
                             color="g",
@@ -131,31 +134,18 @@ class Generator:
         elif self.model_type == "vaegan" or "custom":
             return NotImplementedError
 
-    # TODO: State space models
-    def generate_timeseries(self, num_steps):
-        """Recurrently generate time series for infinite time steps. 
-
-        Args:
-            num_steps ([type]): [description]
-
-        Returns:
-            [type]: [description]
-        """
-        return NotImplementedError
-
-
 class Predictor:
     def __init__(
-            self,
-            model_type: str = None,
-            model_path: str = None,
-            model_hyperparameters: dict = None,
-            model: torch.nn.Module = None,
+        self,
+        model_type: str = None,
+        model_path: str = None,
+        model_hyperparameters: dict = None,
+        model: torch.nn.Module = None,
     ):
-        """Generate a batch of future steps from a random latent state of Multi variate multi label models 
+        """Generate a batch of future steps from a random latent state of Multi variate multi label models
 
         Args:
-            model_type (str, optional): Type of model ['ae','irl','lstm','custom']. Defaults to None.
+            model_type (str, optional): Type of model ['ae','lstm','custom']. Defaults to None.
             model_path (str, optional): [description]. Defaults to None.
             model_hyperparameters (dict, optional): [description]. Defaults to None.
             model (torch.nn.Module, optional): Custom model from user. Defaults to None
@@ -176,9 +166,6 @@ class Predictor:
         if self.model_type == "lstm":
             self.model = LSTM(**self.model_hyperparameters)
 
-        if self.model_type == "irl":
-            self.model = MultiModelIRL(**self.model_hyperparameters)
-
         if self.model_type == "custom":
             assert model is not None
             self.model = model(**self.model_hyperparameters)
@@ -198,7 +185,7 @@ class Predictor:
             data_loader ([type]): [description]
             num_steps ([type]): [description]
             scaler (dict): Scalers of the target data. This scale the model predictions to the scale of the target (future steps).
-                        : This scaler will be returned by the traja data preprocessing and loading helper function.  
+                        : This scaler will be returned by the traja data preprocessing and loading helper function.
             classify (bool, optional): [description]. Defaults to True.
 
         Returns:
@@ -233,10 +220,9 @@ class Predictor:
                     s_s = np.reshape(s_s, len(s_s))
                     self.predicted_data[:, i] = s_s
 
-                # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 predicted_data = np.array(
                     [
-                        self.predicted_data[i: i + num_steps]
+                        self.predicted_data[i : i + num_steps]
                         for i in range(0, len(self.predicted_data), num_steps)
                     ]
                 )
@@ -248,10 +234,9 @@ class Predictor:
                     )
                     s_s = np.reshape(s_s, len(s_s))
                     self.target_data[:, i] = s_s
-                # TODO:Depreself.generated_categoryed;Slicing the data into batches
                 self.target_data = np.array(
                     [
-                        self.target_data[i: i + num_steps]
+                        self.target_data[i : i + num_steps]
                         for i in range(0, len(self.target_data), num_steps)
                     ]
                 )
@@ -272,20 +257,20 @@ class Predictor:
                     for j in range(5):
                         ax[i, j].plot(
                             predicted_data_[:, 0][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             predicted_data_[:, 1][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             label=f"Predicted ID {self.generated_categoryegory[i + j]}",
                         )
 
                         ax[i, j].plot(
                             self.target_data_[:, 0][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             self.target_data_[:, 1][
-                            (i + j) * num_steps: (i + j) * num_steps + num_steps
+                                (i + j) * num_steps : (i + j) * num_steps + num_steps
                             ],
                             label=f"Target ID {self.generated_category[i + j]}",
                             color="g",
@@ -295,7 +280,6 @@ class Predictor:
                         plt.autoscale(True, axis="y", tight=False)
                 plt.show()
 
-                # TODO: Convert predicted_data Tensor into Traja dataframe
                 return predicted_data
 
         elif self.model_type == "vaegan" or "custom":
