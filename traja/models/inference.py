@@ -7,7 +7,6 @@ import torch
 from traja.models.generative_models.vae import MultiModelVAE
 from traja.models.generative_models.vaegan import MultiModelVAEGAN
 from traja.models.predictive_models.ae import MultiModelAE
-from traja.models.predictive_models.irl import MultiModelIRL
 from traja.models.predictive_models.lstm import LSTM
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
