@@ -226,7 +226,7 @@ def test_calc_laterality():
     right_turns, left_turns = traja.calc_laterality(df, dist_thresh=1)
     assert left_turns == 4
     assert right_turns == 0
-    
+
 
 def test_calc_flow_angles():
     df_copy = df.copy()

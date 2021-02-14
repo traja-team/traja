@@ -21,7 +21,9 @@ class TrajaAccessor(object):
     @staticmethod
     def _set_axes(axes):
         if len(axes) != 2:
-            raise ValueError("TrajaAccessor requires precisely two axes, got {}".format(len(axes)))
+            raise ValueError(
+                "TrajaAccessor requires precisely two axes, got {}".format(len(axes))
+            )
         TrajaAccessor.__axes = axes
 
     def _strip(self, text):
@@ -32,8 +34,13 @@ class TrajaAccessor(object):
 
     @staticmethod
     def _validate(obj):
-        if TrajaAccessor.__axes[0] not in obj.columns or TrajaAccessor.__axes[1] not in obj.columns:
-            raise AttributeError("Must have '{}' and '{}'.".format(*TrajaAccessor.__axes))
+        if (
+            TrajaAccessor.__axes[0] not in obj.columns
+            or TrajaAccessor.__axes[1] not in obj.columns
+        ):
+            raise AttributeError(
+                "Must have '{}' and '{}'.".format(*TrajaAccessor.__axes)
+            )
 
     @property
     def center(self):
@@ -95,7 +102,7 @@ class TrajaAccessor(object):
 
         Returns:
           trj (:class:`~traja.frame.TrajaDataFrame`): Dataframe between values.
-          
+
         .. doctest ::
 
             >>> s = pd.to_datetime(pd.Series(['Jun 30 2000 12:00:01', 'Jun 30 2000 12:00:02', 'Jun 30 2000 12:00:03']))
@@ -141,14 +148,14 @@ class TrajaAccessor(object):
         return traja.trajectory.rediscretize_points(self, _obj, R=R, **kwargs)
 
     def trip_grid(
-            self,
-            bins: Union[int, tuple] = 10,
-            log: bool = False,
-            spatial_units=None,
-            normalize: bool = False,
-            hist_only: bool = False,
-            plot: bool = True,
-            **kwargs,
+        self,
+        bins: Union[int, tuple] = 10,
+        log: bool = False,
+        spatial_units=None,
+        normalize: bool = False,
+        hist_only: bool = False,
+        plot: bool = True,
+        **kwargs,
     ):
         """Returns a 2D histogram of trip.
 
@@ -208,7 +215,7 @@ class TrajaAccessor(object):
 
         .. note::
             Takes a while to plot large trajectories. Consider using first::
-            
+
                 rt = trj.traja.rediscretize(R=1.) # Replace R with appropriate step length
                 rt.traja.plot_3d()
 
@@ -252,7 +259,7 @@ class TrajaAccessor(object):
 
         Returns:
           xy (:class:`numpy.ndarray`) -- x,y coordinates (separate if `split` is `True`)
-          
+
         .. doctest::
 
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
@@ -301,7 +308,7 @@ class TrajaAccessor(object):
 
         Returns:
           derivs (:class:`~collections.OrderedDict`): Derivatives.
-          
+
         .. doctest::
 
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3],'time':[0., 0.2, 0.4]})
@@ -325,9 +332,9 @@ class TrajaAccessor(object):
         return derivs
 
     def speed_intervals(
-            self,
-            faster_than: Union[float, int] = None,
-            slower_than: Union[float, int] = None,
+        self,
+        faster_than: Union[float, int] = None,
+        slower_than: Union[float, int] = None,
     ):
         """Returns ``TrajaDataFrame`` with speed time intervals.
 
@@ -355,7 +362,7 @@ class TrajaAccessor(object):
 
         Returns:
           shape (shapely.geometry.linestring.LineString): Shapely shape.
-          
+
         .. doctest::
 
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
@@ -376,7 +383,7 @@ class TrajaAccessor(object):
 
         Returns:
           displacement (:class:`pandas.Series`): Displacement series.
-          
+
         .. doctest::
 
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
@@ -400,7 +407,7 @@ class TrajaAccessor(object):
 
         Returns:
           angle (:class:`pandas.Series`): Angle series.
-          
+
         .. doctest::
 
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})
@@ -450,12 +457,12 @@ class TrajaAccessor(object):
 
         Returns:
           rt (:class:`traja.TrajaDataFrame`): rediscretized trajectory
-          
+
         .. note::
-          
+
             Based on the appendix in Bovet and Benhamou, (1988) and Jim McLean's
             `trajr <https://github.com/JimMcL/trajr>`_ implementation.
-          
+
         .. doctest::
 
             >>> df = traja.TrajaDataFrame({'x':[0,1,2],'y':[1,2,3]})

@@ -221,7 +221,7 @@ intersphinx_mapping = {
     "matplotlib": ("http://matplotlib.sourceforge.net", None),
     "pandas": ("http://pandas-docs.github.io/pandas-docs-travis", None),
     "scipy": ("http://docs.scipy.org/doc/scipy/reference", None),
-    'PyTorch': ('http://pytorch.org/docs/master/', None),
+    "PyTorch": ("http://pytorch.org/docs/master/", None),
 }
 
 autodoc_member_order = "bysource"

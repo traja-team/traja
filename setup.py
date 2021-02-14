@@ -39,7 +39,7 @@ setup(
     author="Justin Shenk",
     author_email="shenkjustin@gmail.com",
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     install_requires=requirements,
     extras_require=extras_requirements,
     classifiers=[
@@ -55,7 +55,7 @@ setup(
         "Topic :: Software Development :: Libraries",
     ],
     python_requires=">= 3.6",
-        project_urls={
+    project_urls={
         "Bug Tracker": "https://github.com/traja-team/traja/issues",
         "Documentation": "https://traja.rtfd.io/en/latest/",
         "Source Code": "https://github.com/traja-team/traja",

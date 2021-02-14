@@ -14,8 +14,8 @@ class HybridTrainer(object):
         model_type: Type of model should be "LSTM"
         optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
                                                                                 'AdamW', 'SparseAdam', 'RMSprop', '
-                                                                                Rprop', 'LBFGS', 'ASGD', 'Adamax']
-        device: Selected device; 'cuda' or 'cpu'
+                                                                                Rprop', 'LBFGS', 'ASGD', 'Adamax'] 
+        device: Selected device; 'cuda' or 'cpu' 
         input_size: The number of expected features in the input x
         output_size: Output feature dimension
         lstm_hidden_size: The number of features in the hidden state h
@@ -26,7 +26,7 @@ class HybridTrainer(object):
         dropout:  If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer,
                     with dropout probability equal to dropout
         num_layers: Number of layers in the classifier
-        batch_size: Number of samples in a batch
+        batch_size: Number of samples in a batch 
         num_future: Number of time steps to be predicted forward
         num_past: Number of past time steps otherwise, length of sequences in each batch of data.
         bidirectional:  If True, becomes a bidirectional LSTM
@@ -43,17 +43,17 @@ class HybridTrainer(object):
     valid_models = ["ae", "vae", "lstm"]
 
     def __init__(
-        self,
-        model: torch.nn.Module,
-        optimizer_type: str,
-        loss_type: str = "huber",
-        lr: float = 0.001,
-        lr_factor: float = 0.1,
-        scheduler_patience: int = 10,
+            self,
+            model: torch.nn.Module,
+            optimizer_type: str,
+            loss_type: str = "huber",
+            lr: float = 0.001,
+            lr_factor: float = 0.1,
+            scheduler_patience: int = 10,
     ):
 
         assert (
-            model.model_type in HybridTrainer.valid_models
+                model.model_type in HybridTrainer.valid_models
         ), "Model type is {model_type}, valid models are {}".format(
             HybridTrainer.valid_models
         )
@@ -137,7 +137,7 @@ class HybridTrainer(object):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
         classification of the timeseriesis_classification
-
+        
         Parameters:
         -----------
         dataloaders: Dictionary containing train and test dataloaders
@@ -157,8 +157,8 @@ class HybridTrainer(object):
 
         self.model.to(device)
 
-        train_loader = dataloaders["train_loader"]
-        test_loader = dataloaders["test_loader"]
+        train_loader = dataloaders['train_loader']
+        test_loader = dataloaders['test_loader']
         validation_loader = dataloaders['validation_loader']
 
         # Training
@@ -171,7 +171,7 @@ class HybridTrainer(object):
                 self.model.train()
                 total_loss = 0
                 for idx, (data, target, ids, parameters, classes) in enumerate(
-                    train_loader
+                        train_loader
                 ):
                     # Reset optimizer states
                     for optimizer in self.forecasting_optimizers:
@@ -197,19 +197,13 @@ class HybridTrainer(object):
                             decoder_out = self.model(
                                 data, training=True, classify=False, latent=False
                             )
-                            loss = Criterion().forecasting_criterion(
-                                decoder_out, target, loss_type=self.loss_type
-                            )
+                            loss = Criterion().forecasting_criterion(decoder_out, target, loss_type=self.loss_type)
                         else:  # vae
                             decoder_out, latent_out, mu, logvar = self.model(
                                 data, training=True, classify=False
                             )
                             loss = Criterion().forecasting_criterion(
-                                decoder_out,
-                                target,
-                                mu=mu,
-                                logvar=logvar,
-                                loss_type=self.loss_type,
+                                decoder_out, target, mu=mu, logvar=logvar, loss_type=self.loss_type
                             )
 
                         loss.backward()
@@ -220,7 +214,9 @@ class HybridTrainer(object):
                         classifier_out = self.model(
                             data, training=True, classify=True, latent=False
                         )
-                        loss = Criterion().classifier_criterion(classifier_out, classes)
+                        loss = Criterion().classifier_criterion(
+                            classifier_out, classes
+                        )
 
                         loss.backward()
                         for optimizer in self.classification_optimizers:
@@ -282,11 +278,7 @@ class HybridTrainer(object):
                                 data, training=False, classify=False, latent=False
                             )
                             test_loss_forecasting += (
-                                Criterion()
-                                .forecasting_criterion(
-                                    out, target, loss_type=self.loss_type
-                                )
-                                .item()
+                                Criterion().forecasting_criterion(out, target, loss_type=self.loss_type).item()
                             )
 
                         else:
@@ -294,11 +286,7 @@ class HybridTrainer(object):
                                 data, training=False, classify=False, latent=True
                             )
                             test_loss_forecasting += Criterion().forecasting_criterion(
-                                decoder_out,
-                                target,
-                                mu=mu,
-                                logvar=logvar,
-                                loss_type=self.loss_type,
+                                decoder_out, target, mu=mu, logvar=logvar, loss_type=self.loss_type
                             )
 
                         # Classification test
@@ -310,8 +298,8 @@ class HybridTrainer(object):
 
                             test_loss_classification += (
                                 Criterion()
-                                .classifier_criterion(classifier_out, classes)
-                                .item()
+                                    .classifier_criterion(classifier_out, classes)
+                                    .item()
                             )
 
                             # Compute number of correct samples
@@ -369,9 +357,7 @@ class HybridTrainer(object):
                 total = 0.0
                 correct = 0.0
             self.model.eval()
-            for idx, (data, target, ids, parameters, classes) in enumerate(
-                validation_loader
-            ):
+            for idx, (data, target, ids, parameters, classes) in enumerate(validation_loader):
                 if type(ids) == list:
                     ids = ids[0]
                 data, target, ids, parameters = (
@@ -382,11 +368,11 @@ class HybridTrainer(object):
                 )
                 # Time series forecasting test
                 if self.model_type == "ae" or self.model_type == "lstm":
-                    out = self.model(data, training=False, classify=False, latent=False)
+                    out = self.model(
+                        data, training=False, classify=False, latent=False
+                    )
                     validation_loss_forecasting += (
-                        Criterion()
-                        .forecasting_criterion(out, target, loss_type=self.loss_type)
-                        .item()
+                        Criterion().forecasting_criterion(out, target, loss_type=self.loss_type).item()
                     )
 
                 else:
@@ -394,11 +380,7 @@ class HybridTrainer(object):
                         data, training=False, classify=False
                     )
                     validation_loss_forecasting += Criterion().forecasting_criterion(
-                        decoder_out,
-                        target,
-                        mu=mu,
-                        logvar=logvar,
-                        loss_type=self.loss_type,
+                        decoder_out, target, mu=mu, logvar=logvar, loss_type=self.loss_type
                     )
 
                 # Classification test
@@ -409,7 +391,9 @@ class HybridTrainer(object):
                     )
 
                     validation_loss_classification += (
-                        Criterion().classifier_criterion(classifier_out, classes).item()
+                        Criterion()
+                            .classifier_criterion(classifier_out, classes)
+                            .item()
                     )
 
                     # Compute number of correct samples
@@ -442,8 +426,4 @@ class HybridTrainer(object):
                     f"====> Mean Validation set regressor loss: {validation_loss_regression:.4f}"
                 )
 
-        return (
-            validation_loss_forecasting,
-            validation_loss_regression,
-            validation_loss_classification,
-        )
+        return validation_loss_forecasting, validation_loss_regression, validation_loss_classification
