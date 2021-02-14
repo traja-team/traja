@@ -132,7 +132,11 @@ class HybridTrainer(object):
         return f"Training model type {self.model_type}"
 
     def fit(
+<<<<<<< HEAD
             self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50, validate_every=3, test_every=10
+=======
+        self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50
+>>>>>>> master
     ):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
@@ -157,9 +161,14 @@ class HybridTrainer(object):
 
         self.model.to(device)
 
+<<<<<<< HEAD
+        train_loader = dataloaders['train_loader']
+        test_loader = dataloaders['test_loader']
+        validation_loader = dataloaders['validation_loader']
+=======
         train_loader = dataloaders["train_loader"]
         test_loader = dataloaders["test_loader"]
-        validation_loader = dataloaders['validation_loader']
+>>>>>>> master
 
         # Training
         for epoch in range(epochs + 1):
@@ -266,7 +275,11 @@ class HybridTrainer(object):
                         correct = 0.0
                     self.model.eval()
                     for idx, (data, target, ids, parameters, classes) in enumerate(
+<<<<<<< HEAD
                             data_loader_to_evaluate
+=======
+                        test_loader
+>>>>>>> master
                     ):
                         if type(ids) == list:
                             ids = ids[0]
