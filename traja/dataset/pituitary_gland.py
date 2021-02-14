@@ -64,14 +64,36 @@ def pituitary_ode(w, t, p):
 
 def compute_pituitary_gland_df_from_parameters(downsample_rate,
                                                gcal, gsk, gk, gbk, gl, kc,
-                                               index):
+                                               sample_id):
+    """
+    Computes a Traja dataframe from the pituitary gland simulation.
+
+    It is easier to discuss ion flow in term of conductances than resistances.
+    If V / R = I, where V is the voltage, R is the resistance and I is the
+    current, then V * C = I, where C = 1 / R is the conductance.
+
+    Below we specify arguments in terms of maximum conductances,
+    i.e. the maximum rate at which ion channels let ions through
+    the cell walls.
+
+    Arguments:
+        downsample_rate : How much the dataframe will be downsampled (relative
+                          to the original simulation)
+        gcal            : The maximum calcium conductance
+        gsk             : The maximum s-potassiun conductance
+        gk              : The maximum potassium conductance
+        gbk             : The maximum b-potassium conductance
+        gl              : The maximum leak conductance
+        kc              :
+        sample_id       : The ID of this particular sample. Must be unique
+    """
 
     # Initial conditions
     v=-60.
     n=0.1
     f=0.01
     c=0.1
-    
+
     p = (gk, gcal, gsk, gbk, gl, kc)
     w0 = (v, n, f, c)
     abserr = 1.0e-8
@@ -81,7 +103,7 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
     #print("Generating gcal={}, gsk={}, gk={}, gbk={}, gl={}, kc={}".format(gcal, gsk, gk, gbk, gl, kc))
     wsol = scipy.integrate.odeint(pituitary_ode, w0, t, args=(p,), atol=abserr, rtol=relerr)
     df = pd.DataFrame(wsol, columns=['v', 'n', 'f', 'c'])
-    df['ID'] = index
+    df['ID'] = sample_id
     df['gcal'] = gcal
     df['gsk'] = gsk
     df['gk'] = gk
