@@ -132,7 +132,7 @@ class HybridTrainer(object):
         return f"Training model type {self.model_type}"
 
     def fit(
-            self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50
+            self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50, validate_every=3, test_every=10
     ):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
@@ -159,6 +159,7 @@ class HybridTrainer(object):
 
         train_loader = dataloaders['train_loader']
         test_loader = dataloaders['test_loader']
+        validation_loader = dataloaders['validation_loader']
 
         # Training
         for epoch in range(epochs + 1):
@@ -241,15 +242,27 @@ class HybridTrainer(object):
                     )
                 )
 
-            # Testing
-            if epoch % 10 == 9 and epoch != 0:
+            # Testing & Validation
+            evaluate_for_this_epoch = False
+            data_loader_to_evaluate = validation_loader
+            current_set = "Validation"
+            if epoch % validate_every == validate_every-1 and epoch != 0:
+                data_loader_to_evaluate = validation_loader
+                evaluate_for_this_epoch = True
+                current_set = "Validation"
+            if epoch % test_every == test_every-1 and epoch != 0:
+                data_loader_to_evaluate = test_loader
+                evaluate_for_this_epoch = True
+                current_set = "Test"
+
+            if evaluate_for_this_epoch:
                 with torch.no_grad():
                     if self.classify:
                         total = 0.0
                         correct = 0.0
                     self.model.eval()
                     for idx, (data, target, ids, parameters, classes) in enumerate(
-                            test_loader
+                            data_loader_to_evaluate
                     ):
                         if type(ids) == list:
                             ids = ids[0]
@@ -303,16 +316,16 @@ class HybridTrainer(object):
                                 regressor_out, parameters
                             )
 
-                test_loss_forecasting /= len(test_loader.dataset)
+                test_loss_forecasting /= len(data_loader_to_evaluate.dataset)
                 print(
-                    f"====> Mean test set forecasting loss: {test_loss_forecasting:.4f}"
+                    f"====> Mean {current_set} set forecasting loss: {test_loss_forecasting:.4f}"
                 )
                 if self.classify:
                     accuracy = correct / total
                     if test_loss_classification != 0:
-                        test_loss_classification /= len(test_loader.dataset)
+                        test_loss_classification /= len(data_loader_to_evaluate.dataset)
                         print(
-                            f"====> Mean test set classifier loss: {test_loss_classification:.4f}; accuracy: {accuracy:.2f}"
+                            f"====> Mean {current_set} set classifier loss: {test_loss_classification:.4f}; accuracy: {accuracy:.2f}"
                         )
 
                 if self.regress:
