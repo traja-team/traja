@@ -11,7 +11,7 @@ class HybridTrainer(object):
     """
     Wrapper for training and testing the LSTM model
     Args:
-        model_type: Type of model should be "LSTM"
+        model_type: Type of model should be 'LSTM'
         optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
                                                                                 'AdamW', 'SparseAdam', 'RMSprop', '
                                                                                 Rprop', 'LBFGS', 'ASGD', 'Adamax']
@@ -250,11 +250,11 @@ class HybridTrainer(object):
             evaluate_for_this_epoch = False
             data_loader_to_evaluate = validation_loader
             current_set = "Validation"
-            if epoch % validate_every == validate_every-1 and epoch != 0:
+            if epoch % validate_every == validate_every - 1 and epoch != 0:
                 data_loader_to_evaluate = validation_loader
                 evaluate_for_this_epoch = True
                 current_set = "Validation"
-            if epoch % test_every == test_every-1 and epoch != 0:
+            if epoch % test_every == test_every - 1 and epoch != 0:
                 data_loader_to_evaluate = test_loader
                 evaluate_for_this_epoch = True
                 current_set = "Test"
@@ -342,7 +342,7 @@ class HybridTrainer(object):
 
                 if self.regress:
                     print(
-                        f"====> Mean test set regressor loss: {test_loss_regression:.4f}"
+                        f"====> Mean {current_set} set regressor loss: {test_loss_regression:.4f}"
                     )
 
             # Scheduler metric is test set loss
