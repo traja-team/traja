@@ -1,5 +1,7 @@
 from numba import jit
 from scipy.integrate import odeint
+import random
+import numpy as np
 
 @jit
 def pituitary_ode(w, t, p):
@@ -101,7 +103,7 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
 
     t = np.arange(0, 5000, 0.05)
     #print("Generating gcal={}, gsk={}, gk={}, gbk={}, gl={}, kc={}".format(gcal, gsk, gk, gbk, gl, kc))
-    wsol = scipy.integrate.odeint(pituitary_ode, w0, t, args=(p,), atol=abserr, rtol=relerr)
+    wsol = odeint(pituitary_ode, w0, t, args=(p,), atol=abserr, rtol=relerr)
     df = pd.DataFrame(wsol, columns=['v', 'n', 'f', 'c'])
     df['ID'] = sample_id
     df['gcal'] = gcal
@@ -114,3 +116,32 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
     #df = df.drop(columns=['t', 'ikdrx', 'ibkx'])
 
     return df
+
+
+
+def create_pituitary_df_distribution(downsample_rate=100, gcal=1.0, gsk=1.5,
+                                     gk=0.8, gbk=.1, gl=0.15, kc=0.06, samples=20,
+                                     random_init=False,
+                                     random_params=True):
+    dataframes = []
+    for index in range(samples):
+        gcal_d, gsk_d, gk_d, gbk_d, gl_d, kc_d = gcal, gsk, gk, gbk, gl, kc
+        if random_params:
+            gcal_d = gcal + np.random.normal(scale=.05)
+            gsk_d = gsk + np.random.normal(scale=.05)
+            gk_d = gk + np.random.normal(scale=.05)
+            gbk_d = gbk + np.random.normal(scale=.05)
+            gl_d = gl + np.random.normal(scale=.005)
+            kc_d = kc + np.random.normal(scale=.0025)
+        df = compute_pituitary_gland_df_from_parameters(downsample_rate,
+                             gcal_d,
+                             gsk_d,
+                             gk_d,
+                             gbk_d,
+                             gl_d,
+                             kc_d,
+                             index,
+                             random_init=random_init)
+        dataframes.append(df)
+    num_ids = index
+    return pd.concat(dataframes), num_ids
