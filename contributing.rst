@@ -13,26 +13,27 @@ The work is currently focussed on reaching version 1.0 with feature
 completeness and 95 % test coverage.
 
 The following features are required for feature completeness:
+
 * Latent space visualisers
-  * Eigenspace-based
-  * Colour-coded to visualise evolution over time
-  * Delay coordinate embeddings
+   * Eigenspace-based
+   * Colour-coded to visualise evolution over time
+   * Delay coordinate embeddings
 * State-space visualisers
 * Additional encoder and decoder options in AE and VAE models
-  * MLP
-  * 1d convolution
+   * MLP
+   * 1d convolution
 * Pituitary gland example dataset
 * Regression output visualisers
 * VAE GAN models
 * Additional VAE latent-space shapes
-  * Uniform
-  * A shape that works for periodic trajectories (Torus?)
+   * Uniform
+   * A shape that works for periodic trajectories (Torus?)
 * Delay coordinate embeddings
-  * Persistent homology diagrams of the embeddings
+   * Persistent homology diagrams of the embeddings
 * Automatic code formatter
 * Tutorials
-  * Find time of day based on activity
-  * Recover parameters from Pituitary ODE
+   * Find time of day based on activity
+   * Recover parameters from Pituitary ODE
 
 How to contribute
 -----------------
