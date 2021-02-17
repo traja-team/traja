@@ -40,9 +40,9 @@ class Optimizer:
         self.classification_schedulers = {}
         self.regression_schedulers = {}
 
-        self.forecasting_keys = ['encoder', 'decoder', 'latent']
-        self.classification_keys = ['classifier']
-        self.regression_keys = ['regressor']
+        self.forecasting_keys = ["encoder", "decoder", "latent"]
+        self.classification_keys = ["classifier"]
+        self.regression_keys = ["regressor"]
 
     def get_optimizers(self, lr=0.0001):
         """Optimizers for each network in the model
@@ -57,12 +57,12 @@ class Optimizer:
         """
 
         if self.model_type in ["lstm", "custom"]:
-            self.optimizers['encoder'] = getattr(torch.optim, f"{self.optimizer_type}")(
+            self.optimizers["encoder"] = getattr(torch.optim, f"{self.optimizer_type}")(
                 self.model.parameters(), lr=lr
             )
 
         elif self.model_type in ["ae", "vae"]:
-            keys = ['encoder', 'decoder', 'latent', 'classifier', 'regressor']
+            keys = ["encoder", "decoder", "latent", "classifier", "regressor"]
             for key in keys:
                 network = getattr(self.model, f"{key}", None)
                 if network is not None:
@@ -76,9 +76,21 @@ class Optimizer:
         else:  # self.model_type == "irl":
             return NotImplementedError
 
-        forecasting_optimizers = [self.optimizers[key] for key in self.forecasting_keys if key in self.optimizers]
-        classification_optimizers = [self.optimizers[key] for key in self.classification_keys if key in self.optimizers]
-        regression_optimizers = [self.optimizers[key] for key in self.regression_keys if key in self.optimizers]
+        forecasting_optimizers = [
+            self.optimizers[key]
+            for key in self.forecasting_keys
+            if key in self.optimizers
+        ]
+        classification_optimizers = [
+            self.optimizers[key]
+            for key in self.classification_keys
+            if key in self.optimizers
+        ]
+        regression_optimizers = [
+            self.optimizers[key]
+            for key in self.regression_keys
+            if key in self.optimizers
+        ]
         return forecasting_optimizers, classification_optimizers, regression_optimizers
 
     def get_lrschedulers(self, factor: float, patience: int):
@@ -95,12 +107,18 @@ class Optimizer:
 
         """
 
-        if self.model_type == "irl" or self.model_type == 'vaegan':
+        if self.model_type == "irl" or self.model_type == "vaegan":
             return NotImplementedError
 
-        forecasting_keys = [key for key in self.forecasting_keys if key in self.optimizers]
-        classification_keys = [key for key in self.classification_keys if key in self.optimizers]
-        regression_keys = [key for key in self.regression_keys if key in self.optimizers]
+        forecasting_keys = [
+            key for key in self.forecasting_keys if key in self.optimizers
+        ]
+        classification_keys = [
+            key for key in self.classification_keys if key in self.optimizers
+        ]
+        regression_keys = [
+            key for key in self.regression_keys if key in self.optimizers
+        ]
 
         for network in forecasting_keys:
             self.forecasting_schedulers[network] = ReduceLROnPlateau(
@@ -128,4 +146,8 @@ class Optimizer:
                 verbose=True,
             )
 
-        return self.forecasting_schedulers, self.classification_schedulers, self.regression_schedulers
+        return (
+            self.forecasting_schedulers,
+            self.classification_schedulers,
+            self.regression_schedulers,
+        )

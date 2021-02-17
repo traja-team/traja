@@ -37,7 +37,15 @@ class TimeSeriesDataset(Dataset):
         Dataset (torch.utils.data.Dataset): Pyptorch dataset object
     """
 
-    def __init__(self, data, target, sequence_ids=None, parameters=None, classes=None, scaler: TransformerMixin = None):
+    def __init__(
+        self,
+        data,
+        target,
+        sequence_ids=None,
+        parameters=None,
+        classes=None,
+        scaler: TransformerMixin = None,
+    ):
         r"""
         Args:
             data (array): Data
@@ -74,10 +82,10 @@ class TimeSeriesDataset(Dataset):
 class MultiModalDataLoader:
     """
     MultiModalDataLoader wraps the following data preparation steps,
-    
+
     1. Data generator: Extract x and y time series and corresponding ID (sequence_id) in the dataset. This process split the dataset into
                         i) Train samples with sequence length equals n_past
-                        ii) Target samples with sequence length equals n_future 
+                        ii) Target samples with sequence length equals n_future
                         iii) Target sequence_id(ID) of both train and target data
     2. Data scalling: Scale the train and target data columns between the range (-1,1) using MinMaxScalers; TODO: It is more optimal to scale data for each ID(sequence_id)
     3. Data shuffling: Shuffle the order of samples in the dataset without loosing the train<->target<->sequence_id combination
@@ -89,12 +97,12 @@ class MultiModalDataLoader:
         Args:
             df (pd.DataFrame): Dataset
             batch_size (int): Number of samples per batch of data
-            n_past (int): Input sequence length. Number of time steps from the past. 
-            n_future (int): Target sequence length. Number of time steps to the future. 
+            n_past (int): Input sequence length. Number of time steps from the past.
+            n_future (int): Target sequence length. Number of time steps to the future.
             num_workers (int): Number of cpu subprocess occupied during data loading process
-            train_split_ratio (float):Should be between 0.0 and 1.0 and represent the proportion of the dataset-validation_dataset 
-                                      to include in the train split. 
-            validation_split_ratio (float): Should be between 0.0 and 1.0 and represent the proportion of the dataset 
+            train_split_ratio (float):Should be between 0.0 and 1.0 and represent the proportion of the dataset-validation_dataset
+                                      to include in the train split.
+            validation_split_ratio (float): Should be between 0.0 and 1.0 and represent the proportion of the dataset
                                       to include in the validation split.
             stride: Size of the sliding window. Defaults to sequence_length
             split_by_id (bool): Whether to split data based on the sequence's ID (default) or split each sequence
@@ -107,23 +115,23 @@ class MultiModalDataLoader:
         Usage:
         ------
         dataloaders, scalers = MultiModalDataLoader(df = data_frame, batch_size=32, n_past = 20, n_future = 10, num_workers=4)
-        """
+    """
 
     def __init__(
-            self,
-            df: pd.DataFrame,
-            batch_size: int,
-            n_past: int,
-            n_future: int,
-            num_workers: int,
-            train_split_ratio: float = 0.4,
-            validation_split_ratio: float = 0.2,
-            stride: int = None,
-            split_by_id: bool = True,
-            scale: bool = True,
-            test: bool = True,
-            parameter_columns: list = (),
-            weighted_sampling: bool = False,
+        self,
+        df: pd.DataFrame,
+        batch_size: int,
+        n_past: int,
+        n_future: int,
+        num_workers: int,
+        train_split_ratio: float = 0.4,
+        validation_split_ratio: float = 0.2,
+        stride: int = None,
+        split_by_id: bool = True,
+        scale: bool = True,
+        test: bool = True,
+        parameter_columns: list = (),
+        weighted_sampling: bool = False,
     ):
         self.df = df
         self.batch_size = batch_size
@@ -138,10 +146,19 @@ class MultiModalDataLoader:
         self.stride = stride
 
         # Train and test data from df-val_df
-        train_data, target_data, target_ids, target_parameters, target_classes, samples_in_sequence_id = generator.generate_dataset(
-            self.df, self.n_past,
-            self.n_future, stride=self.stride,
-            parameter_columns=parameter_columns
+        (
+            train_data,
+            target_data,
+            target_ids,
+            target_parameters,
+            target_classes,
+            samples_in_sequence_id,
+        ) = generator.generate_dataset(
+            self.df,
+            self.n_past,
+            self.n_future,
+            stride=self.stride,
+            parameter_columns=parameter_columns,
         )
 
         if self.scale:
@@ -151,7 +168,14 @@ class MultiModalDataLoader:
             scaler = None
 
         # Dataset
-        dataset = TimeSeriesDataset(train_data, target_data, target_ids, target_parameters, target_classes, scaler=scaler)
+        dataset = TimeSeriesDataset(
+            train_data,
+            target_data,
+            target_ids,
+            target_parameters,
+            target_classes,
+            scaler=scaler,
+        )
 
         # We initialise sample weights in case we need them to weigh samples.
         train_weights = defaultdict(float)
@@ -169,10 +193,15 @@ class MultiModalDataLoader:
             test_ids = np.sort(ids[train_split_index:validation_split_index])
             validation_ids = np.sort(ids[validation_split_index:])
 
-            train_indices, train_weights = get_indices_from_sequence_ids(train_ids, samples_in_sequence_id)
-            test_indices, test_weights = get_indices_from_sequence_ids(test_ids, samples_in_sequence_id)
-            validation_indices, validation_weights = get_indices_from_sequence_ids(validation_ids,
-                                                                                   samples_in_sequence_id)
+            train_indices, train_weights = get_indices_from_sequence_ids(
+                train_ids, samples_in_sequence_id
+            )
+            test_indices, test_weights = get_indices_from_sequence_ids(
+                test_ids, samples_in_sequence_id
+            )
+            validation_indices, validation_weights = get_indices_from_sequence_ids(
+                validation_ids, samples_in_sequence_id
+            )
 
         else:  # Do not sample by sequence ID
             if stride is None:
@@ -189,48 +218,106 @@ class MultiModalDataLoader:
                 start_test_index = round(sequence_count * train_split_ratio)
                 end_train_index = start_test_index - overlap
 
-                start_validation_index = round(sequence_count * (1 - validation_split_ratio))
+                start_validation_index = round(
+                    sequence_count * (1 - validation_split_ratio)
+                )
                 end_test_index = start_validation_index - overlap
 
-                train_indices.extend(list(range(id_start_index, id_start_index + end_train_index)))
-                test_indices.extend(list(range(id_start_index + start_test_index, id_start_index + end_test_index)))
+                train_indices.extend(
+                    list(range(id_start_index, id_start_index + end_train_index))
+                )
+                test_indices.extend(
+                    list(
+                        range(
+                            id_start_index + start_test_index,
+                            id_start_index + end_test_index,
+                        )
+                    )
+                )
                 validation_indices.extend(
-                    list(range(id_start_index + start_validation_index, id_start_index + sequence_count)))
+                    list(
+                        range(
+                            id_start_index + start_validation_index,
+                            id_start_index + sequence_count,
+                        )
+                    )
+                )
 
-                train_weights[sequence_index] = 1.0 / end_train_index if end_train_index > 0 else 0
-                test_weights[sequence_index] = 1.0 / (end_test_index - start_test_index) if (
-                                                                                                    end_test_index - start_test_index) > 0 else 0
-                validation_weights[sequence_index] = 1.0 / (sequence_count - start_validation_index) if (
-                                                                                                                sequence_count - start_validation_index) > 0 else 0
+                train_weights[sequence_index] = (
+                    1.0 / end_train_index if end_train_index > 0 else 0
+                )
+                test_weights[sequence_index] = (
+                    1.0 / (end_test_index - start_test_index)
+                    if (end_test_index - start_test_index) > 0
+                    else 0
+                )
+                validation_weights[sequence_index] = (
+                    1.0 / (sequence_count - start_validation_index)
+                    if (sequence_count - start_validation_index) > 0
+                    else 0
+                )
 
                 id_start_index += sequence_count
 
-        sequential_train_dataset = torch.utils.data.Subset(dataset, np.sort(train_indices[:]))
-        sequential_test_dataset = torch.utils.data.Subset(dataset, np.sort(test_indices[:]))
-        sequential_validation_dataset = torch.utils.data.Subset(dataset, np.sort(validation_indices[:]))
+        sequential_train_dataset = torch.utils.data.Subset(
+            dataset, np.sort(train_indices[:])
+        )
+        sequential_test_dataset = torch.utils.data.Subset(
+            dataset, np.sort(test_indices[:])
+        )
+        sequential_validation_dataset = torch.utils.data.Subset(
+            dataset, np.sort(validation_indices[:])
+        )
 
         if weighted_sampling:
             train_index_weights = list()
             test_index_weights = list()
             validation_index_weights = list()
 
-            for data, target, sequence_id, parameters, classes in sequential_train_dataset:
+            for (
+                data,
+                target,
+                sequence_id,
+                parameters,
+                classes,
+            ) in sequential_train_dataset:
                 train_index_weights.append(train_weights[sequence_id])
-            for data, target, sequence_id, parameters, classes in sequential_test_dataset:
+            for (
+                data,
+                target,
+                sequence_id,
+                parameters,
+                classes,
+            ) in sequential_test_dataset:
                 test_index_weights.append(test_weights[sequence_id])
-            for data, target, sequence_id, parameters, classes in sequential_validation_dataset:
+            for (
+                data,
+                target,
+                sequence_id,
+                parameters,
+                classes,
+            ) in sequential_validation_dataset:
                 validation_index_weights.append(validation_weights[sequence_id])
 
             train_dataset = sequential_train_dataset
             test_dataset = sequential_test_dataset
             validation_dataset = sequential_validation_dataset
 
-            train_sampler = WeightedRandomSampler(weights=train_index_weights, num_samples=len(train_index_weights),
-                                                  replacement=True)
-            test_sampler = WeightedRandomSampler(weights=test_index_weights, num_samples=len(test_index_weights),
-                                                 replacement=True)
-            validation_sampler = WeightedRandomSampler(weights=validation_index_weights,
-                                                       num_samples=len(validation_index_weights), replacement=True)
+            train_sampler = WeightedRandomSampler(
+                weights=train_index_weights,
+                num_samples=len(train_index_weights),
+                replacement=True,
+            )
+            test_sampler = WeightedRandomSampler(
+                weights=test_index_weights,
+                num_samples=len(test_index_weights),
+                replacement=True,
+            )
+            validation_sampler = WeightedRandomSampler(
+                weights=validation_index_weights,
+                num_samples=len(validation_index_weights),
+                replacement=True,
+            )
 
         else:
             train_dataset = dataset
@@ -306,23 +393,23 @@ class MultiModalDataLoader:
             "sequential_loader": self.sequential_loader,
             "sequential_train_loader": self.sequential_train_loader,
             "sequential_test_loader": self.sequential_test_loader,
-            "sequential_validation_loader": self.sequential_validation_loader
+            "sequential_validation_loader": self.sequential_validation_loader,
         }
 
     def __new__(
-            cls,
-            df: pd.DataFrame,
-            batch_size: int,
-            n_past: int,
-            n_future: int,
-            num_workers: int,
-            split_by_id: bool = True,
-            stride: int = None,
-            train_split_ratio: float = 0.4,
-            validation_split_ratio: float = 0.2,
-            scale: bool = True,
-            parameter_columns: list = list(),
-            weighted_sampling: bool = False,
+        cls,
+        df: pd.DataFrame,
+        batch_size: int,
+        n_past: int,
+        n_future: int,
+        num_workers: int,
+        split_by_id: bool = True,
+        stride: int = None,
+        train_split_ratio: float = 0.4,
+        validation_split_ratio: float = 0.2,
+        scale: bool = True,
+        parameter_columns: list = list(),
+        weighted_sampling: bool = False,
     ):
         """Constructor of MultiModalDataLoader"""
         # Loader instance
