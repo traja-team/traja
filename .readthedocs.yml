@@ -10,8 +10,4 @@ build:
 python:
   version: 3.7
   install:
-    - method: pip
-      path: .
-    - requirements: docs/requirements.txt
-conda:
-  environment: docs/environment.yml
+    - requirements: requirements/docs.txt

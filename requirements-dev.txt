@@ -10,6 +10,6 @@ plotly
 networkx
 seaborn
 torch
-pytest
+pytest==6.2.2
 h5py
 numba>=0.50.0

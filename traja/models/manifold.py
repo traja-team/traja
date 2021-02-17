@@ -1,5 +1,5 @@
 class Manifold:
-    """Wrap all the manifold functionalities provided by scikit learn. Provide interface to apply non-linear dimensionality reduction techniques, 
+    """Wrap all the manifold functionalities provided by scikit learn. Provide interface to apply non-linear dimensionality reduction techniques,
     visualize and infer the strucure of the data using neural networks
     """
 

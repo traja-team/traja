@@ -5,7 +5,6 @@ shapely
 scipy>=1.4.1
 sklearn
 fastdtw
-plotly
 networkx
 seaborn
 torch
