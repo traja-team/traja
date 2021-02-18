@@ -22,7 +22,7 @@ class Brownian:
 
     """
 
-    def __init__(self, x0=0, mean_value=0, variance=1, length=100000):
+    def __init__(self, x0=0, mean_value=0, variance=1, dt=1., length=100000):
         assert (type(x0) == float or type(x0) == int or x0 is None), "Expect a float or None for the initial value"
 
         self._x0 = float(x0)
@@ -31,6 +31,7 @@ class Brownian:
         # be unpredictable
         self._mean_value = mean_value
         self._variance = variance
+        self._dt = dt
         self._length = length
 
         self._index = 0
@@ -41,7 +42,7 @@ class Brownian:
         x0 = np.asarray(self._x0)
 
         # Generate self._length samples of noise
-        r = norm.rvs(loc=self._mean_value, scale=self._variance, size=self._length)
+        r = norm.rvs(loc=self._mean_value, scale=self._variance * np.sqrt(self._dt), size=self._length)
         out = np.empty(r.shape)
 
         # This computes the Brownian motion by forming the cumulative sum of
