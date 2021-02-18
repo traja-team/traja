@@ -19,7 +19,7 @@ class Brownian:
         mean_value: Bias (drift) of the random walk.
         variance: Size of random walk steps.
         length: Number of samples to generate.
-
+        dt: delta-time between every step.
     """
 
     def __init__(self, x0=0, mean_value=0, variance=1, dt=1., length=100000):
