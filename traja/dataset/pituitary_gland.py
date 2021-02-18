@@ -1,7 +1,10 @@
+import numpy as np
+import pandas as pd
+from numpy import exp
 from numba import jit
 from scipy.integrate import odeint
-import random
-import numpy as np
+from pyDOE2 import lhs
+
 
 @jit
 def pituitary_ode(w, t, p):
@@ -15,53 +18,53 @@ def pituitary_ode(w, t, p):
         p :  vector of the parameters:
                   p = [gk, gcal, gsk, gbk, gl, k]
     """
-    vca=60
-    vk=-75
-    vl=-50
-    Cm=10
-    vn=-5
-    vm=-20
-    vf=-20
-    sn=10
-    sm=12
-    sf=2
-    taun=30
-    taubk=5
-    ff=0.01
-    alpha=0.0015
-    ks=0.4
-    auto=0
-    cpar=0
-    noise=4.0
+    vca = 60
+    vk = -75
+    vl = -50
+    Cm = 10
+    vn = -5
+    vm = -20
+    vf = -20
+    sn = 10
+    sm = 12
+    sf = 2
+    taun = 30
+    taubk = 5
+    ff = 0.01
+    alpha = 0.0015
+    ks = 0.4
+    auto = 0
+    cpar = 0
+    noise = 4.0
 
     v, n, f, c = w
 
     gk, gcal, gsk, gbk, gl, kc = p
 
-    cd=(1-auto)*c+auto*cpar
+    cd = (1 - auto) * c + auto * cpar
 
-    phik=1/(1+exp((vn-v)/sn))
-    phif=1/(1+exp((vf-v)/sf))
-    phical=1/(1+exp((vm-v)/sm))
-    cinf=cd**2/(cd**2+ks**2)
+    phik = 1 / (1 + exp((vn - v) / sn))
+    phif = 1 / (1 + exp((vf - v) / sf))
+    phical = 1 / (1 + exp((vm - v) / sm))
+    cinf = cd ** 2 / (cd ** 2 + ks ** 2)
 
-    ica=gcal*phical*(v-vca)
-    isk=gsk*cinf*(v-vk)
-    ibk=gbk*f*(v-vk)
-    ikdr=gk*n*(v-vk)
-    ileak=gl*(v-vl)
+    ica = gcal * phical * (v - vca)
+    isk = gsk * cinf * (v - vk)
+    ibk = gbk * f * (v - vk)
+    ikdr = gk * n * (v - vk)
+    ileak = gl * (v - vl)
 
-    ikdrx=ikdr
-    ibkx =ibk
+    ikdrx = ikdr
+    ibkx = ibk
 
     ik = isk + ibk + ikdr
-    inoise = 0 # noise*w #TODO fix
+    inoise = 0  # noise*w #TODO fix
 
-    dv = -(ica+ik+inoise+ileak)/Cm
-    dn = (phik-n)/taun
-    df = (phif-f)/taubk
-    dc = -ff*(alpha*ica+kc*c)
-    return (dv, dn, df, dc)
+    dv = -(ica + ik + inoise + ileak) / Cm
+    dn = (phik - n) / taun
+    df = (phif - f) / taubk
+    dc = -ff * (alpha * ica + kc * c)
+    return dv, dn, df, dc
 
 
 def compute_pituitary_gland_df_from_parameters(downsample_rate,
@@ -91,10 +94,10 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
     """
 
     # Initial conditions
-    v=-60.
-    n=0.1
-    f=0.01
-    c=0.1
+    v = -60.
+    n = 0.1
+    f = 0.01
+    c = 0.1
 
     p = (gk, gcal, gsk, gbk, gl, kc)
     w0 = (v, n, f, c)
@@ -102,7 +105,7 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
     relerr = 1.0e-6
 
     t = np.arange(0, 5000, 0.05)
-    #print("Generating gcal={}, gsk={}, gk={}, gbk={}, gl={}, kc={}".format(gcal, gsk, gk, gbk, gl, kc))
+    # print("Generating gcal={}, gsk={}, gk={}, gbk={}, gl={}, kc={}".format(gcal, gsk, gk, gbk, gl, kc))
     wsol = odeint(pituitary_ode, w0, t, args=(p,), atol=abserr, rtol=relerr)
     df = pd.DataFrame(wsol, columns=['v', 'n', 'f', 'c'])
     df['ID'] = sample_id
@@ -113,35 +116,27 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
     df['gl'] = gl
     df['kc'] = kc
     df = df.iloc[::downsample_rate, :]
-    #df = df.drop(columns=['t', 'ikdrx', 'ibkx'])
+    # df = df.drop(columns=['t', 'ikdrx', 'ibkx'])
 
     return df
 
 
+def create_latin_hypercube_sampled_pituitary_df(downsample_rate=100, samples=1000):
+    latin_hypercube_samples = lhs(6, criterion='center', samples=samples)
 
-def create_pituitary_df_distribution(downsample_rate=100, gcal=1.0, gsk=1.5,
-                                     gk=0.8, gbk=.1, gl=0.15, kc=0.06, samples=20,
-                                     random_init=False,
-                                     random_params=True):
+    # gcal, gsk, gk, gbk, gl, kc,
+    range_start = (0.5, 0.5, 0.8, 0., 0.05, 0.03)
+    range_end = (3.5, 3.5, 5.6, 4., 0.35, 0.21)
+
+    parameters = latin_hypercube_samples * range_end - latin_hypercube_samples * range_start
+
     dataframes = []
-    for index in range(samples):
-        gcal_d, gsk_d, gk_d, gbk_d, gl_d, kc_d = gcal, gsk, gk, gbk, gl, kc
-        if random_params:
-            gcal_d = gcal + np.random.normal(scale=.05)
-            gsk_d = gsk + np.random.normal(scale=.05)
-            gk_d = gk + np.random.normal(scale=.05)
-            gbk_d = gbk + np.random.normal(scale=.05)
-            gl_d = gl + np.random.normal(scale=.005)
-            kc_d = kc + np.random.normal(scale=.0025)
+    for sample_id, parameter in enumerate(parameters):
+        gcal, gsk, gk, gbk, gl, kc = parameter
         df = compute_pituitary_gland_df_from_parameters(downsample_rate,
-                             gcal_d,
-                             gsk_d,
-                             gk_d,
-                             gbk_d,
-                             gl_d,
-                             kc_d,
-                             index,
-                             random_init=random_init)
+                                                        gcal, gsk, gk, gbk, gl, kc,
+                                                        sample_id)
         dataframes.append(df)
-    num_ids = index
-    return pd.concat(dataframes), num_ids
+
+    num_samples = len(dataframes)
+    return pd.concat(dataframes), num_samples

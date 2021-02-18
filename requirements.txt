@@ -10,3 +10,4 @@ seaborn
 torch
 h5py
 numba>=0.50.0
+pyDOE2>=1.3.0
