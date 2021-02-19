@@ -108,6 +108,7 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
     # print("Generating gcal={}, gsk={}, gk={}, gbk={}, gl={}, kc={}".format(gcal, gsk, gk, gbk, gl, kc))
     wsol = odeint(pituitary_ode, w0, t, args=(p,), atol=abserr, rtol=relerr)
     df = pd.DataFrame(wsol, columns=['v', 'n', 'f', 'c'])
+    df = df[20000:]
     df['ID'] = sample_id
     df['gcal'] = gcal
     df['gsk'] = gsk
