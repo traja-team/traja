@@ -52,7 +52,7 @@ class Brownian:
         self._random_walk = out
 
     def __call__(self):
-        assert (self._index < self._length, "Random walk is out of samples!")
+        assert self._index < self._length, "Random walk is out of samples!"
 
         sample = self._random_walk[self._index]
         self._index += 1
