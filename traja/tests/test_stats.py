@@ -8,7 +8,7 @@ def test_brownian_walk_generates_correct_number_of_samples():
 
 
 def test_brownian_motion_with_drift_approximately_sums_to_the_drift():
-    length = 10000000
+    length = 1000000
     mean_drift = 0.1
     drift = 0
 
@@ -19,11 +19,11 @@ def test_brownian_motion_with_drift_approximately_sums_to_the_drift():
 
     drift /= length
 
-    np.testing.assert_approx_equal(drift, mean_drift, significant=5)
+    np.testing.assert_approx_equal(drift, mean_drift, significant=2)
 
 
 def test_brownians_with_different_variances_drift_approximately_equally():
-    length = 10000000
+    length = 1000000
     mean_drift = -0.9
     variance1 = 0.8
     variance2 = 3.5
@@ -41,7 +41,7 @@ def test_brownians_with_different_variances_drift_approximately_equally():
     drift1 /= length
     drift2 /= length
 
-    np.testing.assert_approx_equal(drift1, drift2, significant=3)
+    np.testing.assert_approx_equal(drift1, drift2, significant=2)
 
 
 def test_brownians_with_different_time_steps_walk_approximately_equally():
@@ -52,7 +52,7 @@ def test_brownians_with_different_time_steps_walk_approximately_equally():
     dt1 = 0.1
     dt2 = dt1 * time_step_ratio
 
-    length2 = 1000000
+    length2 = 200000
     length1 = length2 * time_step_ratio
 
     drift1 = 0
@@ -70,4 +70,4 @@ def test_brownians_with_different_time_steps_walk_approximately_equally():
     drift1 /= length1
     drift2 /= length2
 
-    np.testing.assert_approx_equal(drift1, drift2, significant=3)
+    np.testing.assert_approx_equal(drift1, drift2, significant=2)
