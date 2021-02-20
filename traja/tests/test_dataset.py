@@ -665,16 +665,7 @@ def test_sequential_data_loader_indices_are_sequential():
 
 
 def test_pituitary_gland_latin_hypercube_generator_gives_correct_number_of_samples():
-    num_samples = 20
+    num_samples = 30
     _, num_samples_out = create_latin_hypercube_sampled_pituitary_df(samples=num_samples)
-
-    assert num_samples == num_samples_out, "Hypercube sampler returned the wrong number of samples!"
-
-
-def test_pituitary_gland_latin_hypercube_generator_without_jit_gives_correct_number_of_samples():
-    # This function is predominantly to get test coverage of pituitary_ode(). Numba-JITed code
-    # is not 'covered' by pytest.
-    num_samples = 2
-    _, num_samples_out = create_latin_hypercube_sampled_pituitary_df(samples=num_samples, jit_compile=False)
 
     assert num_samples == num_samples_out, "Hypercube sampler returned the wrong number of samples!"
