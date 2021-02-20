@@ -10,6 +10,7 @@ from pyDOE2 import lhs
 def pituitary_ode(w, t, p):
     """
     Defines the differential equations for the pituirary gland system.
+    To be used with scipy.integrate.odeint (this is the rhs equation).
 
     Arguments:
         w :  vector of the state variables:
