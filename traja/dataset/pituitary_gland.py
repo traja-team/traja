@@ -69,7 +69,8 @@ def pituitary_ode(w, t, p):
 
 def compute_pituitary_gland_df_from_parameters(downsample_rate,
                                                gcal, gsk, gk, gbk, gl, kc,
-                                               sample_id):
+                                               sample_id,
+                                               trim_start=20000):
     """
     Computes a Traja dataframe from the pituitary gland simulation.
 
@@ -91,6 +92,10 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
         gl              : The maximum leak conductance
         kc              :
         sample_id       : The ID of this particular sample. Must be unique
+        trim_start      : How much of the start of the sample to trim.
+                          The start of an activation (before converging to a limit cycle
+                          or fixed point) is usually not interesting from a biological
+                          perspective, so the default is to remove it.
     """
 
     # Initial conditions
@@ -108,7 +113,7 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
     # print("Generating gcal={}, gsk={}, gk={}, gbk={}, gl={}, kc={}".format(gcal, gsk, gk, gbk, gl, kc))
     wsol = odeint(pituitary_ode, w0, t, args=(p,), atol=abserr, rtol=relerr)
     df = pd.DataFrame(wsol, columns=['v', 'n', 'f', 'c'])
-    df = df[20000:]
+    df = df[trim_start:]
     df['ID'] = sample_id
     df['gcal'] = gcal
     df['gsk'] = gsk
