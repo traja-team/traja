@@ -6,6 +6,8 @@ from scipy.integrate import odeint
 from pyDOE2 import lhs
 
 
+# PyTest will not compute coverage correctly for @jit-compiled code.
+# Thus we must explicitly suppress the coverage check.
 @jit
 def pituitary_ode(w, t, p):  # pragma: no cover
     """
