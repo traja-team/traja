@@ -8,7 +8,9 @@ from pyDOE2 import lhs
 
 @jit
 def pituitary_ode_jit(w, t, p):
-    return pituitary_ode(w, t, p)
+    # This function will not be covered by pytest because numba
+    # compiles it to C.
+    return pituitary_ode(w, t, p)  # pragma: no cover
 
 
 def pituitary_ode(w, t, p):
