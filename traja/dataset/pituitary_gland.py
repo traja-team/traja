@@ -7,13 +7,7 @@ from pyDOE2 import lhs
 
 
 @jit
-def pituitary_ode_jit(w, t, p):
-    # This function will not be covered by pytest because numba
-    # compiles it to C.
-    return pituitary_ode(w, t, p)  # pragma: no cover
-
-
-def pituitary_ode(w, t, p):
+def pituitary_ode(w, t, p):  # pragma: no cover
     """
     Defines the differential equations for the pituirary gland system.
     To be used with scipy.integrate.odeint (this is the rhs equation).
@@ -77,8 +71,7 @@ def pituitary_ode(w, t, p):
 def compute_pituitary_gland_df_from_parameters(downsample_rate,
                                                gcal, gsk, gk, gbk, gl, kc,
                                                sample_id,
-                                               trim_start=20000,
-                                               jit_compile=True):
+                                               trim_start=20000):
     """
     Computes a Traja dataframe from the pituitary gland simulation.
 
@@ -104,8 +97,6 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
                           The start of an activation (before converging to a limit cycle
                           or fixed point) is usually not interesting from a biological
                           perspective, so the default is to remove it.
-        jit_compile     : Whether to use the numba-powered just in time compiler (much
-                          faster, but the numba code cannot be debugged).
     """
 
     # Initial conditions
@@ -121,10 +112,7 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
 
     t = np.arange(0, 5000, 0.05)
     # print("Generating gcal={}, gsk={}, gk={}, gbk={}, gl={}, kc={}".format(gcal, gsk, gk, gbk, gl, kc))
-    if jit_compile:
-        wsol = odeint(pituitary_ode_jit, w0, t, args=(p,), atol=abserr, rtol=relerr)
-    else:
-        wsol = odeint(pituitary_ode, w0, t, args=(p,), atol=abserr, rtol=relerr)
+    wsol = odeint(pituitary_ode, w0, t, args=(p,), atol=abserr, rtol=relerr)
     df = pd.DataFrame(wsol, columns=['v', 'n', 'f', 'c'])
     df = df[trim_start:]
     df['ID'] = sample_id
@@ -140,7 +128,7 @@ def compute_pituitary_gland_df_from_parameters(downsample_rate,
     return df
 
 
-def create_latin_hypercube_sampled_pituitary_df(downsample_rate=100, samples=1000, jit_compile=True):
+def create_latin_hypercube_sampled_pituitary_df(downsample_rate=100, samples=1000):
     latin_hypercube_samples = lhs(6, criterion='center', samples=samples)
 
     # gcal, gsk, gk, gbk, gl, kc,
@@ -154,8 +142,7 @@ def create_latin_hypercube_sampled_pituitary_df(downsample_rate=100, samples=100
         gcal, gsk, gk, gbk, gl, kc = parameter
         df = compute_pituitary_gland_df_from_parameters(downsample_rate,
                                                         gcal, gsk, gk, gbk, gl, kc,
-                                                        sample_id,
-                                                        jit_compile=jit_compile)
+                                                        sample_id)
         dataframes.append(df)
 
     num_samples = len(dataframes)
