@@ -1,5 +1,6 @@
 import torch
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class Criterion:
     """Implements the loss functions of Autoencoders, Variational Autoencoders and LSTM models
@@ -51,7 +52,8 @@ class Criterion:
         :return: Cross entropy loss
         """
 
-        # _, predicted = torch.max(predicted.data, 1)
+        predicted = predicted.to(device)
+        target = target.to(device)
         loss = self.crossentropy_loss(predicted, target.view(-1))
         return loss
 
