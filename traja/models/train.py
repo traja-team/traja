@@ -11,7 +11,6 @@ class HybridTrainer(object):
     """
     Wrapper for training and testing the LSTM model
     Args:
-        model_type: Type of model should be 'LSTM'
         optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
                                                                                 'AdamW', 'SparseAdam', 'RMSprop', '
                                                                                 Rprop', 'LBFGS', 'ASGD', 'Adamax']
