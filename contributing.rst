@@ -42,6 +42,15 @@ Traja welcomes contributions! To get started, pick up any issue
 labeled with `good first issue`! Alternatively you can read some
 background material or try a tutorial.
 
+Testing and code quality
+------------------------
+
+Since Traja is a library, we strive for sensible tests achieving a
+high level of code coverage. Future commits are required to maintain
+or improve code quality, test coverage. To aid in this, Travis runs
+automated tests on each pull request. Additionally, we run codecov
+on PRs.
+
 Background material
 -------------------
 
