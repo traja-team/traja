@@ -1,6 +1,10 @@
 Contributing to Traja
 =====================
 
+Traja is a research library. Functionality must therefore be both
+cutting-edge and reliable. Traja is part of a wider project to
+increase collaboration in research, through the adoption of
+open-source contribution models. 
 
 Current status
 --------------
