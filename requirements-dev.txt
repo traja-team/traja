@@ -3,7 +3,7 @@ numpy==1.18.5
 matplotlib
 shapely
 psutil
-scipy
+scipy>=1.4.1
 scikit-learn
 fastdtw
 plotly
@@ -12,3 +12,5 @@ seaborn
 torch
 pytest==6.2.2
 h5py
+numba>=0.50.0
+pyDOE2>=1.3.0
