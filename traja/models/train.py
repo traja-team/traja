@@ -260,10 +260,11 @@ class HybridTrainer(object):
                     data_loader_to_evaluate = validation_loader
                     evaluate_for_this_epoch = True
                     current_set = "Validation"
-            if epoch % test_every == test_every - 1 and epoch != 0:
-                data_loader_to_evaluate = test_loader
-                evaluate_for_this_epoch = True
-                current_set = "Test"
+            if test_every is not None:
+                if epoch % test_every == test_every - 1 and epoch != 0:
+                    data_loader_to_evaluate = test_loader
+                    evaluate_for_this_epoch = True
+                    current_set = "Test"
 
             if evaluate_for_this_epoch:
                 with torch.no_grad():
