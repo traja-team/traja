@@ -11,7 +11,6 @@ class HybridTrainer(object):
     """
     Wrapper for training and testing the LSTM model
     Args:
-        model_type: Type of model should be "LSTM"
         optimizer_type: Type of optimizer to use for training.Should be from ['Adam', 'Adadelta', 'Adagrad',
                                                                                 'AdamW', 'SparseAdam', 'RMSprop', '
                                                                                 Rprop', 'LBFGS', 'ASGD', 'Adamax']
@@ -132,7 +131,7 @@ class HybridTrainer(object):
         return f"Training model type {self.model_type}"
 
     def fit(
-        self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50
+            self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50, test_every=10, validate_every=None
     ):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
@@ -146,6 +145,9 @@ class HybridTrainer(object):
         model_save_path: Directory path to save the model
         training_mode: Type of training ('forecasting', 'classification')
         epochs: Number of epochs to train
+        test_every: Run evaluation on the test set in multiple of 'test_every' epochs.
+        validate_every: Run evaluation on the validation set in multiple of 'validate_every' epochs,
+                if evaluation on test-set is not required for current epoch.
         """
 
         assert model_save_path is not None, f"Model path {model_save_path} unknown"
@@ -159,12 +161,16 @@ class HybridTrainer(object):
 
         train_loader = dataloaders["train_loader"]
         test_loader = dataloaders["test_loader"]
+        if 'validation_loader' in dataloaders:
+            validation_loader = dataloaders['validation_loader']
+        else:
+            validate_every = None
 
         # Training
         for epoch in range(epochs + 1):
-            test_loss_forecasting = 0
-            test_loss_classification = 0
-            test_loss_regression = 0
+            eval_loss_forecasting = 0
+            eval_loss_classification = 0
+            eval_loss_regression = 0
             if epoch > 0:  # Initial step is to test and set LR schduler
                 # Training
                 self.model.train()
@@ -245,15 +251,29 @@ class HybridTrainer(object):
                     )
                 )
 
-            # Testing
-            if epoch % 10 == 9 and epoch != 0:
+            # Testing & Validation
+            evaluate_for_this_epoch = False
+            data_loader_to_evaluate = test_loader
+            current_set = "Test"
+            if validate_every is not None:
+                if epoch % validate_every == validate_every - 1 and epoch != 0:
+                    data_loader_to_evaluate = validation_loader
+                    evaluate_for_this_epoch = True
+                    current_set = "Validation"
+            if test_every is not None:
+                if epoch % test_every == test_every - 1 and epoch != 0:
+                    data_loader_to_evaluate = test_loader
+                    evaluate_for_this_epoch = True
+                    current_set = "Test"
+
+            if evaluate_for_this_epoch:
                 with torch.no_grad():
                     if self.classify:
                         total = 0.0
                         correct = 0.0
                     self.model.eval()
                     for idx, (data, target, ids, parameters, classes) in enumerate(
-                        test_loader
+                            data_loader_to_evaluate
                     ):
                         if type(ids) == list:
                             ids = ids[0]
@@ -268,7 +288,7 @@ class HybridTrainer(object):
                             out = self.model(
                                 data, training=False, classify=False, latent=False
                             )
-                            test_loss_forecasting += (
+                            eval_loss_forecasting += (
                                 Criterion()
                                 .forecasting_criterion(
                                     out, target, loss_type=self.loss_type
@@ -280,7 +300,7 @@ class HybridTrainer(object):
                             decoder_out, latent_out, mu, logvar = self.model(
                                 data, training=False, classify=False, latent=True
                             )
-                            test_loss_forecasting += Criterion().forecasting_criterion(
+                            eval_loss_forecasting += Criterion().forecasting_criterion(
                                 decoder_out,
                                 target,
                                 mu=mu,
@@ -295,7 +315,7 @@ class HybridTrainer(object):
                                 data, training=False, classify=True, latent=False
                             )
 
-                            test_loss_classification += (
+                            eval_loss_classification += (
                                 Criterion()
                                 .classifier_criterion(classifier_out, classes)
                                 .item()
@@ -311,37 +331,37 @@ class HybridTrainer(object):
                             regressor_out = self.model(
                                 data, training=False, regress=True, latent=False
                             )
-                            test_loss_regression += Criterion().regressor_criterion(
+                            eval_loss_regression += Criterion().regressor_criterion(
                                 regressor_out, parameters
                             )
 
-                test_loss_forecasting /= len(test_loader.dataset)
+                eval_loss_forecasting /= len(data_loader_to_evaluate.dataset)
                 print(
-                    f"====> Mean test set forecasting loss: {test_loss_forecasting:.4f}"
+                    f"====> Mean {current_set} set forecasting loss: {eval_loss_forecasting:.4f}"
                 )
                 if self.classify:
                     accuracy = correct / total
-                    if test_loss_classification != 0:
-                        test_loss_classification /= len(test_loader.dataset)
+                    if eval_loss_classification != 0:
+                        eval_loss_classification /= len(data_loader_to_evaluate.dataset)
                         print(
-                            f"====> Mean test set classifier loss: {test_loss_classification:.4f}; accuracy: {accuracy:.2f}"
+                            f"====> Mean {current_set} set classifier loss: {eval_loss_classification:.4f}; accuracy: {accuracy:.2f}"
                         )
 
                 if self.regress:
                     print(
-                        f"====> Mean test set regressor loss: {test_loss_regression:.4f}"
+                        f"====> Mean {current_set} set regressor loss: {eval_loss_regression:.4f}"
                     )
 
             # Scheduler metric is test set loss
-            if training_mode == "forecasting":
+            if current_set == "Test" and training_mode == "forecasting":
                 for scheduler in self.forecasting_schedulers.values():
-                    scheduler.step(test_loss_forecasting)
-            elif training_mode == "classification":
+                    scheduler.step(eval_loss_forecasting)
+            elif current_set == "Test" and training_mode == "classification":
                 for scheduler in self.classification_schedulers.values():
-                    scheduler.step(test_loss_classification)
-            elif training_mode == "regression":
+                    scheduler.step(eval_loss_classification)
+            elif current_set == "Test" and training_mode == "regression":
                 for scheduler in self.regression_schedulers.values():
-                    scheduler.step(test_loss_regression)
+                    scheduler.step(eval_loss_regression)
 
         # Save the model at target path
         utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)

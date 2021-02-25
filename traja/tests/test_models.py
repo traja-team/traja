@@ -59,7 +59,7 @@ def test_aevae_jaguar():
     trainer = HybridTrainer(model=model, optimizer_type="Adam", loss_type="huber")
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode="forecasting")
+    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode="forecasting", validate_every=5, test_every=10)
 
     scaler = data_loaders["train_loader"].dataset.scaler
 
@@ -125,7 +125,9 @@ def test_ae_jaguar():
     trainer = HybridTrainer(model=model, optimizer_type="Adam", loss_type="huber")
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode="forecasting")
+    trainer.fit(data_loaders, model_save_path, epochs=5, training_mode="forecasting", validate_every=2, test_every=5)
+    trainer.fit(data_loaders, model_save_path, epochs=5, training_mode="forecasting", validate_every=None, test_every=5)
+    trainer.fit(data_loaders, model_save_path, epochs=5, training_mode="forecasting", validate_every=2, test_every=None)
 
     trainer.validate(data_loaders["sequential_validation_loader"])
 
@@ -176,7 +178,7 @@ def test_lstm_jaguar():
     print(f'Loss pre training: {forecasting_loss_pre_training}')
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="forecasting")
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="forecasting", validate_every=1, test_every=2)
 
     forecasting_loss_post_training, _, _ = trainer.validate(data_loaders['train_loader'])
 
@@ -254,8 +256,8 @@ def test_aevae_regression_network_converges():
     print(f'Loss pre training: {regression_lost_pre_training}')
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="forecasting")
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="regression")
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="forecasting", validate_every=1, test_every=2)
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="regression", validate_every=1, test_every=2)
 
     _, regression_lost_post_training, _ = trainer.validate(data_loaders['train_loader'])
 
@@ -329,8 +331,8 @@ def test_ae_regression_network_converges():
     print(f'Loss pre training: {regression_lost_pre_training}')
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting')
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='regression')
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting', validate_every=1, test_every=2)
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='regression', validate_every=1, test_every=2)
 
     _, regression_lost_post_training, _ = trainer.validate(data_loaders['train_loader'])
 
@@ -402,8 +404,8 @@ def test_vae_regression_network_converges():
     print(f'Loss pre training: {regression_lost_pre_training}')
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="forecasting")
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="regression")
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="forecasting", validate_every=1, test_every=2)
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="regression", validate_every=1, test_every=2)
 
     _, regression_lost_post_training, _ = trainer.validate(data_loaders['train_loader'])
 
@@ -476,8 +478,8 @@ def test_ae_classification_network_converges():
     print(f'Loss pre training: {classification_loss_pre_training}')
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting')
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='classification')
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='forecasting', validate_every=1, test_every=2)
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode='classification', validate_every=1, test_every=2)
 
     _, _, classification_loss_post_training = trainer.validate(data_loaders['train_loader'])
 
@@ -549,8 +551,8 @@ def test_vae_classification_network_converges():
     print(f'Loss pre training: {classification_loss_pre_training}')
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="forecasting")
-    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="classification")
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="forecasting", validate_every=1, test_every=2)
+    trainer.fit(data_loaders, model_save_path, epochs=2, training_mode="classification", validate_every=1, test_every=2)
 
     _, _, classification_loss_post_training = trainer.validate(data_loaders['train_loader'])
 
