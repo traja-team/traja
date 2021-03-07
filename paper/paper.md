@@ -55,7 +55,7 @@ The data used in this project includes animal trajectory data provided by Tecnip
 
 ## Design Principles
 
-Traja targets Python because of its popularity with data scientists.The library leverages the powerful pandas library, while adding methods specically for trajectory analysis.
+Traja targets Python because of its popularity with data scientists.The library leverages the powerful pandas library, while adding methods specifically for trajectory analysis.
 
 When importing `traja`, the traja namespace registers itself within the pandas dataframes namespace via `df.traja` (see Section [\[accessor\]](#accessor){reference-type="ref" reference="accessor"}).
 
@@ -432,7 +432,7 @@ Traja implements neural networks by extending the widely used open source machin
 Because RNNs work with time series, the trajectories require special handling. The `traja.dataset.MultiModalDataLoader` efficiently groups subsequent samples and into series and splits these series into training and test data. It represents a Python iterable over the dataset and extends the PyTorch `DataLoader` class, with support for
 • random, weighted sampling,
 • data scaling,
-• data shuing,
+• data shuffling,
 • train/validation/test split.
 
 `MultiModalDataLoader` accepts several important conguration parameters and
