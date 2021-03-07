@@ -476,7 +476,7 @@ In comparison to mean-squared error loss, Huber loss is less sensitive to outlie
 ### Recurrent Autoencoder Networks
 Traja can also train autoencoders to either predict the future position of a track or classify the track into a number of categories. Autoencoders embed the time series into a time-invariant latent space, allowing representation of each trajectory or sub-trajectory as a vector (Figure 15). A class of well-separated trajectories would then be restricted
 
-![Example of how autoencoders compress data such as an image to an embedding vector. Source: Author’s Towards Data Science post [@137].](./images/trip_grid_algo.png){width="\textwidth"} 
+![Example of how autoencoders compress data such as an image to an embedding vector. Source: Author’s Towards Data Science post [@shenk_towards_2019].](./images/trip_grid_algo.png){width="\textwidth"} 
 
 Listing 6: High-level API for training neural networks for time-series data, including autoencoders, variational autoencoder, and LSTM:
 ```
