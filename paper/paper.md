@@ -12,7 +12,7 @@ authors:
   - name: Wolf Byttner
     affiliation: 3
     orcid: 0000-0002-9525-9730
-  - name: Saran Subramaniyan
+  - name: Saran Nambusubramaniyan
     affiliation: 1
     orcid: 0000-0002-7314-0261
 affiliations:
