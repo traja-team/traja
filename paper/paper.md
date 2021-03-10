@@ -49,7 +49,7 @@ A comprehensive source of documentation is provided on the home page
 
 ## Statement of Need
 
-The data used in this project includes animal trajectory data provided by Tecniplast S.p.A.[^1], manufacturer of laboratory animal equipment based in Varese, Italy, and Radboud University, Nijmegen, Netherlands. Tecniplast provided the mouse locomotion data collected with their Digital Ventilated Cages (DVC). The extracted coordinates of the mice requires further analysis with external tools. Due to lack of access to equipment, mouse home cage data is rather difficult to collect and analyze, thus few studies have been done onhomecage data. Furthermore, researchers who are interested in developing novel algorithms must implement from scratch much of the computational and algorithmic infrastructure for analysis and visualization. By packaging a library that is particularly useful for animal locomotion analysis, future researchers can benefit from access to a high-level interface and clearly documented methods for their work.
+The data used in this project includes animal trajectory data provided by [http://www.tecniplast.it](Tecniplast S.p.A.), manufacturer of laboratory animal equipment based in Varese, Italy, and Radboud University, Nijmegen, Netherlands. Tecniplast provided the mouse locomotion data collected with their Digital Ventilated Cages (DVC). The extracted coordinates of the mice requires further analysis with external tools. Due to lack of access to equipment, mouse home cage data is rather difficult to collect and analyze, thus few studies have been done onhomecage data. Furthermore, researchers who are interested in developing novel algorithms must implement from scratch much of the computational and algorithmic infrastructure for analysis and visualization. By packaging a library that is particularly useful for animal locomotion analysis, future researchers can benefit from access to a high-level interface and clearly documented methods for their work.
 
 [^1]: [http://www.tecniplast.it](http://www.tecniplast.it) 
 
@@ -61,7 +61,7 @@ When importing `traja`, the traja namespace registers itself within the pandas d
 
 This lets traja work directly with panda's internal objects:
 
-```
+```python
  >>> df = pd.DataFrame({'x':[0,1,2], 'y':[2,3,4]})
  >>> df.traja.center
  (1.0, 3.0)
@@ -72,23 +72,21 @@ Data, e.g., x and y coordinates, are stored as one-dimensional labelled arrays a
 
 ## Mouse Locomotion Data
 
-The data samples presented throughout this paper[^2] are in rectangular (x, y) Cartesian coordinates, reflecting the mouse home-cage (25x12.5 cm) dimensions. Analytical methods relevant to 2D rectilinear analysis of highly constrained spatial coordinates are thus primarily considered.
+The data samples presented here[^1] are in rectangular ($x$, $y$) Cartesian coordinates, reflecting the mouse home-cage (25x12.5 cm) dimensions. Analytical methods relevant to 2D rectilinear analysis of highly constrained spatial coordinates are thus primarily considered.
 
 ![Traja package diagram](./images/diagram.jpg){width=80%} 
 
 High volume data like animal trajectories has an increased tendency to be missing data due to data collection issues or noise. Filling in the missing data values, referred to as _data imputation_, is achieved with a wide variety of statistical or learning-based methods. As previously observed, data science projects typically require at least _95%_ of the time to be spent on cleaning, pre-processing and managing the data [@bosch_engineering_2021]. Therefore, several methods relevant to preprocessing animal data are demonstrated throuhghout the following sections.
 
-[^2]: This dataset has been collected for other studies of our laboratory [@shenk_automated_2020].
+[^1]: This dataset has been collected for other studies of our laboratory [@shenk_automated_2020].
 
 ## Overview of the Library
 
 The software is structured into several modules. This section surveys the structure of the codebase and elaborates on implementation strategies, but does not constitute a full documentation. For a detailed API reference, the reader is referred to the HTML documentation[^3]. The import classes are the `TrajaDataFrame` class located in `frame.py` and `TrajaAccessor` located in `accessor.py`. The root package diagram is shown in Figure 1.
 
-[^3]: [https://traja.readthedocs.io](https://traja.readthedocs.io)
-
 A high-level accessor (`TrajaAccessor`) provides access to data stored within the pandas dataframe, as well as methods within `trajectory` and `plotting` modules:
 
-``` {.python language="Python"}
+```python
 import pandas as pd
 ...
 @pd.api.extensions.register_dataframe_accessor("traja")
@@ -104,7 +102,7 @@ class TrajaAccessor(object):
 
 Additionally `TrajaDataFrame` is a subclass of the pandas `DataFrame`, allowing instantiation of a `TrajaDataFrame` directly from an array of x,y coordinates:
 
-``` {language="python"}
+```python
 import numpy as np
 xy = np.array([[0,1,2],[1,2,3]])
 df = traja.TrajaDataFrame.from_xy(xy)
@@ -167,21 +165,21 @@ __Table 2 `traja.plotting` functionalities__
   plot_{flow,quiver,stream,surface}           |Plot flow between grid coordinates
   plot_periodogram            |Plot power spectrum (Figure 8)
   plot_transition_graph     | Plot transition graph between grid coordinates
-  plot_transition_matrix    | Plot transition matrix (paragraph 2.1.11)
+  plot_transition_matrix    | Plot transition matrix
   polar_bar                  |Plot polar bar chart with step lengths and turn angles
-  plot_prediction                | Plot and visualize neural network prediction of trajectory (subsubsection 2.1.11)
+  plot_prediction                | Plot and visualize neural network prediction of trajectory
   trip_grid                   |Plot trip grid as heatmap (Figure 3)
 
 
 ### The `rutils` module
 
-The `rutils` module[^4] contains all methods relevant to interfacing R packages. It includes interfaces for:
+The `rutils` module[^2] contains all methods relevant to interfacing R packages. It includes interfaces for:
 -   moveHMM
 -   adehabitat
 -   trajr
 as well as respective plotting methods.
 
-[^4]: rutils available in version 0.2 - 0.2.3 and is removed in version 0.2.4 
+[^2]: rutils available in version 0.2 - 0.2.3 and is removed in version 0.2.4 
 
 __Table 3 R packages with interfaces in Traja__
 
@@ -193,8 +191,7 @@ __Table 3 R packages with interfaces in Traja__
 
 ## Documentation
 
-The entire codebase is liberally documented using the Sphinx documentation processor[^5]. The documentation contains further documentation with a detailed user guide and installation instructions. At the time of writing, the HTML documentation and API reference is hosted at <https://traja.readthedocs.io>.
-[^5]: [http://www.sphinx-doc.org](http://www.sphinx-doc.org)
+The entire codebase is liberally documented using the [http://www.sphinx-doc.org](Sphinx) documentation processor[^3]. The documentation contains further documentation with a detailed user guide and installation instructions. At the time of writing, the HTML documentation and API reference is hosted at <https://traja.readthedocs.io>.
 
 ## Spatial Trajectory
 
@@ -219,22 +216,20 @@ $$\begin{bmatrix} x'//y' \end{bmatrix} = \begin{bmatrix} cos\theta & i sin\theta
 
 This is achieved with a clockwise angle of 20 degrees, for example, by
 
-```
+```python
 df.traja.rotate(angle=-20)
 ```
 and angle $\theta$ where $\theta \in R : \theta \in [-180,180]$.
 
 ### Trip Grid 
-One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [\[fig:tripgrid\]](#fig:tripgrid){reference-type="ref" reference="fig:tripgrid"}.
+One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [2](#fig:tripgrid){reference-type="ref" reference="fig:tripgrid"}.
 
 ![Trip grid image generation from mouse
 trajectory.](./images/trip_grid_algo.png){width=80%} 
 
-[\[fig:tripgrid_gen\]]{#fig:tripgrid_gen label="fig:tripgrid_gen"}
+Allowing computation on discrete variables rather than continuous ones has several advantages stemming from the ability to store trajectories in a more memory efficient form [^3]. The advantage is that computation is generally faster, more data can fit in memory in the case of complex models, and item noise can be reduced.
 
-Allowing computation on discrete variables rather than continuous ones has several advantages stemming from the ability to store trajectories in a more memory efficient form [^6]. The advantage is that computation is generally faster, more data can fit in memory in the case of complex models, and item noise can be reduced.
-
-[^6]: In this experiment, for example, data can be reduced from single-precision floating point (32 bits) to byteint (8 bits) format.
+[^3]: In this experiment, for example, data can be reduced from single-precision floating point (32 bits) to byteint (8 bits) format.
 
 Creation of an $M * N$ grid allows mapping trajectory $T_k$ onto uniform
 grid cells. Generalizing the nomenclature of [@wang_modeling_2017] to rectangular grids, $C_{mn}(1\leq{m}\leq M; 1\leq{n}\leq{N})$ denotes the cell in row $m$ and column $n$ of the grid. Each point $P_{ki}$ is assigned to a cell $C(m,n)$. The result is a two-dimensional image $M*N$ image $I_k$, where the value of pixel $I_k(m,n)(1\leq{m,n}\leq{M})$ indicates the relative number of points assigned to cell $C_{mn}$. Partionining of spatial position into separate grid cells is typically preceded by generation of hidden Markov models [@jeung_mining_2007] (see below).
@@ -277,11 +272,11 @@ Smoothing can also be achieved with traja using Savitzky-Golay filtering with `s
 
 Trajectories can be resampled by time or by step length. This can be useful for aligning trajectories from various data sources and sampling rates or reducing the number of data points to improve computational efficiency. Care must be taken to select a time interval which maintains information on the significant behavior. If the minimal time interval observed is selected for the points, calculations will be computationally intractable for some systems. If too large of an interval is selected, we will fail to capture changes relevant to the target behavior in the data.
 
-Resampling by time is performed with `resample_time`. Rediscretizing by step length is performed with `rediscretize` (Figure [\[fig:step\]](#fig:step){reference-type="ref" reference="fig:step"}).
+Resampling by time is performed with `resample_time`. Rediscretizing by step length is performed with `rediscretize` (Figure [5]](#fig:step){reference-type="ref" reference="fig:step"}).
 
 ![Resampling x and y values over time by step length is performed with `rediscretize()`.[]{label="fig:step"}](./images/sample_rate.png){#fig:step width=80%}
 
-For example, Fortasyn dataset [@shenk_automated_2020] which is demonstrated in this paper was sampled at 4 Hz and converted to single-precision floating point data. Pandas dataframes store this data in 4 bytes, thus there are approximately 4,147,200[^7] bytes required to store data for x and y dimensions plus an index reference for a single day. In the case of [@shenk_automated_2020] were 24 mice observed over 35 days. This translates to 3.4 GB ($10^9$) to 29 TB ($10^{12}$) of storage capacity respectively, for the uncompressed datasets prior to feature engineering. Thus resampling can be a useful way to reduce the memory footprint for memory constrained processes that have to fit into a standard laptop with 8 GB memory space. A demonstration of how resampling can reduce precision but still be useful for trajectory data analysis is provided in Figure 5, applied to a sample from the Fortasyn experiment [@shenk_automated_2020]. For identifying broad effects such as cage crossings, for example, data can be downsampled to a lower frequency such as 0.1 Hz, reducing the memory footprint by a factor of 40 (4 Hz/0.1 Hz) and providing significant speedups for processing.
+For example, Fortasyn dataset [@shenk_automated_2020] which is demonstrated in this paper was sampled at 4 Hz and converted to single-precision floating point data. Pandas dataframes store this data in 4 bytes, thus there are approximately 4,147,200[^6] bytes required to store data for x and y dimensions plus an index reference for a single day. In the case of [@shenk_automated_2020] were 24 mice observed over 35 days. This translates to 3.4 GB ($10^9$) to 29 TB ($10^{12}$) of storage capacity respectively, for the uncompressed datasets prior to feature engineering. Thus resampling can be a useful way to reduce the memory footprint for memory constrained processes that have to fit into a standard laptop with 8 GB memory space. A demonstration of how resampling can reduce precision but still be useful for trajectory data analysis is provided in Figure 5, applied to a sample from the Fortasyn experiment [@shenk_automated_2020]. For identifying broad effects such as cage crossings, for example, data can be downsampled to a lower frequency such as 0.1 Hz, reducing the memory footprint by a factor of 40 (4 Hz/0.1 Hz) and providing significant speedups for processing.
 
 ## Movement Analysis
 ### Distance traveled 
@@ -296,7 +291,7 @@ $$d(t) = \sqrt{(p_x(t) -p_x(t-1))^2 + (p_y(t) - p_y(t-1))^2}  $$
 
 is the Euclidean distance between two positions in adjacent time samples.
 
-[^7]: 4 x 4 Hz x 60 seconds x 60 minutes x 24 hours x 3 features (x,y, and time)
+[^6]: 4 x 4 Hz x 60 seconds x 60 minutes x 24 hours x 3 features (x,y, and time)
 
 ![Velocity histogram from one day of mouse activity.[]{label="fig:velocity-hist"}](./images/velocitylog.png){#fig:velocity-hist width=70%}
 
@@ -325,12 +320,12 @@ Periodic behaviors are a consequence of the circadian rhythm aswell as observing
 
 ### Autocorrelation 
 Autocorrelation is the correlation of a signal with a delayed copy of itself as a function of the decay. Basically, it is similarity of observations as a function of the time lag between them. 
-It is computed with autocorrelation and plotted with `plot_autocorrelation`, as in Figure 7.
+It is computed with autocorrelation and plotted with `plot_autocorrelation`, as in Figure [7](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
 
 ![Autocorrelation of the y-dimension reveals daily (1440 minutes) periodic behavior[]{label="fig:autocorrelation"}](./images/autocorrelation_E1.png){#fig:autocorrelation width=80%}
 
 ### Power Spectrum 
-Power spectrum of a time-series signal can be estimated with `plot_periodogram` (Figure 8). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
+Power spectrum of a time-series signal can be estimated with `plot_periodogram` (Figure [8](#fig:powerspectrum){reference-type="ref" reference="fig:powerspectrum"}). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
 
 ![Power Spectral Density. One day of activity reveals fairly smooth power spectral density.[]{label="fig:powerspectrum"}](./images/spectrum.png){#fig:powerspectrum width=70%}
 
@@ -368,9 +363,9 @@ Clustering of trajectories is achieved with by first extracting displacements wi
 ```
 traja.calc_displacements()
 ```
-and wrapping seaborn’s `clustermap`[^8] object:
+and wrapping seaborn’s `clustermap`[^4] object:
 
-[^8]: [https://seaborn.pydata.org/generated/seaborn.clustermap.html](https://seaborn.pydata.org/generated/seaborn.clustermap.html)
+[^4]: [https://seaborn.pydata.org/generated/seaborn.clustermap.html](https://seaborn.pydata.org/generated/seaborn.clustermap.html)
 
 ![K-Means clustering on the results of the PCA shown above reveals a high accuracy
 of classification, with a few errors. Cluster labels are generated by
@@ -470,8 +465,8 @@ $$L_{\delta} (a) = \begin{cases}
  \delta (|a| - \frac{1}{2}\delta), & \text{otherwise.}
 \end{cases}$$
 
-In comparison to mean-squared error loss, Huber loss is less sensitive to outliers in data: it is quadratic for small values of a, and linear for large values. It extends the PyTorch SmoothL1Loss class, where the d parameter is set to 1[^9]. Acommon optimization algorithm is ADAM and is Traja’s default, but several others are provided as well. Although training with only a CPU is possible, a GPU can provide a $40-100x$ speedup [@Arpteg2018SoftwareEC].
-[^9]: [https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html](https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html)
+In comparison to mean-squared error loss, Huber loss is less sensitive to outliers in data: it is quadratic for small values of a, and linear for large values. It extends the PyTorch SmoothL1Loss class, where the d parameter is set to 1[^5]. Acommon optimization algorithm is ADAM and is Traja’s default, but several others are provided as well. Although training with only a CPU is possible, a GPU can provide a $40-100x$ speedup [@Arpteg2018SoftwareEC].
+[^5]: [https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html](https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html)
 
 ### Recurrent Autoencoder Networks
 Traja can also train autoencoders to either predict the future position of a track or classify the track into a number of categories. Autoencoders embed the time series into a time-invariant latent space, allowing representation of each trajectory or sub-trajectory as a vector (Figure 15). A class of well-separated trajectories would then be restricted
