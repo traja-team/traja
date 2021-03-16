@@ -69,6 +69,7 @@ This lets traja work directly with panda's internal objects:
 ```
 
 Data, e.g., x and y coordinates, are stored as one-dimensional labelled arrays as instances of the pandas native `Series` class. Further, subclassing the pandas `DataFrame` allows creating an API that mirrors the pandas API which is familiar to most data scientists, thus reducing the barrier for entry while providing methods and properties specific to trajectories for rapid prototyping.
+Traja depends on Matplotlib [@Hunter:2007] and Seaborn [@wasdom2020seaborn] for plotting and NumPy [@harris2020array] for computation.
 
 ## Mouse Locomotion Data
 
