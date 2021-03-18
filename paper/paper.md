@@ -12,7 +12,7 @@ authors:
   - name: Wolf Byttner
     affiliation: 3
     orcid: 0000-0002-9525-9730
-  - name: Saran Nambusubramaniyan
+  - name: Saranraj Nambusubramaniyan
     affiliation: 1
     orcid: 0000-0002-7314-0261
 affiliations:
@@ -51,7 +51,7 @@ A comprehensive source of documentation is provided on the home page
 
 The data used in this project includes animal trajectory data provided by [http://www.tecniplast.it](Tecniplast S.p.A.), manufacturer of laboratory animal equipment based in Varese, Italy, and Radboud University, Nijmegen, Netherlands. Tecniplast provided the mouse locomotion data collected with their Digital Ventilated Cages (DVC). The extracted coordinates of the mice requires further analysis with external tools. Due to lack of access to equipment, mouse home cage data is rather difficult to collect and analyze, thus few studies have been done onhomecage data. Furthermore, researchers who are interested in developing novel algorithms must implement from scratch much of the computational and algorithmic infrastructure for analysis and visualization. By packaging a library that is particularly useful for animal locomotion analysis, future researchers can benefit from access to a high-level interface and clearly documented methods for their work.
 
-[^1]: [http://www.tecniplast.it](http://www.tecniplast.it) 
+[^1]: [http://www.tecniplast.it](http://www.tecniplast.it)
 
 ## Design Principles
 
@@ -75,7 +75,7 @@ Traja depends on Matplotlib [@Hunter:2007] and Seaborn [@wasdom2020seaborn] for 
 
 The data samples presented here[^1] are in rectangular ($x$, $y$) Cartesian coordinates, reflecting the mouse home-cage (25x12.5 cm) dimensions. Analytical methods relevant to 2D rectilinear analysis of highly constrained spatial coordinates are thus primarily considered.
 
-![Traja package diagram](./images/diagram.jpg){width=80%} 
+![Traja package diagram](./images/diagram.jpg){width=80%}
 
 High volume data like animal trajectories has an increased tendency to be missing data due to data collection issues or noise. Filling in the missing data values, referred to as _data imputation_, is achieved with a wide variety of statistical or learning-based methods. As previously observed, data science projects typically require at least _95%_ of the time to be spent on cleaning, pre-processing and managing the data [@bosch_engineering_2021]. Therefore, several methods relevant to preprocessing animal data are demonstrated throuhghout the following sections.
 
@@ -142,10 +142,10 @@ __Table 1 `traja.trajectory` functionalities__
   to_shapely            |Convert to `Shapely` object
   transition_matrix     |Computes the transition matrix from binned trajectory
   transitions           | Computes the first-order Markov model for transitions between grid cells
-  
+
 ### The `plotting` module
 
-The `plotting` module contains all methods relevant to visualization of trajectories, features and models. A complete table of methods included as of writing are described in Table 
+The `plotting` module contains all methods relevant to visualization of trajectories, features and models. A complete table of methods included as of writing are described in Table
 
 __Table 2 `traja.plotting` functionalities__
 
@@ -180,7 +180,7 @@ The `rutils` module[^2] contains all methods relevant to interfacing R packages.
 -   trajr
 as well as respective plotting methods.
 
-[^2]: rutils available in version 0.2 - 0.2.3 and is removed in version 0.2.4 
+[^2]: rutils available in version 0.2 - 0.2.3 and is removed in version 0.2.4
 
 __Table 3 R packages with interfaces in Traja__
 
@@ -222,11 +222,11 @@ df.traja.rotate(angle=-20)
 ```
 and angle $\theta$ where $\theta \in R : \theta \in [-180,180]$.
 
-### Trip Grid 
+### Trip Grid
 One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [2](#fig:tripgrid){reference-type="ref" reference="fig:tripgrid"}.
 
 ![Trip grid image generation from mouse
-trajectory.](./images/trip_grid_algo.png){width=80%} 
+trajectory.](./images/trip_grid_algo.png){width=80%}
 
 Allowing computation on discrete variables rather than continuous ones has several advantages stemming from the ability to store trajectories in a more memory efficient form [^3]. The advantage is that computation is generally faster, more data can fit in memory in the case of complex models, and item noise can be reduced.
 
@@ -261,15 +261,15 @@ Scaling a trajectory is performed with
 ```
 df.traja.scale(factor)
 ```
-for factor f where $f \in R: f \in (-\infty, +\infty)$. 
+for factor f where $f \in R: f \in (-\infty, +\infty)$.
 
-### Smoothing 
+### Smoothing
 
 Smoothing can also be achieved with traja using Savitzky-Golay filtering with `smooth_sg` [@savitzky_smoothing_1964].
 
 ## Temporal Transformations
 
-### Resampling 
+### Resampling
 
 Trajectories can be resampled by time or by step length. This can be useful for aligning trajectories from various data sources and sampling rates or reducing the number of data points to improve computational efficiency. Care must be taken to select a time interval which maintains information on the significant behavior. If the minimal time interval observed is selected for the points, calculations will be computationally intractable for some systems. If too large of an interval is selected, we will fail to capture changes relevant to the target behavior in the data.
 
@@ -280,15 +280,15 @@ Resampling by time is performed with `resample_time`. Rediscretizing by step len
 For example, Fortasyn dataset [@shenk_automated_2020] which is demonstrated in this paper was sampled at 4 Hz and converted to single-precision floating point data. Pandas dataframes store this data in 4 bytes, thus there are approximately 4,147,200[^6] bytes required to store data for x and y dimensions plus an index reference for a single day. In the case of [@shenk_automated_2020] were 24 mice observed over 35 days. This translates to 3.4 GB ($10^9$) to 29 TB ($10^{12}$) of storage capacity respectively, for the uncompressed datasets prior to feature engineering. Thus resampling can be a useful way to reduce the memory footprint for memory constrained processes that have to fit into a standard laptop with 8 GB memory space. A demonstration of how resampling can reduce precision but still be useful for trajectory data analysis is provided in Figure 5, applied to a sample from the Fortasyn experiment [@shenk_automated_2020]. For identifying broad effects such as cage crossings, for example, data can be downsampled to a lower frequency such as 0.1 Hz, reducing the memory footprint by a factor of 40 (4 Hz/0.1 Hz) and providing significant speedups for processing.
 
 ## Movement Analysis
-### Distance traveled 
+### Distance traveled
 Distance traveled is a common metric in animal studies - it accounts for the total distance covered by the animal within a given time interval. The distance traveled is typically quantified by summing the square straight-line displacement between discretely sampled trajectories [@rowcliffe_bias_2012, @solla_eliminating_1999]. Alternative distance metrics for the case of animal tracking are discussed in [@noonan_scale-insensitive_2019].
 
 Let $p(t) = [p_x(t), p_y(t)]$ be a $2\times 1$ vector of coordinates on the ground representing the position of the animal at time t. Then, the distance traveled within the time interval $t_1$ and $t_2$ can be computed as a sum of step-wise Euclidean distances
 
-$$p(t_1,t_2) = \Sigma^{t_2}_{t=t_1+1} d(t),$$ 
+$$p(t_1,t_2) = \Sigma^{t_2}_{t=t_1+1} d(t),$$
 
 where
-$$d(t) = \sqrt{(p_x(t) -p_x(t-1))^2 + (p_y(t) - p_y(t-1))^2}  $$ 
+$$d(t) = \sqrt{(p_x(t) -p_x(t-1))^2 + (p_y(t) - p_y(t-1))^2}  $$
 
 is the Euclidean distance between two positions in adjacent time samples.
 
@@ -296,16 +296,16 @@ is the Euclidean distance between two positions in adjacent time samples.
 
 ![Velocity histogram from one day of mouse activity.[]{label="fig:velocity-hist"}](./images/velocitylog.png){#fig:velocity-hist width=70%}
 
-### Speed 
+### Speed
 Speed or velocity is the first derivative of centroids with respect to time. Peak velocity in a home cage environment is perhaps less interesting than a distribution of velocity observations, as in Figure 6. Additionally, noise can be eliminated from velocity calculations by using a minimal distance moved threshold, as demonstrated in [@shenk_automated_2020]. This allows identifying broad-scale behaviors such as cage crossings.
 
 ### Turn Angles
 Turn angles are the angle between the movement vectors of two consecutive samples. They can be calculated with calc_turn_angles.
 
-### Laterality 
+### Laterality
 Laterality is the preference for left or right turning and a *laterality index*
 is defined as:
-$$LI = \frac{RT}{LT + RT} $$ 
+$$LI = \frac{RT}{LT + RT} $$
 
 where RT is the number of right turns observed and LT is the number of left turns observed. Turns are counted within a left turn angle $\in$ ($\theta$, 90) and right turn angle $\in(-\theta,-90)$. A turn is considered to have a minimal step length. In Traja it is computed with
 
@@ -319,13 +319,13 @@ and returns a 2-tuple of the number of right and left turns.
 ### Periodic Analysis
 Periodic behaviors are a consequence of the circadian rhythm aswell as observing expression of underlying cognitive traits. Some basic implementations of periodic analysis of mouse cage data are presented.
 
-### Autocorrelation 
-Autocorrelation is the correlation of a signal with a delayed copy of itself as a function of the decay. Basically, it is similarity of observations as a function of the time lag between them. 
+### Autocorrelation
+Autocorrelation is the correlation of a signal with a delayed copy of itself as a function of the decay. Basically, it is similarity of observations as a function of the time lag between them.
 It is computed with autocorrelation and plotted with `plot_autocorrelation`, as in Figure [7](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
 
 ![Autocorrelation of the y-dimension reveals daily (1440 minutes) periodic behavior[]{label="fig:autocorrelation"}](./images/autocorrelation_E1.png){#fig:autocorrelation width=80%}
 
-### Power Spectrum 
+### Power Spectrum
 Power spectrum of a time-series signal can be estimated with `plot_periodogram` (Figure [8](#fig:powerspectrum){reference-type="ref" reference="fig:powerspectrum"}). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
 
 ![Power Spectral Density. One day of activity reveals fairly smooth power spectral density.[]{label="fig:powerspectrum"}](./images/spectrum.png){#fig:powerspectrum width=70%}
@@ -358,7 +358,7 @@ width=80%}
 data.[]{label="fig:LDA"}](./images/lda_fortasyn-period.png){#fig:LDA
 width=80%}
 
-### Clustering 
+### Clustering
 Clustering of trajectories is an extensive topic with applications in geospatial data, vehicle and pedestrian classification, as well as molecular identification. K-Means clustering is an iterative unsupervised learning method that assigns a label to data points based on a distance function [@bishop_pattern_2006].
 Clustering of trajectories is achieved with by first extracting displacements with
 ```
@@ -378,15 +378,15 @@ width=80%}
 plot_clustermap(displacements, ...)
 ```
 
-### Hierarchical Agglomerative Clustering 
+### Hierarchical Agglomerative Clustering
 Clustering spatial trajectories has broad applications. For mice, hierarchical agglomerative clustering can be used to identify similarities between groups, for example periodic activity and location visit frequency. Clustering actograms is possible with df.traja.plot_cluster.
 
-### Gaussian Processes 
+### Gaussian Processes
 Gaussian Processes is a non-parametric method which can be used to model spatial trajectories. This method is not currently implemented in Traja
 and is thus outside the scope of the current paper, however the interested reader is directed to the excellent text on Gaussian processes by Rasmussen and Williams ([@rasmussen_gaussian_2006]) for a complete reference and [@cox_gaussian_2012] for an application to spatial trajectories.
 
 ## Other Methods
-### Graph Model 
+### Graph Model
 A graph is a pair $G = (V, E)$ comprising a set of vertices and a set of connecting edges. A probabilistic graphical model of a spatial occupancy grid can be used to identify probabilities of state transitions between nodes. A basic example is given with hidden Markov models below.
 
 ![Transition matrix. Rows and columns are flattened histogram of a grid
@@ -395,22 +395,22 @@ visible at a spacing of -11, -10, -9, 1, 10, and 11 cells from the
 diagonal. The intensity of pixels in the diagonal represents relative
 likelihood to stay in the same
 position.[]{label="fig:transitionmatrix"}](./images/transition_matrix.png){#fig:transitionmatrix
-width=60%} 
+width=60%}
 
 ### Hidden Markov Models
-Transition probabilities are most commonly modelled with Hidden Markov Models (HMM) because of their ability to capture spatial and temporal dependencies. A recent introduction to these methods is available provided by [@patterson_statistical_2017]. HMMs have successfully been used to analyze movement of caribou [@franke_analysis_2004], fruit flies [@holzmann_hidden_2006], and tuna [@patterson_migration_2018], among others. Trajectories are typically modelled as bivariate time series consisting of step length and turn angle, regularly spaced in time. 
+Transition probabilities are most commonly modelled with Hidden Markov Models (HMM) because of their ability to capture spatial and temporal dependencies. A recent introduction to these methods is available provided by [@patterson_statistical_2017]. HMMs have successfully been used to analyze movement of caribou [@franke_analysis_2004], fruit flies [@holzmann_hidden_2006], and tuna [@patterson_migration_2018], among others. Trajectories are typically modelled as bivariate time series consisting of step length and turn angle, regularly spaced in time.
 
 Traja implements the rectangular spatial grid version ofHMMwith transitions.
 
 The probability of transition from each cell to another cell is stored as a probability within the transition matrix. This can further be plotted (eg, Figure 13) with `plot_transition_matrix`.
 
-### Convex Hull 
+### Convex Hull
 The convex hull of a subtrajectory is the set X of points in the Euclidean plane that is the smallest convex set to include X. For computational efficiency, a geometric k-simplex can be plotted covering the convex hull by converting to a Shapely object and using Shapely’s `convex_hull` method. `plot_rolling_hull` performs this. Plotting the convex hull in 3D allows seeing the change of the range of motion over time via `plot_rolling_hull_3d`.
 
 ### Recurrent Neural Networks
 In recent years, deep learning has transformed the field of machine learning. For example, the current state of the art models for a wide range of tasks, including computer vision, speech to text, and pedestrian trajectory prediction, are achieved with deep neural networks. Neural networks are essentially sequences of matrix operations and elementwise function application based on a collection of computing units known as nodes or neurons 1.3. These units perform operations, such as matrix multiplication on input features of a dataset, followed by backpropagation of errors, to identify parameters useful for approximating a function.
 
-![Neural network architectures available in Traja](./images/dnns.jpg){width=80%} 
+![Neural network architectures available in Traja](./images/dnns.jpg){width=80%}
 
 Recurrent Neural Networks (RNNs) are a special type of Neural Networks that use
 a state $S(`t_{i-1}`)$ from the previous timestep $`t_{i-1}`$ alongside X(`$t_i$`) as input. They output a prediction $Y(`t_i`)$ and a new state $`S(t_i)`$ at every step. Utilising previous states makes RNNs particularly good at analyzing time series like trajectories, since they can process arbitrarily long inputs. They remember information from previous time steps $X(`t_{i-k}`), ..., X(`t_{i-1}`)$ when processing the current time step $X(`t_i`)$.
@@ -434,7 +434,7 @@ allows batched sampling of the data. The two constructor arguments `n_past` and
 ```python
 MultiModalDataLoader(df,
     batch_size=10, # number of sequences to train every step
-    n_past=10, # number of time steps to learn the time series  
+    n_past=10, # number of time steps to learn the time series
     n_future=5, # number of time steps to predict
     split_by_id=True) # whether to split data by trajectory id or
         by time steps for each id
@@ -472,7 +472,7 @@ In comparison to mean-squared error loss, Huber loss is less sensitive to outlie
 ### Recurrent Autoencoder Networks
 Traja can also train autoencoders to either predict the future position of a track or classify the track into a number of categories. Autoencoders embed the time series into a time-invariant latent space, allowing representation of each trajectory or sub-trajectory as a vector (Figure 15). A class of well-separated trajectories would then be restricted
 
-![Example of how autoencoders compress data such as an image to an embedding vector. Source: Author’s Towards Data Science post [@shenk_towards_2020].](./images/trip_grid_algo.png){width=80%} 
+![Example of how autoencoders compress data such as an image to an embedding vector. Source: Author’s Towards Data Science post [@shenk_towards_2020].](./images/trip_grid_algo.png){width=80%}
 
 A sample implementation of high-level API for training neural networks for time-series data, including autoencoders, variational autoencoder, and LSTMs is:
 
@@ -498,7 +498,7 @@ to a region of the latent space. The technique is similar to Word2vec [@word2vec
 ![LSTM implementation for trajectory
 prediction[]{label="fig:lstm"}](./images/rnn-prediction.png){#fig:lstm
 width=80%}
- 
+
 Traja can train a classifier that works directly on the latent space output; since each class of trajectories converges to a distinct region in the latent space, this technique is often superior to classifying the trajectory itself. Traja trains classifiers for both Autoencoderstyle and Variational Autoencoder-style RNNs. When investigating whether animals’ behaviors have changed, or whether two experimental categories of animals behave differently, this unstructured data mining can suggest fruitful avenues for investigation.
 
 A sample usage of multimodal autoencoder combining training for both forecasting and classification tasks follows:
