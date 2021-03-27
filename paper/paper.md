@@ -32,25 +32,18 @@ There are generally four categories of trajectory data: mobility of people, mobi
 
 Animal tracking is important for fields as diverse as ethology, optimal foraging theory, and neuroscience. In recent years, advances in machinelearning have led to breakthroughs in pattern recognition and data modeling [@10.3389/fnsys.2019.00020]. A tool that supports modeling in the language of state-of-the-art predictive models  [@amirian_social_2019; @liang_peeking_2019; @chandra_traphic_2019], and which provides researchers with a high-level API for feature extraction, modeling and visualization is needed.
 
-Traja is a Python package for statistical analysis and computational modelling of trajectories. Traja extends the familiar pandas [@mckinney-proc-scipy-2010;@reback2020pandas] methods by providing a pandas accessor to the `df.traja` namespace upon import. The API for Traja was designed to provide an object-oriented and user-friendly interface to common methods in analysis and visualization of animal trajectories. Traja also interfaces well with relevant spatial analysis packages in R (e.g., trajr [@trajr], adehabitat [@adehabitat]), Shapely [@shapely], and MovingPandas [@graser_movingpandas_2019] allowing rapid prototyping and comparison of relevant methods in Python.
-
-The library can be installed to the local Python environment by use of
-the provided setuptools script (`setup.py`). It can also be downloaded from the [Python Package Index](http://pypi.org) by use of the package manager pip:
-```
-pip install traja
-```
-or with the conda package manager using the `conda-forge` channel:
-```
-conda install -c conda-forge traja
-```
-
-A comprehensive source of documentation is provided on the home page
+Traja is a Python package for statistical analysis and computational modelling of trajectories. Traja extends the familiar pandas [@mckinney-proc-scipy-2010;@reback2020pandas] methods by providing a pandas accessor to the `df.traja` namespace upon import. The API for Traja was designed to provide an object-oriented and user-friendly interface to common methods in analysis and visualization of animal trajectories. Traja also interfaces well with relevant spatial analysis packages in R (e.g., trajr [@trajr], adehabitat [@adehabitat]), Shapely [@shapely], and MovingPandas [@graser_movingpandas_2019] allowing rapid prototyping and comparison of relevant methods in Python. A comprehensive source of documentation is provided on the home page
 ([http://traja.readthedocs.io](traja.readthedocs.io)).
 
 ## Statement of Need
 
 The data used in this project includes animal trajectory data provided by [http://www.tecniplast.it](Tecniplast S.p.A.), manufacturer of laboratory animal equipment based in Varese, Italy, and Radboud University, Nijmegen, Netherlands. Tecniplast provided the mouse locomotion data collected with their Digital Ventilated Cages (DVC). The extracted coordinates of the mice requires further analysis with external tools. Due to lack of access to equipment, mouse home cage data is rather difficult to collect and analyze, thus few studies have been done onhomecage data. Furthermore, researchers who are interested in developing novel algorithms must implement from scratch much of the computational and algorithmic infrastructure for analysis and visualization. By packaging a library that is particularly useful for animal locomotion analysis, future researchers can benefit from access to a high-level interface and clearly documented methods for their work.
 
+## Overview of the Library
+
+The software is structured into several modules. This section surveys the structure of the codebase and elaborates on implementation strategies, but does not constitute a full documentation. For a detailed API reference, the reader is referred to the HTML documentation hosted at  <https://traja.readthedocs.io>. The import classes are the `TrajaDataFrame` class located in `frame.py` and `TrajaAccessor` located in `accessor.py`.
+
+A high-level accessor (`TrajaAccessor`) provides access to data stored within the pandas dataframe.
 ## Design Principles
 
 Traja targets Python because of its popularity with data scientists.The library leverages the powerful pandas library, while adding methods specifically for trajectory analysis.
@@ -73,21 +66,9 @@ Traja depends on Matplotlib [@Hunter:2007] and Seaborn [@waskom2020seaborn] for 
 
 The data samples presented here[^2] are in rectangular ($x$, $y$) Cartesian coordinates, reflecting the mouse home-cage (25x12.5 cm) dimensions. Analytical methods relevant to 2D rectilinear analysis of highly constrained spatial coordinates are thus primarily considered.
 
-![Traja package diagram](./images/diagram.jpg){width=80%}
-
 High volume data like animal trajectories has an increased tendency to be missing data due to data collection issues or noise. Filling in the missing data values, referred to as _data imputation_, is achieved with a wide variety of statistical or learning-based methods. As previously observed, data science projects typically require at least _95%_ of the time to be spent on cleaning, pre-processing and managing the data [@bosch_engineering_2021]. Therefore, several methods relevant to preprocessing animal data are demonstrated throuhghout the following sections.
 
 [^2]: This dataset has been collected for other studies of our laboratory [@shenk_automated_2020].
-
-## Overview of the Library
-
-The software is structured into several modules. This section surveys the structure of the codebase and elaborates on implementation strategies, but does not constitute a full documentation. For a detailed API reference, the reader is referred to the HTML documentation hosted at  <https://traja.readthedocs.io>. The import classes are the `TrajaDataFrame` class located in `frame.py` and `TrajaAccessor` located in `accessor.py`. The root package diagram is shown in Figure 1.
-
-A high-level accessor (`TrajaAccessor`) provides access to data stored within the pandas dataframe.
-### The `trajectory` module
-
-The `trajectory` module contains the methods relevant to preprocessing, analysis and modelling trajectories. A complete table of methods included as of writing are described in Table 1.
-
 ## Spatial Trajectory
 
 A *spatial trajectory* is a trace generated by a moving object in geographical space. Trajectories are traditionally modelled as a sequence of spatial points like:
@@ -96,7 +77,7 @@ $$T_k = \{P_{k1}, P_{k2},...\}$$
 
 where $P_{ki}(i\geq 1)$ is a point in the trajectory.
 
-Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure 4) is generated with `traja.generate`.
+Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure [2](#fig:generated){reference-type="ref" reference="fig:generated"}) is generated with `traja.generate`.
 
 ## Spatial Transformations
 Transformation of trajectories can be useful for comparing trajectories from various geospatial coordinates, data compression, or simply for visualization purposes.
@@ -108,7 +89,7 @@ $$\begin{bmatrix} x'\\y' \end{bmatrix} = \begin{bmatrix} cos\theta & i sin\theta
 with angle $\theta$ where $\theta \in R : \theta \in [-180,180]$.
 
 ### Trip Grid
-One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [2](#fig:tripgrid){reference-type="ref" reference="fig:tripgrid"}.
+One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [1](#fig:tripgrid){reference-type="ref" reference="fig:tripgrid"}.
 
 ![Trip grid image generation from mouse
 trajectory.](./images/trip_grid_algo.png){width=80%}
@@ -158,13 +139,15 @@ Smoothing can also be achieved with traja using Savitzky-Golay filtering with `s
 
 Trajectories can be resampled by time or by step length. This can be useful for aligning trajectories from various data sources and sampling rates or reducing the number of data points to improve computational efficiency. Care must be taken to select a time interval which maintains information on the significant behavior. If the minimal time interval observed is selected for the points, calculations will be computationally intractable for some systems. If too large of an interval is selected, we will fail to capture changes relevant to the target behavior in the data.
 
-Resampling by time is performed with `resample_time`. Rediscretizing by step length is performed with `rediscretize` (Figure [5]](#fig:step){reference-type="ref" reference="fig:step"}).
+Resampling by time is performed with `resample_time`. Rediscretizing by step length is performed with `rediscretize` (Figure [2](#fig:step){reference-type="ref" reference="fig:step"}).
 
 ![Resampling x and y values over time by step length is performed with `rediscretize()`.[]{label="fig:step"}](./images/sample_rate.png){#fig:step width=80%}
 
-For example, Fortasyn dataset [@shenk_automated_2020] which is demonstrated in this paper was sampled at 4 Hz and converted to single-precision floating point data. Pandas dataframes store this data in 4 bytes, thus there are approximately 4,147,200[^6] bytes required to store data for x and y dimensions plus an index reference for a single day. In the case of [@shenk_automated_2020] were 24 mice observed over 35 days. This translates to 3.4 GB ($10^9$) to 29 TB ($10^{12}$) of storage capacity respectively, for the uncompressed datasets prior to feature engineering. Thus resampling can be a useful way to reduce the memory footprint for memory constrained processes that have to fit into a standard laptop with 8 GB memory space. A demonstration of how resampling can reduce precision but still be useful for trajectory data analysis is provided in Figure 5, applied to a sample from the Fortasyn experiment [@shenk_automated_2020]. For identifying broad effects such as cage crossings, for example, data can be downsampled to a lower frequency such as 0.1 Hz, reducing the memory footprint by a factor of 40 (4 Hz/0.1 Hz) and providing significant speedups for processing.
+For example, Fortasyn dataset [@shenk_automated_2020] which is demonstrated in this paper was sampled at 4 Hz and converted to single-precision floating point data. Pandas dataframes store this data in 4 bytes, thus there are approximately 4,147,200[^6] bytes required to store data for x and y dimensions plus an index reference for a single day. In the case of [@shenk_automated_2020] were 24 mice observed over 35 days. This translates to 3.4 GB ($10^9$) to 29 TB ($10^{12}$) of storage capacity respectively, for the uncompressed datasets prior to feature engineering. Thus resampling can be a useful way to reduce the memory footprint for memory constrained processes that have to fit into a standard laptop with 8 GB memory space. A demonstration of how resampling can reduce precision but still be useful for trajectory data analysis is provided in Figure [3](#fig:step){reference-type="ref" reference="fig:step"}, applied to a sample from the Fortasyn experiment [@shenk_automated_2020]. For identifying broad effects such as cage crossings, for example, data can be downsampled to a lower frequency such as 0.1 Hz, reducing the memory footprint by a factor of 40 (4 Hz/0.1 Hz) and providing significant speedups for processing.
 
 ## Movement Analysis
+
+Traja includes traditional and machine learning methods for trajectory anaylsis.
 ### Distance traveled
 Distance traveled is a common metric in animal studies - it accounts for the total distance covered by the animal within a given time interval. The distance traveled is typically quantified by summing the square straight-line displacement between discretely sampled trajectories [@rowcliffe_bias_2012, @solla_eliminating_1999]. Alternative distance metrics for the case of animal tracking are discussed in [@noonan_scale-insensitive_2019].
 
@@ -182,7 +165,7 @@ is the Euclidean distance between two positions in adjacent time samples.
 ![Velocity histogram from one day of mouse activity.[]{label="fig:velocity-hist"}](./images/velocitylog.png){#fig:velocity-hist width=70%}
 
 ### Speed
-Speed or velocity is the first derivative of centroids with respect to time. Peak velocity in a home cage environment is perhaps less interesting than a distribution of velocity observations, as in Figure 6. Additionally, noise can be eliminated from velocity calculations by using a minimal distance moved threshold, as demonstrated in [@shenk_automated_2020]. This allows identifying broad-scale behaviors such as cage crossings.
+Speed or velocity is the first derivative of centroids with respect to time. Peak velocity in a home cage environment is perhaps less interesting than a distribution of velocity observations, as in Figure [4](#fig:velocity-hist){reference-type="ref" reference="fig:velocity-hist"}. Additionally, noise can be eliminated from velocity calculations by using a minimal distance moved threshold, as demonstrated in [@shenk_automated_2020]. This allows identifying broad-scale behaviors such as cage crossings.
 
 ### Turn Angles
 Turn angles are the angle between the movement vectors of two consecutive samples. They can be calculated with calc_turn_angles.
@@ -200,12 +183,12 @@ Periodic behaviors are a consequence of the circadian rhythm aswell as observing
 
 ### Autocorrelation
 Autocorrelation is the correlation of a signal with a delayed copy of itself as a function of the decay. Basically, it is similarity of observations as a function of the time lag between them.
-It is computed with autocorrelation and plotted with `plot_autocorrelation`, as in Figure [7](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
+It is computed with autocorrelation and plotted with `plot_autocorrelation`, as in Figure [5](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
 
 ![Autocorrelation of the y-dimension reveals daily (1440 minutes) periodic behavior[]{label="fig:autocorrelation"}](./images/autocorrelation_E1.png){#fig:autocorrelation width=80%}
 
 ### Power Spectrum
-Power spectrum of a time-series signal can be estimated with `plot_periodogram` (Figure [8](#fig:powerspectrum){reference-type="ref" reference="fig:powerspectrum"}). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
+Power spectrum of a time-series signal can be estimated with `plot_periodogram` (Figure [6](#fig:powerspectrum){reference-type="ref" reference="fig:powerspectrum"}). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
 
 ![Power Spectral Density. One day of activity reveals fairly smooth power spectral density.[]{label="fig:powerspectrum"}](./images/spectrum.png){#fig:powerspectrum width=70%}
 
@@ -214,19 +197,18 @@ Power spectrum of a time-series signal can be estimated with `plot_periodogram` 
 Machine learning methods enable researchers to solve tasks computationally without explicit instructions by detecting patterns or relying on inference. Thus they are particularly relevant for data exploration of high volume datasets such as spatial trajectories and other multivariate time series.
 
 ### Principal Component Analysis
-The ability to identify patterns between groups and over time is often constrained by computational resources. Finding representations of the data which allow reducing the dimensionality of the data is thus a valuable preprocessing step in exploratory data analysis as wel as machine learning applications. A common method of reducing the dimensionality of high dimensional data is to identify the directions which explain most of the variance via eigenvector decomposition of the covariance matrix __E__.
+
+Principal Component Analysis projects the data into a linear subspace with a minimum loss of information by multiplying the data by the eigenvectors of the covariance matrix.
 
 ![PCA of Fortasyn trajectory data. Daily trajectories (day and night)
 were binned into 8x8 grids before applying
 PCA.[]{label="fig:pca"}](./images/pca_fortasyn-period.png){#fig:pca
 width=80%}
 
-Principal Component Analysis projects the data into a linear subspace with a minimum loss of information by multiplying the data by the eigenvectors of the covariance matrix.
-
-This requires converting the trajectory to a trip grid (see Figure 3) and performing PCA on the grid in 2D (Figure 9) or 3D (Figure 10). Structure in the data is visible if light and dark time periods are compared.
+This requires converting the trajectory to a trip grid (see Figure 1) and performing PCA on the grid in 2D (Figure [6](#fig:pca){reference-type="ref" reference="fig:pca"}) or 3D (Figure [7](#fig:3dpca){reference-type="ref" reference="fig:3dpca"}). Structure in the data is visible if light and dark time periods are compared.
 
 ### Linear Discriminant Analysis
-Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance. It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. LDA assumes normal distribution of attributes, and identies the probability that a new set of inputs belong to a given class. Since LDA takes into account class labels, and there are only binary labels in the present dataset, it provides an identical view to PCA as shown in Figure 11. When the $x, y$ attributes are not normally distributed, which is often the case, methods such as logistic regression are preferred, since it has fewer assumptions and restrictions [@hastie01statisticallearning].
+Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance. It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. It behaves similar to PCA in some cases (Figure [7](#fig:LDA){reference-type="ref" reference="fig:LDA"})
 
 ![3D PCA of Fortasyn trajectory data. Daily trajectories (day and night)
 were binned into 8x8 grids before applying
@@ -239,23 +221,11 @@ width=80%}
 
 ### Clustering
 Clustering of trajectories is an extensive topic with applications in geospatial data, vehicle and pedestrian classification, as well as molecular identification. K-Means clustering is an iterative unsupervised learning method that assigns a label to data points based on a distance function [@bishop_pattern_2006].
-Clustering of trajectories is achieved with by first extracting displacements with
-```
-traja.calc_displacements()
-```
-and wrapping seaborn’s `clustermap`[^4] object:
-
-[^4]: [https://seaborn.pydata.org/generated/seaborn.clustermap.html](https://seaborn.pydata.org/generated/seaborn.clustermap.html)
 
 ![K-Means clustering on the results of the PCA shown above reveals a high accuracy
 of classification, with a few errors. Cluster labels are generated by
 the model.[]{label="fig:kmeans"}](./images/kmeans_pca-fortasyn.png){#fig:kmeans
 width=80%}
-
-
-```python
-plot_clustermap(displacements, ...)
-```
 
 ### Hierarchical Agglomerative Clustering
 Clustering spatial trajectories has broad applications. For mice, hierarchical agglomerative clustering can be used to identify similarities between groups, for example periodic activity and location visit frequency. Clustering actograms is possible with df.traja.plot_cluster.
@@ -279,20 +249,20 @@ width=60%}
 ### Hidden Markov Models
 Transition probabilities are most commonly modelled with Hidden Markov Models (HMM) because of their ability to capture spatial and temporal dependencies. A recent introduction to these methods is available provided by [@patterson_statistical_2017]. HMMs have successfully been used to analyze movement of caribou [@franke_analysis_2004], fruit flies [@holzmann_hidden_2006], and tuna [@patterson_migration_2018], among others. Trajectories are typically modelled as bivariate time series consisting of step length and turn angle, regularly spaced in time.
 
-Traja implements the rectangular spatial grid version ofHMMwith transitions.
+Traja implements the rectangular spatial grid version of HMM with transitions.
 
-The probability of transition from each cell to another cell is stored as a probability within the transition matrix. This can further be plotted (eg, Figure 13) with `plot_transition_matrix`.
+The probability of transition from each cell to another cell is stored as a probability within the transition matrix. This can further be plotted with `plot_transition_matrix` (Figure [8](#fig:transitionmatrix){reference-type="ref" reference="fig:transitionmatrix"}).
 
 ### Convex Hull
-The convex hull of a subtrajectory is the set X of points in the Euclidean plane that is the smallest convex set to include X. For computational efficiency, a geometric k-simplex can be plotted covering the convex hull by converting to a Shapely object and using Shapely’s `convex_hull` method. `plot_rolling_hull` performs this. Plotting the convex hull in 3D allows seeing the change of the range of motion over time via `plot_rolling_hull_3d`.
+The convex hull of a subtrajectory is the set $X$ of points in the Euclidean plane that is the smallest convex set to include X. For computational efficiency, a geometric k-simplex can be plotted covering the convex hull by converting to a Shapely object and using Shapely’s `convex_hull` method. `plot_rolling_hull` performs this. Plotting the convex hull in 3D allows seeing the change of the range of motion over time via `plot_rolling_hull_3d`.
 
 ### Recurrent Neural Networks
-In recent years, deep learning has transformed the field of machine learning. For example, the current state of the art models for a wide range of tasks, including computer vision, speech to text, and pedestrian trajectory prediction, are achieved with deep neural networks. Neural networks are essentially sequences of matrix operations and elementwise function application based on a collection of computing units known as nodes or neurons 1.3. These units perform operations, such as matrix multiplication on input features of a dataset, followed by backpropagation of errors, to identify parameters useful for approximating a function.
+In recent years, deep learning has transformed the field of machine learning. For example, the current state of the art models for a wide range of tasks, including computer vision, speech to text, and pedestrian trajectory prediction, are achieved with deep neural networks. Neural networks are essentially sequences of matrix operations and elementwise function application based on a collection of computing units known as nodes or neurons. These units perform operations, such as matrix multiplication on input features of a dataset, followed by backpropagation of errors, to identify parameters useful for approximating a function.
 
 ![Neural network architectures available in Traja](./images/dnns.jpg){width=80%}
 
 Recurrent Neural Networks (RNNs) are a special type of Neural Networks that use
-a state $S(`t_{i-1}`)$ from the previous timestep $`t_{i-1}`$ alongside X(`$t_i$`) as input. They output a prediction $Y(`t_i`)$ and a new state $`S(t_i)`$ at every step. Utilising previous states makes RNNs particularly good at analyzing time series like trajectories, since they can process arbitrarily long inputs. They remember information from previous time steps $X(`t_{i-k}`), ..., X(`t_{i-1}`)$ when processing the current time step $X(`t_i`)$.
+a state $S(t_{i-1})$ from the previous timestep $t_{i-1}$ alongside X($t_i$) as input. They output a prediction $Y(t_i)$ and a new state $S(t_i)$ at every step. Utilising previous states makes RNNs particularly good at analyzing time series like trajectories, since they can process arbitrarily long inputs. They remember information from previous time steps $X(t_{i-k}), ..., X(t_{i-1})$ when processing the current time step $X(t_i)$.
 
 Trajectory prediction lets researchers forecast the location and trajectory of animals. Where this technique works well, it is also a sign that the trajectory is highly regular and, fundamentally, follows certain rules and patterns. When tracking an animal live, it would also let researchers predict when it will arrive at a particular location, or where it will go, letting them rig cameras and other equipment ahead of time.
 
@@ -311,7 +281,7 @@ Because RNNs work with time series, the trajectories require special handling. T
 allows batched sampling of the data. The two constructor arguments `n_past` and
 `n_future` specify the number of samples that the network will be shown and the number that the network will have to guess, respectively. `batch_size` is generally in the dozens and is used to regularise the network.
 
-The RNNs also need to be trained - this is done by the high-level Trainer class below. It performs nonlinear optimisation with a Stochastic Gradient Descent-like algorithm. The Trainer class by default implements the Huber loss function [@huber_robust_1964], also known as smooth $L_1$ loss, which is a loss function commonly used in robust regression:
+The RNNs also need to be trained - this is done by the high-level `Trainer` class below. It performs nonlinear optimisation with a Stochastic Gradient Descent-like algorithm. The `Trainer` class by default implements the Huber loss function [@huber_robust_1964], also known as smooth $L_1$ loss, which is a loss function commonly used in robust regression:
 
 $$L_{\delta} (a) = \begin{cases}
  \frac{1}{2}{a^2}                   & \text{for } |a| \le \delta, \\
@@ -322,15 +292,8 @@ In comparison to mean-squared error loss, Huber loss is less sensitive to outlie
 [^5]: [https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html](https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html)
 
 ### Recurrent Autoencoder Networks
-Traja can also train autoencoders to either predict the future position of a track or classify the track into a number of categories. Autoencoders embed the time series into a time-invariant latent space, allowing representation of each trajectory or sub-trajectory as a vector (Figure 15). A class of well-separated trajectories would then be restricted to a region of the latent space. The technique is similar to Word2vec [@word2vec], where words are converted to a 100+ dimensional vector. In this approach, forecasting and classification are both preceded by training the data in an autoencoder, which learns an efficient representation of the data for further computation of the target function.
+Traja can also train autoencoders to either predict the future position of a track or classify the track into a number of categories. Autoencoders embed the time series into a time-invariant latent space, allowing representation of each trajectory or sub-trajectory as a vector. A class of well-separated trajectories would then be restricted to a region of the latent space. The technique is similar to Word2vec [@word2vec], where words are converted to a 100+ dimensional vector. In this approach, forecasting and classification are both preceded by training the data in an autoencoder, which learns an efficient representation of the data for further computation of the target function.
 
-![Example of how autoencoders compress data such as an image to an embedding vector. Source: Author’s Towards Data Science post [@shenk_towards_2020].](./images/trip_grid_algo.png){width=80%}
-
-
-![LSTM implementation for trajectory
-prediction[]{label="fig:lstm"}](./images/rnn-prediction.png){#fig:lstm
-width=80%}
-
-Traja can train a classifier that works directly on the latent space output; since each class of trajectories converges to a distinct region in the latent space, this technique is often superior to classifying the trajectory itself. Traja trains classifiers for both Autoencoderstyle and Variational Autoencoder-style RNNs. When investigating whether animals’ behaviors have changed, or whether two experimental categories of animals behave differently, this unstructured data mining can suggest fruitful avenues for investigation.
+Traja allows training a classifier that works directly on the latent space output - since each class of trajectories converges to a distinct region in the latent space, this technique is often superior to classifying the trajectory itself. Traja trains classifiers for both Autoencoder-style and Variational Autoencoder-style RNNs. When investigating whether animal behavior has changed, or whether two experimental categories of animals behave differently, this unstructured data mining can suggest fruitful avenues for investigation.
 
 # References
