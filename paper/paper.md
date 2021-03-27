@@ -69,17 +69,17 @@ This lets traja work directly with panda's internal objects:
 ```
 
 Data, e.g., x and y coordinates, are stored as one-dimensional labelled arrays as instances of the pandas native `Series` class. Further, subclassing the pandas `DataFrame` allows creating an API that mirrors the pandas API which is familiar to most data scientists, thus reducing the barrier for entry while providing methods and properties specific to trajectories for rapid prototyping.
-Traja depends on Matplotlib [@Hunter:2007] and Seaborn [@wasdom2020seaborn] for plotting and NumPy [@harris2020array] for computation.
+Traja depends on Matplotlib [@Hunter:2007] and Seaborn [@waskom2020seaborn] for plotting and NumPy [@harris2020array] for computation.
 
 ## Mouse Locomotion Data
 
-The data samples presented here[^1] are in rectangular ($x$, $y$) Cartesian coordinates, reflecting the mouse home-cage (25x12.5 cm) dimensions. Analytical methods relevant to 2D rectilinear analysis of highly constrained spatial coordinates are thus primarily considered.
+The data samples presented here[^2] are in rectangular ($x$, $y$) Cartesian coordinates, reflecting the mouse home-cage (25x12.5 cm) dimensions. Analytical methods relevant to 2D rectilinear analysis of highly constrained spatial coordinates are thus primarily considered.
 
 ![Traja package diagram](./images/diagram.jpg){width=80%}
 
 High volume data like animal trajectories has an increased tendency to be missing data due to data collection issues or noise. Filling in the missing data values, referred to as _data imputation_, is achieved with a wide variety of statistical or learning-based methods. As previously observed, data science projects typically require at least _95%_ of the time to be spent on cleaning, pre-processing and managing the data [@bosch_engineering_2021]. Therefore, several methods relevant to preprocessing animal data are demonstrated throuhghout the following sections.
 
-[^1]: This dataset has been collected for other studies of our laboratory [@shenk_automated_2020].
+[^2]: This dataset has been collected for other studies of our laboratory [@shenk_automated_2020].
 
 ## Overview of the Library
 
@@ -192,7 +192,7 @@ __Table 3 R packages with interfaces in Traja__
 
 ## Documentation
 
-The entire codebase is liberally documented using the [http://www.sphinx-doc.org](Sphinx) documentation processor[^3]. The documentation contains further documentation with a detailed user guide and installation instructions. At the time of writing, the HTML documentation and API reference is hosted at <https://traja.readthedocs.io>.
+The entire codebase is liberally documented using the [http://www.sphinx-doc.org](Sphinx) documentation processor. The documentation contains further documentation with a detailed user guide and installation instructions. At the time of writing, the HTML documentation and API reference is hosted at <https://traja.readthedocs.io>.
 
 ## Spatial Trajectory
 
