@@ -51,8 +51,6 @@ A comprehensive source of documentation is provided on the home page
 
 The data used in this project includes animal trajectory data provided by [http://www.tecniplast.it](Tecniplast S.p.A.), manufacturer of laboratory animal equipment based in Varese, Italy, and Radboud University, Nijmegen, Netherlands. Tecniplast provided the mouse locomotion data collected with their Digital Ventilated Cages (DVC). The extracted coordinates of the mice requires further analysis with external tools. Due to lack of access to equipment, mouse home cage data is rather difficult to collect and analyze, thus few studies have been done onhomecage data. Furthermore, researchers who are interested in developing novel algorithms must implement from scratch much of the computational and algorithmic infrastructure for analysis and visualization. By packaging a library that is particularly useful for animal locomotion analysis, future researchers can benefit from access to a high-level interface and clearly documented methods for their work.
 
-[^1]: [http://www.tecniplast.it](http://www.tecniplast.it)
-
 ## Design Principles
 
 Traja targets Python because of its popularity with data scientists.The library leverages the powerful pandas library, while adding methods specifically for trajectory analysis.
@@ -83,116 +81,12 @@ High volume data like animal trajectories has an increased tendency to be missin
 
 ## Overview of the Library
 
-The software is structured into several modules. This section surveys the structure of the codebase and elaborates on implementation strategies, but does not constitute a full documentation. For a detailed API reference, the reader is referred to the HTML documentation[^3]. The import classes are the `TrajaDataFrame` class located in `frame.py` and `TrajaAccessor` located in `accessor.py`. The root package diagram is shown in Figure 1.
+The software is structured into several modules. This section surveys the structure of the codebase and elaborates on implementation strategies, but does not constitute a full documentation. For a detailed API reference, the reader is referred to the HTML documentation hosted at  <https://traja.readthedocs.io>. The import classes are the `TrajaDataFrame` class located in `frame.py` and `TrajaAccessor` located in `accessor.py`. The root package diagram is shown in Figure 1.
 
-A high-level accessor (`TrajaAccessor`) provides access to data stored within the pandas dataframe, as well as methods within `trajectory` and `plotting` modules:
-
-```python
-import pandas as pd
-...
-@pd.api.extensions.register_dataframe_accessor("traja")
-class TrajaAccessor(object):
-    """Accessor for pandas DataFrame with trajectory-specific numerical and analytical functions.
-    Access with `df.traja`.
-    """
-    def __init__(self, pandas_obj):
-        self._validate(pandas_obj)
-        self._obj = pandas_obj
-    ...
-```
-
-Additionally `TrajaDataFrame` is a subclass of the pandas `DataFrame`, allowing instantiation of a `TrajaDataFrame` directly from an array of x,y coordinates:
-
-```python
-import numpy as np
-xy = np.array([[0,1,2],[1,2,3]])
-df = traja.TrajaDataFrame.from_xy(xy)
-```
-
+A high-level accessor (`TrajaAccessor`) provides access to data stored within the pandas dataframe.
 ### The `trajectory` module
 
 The `trajectory` module contains the methods relevant to preprocessing, analysis and modelling trajectories. A complete table of methods included as of writing are described in Table 1.
-
-__Table 1 `traja.trajectory` functionalities__
-
-|Name|Function|
-|----------------------|-------------------------------------------------|
-  angles                | Returns angles w.r.t. x-axis
-  calc_derivatives      |Computes the step displacement $\frac{ds}{dt}$ and displacement time
-  calc_displacement     |Computes the displacement $\frac{ds}{dt}$ between consecutive indices
-  calc_heading          |Computes the direction of travel for each step
-  calc_laterality       |Compute number of right and left turns
-  calc_turn_angle      |Computes the turn angle `theta` between time steps
-  calc_flow_angles     |Computes the average flow between grid indices
-  cartesian_to_polar   |Converts x,y coordinates to polar coordinates $\gamma$ and $\theta$
-  coords_to_flow       |Computes the average flow between grid indices
-  distance_between      |Computes distance between trajectories with Hausdorff or dynamic time warping methods
-  distance               |Computes the distance from start to end of trajectory, also called net distance, displacement, or bee-line from start to finish
-  generate               |Generate random walk with normally distributed step lengths and turn angles
-  get_derivatives       |Computes the first and second-order derivatives of position
-  grid_coordinates      |Bin trajectory into grid coordinates
-  length                 |Computes the cumulative length of trajectory
-  polar_to_z           |Converts polar coordinates $\gamma$ and $\theta$ to complex number $Z$
-  rediscretize_points   |Computes rediscretized points with given step length
-  resample_time     | Resamples time by given `step_time`
-  rotate                 |Rotate trajectory `angle` degrees in radians about `origin`
-  smooth_sg             |Smooth trajectory with Savitzky-Golay filtering
-  speed_intervals       |Computes intervals where speed is faster or slow than given parameters
-  step_lengths          |Calculate step length
-  to_shapely            |Convert to `Shapely` object
-  transition_matrix     |Computes the transition matrix from binned trajectory
-  transitions           | Computes the first-order Markov model for transitions between grid cells
-
-### The `plotting` module
-
-The `plotting` module contains all methods relevant to visualization of trajectories, features and models. A complete table of methods included as of writing are described in Table
-
-__Table 2 `traja.plotting` functionalities__
-
-|Name|Function|
-|---------------------------------|-------------------------------------------------------------|
-  animate|                      Animate trajectory
-  bar_plot|                    Create bar plot
-  color_dark|                  Color dark periods (nighttime)
-  fill_ci    |                 Fill confidence intervals
-  find_runs   |                Find runs of consecutive times in an array
-  plot         |                Generic plotting method
-  plot_3d       |              Plot 3D
-  plot_actogram  |             Plot actogram showing activity as spikes
-  plot_autocorrelation|        Plot autocorrelation of coordinate (Figure 7)
-  plot_collection      |       Plot mulitple trajectories
-  plot_contour          |      Plot contour map
-  plot_clustermap        |     Plot clusterred actograms using hierarchical agglomerative clustering
-  plot_{flow,quiver,stream,surface}           |Plot flow between grid coordinates
-  plot_periodogram            |Plot power spectrum (Figure 8)
-  plot_transition_graph     | Plot transition graph between grid coordinates
-  plot_transition_matrix    | Plot transition matrix
-  polar_bar                  |Plot polar bar chart with step lengths and turn angles
-  plot_prediction                | Plot and visualize neural network prediction of trajectory
-  trip_grid                   |Plot trip grid as heatmap (Figure 3)
-
-
-### The `rutils` module
-
-The `rutils` module[^2] contains all methods relevant to interfacing R packages. It includes interfaces for:
--   moveHMM
--   adehabitat
--   trajr
-as well as respective plotting methods.
-
-[^2]: rutils available in version 0.2 - 0.2.3 and is removed in version 0.2.4
-
-__Table 3 R packages with interfaces in Traja__
-
- | R Package     | Description|
- | --------------| --------------------------------------------------------|
-  adehabitat     |A collection of tools for the analysis of habitat selection by animals.
-  moveHMM        |An R package for the analysis of animal movement data
-  trajr          |A toolkit for the numerical characterisation and analysis of the trajectories of moving animals
-
-## Documentation
-
-The entire codebase is liberally documented using the [http://www.sphinx-doc.org](Sphinx) documentation processor. The documentation contains further documentation with a detailed user guide and installation instructions. At the time of writing, the HTML documentation and API reference is hosted at <https://traja.readthedocs.io>.
 
 ## Spatial Trajectory
 
@@ -202,25 +96,16 @@ $$T_k = \{P_{k1}, P_{k2},...\}$$
 
 where $P_{ki}(i\geq 1)$ is a point in the trajectory.
 
-Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure 4) is generated with:
-```
-from traja import generate
-generate(n=1000) #1000 steps
-```
+Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure 4) is generated with `traja.generate`.
 
 ## Spatial Transformations
 Transformation of trajectories can be useful for comparing trajectories from various geospatial coordinates, data compression, or simply for visualization purposes.
 
 **Rotation** Rotation of a 2D rectilinear trajectory is a coordinate transformation of orthonormal bases x and y at angle $\theta$ (in radians) around the origin defined by
 
-$$\begin{bmatrix} x'//y' \end{bmatrix} = \begin{bmatrix} cos\theta & i sin\theta\\ sin\theta & cos\theta \end{bmatrix} \begin{bmatrix} x\\y \end{bmatrix} $$
+$$\begin{bmatrix} x'\\y' \end{bmatrix} = \begin{bmatrix} cos\theta & i sin\theta\\ sin\theta & cos\theta \end{bmatrix} \begin{bmatrix} x\\y \end{bmatrix} $$
 
-This is achieved with a clockwise angle of 20 degrees, for example, by
-
-```python
-df.traja.rotate(angle=-20)
-```
-and angle $\theta$ where $\theta \in R : \theta \in [-180,180]$.
+with angle $\theta$ where $\theta \in R : \theta \in [-180,180]$.
 
 ### Trip Grid
 One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [2](#fig:tripgrid){reference-type="ref" reference="fig:tripgrid"}.
@@ -261,7 +146,7 @@ Scaling a trajectory is performed with
 ```
 df.traja.scale(factor)
 ```
-for factor f where $f \in R: f \in (-\infty, +\infty)$.
+for factor $f$ where $f \in R: f \in (-\infty, +\infty)$.
 
 ### Smoothing
 
@@ -307,13 +192,7 @@ Laterality is the preference for left or right turning and a *laterality index*
 is defined as:
 $$LI = \frac{RT}{LT + RT} $$
 
-where RT is the number of right turns observed and LT is the number of left turns observed. Turns are counted within a left turn angle $\in$ ($\theta$, 90) and right turn angle $\in(-\theta,-90)$. A turn is considered to have a minimal step length. In Traja it is computed with
-
-```python
-calc_laterality(trj, dist_thresh, angle_thresh)
-```
-
-and returns a 2-tuple of the number of right and left turns.
+where RT is the number of right turns observed and LT is the number of left turns observed. Turns are counted within a left turn angle $\in$ ($\theta$, 90) and right turn angle $\in(-\theta,-90)$. A turn is considered to have a minimal step length.
 
 ## Advanced Techniques
 ### Periodic Analysis
@@ -383,7 +262,7 @@ Clustering spatial trajectories has broad applications. For mice, hierarchical a
 
 ### Gaussian Processes
 Gaussian Processes is a non-parametric method which can be used to model spatial trajectories. This method is not currently implemented in Traja
-and is thus outside the scope of the current paper, however the interested reader is directed to the excellent text on Gaussian processes by Rasmussen and Williams ([@rasmussen_gaussian_2006]) for a complete reference and [@cox_gaussian_2012] for an application to spatial trajectories.
+and is thus outside the scope of the current paper, however the interested reader is directed to the excellent text on Gaussian processes by Rasmussen and Williams [@rasmussen_gaussian_2006] for a complete reference and [@cox_gaussian_2012] for an application to spatial trajectories.
 
 ## Other Methods
 ### Graph Model
@@ -422,42 +301,15 @@ A particularly interesting type of RNN is the Long Short Term Memory (LSTM) arch
 Traja implements neural networks by extending the widely used open source machine learning library PyTorch, primarily developed by Facebook AI Research Group. Traja allows framework-agnostic modeling through data loaders designed for time series. In addition, the Traja package comes with several predefined model architectures which can be configured according to the user’s requirements.
 
 Because RNNs work with time series, the trajectories require special handling. The `traja.dataset.MultiModalDataLoader` efficiently groups subsequent samples and into series and splits these series into training and test data. It represents a Python iterable over the dataset and extends the PyTorch `DataLoader` class, with support for
-• random, weighted sampling,
-• data scaling,
-• data shuffling,
-• train/validation/test split.
+
+- random, weighted sampling,
+- data scaling,
+- data shuffling,
+- train/validation/test split.
 
 `MultiModalDataLoader` accepts several important configuration parameters and
 allows batched sampling of the data. The two constructor arguments `n_past` and
-`n_future` specify the number of samples that the network will be shown and the number that the network will have to guess, respectively. `batch_size` is generally in the dozens and is used to regularise the network. The `MultiModalDataLoader` has a signature:
-
-```python
-MultiModalDataLoader(df,
-    batch_size=10, # number of sequences to train every step
-    n_past=10, # number of time steps to learn the time series
-    n_future=5, # number of time steps to predict
-    split_by_id=True) # whether to split data by trajectory id or
-        by time steps for each id
-```
-
-A sample implementation of LSTM for trajectory forecasting is as follows:
-
-```python
-from traja.models.predictive_models.lstm import LSTM
-
-# more LSTM layers learn more complex patterns but risk overfitting
-num_layers = 2
-# wider layers learn more complex patterns but risk overfitting
-hidden_size = 32
-# ignore some network connections (improves generalization)
-dropout = 0.1
-model = LSTM(input_size=input_size,
-        hidden_size=hidden_size,
-        num_layers=num_layers,
-        output_size=output_size,
-        dropout=dropout,
-        batch_size=batch_size,
-```
+`n_future` specify the number of samples that the network will be shown and the number that the network will have to guess, respectively. `batch_size` is generally in the dozens and is used to regularise the network.
 
 The RNNs also need to be trained - this is done by the high-level Trainer class below. It performs nonlinear optimisation with a Stochastic Gradient Descent-like algorithm. The Trainer class by default implements the Huber loss function [@huber_robust_1964], also known as smooth $L_1$ loss, which is a loss function commonly used in robust regression:
 
@@ -470,84 +322,15 @@ In comparison to mean-squared error loss, Huber loss is less sensitive to outlie
 [^5]: [https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html](https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html)
 
 ### Recurrent Autoencoder Networks
-Traja can also train autoencoders to either predict the future position of a track or classify the track into a number of categories. Autoencoders embed the time series into a time-invariant latent space, allowing representation of each trajectory or sub-trajectory as a vector (Figure 15). A class of well-separated trajectories would then be restricted
+Traja can also train autoencoders to either predict the future position of a track or classify the track into a number of categories. Autoencoders embed the time series into a time-invariant latent space, allowing representation of each trajectory or sub-trajectory as a vector (Figure 15). A class of well-separated trajectories would then be restricted to a region of the latent space. The technique is similar to Word2vec [@word2vec], where words are converted to a 100+ dimensional vector. In this approach, forecasting and classification are both preceded by training the data in an autoencoder, which learns an efficient representation of the data for further computation of the target function.
 
 ![Example of how autoencoders compress data such as an image to an embedding vector. Source: Author’s Towards Data Science post [@shenk_towards_2020].](./images/trip_grid_algo.png){width=80%}
 
-A sample implementation of high-level API for training neural networks for time-series data, including autoencoders, variational autoencoder, and LSTMs is:
-
-```python
-from traja.models.train import HybridTrainer
-optimizer_type = 'Adam' # Nonlinear optimiser with momentum
-loss_type = 'huber'
-
-# Trainer
-trainer = HybridTrainer(model=model,
-    optimizer_type=optimizer_type,
-    loss_type=loss_type)
-
-# Train the model to forecast the trajectory
-trainer.fit(data_loaders,
-    model_save_path,
-    epochs=10,
-    training_mode='forecasting')
-```
-
-to a region of the latent space. The technique is similar to Word2vec [@word2vec], where words are converted to a 100+ dimensional vector. In this approach, forecasting and classification are both preceded by training the data in an autoencoder, which learns an efficient representation of the data for further computation of the target function.
 
 ![LSTM implementation for trajectory
 prediction[]{label="fig:lstm"}](./images/rnn-prediction.png){#fig:lstm
 width=80%}
 
 Traja can train a classifier that works directly on the latent space output; since each class of trajectories converges to a distinct region in the latent space, this technique is often superior to classifying the trajectory itself. Traja trains classifiers for both Autoencoderstyle and Variational Autoencoder-style RNNs. When investigating whether animals’ behaviors have changed, or whether two experimental categories of animals behave differently, this unstructured data mining can suggest fruitful avenues for investigation.
-
-A sample usage of multimodal autoencoder combining training for both forecasting and classification tasks follows:
-
-```python
-from traja.models.generative_models.ae import MultiModelAE
-from traja.models.train import HybridTrainer
-
-# Because we will also train a classifier,
-# we need to provide extra parameters.
-num_classifier_layers=4,
-classifier_hidden_size=32,
-num_classes=9
-
-model = MultiModelAE(input_size=2,
-    num_past=num_past,
-    batch_size=batch_size,
-    num_future=num_future,
-    lstm_hidden_size=32,
-    num_lstm_layers=2,
-    output_size=2,
-    latent_size=10,
-    batch_first=True,
-    dropout=0.1,
-    reset_state=True,
-    bidirectional=False,
-    num_classifier_layers=num_classifier_layers,
-    classifier_hidden_size=classifier_hidden_size,
-    num_classes=num_classes)
-
-optimizer_type = 'Adam' # Nonlinear optimiser with momentum
-loss_type = 'huber'
-
-# Trainer
-trainer = HybridTrainer(model=model,
-    optimizer_type=optimizer_type,
-    loss_type=loss_type)
-
-# Train the model to forecast the trajectory, so we have a valid
-# latent space
-trainer.fit(data_loaders,
-    model_save_path,
-    epochs=10,
-    training_mode='forecasting')
-# Now optimise the classification head
-trainer.fit(data_loaders,
-    model_save_path,
-    epochs=10,
-    training_mode='classification')
-```
 
 # References
