@@ -39,7 +39,8 @@ The following features are required for feature completeness:
 * Automatic code formatter
 * Tutorials
    * Find time of day based on activity
-   * Recover parameters from Pituitary ODE
+   * `Recover parameters from Pituitary ODE <https://colab.research.google.com/drive/1Fc8Z6LtjMBk20QPPzJt8uDAxWu5dz_1Y?usp=sharing>`_
+   * `Predict stock prices with LSTMs <https://colab.research.google.com/drive/1TAW9Lv0Sm9g8YRgYXaiHIZBqnGtGQn1H?usp=sharing>`_
 
 How to contribute
 -----------------
