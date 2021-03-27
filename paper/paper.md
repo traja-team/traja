@@ -41,25 +41,12 @@ The data used in this project includes animal trajectory data provided by [http:
 
 ## Overview of the Library
 
-The software is structured into several modules. This section surveys the structure of the codebase and elaborates on implementation strategies, but does not constitute a full documentation. For a detailed API reference, the reader is referred to the HTML documentation hosted at  <https://traja.readthedocs.io>. The import classes are the `TrajaDataFrame` class located in `frame.py` and `TrajaAccessor` located in `accessor.py`.
+# Overview
+Traja targets Python because of its popularity with data scientists.The library leverages the powerful pandas library, while adding methods specifically for trajectory analysis.When importing traja, the traja namespace registers itself within the pandas dataframes namespace via df.traja.
 
-A high-level accessor (`TrajaAccessor`) provides access to data stored within the pandas dataframe.
-## Design Principles
+The software is structured into three parts. These provide functionality to transform, analyse and visualize trajectories. Full details are available at <https://traja.readthedocs.io/>.  The `trajectory` model provides analytical and preprocessing functionalities. The `models` subpackage provides both traditional and neural network-based tools to determine trajectory properties. The `plotting` module allows visualizing trajectories in various ways. 
 
-Traja targets Python because of its popularity with data scientists.The library leverages the powerful pandas library, while adding methods specifically for trajectory analysis.
-
-When importing `traja`, the traja namespace registers itself within the pandas dataframes namespace via `df.traja`.
-
-This lets traja work directly with panda's internal objects:
-
-```python
- >>> df = pd.DataFrame({'x':[0,1,2], 'y':[2,3,4]})
- >>> df.traja.center
- (1.0, 3.0)
- >>> df.traja.plot()
-```
-
-Data, e.g., x and y coordinates, are stored as one-dimensional labelled arrays as instances of the pandas native `Series` class. Further, subclassing the pandas `DataFrame` allows creating an API that mirrors the pandas API which is familiar to most data scientists, thus reducing the barrier for entry while providing methods and properties specific to trajectories for rapid prototyping.
+Data, e.g., x and y coordinates, are stored as one-dimensional labelled arrays as instances of the pandas native `Series` class. Further, subclassing the pandas `DataFrame` allows providing an API that mirrors the pandas API which is familiar to most data scientists, thus reducing the barrier for entry while providing methods and properties specific to trajectories for rapid prototyping.
 Traja depends on Matplotlib [@Hunter:2007] and Seaborn [@waskom2020seaborn] for plotting and NumPy [@harris2020array] for computation.
 
 ## Mouse Locomotion Data
@@ -77,7 +64,7 @@ $$T_k = \{P_{k1}, P_{k2},...\}$$
 
 where $P_{ki}(i\geq 1)$ is a point in the trajectory.
 
-Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure [2](#fig:generated){reference-type="ref" reference="fig:generated"}) is generated with `traja.generate`.
+Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure [3](#fig:generated){reference-type="ref" reference="fig:generated"}) is generated with `traja.generate`.
 
 ## Spatial Transformations
 Transformation of trajectories can be useful for comparing trajectories from various geospatial coordinates, data compression, or simply for visualization purposes.
@@ -89,10 +76,10 @@ $$\begin{bmatrix} x'\\y' \end{bmatrix} = \begin{bmatrix} cos\theta & i sin\theta
 with angle $\theta$ where $\theta \in R : \theta \in [-180,180]$.
 
 ### Trip Grid
-One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [1](#fig:tripgrid){reference-type="ref" reference="fig:tripgrid"}.
+One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [1](#fig:tripgridalgo){reference-type="ref" reference="fig:tripgridalgo"}.
 
 ![Trip grid image generation from mouse
-trajectory.](./images/trip_grid_algo.png){width=80%}
+trajectory.](./images/trip_grid_algo.png){#fig:tripgridalgo width=80%}
 
 Allowing computation on discrete variables rather than continuous ones has several advantages stemming from the ability to store trajectories in a more memory efficient form [^3]. The advantage is that computation is generally faster, more data can fit in memory in the case of complex models, and item noise can be reduced.
 
@@ -101,7 +88,7 @@ Allowing computation on discrete variables rather than continuous ones has sever
 Creation of an $M * N$ grid allows mapping trajectory $T_k$ onto uniform
 grid cells. Generalizing the nomenclature of [@wang_modeling_2017] to rectangular grids, $C_{mn}(1\leq{m}\leq M; 1\leq{n}\leq{N})$ denotes the cell in row $m$ and column $n$ of the grid. Each point $P_{ki}$ is assigned to a cell $C(m,n)$. The result is a two-dimensional image $M*N$ image $I_k$, where the value of pixel $I_k(m,n)(1\leq{m,n}\leq{M})$ indicates the relative number of points assigned to cell $C_{mn}$. Partionining of spatial position into separate grid cells is typically preceded by generation of hidden Markov models [@jeung_mining_2007] (see below).
 
-![Visualization of heat map from bins generated with `df.trip_grid`. Note regularly spaced artifacts (bright yellow) in this sample due to a bias in the sensor data interpolation. This type of noise can be minimized by thresholding or using a logarithmic scale (`traja.trip_grid(trj, log=True)`, as shown above.[]{label="fig:tripgrid"}](./images/tripgrid.png){#fig:tripgrid width=80%}
+![Visualization of heat map from bins generated with `df.trip_grid`. Note regularly spaced artifacts (bright yellow) in this sample due to a bias in the sensor data interpolation. This type of noise can be minimized by thresholding or using a logarithmic scale (`traja.trip_grid(trj, log=True)`, as shown above.[]{label="fig:heatmap"}](./images/tripgrid.png){#fig:heatmap width=80%}
 
 ### Feature Scaling
 
@@ -117,7 +104,7 @@ $\hat{X} = \frac{X - X_{min}}{X_{max} - X_{min}}$
 
 ### Standardization
 
-The result of standardization (or Z-score normalization) is that the features will be rescaled to have the property of a standard normal distribution with $\mu = 0$ and $\sigma = 1$ where $\mu$ is the mean (average) of the data and $\sigma$ is the standard deviation from the mean. Standard scores (also known as **z**-scores are calculated as follows:
+The result of standardization is that the features will be rescaled to have the property of a standard normal distribution with $\mu = 0$ and $\sigma = 1$ where $\mu$ is the mean (average) of the data and $\sigma$ is the standard deviation from the mean. Standard scores (also known as **z**-scores are calculated as follows:
 
 $z = \frac{x-\mu}{\sigma}$
 
@@ -162,7 +149,7 @@ is the Euclidean distance between two positions in adjacent time samples.
 
 [^6]: 4 x 4 Hz x 60 seconds x 60 minutes x 24 hours x 3 features (x,y, and time)
 
-![Velocity histogram from one day of mouse activity.[]{label="fig:velocity-hist"}](./images/velocitylog.png){#fig:velocity-hist width=70%}
+![Velocity histogram from one day of mouse activity.[]{label="fig:velocity-hist"}](./images/velocitylog.png){#fig:velocity-hist width=50%}
 
 ### Speed
 Speed or velocity is the first derivative of centroids with respect to time. Peak velocity in a home cage environment is perhaps less interesting than a distribution of velocity observations, as in Figure [4](#fig:velocity-hist){reference-type="ref" reference="fig:velocity-hist"}. Additionally, noise can be eliminated from velocity calculations by using a minimal distance moved threshold, as demonstrated in [@shenk_automated_2020]. This allows identifying broad-scale behaviors such as cage crossings.
@@ -205,10 +192,10 @@ were binned into 8x8 grids before applying
 PCA.[]{label="fig:pca"}](./images/pca_fortasyn-period.png){#fig:pca
 width=80%}
 
-This requires converting the trajectory to a trip grid (see Figure 1) and performing PCA on the grid in 2D (Figure [6](#fig:pca){reference-type="ref" reference="fig:pca"}) or 3D (Figure [7](#fig:3dpca){reference-type="ref" reference="fig:3dpca"}). Structure in the data is visible if light and dark time periods are compared.
+This requires converting the trajectory to a trip grid (see Figure 1) and performing PCA on the grid in 2D (Figure [7](#fig:pca){reference-type="ref" reference="fig:pca"}) or 3D (Figure [7](#fig:3dpca){reference-type="ref" reference="fig:3dpca"}). Structure in the data is visible if light and dark time periods are compared.
 
 ### Linear Discriminant Analysis
-Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance. It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. It behaves similar to PCA in some cases (Figure [7](#fig:LDA){reference-type="ref" reference="fig:LDA"})
+Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance. It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. It behaves similar to PCA in some cases (Figure [8](#fig:LDA){reference-type="ref" reference="fig:LDA"})
 
 ![3D PCA of Fortasyn trajectory data. Daily trajectories (day and night)
 were binned into 8x8 grids before applying
@@ -251,7 +238,7 @@ Transition probabilities are most commonly modelled with Hidden Markov Models (H
 
 Traja implements the rectangular spatial grid version of HMM with transitions.
 
-The probability of transition from each cell to another cell is stored as a probability within the transition matrix. This can further be plotted with `plot_transition_matrix` (Figure [8](#fig:transitionmatrix){reference-type="ref" reference="fig:transitionmatrix"}).
+The probability of transition from each cell to another cell is stored as a probability within the transition matrix. This can further be plotted with `plot_transition_matrix` (Figure [9](#fig:transitionmatrix){reference-type="ref" reference="fig:transitionmatrix"}).
 
 ### Convex Hull
 The convex hull of a subtrajectory is the set $X$ of points in the Euclidean plane that is the smallest convex set to include X. For computational efficiency, a geometric k-simplex can be plotted covering the convex hull by converting to a Shapely object and using Shapely’s `convex_hull` method. `plot_rolling_hull` performs this. Plotting the convex hull in 3D allows seeing the change of the range of motion over time via `plot_rolling_hull_3d`.
@@ -288,8 +275,9 @@ $$L_{\delta} (a) = \begin{cases}
  \delta (|a| - \frac{1}{2}\delta), & \text{otherwise.}
 \end{cases}$$
 
-In comparison to mean-squared error loss, Huber loss is less sensitive to outliers in data: it is quadratic for small values of a, and linear for large values. It extends the PyTorch SmoothL1Loss class, where the $d$ parameter is set to 1[^5]. Acommon optimization algorithm is ADAM and is Traja’s default, but several others are provided as well. Although training with only a CPU is possible, a GPU can provide a $40-100x$ speedup [@Arpteg2018SoftwareEC].
-[^5]: [https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html](https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html)
+In comparison to mean-squared error loss, Huber loss is less sensitive to outliers in data: it is quadratic for small values of a, and linear for large values. It extends the PyTorch `SmoothL1Loss` class, where the $d$ parameter is set to 1[^4]. A common optimization algorithm is ADAM and is Traja’s default, but several others are provided as well. Although training with only a CPU is possible, a GPU can provide a $40-100x$ speedup [@Arpteg2018SoftwareEC].
+
+[^4]: [https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html](https://pytorch.org/docs/stable/generated/torch.nn.SmoothL1Loss.html)
 
 ### Recurrent Autoencoder Networks
 Traja can also train autoencoders to either predict the future position of a track or classify the track into a number of categories. Autoencoders embed the time series into a time-invariant latent space, allowing representation of each trajectory or sub-trajectory as a vector. A class of well-separated trajectories would then be restricted to a region of the latent space. The technique is similar to Word2vec [@word2vec], where words are converted to a 100+ dimensional vector. In this approach, forecasting and classification are both preceded by training the data in an autoencoder, which learns an efficient representation of the data for further computation of the target function.
