@@ -64,7 +64,9 @@ $$T_k = \{P_{k1}, P_{k2},...\}$$
 
 where $P_{ki}(i\geq 1)$ is a point in the trajectory.
 
-Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure [3](#fig:generated){reference-type="ref" reference="fig:generated"}) is generated with `traja.generate`.
+Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure [1](#fig:generated){reference-type="ref" reference="fig:generated"}) is generated with `traja.generate`.
+
+![Generation of a random walk[]{label="fig:generated"}](./images/generate.png){#fig:generated width=80%}
 
 ## Spatial Transformations
 Transformation of trajectories can be useful for comparing trajectories from various geospatial coordinates, data compression, or simply for visualization purposes.
@@ -76,7 +78,7 @@ $$\begin{bmatrix} x'\\y' \end{bmatrix} = \begin{bmatrix} cos\theta & i sin\theta
 with angle $\theta$ where $\theta \in R : \theta \in [-180,180]$.
 
 ### Trip Grid
-One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [1](#fig:tripgridalgo){reference-type="ref" reference="fig:tripgridalgo"}.
+One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [2](#fig:tripgridalgo){reference-type="ref" reference="fig:tripgridalgo"}.
 
 ![Trip grid image generation from mouse
 trajectory.](./images/trip_grid_algo.png){#fig:tripgridalgo width=80%}
@@ -93,8 +95,6 @@ grid cells. Generalizing the nomenclature of [@wang_modeling_2017] to rectangula
 ### Feature Scaling
 
 Feature scaling is common practice for preprocessing data for machine learning [@grus_data_2015] and is essential for even application of methods to attributes. For example, a high dimensional feature vector $\mathbf{x} \in \mathbb{R}^n$ where some attributes are in $(0,100)$ and others are in $(-1,1)$ would lead to biases in the treatment of certain attributes. To limit the dynamic range for multiple data instances simultaneously, scaling is applied to a feature matrix $X = \{\mathbf{x_1}, \mathbf{x_2}, ..., \mathbf{x_N}\} \in \mathbb{R}^{n\times{N}}$, where $n$ is the number of instances.
-
-![Generation of a random walk[]{label="fig:generated"}](./images/generate.png){#fig:generated width=80%}
 
 ### Min-Max Scaling
 
@@ -126,7 +126,7 @@ Smoothing can also be achieved with traja using Savitzky-Golay filtering with `s
 
 Trajectories can be resampled by time or by step length. This can be useful for aligning trajectories from various data sources and sampling rates or reducing the number of data points to improve computational efficiency. Care must be taken to select a time interval which maintains information on the significant behavior. If the minimal time interval observed is selected for the points, calculations will be computationally intractable for some systems. If too large of an interval is selected, we will fail to capture changes relevant to the target behavior in the data.
 
-Resampling by time is performed with `resample_time`. Rediscretizing by step length is performed with `rediscretize` (Figure [2](#fig:step){reference-type="ref" reference="fig:step"}).
+Resampling by time is performed with `resample_time`. Rediscretizing by step length is performed with `rediscretize` (Figure [3](#fig:step){reference-type="ref" reference="fig:step"}).
 
 ![Resampling x and y values over time by step length is performed with `rediscretize()`.[]{label="fig:step"}](./images/sample_rate.png){#fig:step width=80%}
 
@@ -170,12 +170,12 @@ Periodic behaviors are a consequence of the circadian rhythm aswell as observing
 
 ### Autocorrelation
 Autocorrelation is the correlation of a signal with a delayed copy of itself as a function of the decay. Basically, it is similarity of observations as a function of the time lag between them.
-It is computed with autocorrelation and plotted with `plot_autocorrelation`, as in Figure [5](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
+It is computed with autocorrelation and plotted as shown in Figure [5](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
 
 ![Autocorrelation of the y-dimension reveals daily (1440 minutes) periodic behavior[]{label="fig:autocorrelation"}](./images/autocorrelation_E1.png){#fig:autocorrelation width=80%}
 
 ### Power Spectrum
-Power spectrum of a time-series signal can be estimated with `plot_periodogram` (Figure [6](#fig:powerspectrum){reference-type="ref" reference="fig:powerspectrum"}). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
+Power spectrum of a time-series signal can be estimated (Figure [6](#fig:powerspectrum){reference-type="ref" reference="fig:powerspectrum"}). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
 
 ![Power Spectral Density. One day of activity reveals fairly smooth power spectral density.[]{label="fig:powerspectrum"}](./images/spectrum.png){#fig:powerspectrum width=70%}
 
@@ -192,10 +192,10 @@ were binned into 8x8 grids before applying
 PCA.[]{label="fig:pca"}](./images/pca_fortasyn-period.png){#fig:pca
 width=80%}
 
-This requires converting the trajectory to a trip grid (see Figure 1) and performing PCA on the grid in 2D (Figure [7](#fig:pca){reference-type="ref" reference="fig:pca"}) or 3D (Figure [7](#fig:3dpca){reference-type="ref" reference="fig:3dpca"}). Structure in the data is visible if light and dark time periods are compared.
+This requires converting the trajectory to a trip grid (see Figure 1) and performing PCA on the grid in 2D (Figure [7](#fig:pca){reference-type="ref" reference="fig:pca"}) or 3D (Figure [8](#fig:3dpca){reference-type="ref" reference="fig:3dpca"}). Structure in the data is visible if light and dark time periods are compared.
 
 ### Linear Discriminant Analysis
-Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance. It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. It behaves similar to PCA in some cases (Figure [8](#fig:LDA){reference-type="ref" reference="fig:LDA"})
+Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance. It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. It behaves similar to PCA in some cases (Figure [9](#fig:LDA){reference-type="ref" reference="fig:LDA"})
 
 ![3D PCA of Fortasyn trajectory data. Daily trajectories (day and night)
 were binned into 8x8 grids before applying
