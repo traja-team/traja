@@ -5,7 +5,7 @@ from pandas.util.testing import assert_series_equal
 
 import traja
 
-df = traja.generate(n=20)
+df = traja.generate(n=20, convex_hull=True)
 
 
 def test_polar_to_z():
@@ -221,17 +221,10 @@ def test_transition_matrix():
     transitions_matrix = traja.transition_matrix(grid_indices1D)
 
 
-def test_calc_laterality():
-    df_copy = df.copy()
-    right_turns, left_turns = traja.calc_laterality(df, dist_thresh=1)
-    assert left_turns == 4
-    assert right_turns == 0
-
-
-def test_calc_flow_angles():
+def test_calculate_flow_angles():
     df_copy = df.copy()
     grid_indices = traja.grid_coordinates(df_copy)
-    U, V = traja.calc_flow_angles(grid_indices.values)
+    U, V = traja.calculate_flow_angles(grid_indices.values)
     actual = U.sum()
     expected = -2.707_106_781_186_548_3
     npt.assert_allclose(actual, expected)
@@ -644,4 +637,25 @@ def test_from_xy():
     df_copy = df.copy()
     expected = traja.from_xy(df_copy.traja.xy).values
     actual = df_copy.traja.xy
+    npt.assert_allclose(expected, actual)
+
+
+def test_calc_convex_hull():
+    df_copy = df.copy()
+    expected = np.array([[ -4.86747278, -10.14421693],
+                         [  1.8618368 ,   2.72724373],
+                         [  1.86039336,   4.85796696],
+                         [ -0.09648629,   5.80245677],
+                         [ -4.1892174 ,   4.95182617],
+                         [ -9.41528913,   2.74372589],
+                         [-11.38346284,   1.54102389],
+                         [-13.249669  ,   0.20718649],
+                         [-13.69906214,  -1.7734609 ],
+                         [-13.37369615,  -3.8234334 ],
+                         [-12.97911277,  -5.60264725],
+                         [-12.29572211,  -7.05360631],
+                         [-11.19458371,  -8.63916811],
+                         [ -7.07832674,  -9.78109529],
+                         [ -4.86747278, -10.14421693]])
+    actual = df.convex_hull
     npt.assert_allclose(expected, actual)
