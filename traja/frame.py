@@ -1,5 +1,6 @@
 import logging
 from typing import Optional, Union, Tuple
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -38,7 +39,7 @@ class TrajaDataFrame(pd.DataFrame):
         "fps",
         "time_units",
         "time_col",
-        "id",
+        "id"
     ]
 
     def __init__(self, *args, **kwargs):
@@ -49,12 +50,10 @@ class TrajaDataFrame(pd.DataFrame):
                 if key == name:
                     traja_kwargs[key] = kwargs.pop(key)
         super(TrajaDataFrame, self).__init__(*args, **kwargs)
-
         if len(args) == 1 and isinstance(args[0], TrajaDataFrame):
             args[0]._copy_attrs(self)
         for name, value in traja_kwargs.items():
             self.__dict__[name] = value
-
         # Initialize metadata like 'fps','spatial_units', etc.
         self._init_metadata()
 
@@ -136,6 +135,63 @@ class TrajaDataFrame(pd.DataFrame):
         """Set metadata."""
         self.__dict__[key] = value
 
+        self.convex_hull = None
+
+    def __setattr__(self, name: str, value) -> None:
+        """Override method for pandas.core.generic method __setattr__
+
+        Allows for setting attributes to dataframe without warning.
+        """
+        try:
+            object.__getattribute__(self, name)
+            return object.__setattr__(self, name, value)
+        except AttributeError:
+            pass
+        if name in self._internal_names_set:
+            object.__setattr__(self, name, value)
+        elif name in self._metadata:
+            object.__setattr__(self, name, value)
+        else:
+            try:
+                existing = getattr(self, name)
+                if isinstance(existing, Index):
+                    object.__setattr__(self, name, value)
+                elif name in self._info_axis:
+                    self[name] = value
+                else:
+                    object.__setattr__(self, name, value)
+            except (AttributeError, TypeError):
+                object.__setattr__(self, name, value)
+
+    @property
+    def convex_hull(self):
+        """Property of TrajaDataFrame class representing
+        bounds for convex area enclosing trajectory points.
+
+        """
+        return self._convex_hull
+
+    @convex_hull.setter
+    def convex_hull(self, values):
+        """Set convex_hull property of TrajaDataFrame.
+
+        Returns:
+            np.array, calculated coordinates of convex hull boundary
+        """
+        if not values is None and not values.shape[1]==2:
+            raise Exception('XY coordinates must be in separate columns '\
+                            'for convex hull calculation.')
+        elif values is None:
+            self._convex_hull = np.array([])
+        else:
+            point_arr = traja.trajectory.calc_convex_hull(values)
+            self._convex_hull = point_arr
+
+    @convex_hull.deleter
+    def convex_hull(self):
+        self._convex_hull = None
+
+
 
 def tocontainer(func):
     def wrapper(*args, **kwargs):
@@ -162,10 +218,10 @@ class TrajaCollection(TrajaDataFrame):
     ]
 
     def __init__(
-        self,
-        trjs: Union[TrajaDataFrame, pd.DataFrame, dict],
-        id_col: Optional[str] = None,
-        **kwargs,
+            self,
+            trjs: Union[TrajaDataFrame, pd.DataFrame, dict],
+            id_col: Optional[str] = None,
+            **kwargs,
     ):
         """Initialize with trajectories with x, y, and time columns.
 
@@ -214,9 +270,9 @@ class TrajaCollection(TrajaDataFrame):
     def plot(self, colors=None, **kwargs):
         """Plot collection of trajectories with colors assigned to each id.
 
-        >>> trjs = {ind: traja.generate(seed=ind) for ind in range(3)} # doctest: +SKIP
-        >>> coll = traja.TrajaCollection(trjs) # doctest: +SKIP
-        >>> coll.plot() # doctest: +SKIP
+            >>> trjs = {ind: traja.generate(seed=ind) for ind in range(3)} # doctest: +SKIP
+            >>> coll = traja.TrajaCollection(trjs) # doctest: +SKIP
+            >>> coll.plot() # doctest: +SKIP
 
         """
         return traja.plotting.plot_collection(
@@ -242,10 +298,10 @@ class TrajaCollection(TrajaDataFrame):
 
 class StaticObject(object):
     def __init__(
-        self,
-        x: Optional[float] = None,
-        y: Optional[float] = None,
-        bounding_box: Tuple[float] = None,
+            self,
+            x: Optional[float] = None,
+            y: Optional[float] = None,
+            bounding_box: Tuple[float] = None,
     ):
         ...
         pass

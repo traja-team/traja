@@ -70,6 +70,8 @@ The following methods are available via :mod:`traja.trajectory`:
 
 .. automethod:: traja.trajectory.calc_angle
 
+.. automethod:: traja.trajectory.calc_convex_hull
+
 .. automethod:: traja.trajectory.calc_derivatives
 
 .. automethod:: traja.trajectory.calc_displacement
@@ -78,11 +80,13 @@ The following methods are available via :mod:`traja.trajectory`:
 
 .. automethod:: traja.trajectory.calc_turn_angle
 
-.. automethod:: traja.trajectory.calc_flow_angles
+.. automethod:: traja.trajectory.calculate_flow_angles
 
 .. automethod:: traja.trajectory.cartesian_to_polar
 
 .. automethod:: traja.trajectory.coords_to_flow
+
+.. automethod:: traja.trajectory.determine_colinearity
 
 .. automethod:: traja.trajectory.distance_between
 
@@ -102,6 +106,8 @@ The following methods are available via :mod:`traja.trajectory`:
 
 .. automethod:: traja.trajectory.grid_coordinates
 
+.. automethod:: traja.trajectory.inside
+
 .. automethod:: traja.trajectory.length
 
 .. automethod:: traja.trajectory.polar_to_z
@@ -109,6 +115,8 @@ The following methods are available via :mod:`traja.trajectory`:
 .. automethod:: traja.trajectory.rediscretize_points
 
 .. automethod:: traja.trajectory.resample_time
+
+.. automethod:: traja.trajectory.return_angle_to_point
 
 .. automethod:: traja.trajectory.rotate
 
