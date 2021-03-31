@@ -221,10 +221,10 @@ def test_transition_matrix():
     transitions_matrix = traja.transition_matrix(grid_indices1D)
 
 
-def test_calculate_flow_angles():
+def test_calc_flow_angles():
     df_copy = df.copy()
     grid_indices = traja.grid_coordinates(df_copy)
-    U, V = traja.calculate_flow_angles(grid_indices.values)
+    U, V = traja.calc_flow_angles(grid_indices.values)
     actual = U.sum()
     expected = -2.707_106_781_186_548_3
     npt.assert_allclose(actual, expected)

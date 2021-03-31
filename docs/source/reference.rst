@@ -80,7 +80,7 @@ The following methods are available via :mod:`traja.trajectory`:
 
 .. automethod:: traja.trajectory.calc_turn_angle
 
-.. automethod:: traja.trajectory.calculate_flow_angles
+.. automethod:: traja.trajectory.calc_flow_angles
 
 .. automethod:: traja.trajectory.cartesian_to_polar
 
