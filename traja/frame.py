@@ -154,7 +154,7 @@ class TrajaDataFrame(pd.DataFrame):
         else:
             try:
                 existing = getattr(self, name)
-                if isinstance(existing, Index):
+                if isinstance(existing, type(self.index)):
                     object.__setattr__(self, name, value)
                 elif name in self._info_axis:
                     self[name] = value
