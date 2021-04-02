@@ -221,6 +221,13 @@ def test_transition_matrix():
     transitions_matrix = traja.transition_matrix(grid_indices1D)
 
 
+def test_calc_laterality():
+    df_copy = df.copy()
+    right_turns, left_turns = traja.calc_laterality(df, dist_thresh=1)
+    assert left_turns == 4
+    assert right_turns == 0
+    
+    
 def test_calc_flow_angles():
     df_copy = df.copy()
     grid_indices = traja.grid_coordinates(df_copy)
