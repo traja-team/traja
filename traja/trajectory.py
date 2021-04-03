@@ -26,6 +26,7 @@ __all__ = [
     "_resample_time",
     "angles",
     "calc_angle",
+    "calc_convex_hull",
     "calc_derivatives",
     "calc_displacement",
     "calc_heading",
@@ -34,12 +35,14 @@ __all__ = [
     "calc_flow_angles",
     "cartesian_to_polar",
     "coords_to_flow",
+    "determine_colinearity",
     "distance_between",
     "distance",
     "euclidean",
     "expected_sq_displacement",
     "fill_in_traj",
     "from_xy",
+    "inside",
     "generate",
     "get_derivatives",
     "grid_coordinates",
@@ -47,6 +50,7 @@ __all__ = [
     "polar_to_z",
     "rediscretize_points",
     "resample_time",
+    "return_angle_to_point",
     "rotate",
     "smooth_sg",
     "speed_intervals",
@@ -330,8 +334,8 @@ def distance_between(A: traja.TrajaDataFrame, B: traja.TrajaDataFrame, method="d
             from fastdtw import fastdtw
         except ImportError:
             raise ImportError(
-                """            
-            Missing optional dependency 'fastdtw'. Install fastdtw for dynamic time warping distance with pip install 
+                """
+            Missing optional dependency 'fastdtw'. Install fastdtw for dynamic time warping distance with pip install
             fastdtw.
             """
             )
@@ -607,6 +611,7 @@ def generate(
     fps: float = 50,
     spatial_units: str = "m",
     seed: int = None,
+    convex_hull: bool = False,
     **kwargs,
 ):
     """Generates a trajectory.
@@ -615,7 +620,7 @@ def generate(
     be a correlated random walk/idiothetic directed walk (Kareiva & Shigesada,
     1983), corresponding to an animal navigating without a compass (Cheung,
     Zhang, Stricker, & Srinivasan, 2008). If ``random`` is ``False``, it
-    will be a directed walk/allothetic directed walk/oriented path, corresponding
+    will be(np.ndarray) a directed walk/allothetic directed walk/oriented path, corresponding
     to an animal navigating with a compass (Cheung, Zhang, Stricker, &
     Srinivasan, 2007, 2008).
 
@@ -637,6 +642,7 @@ def generate(
       linear_error_sd (float):  (Default value = 0.2)
       linear_error_dist (Callable):  (Default value = None)
       fps (float):  (Default value = 50)
+      convex_hull (bool):  (Default value = False)
       spatial_units:  (Default value = 'm')
       **kwargs: Additional arguments
 
@@ -699,7 +705,11 @@ def generate(
     # Update metavars
     metavars = dict(angular_error_sd=angular_error_sd, linear_error_sd=linear_error_sd)
     df.__dict__.update(metavars)
-
+    #Attribute convex hull to dataframe
+    if convex_hull:
+        df.convex_hull = df[['x','y']].values
+    else:
+        del df.convex_hull
     return df
 
 
@@ -1291,6 +1301,196 @@ def coords_to_flow(trj: TrajaDataFrame, bins: Union[int, tuple] = None):
     U, V = traja.calc_flow_angles(grid_indices.values)
 
     return X, Y, U, V
+
+
+def return_angle_to_point(p1: np.ndarray, p0: np.ndarray):
+    """Calculate angle of points as coordinates in relation to each other.
+    Designed to be broadcast across all trajectory points for a single
+    origin point p0.
+
+    Args:
+        p1 (np.ndarray):  Test point [x,y]
+        p0 (np.ndarray):  Origin/source point [x,y]
+
+    Returns:
+        r (float)
+
+    """
+
+    r = math.degrees(math.atan2((p0[1]-p1[1]), (p0[0]-p1[0])))
+    return r
+
+
+def determine_colinearity(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray):
+    """Determine whether trio of points constitute a right turn, or
+    whether they are left turns (or colinear/straight line).
+
+    Args:
+        p0 (:class:`~numpy.ndarray`):  First point [x,y] in line
+        p1 (:class:`~numpy.ndarray`):  Second point [x,y] in line
+        p2 (:class:`~numpy.ndarray`):  Third point [x,y] in line
+
+    Returns:
+        (bool)
+
+    """
+
+    cross_product = (p1[0] - p0[0])*(p2[1] - p0[1])-(p1[1] - p0[1])*(p2[0] - p0[0])
+
+    if cross_product < 0:  #Right turn
+        return False
+    else:  #Points are colinear (if == 0) or left turn (if < 0)
+        return True
+
+
+def inside(pt: np.array, bounds_xs: list, bounds_ys: list,
+           minx: float, maxx: float, miny: float, maxy: float):
+    """Determine whether point lies inside or outside of polygon formed
+    by "extrema" points - minx, maxx, miny, maxy.  Optimized to be run
+    as broadcast function in numpy along axis.
+
+    Args:
+        pt (:class:`~numpy.ndarray`):  Point to test whether inside or outside polygon
+        bounds_xs (list or tuple): x-coordinates of polygon vertices, in sequence
+        bounds_ys (list or tuple): y-coordinates of polygon vertices, same sequence
+        minx (float): minimum x coordinate value
+        maxx (float): maximum x coordinate value
+        miny (float): minimum y coordinate value
+        maxy (float): maximum y coordinate value
+
+    Returns:
+        (bool)
+
+    .. note::
+        Ported to Python from C implementation by W. Randolph Franklin (WRF):
+        <https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html>
+
+
+    Boolean return "True" for OUTSIDE polygon, meaning it is within
+    subset of possible convex hull coordinates.
+    """
+    #Only theoretically possible, extrema polygon is actually a straight line
+    if maxx == maxy and minx == miny:
+        return True  #No polygon to be within (considered outside)
+    if pt[0] in [minx, maxx] or pt[1] in [miny, maxy]:
+        return True  #Extrema points are by definition part of convex hull
+    poly_pts = len(bounds_xs)
+    ct = 0
+    for i in range(poly_pts):
+        if i == 0:
+            j = poly_pts - 1
+        else:
+            j = i - 1
+        #Test if horizontal trace from the point to infinity intersects the given polygon line segment
+        if (((bounds_ys[i]>pt[1]) != (bounds_ys[j]>pt[1])) & \
+            (pt[0] < ((bounds_xs[j]-bounds_xs[i])*(pt[1]-bounds_ys[i])/(bounds_ys[j]-bounds_ys[i])+bounds_xs[i]))):
+            ct += 1
+    if ct % 2 == 0:  #Number of intersections between point, polygon edge(s) and infinity point are odd:
+        return True  #Outside polygon
+    else:
+        return False  #Inside polygon
+
+
+def calc_convex_hull(point_arr: np.array):
+    """Identify containing polygonal convex hull for full Trajectory
+    Interior points filtered with inside() method, takes quadrilateral using extrema points
+    (minx, maxx, miny, maxy) - convex hull points MUST all be outside such a polygon.
+    Returns an array with all points in the convex hull.
+
+    Implementation of Graham Scan technique: <https://en.wikipedia.org/wiki/Graham_scan>
+
+    Returns:
+        point_arr (:class:`~numpy.ndarray`)
+
+    .. doctest::
+
+        >> #Quick visualizaation
+        >> import matplotlib.pyplot as plt
+        >> df = traja.generate(n=10000, convex_hull=True)
+        >> xs, ys = [*zip(*df.convex_hull)]
+        >> _ = plt.plot(df.x.values, df.y.values, 'o', 'blue')
+        >> _ = plt.plot(xs, ys, '-o', color='red')
+        >> _ = plt.show()
+
+
+    .. note::
+        Incorporates Akl-Toussaint method for filtering interior points:
+        <http:/www-cgrl.cs.mcgill.ca/~godfried/publications/fast.convex.hull.algorithm.pdf>
+
+    .. note::
+        Performative loss beyond ~100,000-200,000 points, algorithm has O(nlogn) complexity.
+
+    """
+    #Find "extrema" points to form polygon (convex hull must be outside this polygon)
+    minx = point_arr[:,0].min()
+    maxx = point_arr[:,0].max()
+    miny = point_arr[:,1].min()
+    maxy = point_arr[:,1].max()
+    min_x_pt = point_arr[np.where(point_arr[:,0]==point_arr[:,0].min())].tolist()[0]
+    min_y_pt = point_arr[np.where(point_arr[:,1]==point_arr[:,1].min())].tolist()[0]
+    max_x_pt = point_arr[np.where(point_arr[:,0]==point_arr[:,0].max())].tolist()[0]
+    max_y_pt = point_arr[np.where(point_arr[:,1]==point_arr[:,1].max())].tolist()[0]
+    extrema_pts = [min_x_pt, min_y_pt, max_x_pt, max_y_pt]
+    extrema_xys = [*zip(*extrema_pts)]
+    bounds_x, bounds_y = extrema_xys[0], extrema_xys[1]
+
+    #Filter trajectory points to only include points "outside" of this extrema polygon
+    convex_mask = np.apply_along_axis(inside, 1, point_arr,
+                                      bounds_x, bounds_y,
+                                      minx, maxx, miny, maxy)
+    point_arr = point_arr[convex_mask]
+
+    #Find principal point (lowest y, lower x) from which to start
+    p0 = point_arr[point_arr[:,1]==point_arr[:,1].min()].min(axis=0)
+    point_arr = np.delete(point_arr, np.where((point_arr[:,0]==p0[0])&(point_arr[:,1]==p0[1])), 0)
+    #Sort remaining points
+    point_arr = point_arr[np.lexsort((point_arr[:,0], point_arr[:,1]))]
+    #Populate array with direction of each point in the trajectory to the principal (lowest, then leftmost) point
+    point_arr_r_p0 = np.apply_along_axis(return_angle_to_point, 1, point_arr, p0)
+    #Sort point array by radius
+    sorted_ind = point_arr_r_p0.argsort()
+    point_arr_r_p0 = point_arr_r_p0[sorted_ind]
+    point_arr = point_arr[sorted_ind]
+
+    #Check for points with duplicate angles from principal point, only keep furthest point
+    unique_r = np.unique(point_arr_r_p0, return_index=True)[1]
+    if unique_r.shape == point_arr_r_p0.shape:  #There are no two points at same angle from x axis
+        pass
+    else:
+        dist_p0 = lambda x: np.linalg.norm(p0-x)
+        point_arr_d_p0 = np.apply_along_axis(dist_p0, 1, point_arr)
+        #Identify duplicate angles
+        unique, counts = np.unique(point_arr_r_p0, axis=0, return_counts=True)
+        rep_angles = unique[counts>1]
+        duplicates = point_arr_r_p0[np.where(np.in1d(point_arr_r_p0, rep_angles))]
+        duplicates = point_arr[np.where(np.in1d(point_arr_r_p0, rep_angles))]
+        #Get indices of only the furthest point from origin at each unique angle
+        dropped_pts = []
+        for dup_pt in duplicates:
+            pt_idx = np.where((point_arr[:,0]==dup_pt[0])&(point_arr[:,1]==dup_pt[1]))[0][0]
+            r_val = point_arr_r_p0[pt_idx]
+            ind_furthest = np.where(point_arr_d_p0==point_arr_d_p0[np.where(point_arr_r_p0==r_val)].max())[0][0]
+            if not pt_idx == ind_furthest:  #This is a "closer" point to origin, not in convex hull
+                dropped_pts.append(pt_idx)
+        point_arr = np.delete(point_arr, dropped_pts, axis=0)
+
+    #Iterate through points. If a "right turn" is made, remove preceding point.
+    point_arr = np.insert(point_arr, 0, p0, axis=0)
+    for pt in point_arr:
+        idx = np.where((point_arr[:,0]==pt[0])&(point_arr[:,1]==pt[1]))[0][0]
+        while True:
+            #Skip/stop at first two points (3 points form line), after working backwards
+            if idx <= 1:
+                break
+            #Continue working backwards until a left turn is made, or we reach the origin
+            elif determine_colinearity(point_arr[idx-2], point_arr[idx-1],
+                                       point_arr[idx]):
+                break
+            else:  #This is a right turn
+                point_arr = np.delete(point_arr, idx-1, 0)
+                idx -= 1
+    point_arr = np.insert(point_arr, point_arr.shape[0], p0, axis=0)
+    return point_arr
 
 
 def from_xy(xy: np.ndarray):
