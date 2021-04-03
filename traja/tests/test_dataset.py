@@ -6,8 +6,8 @@ from traja.dataset.pituitary_gland import create_latin_hypercube_sampled_pituita
 
 def test_time_based_sampling_dataloaders_do_not_overlap():
     data = list()
-    num_ids = 140
-    sequence_length = 2000
+    num_ids = 10
+    sequence_length = 100
 
     # Hyperparameters
     batch_size = 10
