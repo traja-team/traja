@@ -1343,7 +1343,7 @@ def determine_colinearity(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray):
         return True
 
 
-def inside(pt: np.array, bounds_xs: list, bounds_ys: list,
+def inside(pt: np.ndarray, bounds_xs: list, bounds_ys: list,
            minx: float, maxx: float, miny: float, maxy: float):
     """Determine whether point lies inside or outside of polygon formed
     by "extrema" points - minx, maxx, miny, maxy.  Optimized to be run
@@ -1393,11 +1393,11 @@ def inside(pt: np.array, bounds_xs: list, bounds_ys: list,
 
 def calc_convex_hull(point_arr: np.array):
     """Identify containing polygonal convex hull for full Trajectory
-    Interior points filtered with inside() method, takes quadrilateral using extrema points
-    (minx, maxx, miny, maxy) - convex hull points MUST all be outside such a polygon.
+    Interior points filtered with :meth:`traja.trajectory.inside` method, takes quadrilateral using extrema points
+    `(minx, maxx, miny, maxy)` - convex hull points MUST all be outside such a polygon.
     Returns an array with all points in the convex hull.
 
-    Implementation of Graham Scan technique: <https://en.wikipedia.org/wiki/Graham_scan>
+    Implementation of Graham Scan `technique <https://en.wikipedia.org/wiki/Graham_scan>_`. 
 
     Returns:
         point_arr (:class:`~numpy.ndarray`)
@@ -1414,8 +1414,7 @@ def calc_convex_hull(point_arr: np.array):
 
 
     .. note::
-        Incorporates Akl-Toussaint method for filtering interior points:
-        <http:/www-cgrl.cs.mcgill.ca/~godfried/publications/fast.convex.hull.algorithm.pdf>
+        Incorporates Akl-Toussaint `method <http:/www-cgrl.cs.mcgill.ca/~godfried/publications/fast.convex.hull.algorithm.pdf>`_ for filtering interior points.
 
     .. note::
         Performative loss beyond ~100,000-200,000 points, algorithm has O(nlogn) complexity.
