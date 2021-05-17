@@ -7,8 +7,5 @@ fastdtw
 networkx
 seaborn
 torch
-h5py
 statsmodels
 scikit-learn
-numba>=0.50.0
-pyDOE2>=1.3.0
