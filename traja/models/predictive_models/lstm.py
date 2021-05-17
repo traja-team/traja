@@ -10,15 +10,16 @@ class LSTM(torch.nn.Module):
     """Deep LSTM network. This implementation
     returns output_size outputs.
     Args:
-        input_size: The number of expected features in the input `x`
-        batch_size:
-        sequence_length: The number of in each sample
-        hidden_size: The number of features in the hidden state `h`
+        input_size: The number of expected features in the input ``x``
+        hidden_size: The number of features in the hidden state ``h``
+        output_size: The number of output dimensions
+        batch_size: Size of batch. Default is 8
+        sequence_length: The number of in each sample        
         num_layers: Number of recurrent layers. E.g., setting ``num_layers=2``
             would mean stacking two LSTMs together to form a `stacked LSTM`,
             with the second LSTM taking in outputs of the first LSTM and
             computing the final results. Default: 1
-        output_size: The number of output dimensions
+        reset_state: If ``True``, will reset the hidden and cell state for each batch of data
         dropout: If non-zero, introduces a `Dropout` layer on the outputs of each
             LSTM layer except the last layer, with dropout probability equal to
             :attr:`dropout`. Default: 0
@@ -26,17 +27,17 @@ class LSTM(torch.nn.Module):
     """
 
     def __init__(
-        self,
-        batch_size: int,
-        num_future: int,
+        self,            
+        input_size: int,       
         hidden_size: int,
-        num_layers: int,
         output_size: int,
-        input_size: int,
-        batch_first: bool,
-        dropout: float,
-        reset_state: bool,
-        bidirectional: bool,
+        num_future: int = 8,
+        batch_size: int = 8,
+        num_layers: int = 1,             
+        reset_state: bool = True,
+        bidirectional: bool = False,
+        dropout: float = 0,
+        batch_first: bool = True,
     ):
         super(LSTM, self).__init__()
 
@@ -46,9 +47,9 @@ class LSTM(torch.nn.Module):
         self.num_future = num_future
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.output_size = output_size
-        self.batch_first = batch_first
+        self.output_size = output_size        
         self.dropout = dropout
+        self.batch_first = batch_first
         self.reset_state = reset_state
         self.bidirectional = bidirectional
 
