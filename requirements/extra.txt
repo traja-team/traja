@@ -9,7 +9,6 @@ shapely
 scipy>=1.4.1
 scikit-learn
 fastdtw
-plotly
 networkx
 seaborn
 torch
