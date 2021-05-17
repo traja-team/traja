@@ -3,11 +3,12 @@ numpy==1.18.5
 matplotlib
 shapely
 scipy>=1.4.1
-sklearn
 fastdtw
 networkx
 seaborn
 torch
 h5py
+statsmodels
+scikit-learn
 numba>=0.50.0
 pyDOE2>=1.3.0
