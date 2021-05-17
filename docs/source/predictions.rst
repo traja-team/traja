@@ -1,17 +1,16 @@
 Predicting Trajectories
 =======================
 
-Predicting trajectories with `traja` can be done with a recurrent neural network (RNN). `Traja` includes
+Predicting trajectories with traja can be done with a recurrent neural network (RNN). Traja includes
 the Long Short Term Memory (LSTM), LSTM Autoencoder (LSTM AE) and LSTM Variational Autoencoder (LSTM VAE)
 RNNs. Traja also supports custom RNNs.
 
-To model a trajectory using RNNs, one needs to fit the network to the model. `Traja` includes the MultiTaskRNNTrainer
-that can solve a prediction, classification and regression problem with `traja` DataFrames.
+To model a trajectory using RNNs, one needs to fit the network to the model. Traja includes the MultiTaskRNNTrainer
+that can solve a prediction, classification and regression problem with traja DataFrames.
 
-`Traja` also includes a DataLoader that handles `traja` dataframes.
+`Traja` also includes a DataLoader that handles traja dataframes.
 
-Below is an example with a prediction LSTM:
-via :class:`~traja.models.predictive_models.lstm.LSTM`.
+Below is an example with a prediction LSTM via :py:class:`traja.models.predictive_models.lstm.LSTM`.
 
 .. code-block:: python
 
@@ -21,14 +20,13 @@ via :class:`~traja.models.predictive_models.lstm.LSTM`.
 
 .. note::
     LSTMs work better with data between -1 and 1. Therefore the data loader
-    scales the data. To view the data in the original coordinate system,
-    you need to invert the scaling with the returned `scaler`.
+    scales the data.
 
 .. code-block:: python
 
     batch_size = 10 # How many sequences to train every step. Constrained by GPU memory.
     num_past = 10 # How many time steps from which to learn the time series
-    num_future = 5 # How many time steps to predict
+    num_future = 10 # How many time steps to predict
     split_by_id = False # Whether to split data into training, test and validation sets based on
                         # the animal's ID or not. If True, an animal's entire trajectory will only
                         # be used for training, or only for testing and so on.
@@ -39,16 +37,19 @@ via :class:`~traja.models.predictive_models.lstm.LSTM`.
                         # the correct class.
 
 
-    data_loaders, scalers = dataset.MultiModalDataLoader(df,
-                                                         batch_size=batch_size,
-                                                         n_past=num_past,
-                                                         n_future=num_future,
-                                                         num_workers=1,
-                                                         split_by_id=split_by_id)
+.. autoclass:: traja.models.predictive_models.lstm.LSTM
+    :members:
+
+    dataloaders = traja.dataset.MultiModalDataLoader(df,
+                                                batch_size=batch_size,
+                                                n_past=num_past,
+                                                n_future=num_future,
+                                                num_workers=0,
+                                                split_by_id=split_by_id)
 
 .. note::
 
-    The width of the hidden layers and depth of the network are the two main way in which
+    The width of the hidden layers and depth of the network are the two main ways in which
     one tunes the performance of the network. More complex datasets require wider and deeper
     networks. Below are sensible defaults.
 
@@ -66,12 +67,7 @@ via :class:`~traja.models.predictive_models.lstm.LSTM`.
                  num_layers=num_layers,
                  output_size=output_size,
                  dropout=dropout,
-                 batch_size=batch_size,
-                 num_future=num_future)
-
-.. note::
-
-    Recommended training is over 50 epochs. This example only uses 10 epochs for demonstration.
+                 batch_size=batch_size)
 
 .. code-block:: python
 
@@ -85,18 +81,18 @@ via :class:`~traja.models.predictive_models.lstm.LSTM`.
                             optimizer_type=optimizer_type,
                             loss_type=loss_type)
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode='forecasting')
+    trainer.fit(dataloaders, model_save_path='./model.pt', epochs=10, training_mode='forecasting')
 
 After training, you can determine the network's final performance with test data, if you want to pick
 the best model, or with validation data, if you want to determine the performance of your model.
 
-The data_loaders dictionary contains the 'sequential_test_loader' and 'sequential_validation_loader,
+The ``dataloaders`` dictionary contains the ``sequential_test_loader`` and ``sequential_validation_loader``,
 that preserve the order of the original data. The dictionary also contains the 'test_loader' and
-'validation_loader' data loaders, where the order of the time series is randomised.
+``validation_loader`` data loaders, where the order of the time series is randomised.
 
 .. code-block:: python
 
-    validation_loader = data_loaders['sequential_validation_loader']
+    validation_loader = dataloaders['sequential_validation_loader']
 
     trainer.validate(validation_loader)
 
