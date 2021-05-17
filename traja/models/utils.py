@@ -37,13 +37,13 @@ class TimeDistributed(torch.nn.Module):
         return out
 
 
-def save(model, hyperparameters, PATH=None):
+def save(model, hyperparameters, path:str=""):
     """Save the trained model(.pth) along with its hyperparameters as a json (hyper.json) at the user defined Path
     Parameters:
     -----------
         model (torch.nn.Module): Trained Model
         hyperparameters(dict): Hyperparameters of the model
-        PATH (str): Directory path to save the trained model and its hyperparameters
+        path (str): Directory path to save the trained model and its hyperparameters
     Returns:
     ---------
         None
@@ -52,37 +52,38 @@ def save(model, hyperparameters, PATH=None):
     if hyperparameters is not None and not isinstance(hyperparameters, dict):
         raise Exception("Invalid argument, hyperparameters must be dict")
     # Save
-    if PATH is None:
-        PATH = os.getcwd() + "model.pt"
-    torch.save(model.state_dict(), PATH)
-    hyperdir, _ = os.path.split(PATH)
+    if path == "":
+        path = os.path.join(os.getcwd(), "model.pt")
+    torch.save(model.state_dict(), path)
+    
+    hyperdir, _ = os.path.split(path)
     if hyperparameters is not None:
         with open(os.path.join(hyperdir, "hypers.json"), "w") as fp:
             json.dump(hyperparameters, fp, sort_keys=False)
     if hyperdir == "":
         hyperdir = "."
-    print(f"Model and hyperparameters saved at {hyperdir}")
+    print(f"Model and hyperparameters saved at {os.path.abspath(hyperdir)}")
 
 
-def load(model, PATH=None):
-    """Load trained model from PATH using the model_hyperparameters saved in the
+def load(model, path: str=""):
+    """Load trained model from path using the model_hyperparameters saved in the
     Parameters:
     -----------
         model (torch.nn.Module): Type of the model ['ae','vae','vaegan','irl','lstm','custom']
-        PATH (str): Directory path of the model: Defaults to None: Means Current working directory
+        path (str): Directory path of the model: Defaults to None: Means Current working directory
     Returns:
     ---------
         model(torch.nn.module): Model
     """
     # Hyperparameters
-    if PATH is None:
-        PATH = os.getcwd() + "/model.pt"
-        print(f"Model loaded from {PATH}")
+    if path == "":
+        path = os.path.join(os.getcwd(), "/model.pt")
+        print(f"Model loaded from {path}")
     else:
-        raise Exception(f"Model state dict not found at {PATH}")
+        raise Exception(f"Model state dict not found at {path}")
 
     # Load state of the model
-    model.load_state_dict(torch.load(PATH))
+    model.load_state_dict(torch.load(path))
     return model
 
 
