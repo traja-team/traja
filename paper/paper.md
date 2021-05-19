@@ -4,6 +4,7 @@ tags:
   - Python
   - animal behavior
   - trajectory
+  - multivariate time series
   - neuroscience
 authors:
   - name: Justin Shenk
@@ -22,7 +23,7 @@ affiliations:
    index: 2
  - name: Rapid Health, London, England, United Kingdom
    index: 3
-date: 7 March 2021
+date: 19 May 2021
 bibliography: paper.bib
 ---
 
