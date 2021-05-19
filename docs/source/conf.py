@@ -67,10 +67,11 @@ sphinx_gallery_conf = {
     "gallery_dirs": ["gallery"],
     "doc_module": ("traja",),
     "reference_url": {
-        "numpy": "http://docs.scipy.org/doc/numpy",
-        "geopandas": "https://geopandas.readthedocs.io/en/latest/",
+        # "geopandas": "https://geopandas.readthedocs.io/en/latest/",
+        # "pandas": "https://geopandas.readthedocs.io/en/latest/",
+        # "matplotlib": "https://matplotlib.org"
     },
-    "sphinx_gallery": None,
+    # "plot_gallery": None,
     "backreferences_dir": "reference",
     "within_subsection_order": FileNameSortKey,
 }
@@ -218,15 +219,16 @@ epub_exclude_files = ["search.html"]
 intersphinx_mapping = {
     "python": ("https://docs.python.org", None),
     "numpy": ("http://docs.scipy.org/doc/numpy", None),
-    "matplotlib": ("http://matplotlib.sourceforge.net", None),
-    "pandas": ("http://pandas-docs.github.io/pandas-docs-travis", None),
+    "matplotlib": ("http://matplotlib.org/stable", None),
+    "pandas": (
+        "https://pandas.pydata.org/pandas-docs/stable/",
+        "https://pandas.pydata.org/pandas-docs/stable/objects.inv",
+    ),
     "scipy": ("http://docs.scipy.org/doc/scipy/reference", None),
     "PyTorch": ("http://pytorch.org/docs/master/", None),
 }
 
 autodoc_member_order = "bysource"
-autodoc_mock_imports = ["rpy2"]
-
 
 def setup(app):
     """
