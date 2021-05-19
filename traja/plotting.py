@@ -489,6 +489,14 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
     Returns:
         Figure
 
+    .. plot::
+
+        import matplotlib.pyplot as plt
+
+        trj = traja.generate()
+        trj.traja.plot_periodogram()
+        plt.show()
+
     .. note:: 
 
         Convenience wrapper for :meth:`scipy.signal.periodogram`.
@@ -524,9 +532,12 @@ def plot_autocorrelation(
     Returns:
         Matplotlib Figure
 
-    .. doctest::
+    .. plot::
 
-        >>> df.traja.plot_autocorrelation() #doctest: +SKIP
+        import traja
+        
+        df = traja.generate()
+        df.traja.plot_autocorrelation()
 
     .. note::
 
@@ -554,6 +565,14 @@ def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_d
     Returns:
         fig - Figure
     
+    .. plot::
+
+        # Load sample jaguar dataset with trajectories for 9 animals
+        df = traja.dataset.example.jaguar()
+
+        # Bin trajectory into a trip grid then perform PCA
+        traja.plotting.plot_pca(df, id_col="ID", bins=(8,8))   
+
     """
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import StandardScaler
@@ -563,8 +582,10 @@ def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_d
 
     # Bin trajectories to trip grids
     grids = []
-    for ID in trj[id_col].unique():
-        animal = trj[trj.ID==ID]
+    ids = trj[id_col].unique()
+
+    for id in ids:
+        animal = trj[trj[id_col]==id].copy()
         animal.drop(columns=[id_col],inplace=True)
         grid = animal.traja.trip_grid(bins = bins, hist_only=True)[0]
         grids.append(grid.flatten())
