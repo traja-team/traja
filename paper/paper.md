@@ -170,7 +170,7 @@ Periodic behaviors are a consequence of the circadian rhythm aswell as observing
 
 ### Autocorrelation
 Autocorrelation is the correlation of a signal with a delayed copy of itself as a function of the decay. Basically, it is similarity of observations as a function of the time lag between them.
-It is computed with autocorrelation and plotted as shown in Figure [5](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
+An example is shown in Figure [5](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
 
 ![Autocorrelation of the y-dimension reveals daily (1440 minutes) periodic behavior[]{label="fig:autocorrelation"}](./images/autocorrelation_E1.png){#fig:autocorrelation width=80%}
 
@@ -194,16 +194,9 @@ width=80%}
 
 This requires converting the trajectory to a trip grid (see Figure 1) and performing PCA on the grid in 2D (Figure [7](#fig:pca){reference-type="ref" reference="fig:pca"}) or 3D (Figure [8](#fig:3dpca){reference-type="ref" reference="fig:3dpca"}). Structure in the data is visible if light and dark time periods are compared.
 
-### Linear Discriminant Analysis
-Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance. It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. It behaves similar to PCA in some cases (Figure [9](#fig:LDA){reference-type="ref" reference="fig:LDA"})
-
 ![3D PCA of Fortasyn trajectory data. Daily trajectories (day and night)
 were binned into 8x8 grids before applying
 PCA.[]{label="fig:3dpca"}](./images/pca_fortasyn-period-3d.png){#fig:3dpca
-width=80%}
-
-![LDA of Fortasyn trajectory
-data.[]{label="fig:LDA"}](./images/lda_fortasyn-period.png){#fig:LDA
 width=80%}
 
 ### Clustering
