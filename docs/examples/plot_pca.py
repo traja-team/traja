@@ -3,8 +3,6 @@ Plot PCA with traja
 -------------------
 Plot PCA of a trip grid with :meth:`traja.plotting.plot_pca`
 
-Wrapper for pandas :meth:`pandas.plotting.autocorrelation_plot`.
-
 """
 import traja
 
