@@ -50,8 +50,11 @@ If you use traja in your publications, please cite:
    Distance Calculations <calculations>
    Turns <turns>
    Plotting Paths <plots>
+   Periodicity <periodicity>
+   Clustering <clustering>
    Plotting Grid Cell Flow <grid_cell>
    Rediscretizing Trajectories <rediscretize>
+   Clustering and Dimensionality Reduction <clustering>
    Collections / Scenes <collections>
    Predicting Trajectories <predictions>
 

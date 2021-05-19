@@ -1,7 +1,7 @@
 Pandas Indexing and Resampling
 ==============================
 
-traja is built on top of pandas :class:`~pandas.DataFrame`, giving access to low-level pandas indexing functions.
+Traja is built on top of pandas :class:`~pandas.DataFrame`, giving access to low-level pandas indexing functions.
 
 This allows indexing, resampling, etc., just as in pandas::
 
