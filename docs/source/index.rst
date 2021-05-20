@@ -9,13 +9,13 @@ traja |version|
 Trajectory Analysis in Python
 
 Traja allows analyzing trajectory datasets using a wide range of tools, including pandas and R.
-traja extends the capability of pandas :class:`~pandas.DataFrame` specific for animal or object trajectory
+Traja extends the capability of pandas :class:`~pandas.DataFrame` specific for animal or object trajectory
 analysis in 2D, and provides convenient interfaces to other geometric analysis packages (eg, shapely).
 
 Description
 -----------
 
-The traja Python package is a toolkit for the numerical characterization and analysis
+The Traja Python package is a toolkit for the numerical characterization and analysis
 of the trajectories of moving animals. Trajectory analysis is applicable in fields as
 diverse as optimal foraging theory, migration, and behavioural mimicry
 (e.g. for verifying similarities in locomotion).
@@ -29,7 +29,7 @@ experience with Python, to analyse trajectories
 without being handicapped by a limited knowledge of Python or programming.
 However, a basic understanding of Python is useful.
 
-If you use traja in your publications, please cite:
+If you use Traja in your publications, please cite:
 
 “Shenk, J. Traja. (2019). A Python Trajectory Analysis Library. https://github.com/justinshenk/traja.”
 
@@ -68,7 +68,7 @@ If you use traja in your publications, please cite:
   :maxdepth: 1
   :caption: Developer
 
-  Contributing to traja <contributing>
+  Contributing to Traja <contributing>
 
 
 Indices and tables
