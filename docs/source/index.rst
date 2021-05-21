@@ -35,12 +35,12 @@ If you use traja in your publications, please cite:
 
    @software{justin_shenk_2019_3237827,
    author       = {Justin Shenk and
-                     Rüdiger Busche},
-   title        = {justinshenk/traja: v0.1.1},
+                     the Traja development team},
+   title        = {justinshenk/traja},
    month        = jun,
    year         = 2019,
    publisher    = {Zenodo},
-   version      = {v0.1.1},
+   version      = {latest},
    doi          = {10.5281/zenodo.3237827},
    url          = {https://doi.org/10.5281/zenodo.3237827}
    }
@@ -59,7 +59,7 @@ If you use traja in your publications, please cite:
    Reading and Writing Files <reading>
    Pandas Indexing and Resampling <pandas>
    Generate Random Walk <generate>
-   Distance Calculations <calculations>
+   Smoothing and Analysis <calculations>
    Turns <turns>
    Plotting Paths <plots>
    Plotting Grid Cell Flow <grid_cell>
