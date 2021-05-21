@@ -42,8 +42,9 @@ __all__ = [
     "plot_contour",
     "plot_clustermap",
     "plot_flow",
-    "plot_quiver",
-    "plot_periodogram",
+    "plot_pca",
+    "plot_periodogram",    
+    "plot_quiver",  
     "plot_stream",
     "plot_surface",
     "plot_transition_graph",
@@ -477,7 +478,7 @@ def plot(
 
 
 def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = True):
-    """Plot power spectral density using a periodogram.
+    """Plot power spectral density of ``coord`` timeseries using a periodogram.
 
     Args:
         trj - Trajectory
@@ -487,6 +488,10 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
 
     Returns:
         Figure
+
+    .. note:: 
+
+        Convenience wrapper for :meth:`scipy.signal.periodogram`.
 
     """
     from scipy import signal
@@ -513,20 +518,21 @@ def plot_autocorrelation(
         trj - Trajectory
         coord - 'x' or 'y'
         unit - string, eg, 'Days'
-        sample_rate - sample rate
         xmax - max xaxis value
         interactive - Plot immediately
 
     Returns:
         Matplotlib Figure
 
-    """
-    from statsmodels import api as sm
+    .. doctest::
 
-    pos = trj[coord].values
-    acf = sm.tsa.acf(pos, nlags=len(pos))
-    lag = np.arange(len(pos)) / sample_rate
-    plt.plot(lag, acf)
+        >>> df.traja.plot_autocorrelation() #doctest: +SKIP
+
+    .. note::
+
+        Convenience wrapper for pandas :meth:`~pandas.plotting.autocorrelation_plot`.
+    """
+    pd.plotting.autocorrelation_plot(trj[coord])
     plt.xlim((0, xmax))
     plt.xlabel(f"Lags ({unit})")
     plt.ylabel("Autocorrelation")
@@ -534,6 +540,63 @@ def plot_autocorrelation(
         plt.show()
     return plt.gcf()
 
+
+def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_dims: bool = False, ax = None):
+    """Plot PCA comparing animals ids by trip grids.
+    
+    Args:
+        trj - Trajectory
+        id_col - column representing animal IDs
+        bins - shape for binning trajectory into a trip grid
+        three_dims - 3D plot. Default: False (2D plot)
+        ax - Matplotlib axes (optional)
+
+    Returns:
+        fig - Figure
+    
+    """
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import StandardScaler
+
+
+    DIMS = 3 if three_dims else 2
+
+    # Bin trajectories to trip grids
+    grids = []
+    for ID in trj[id_col].unique():
+        animal = trj[trj.ID==ID]
+        animal.drop(columns=[id_col],inplace=True)
+        grid = animal.traja.trip_grid(bins = bins, hist_only=True)[0]
+        grids.append(grid.flatten())
+
+    # Standardize the data
+    gridsarr = np.array(grids)
+    X = StandardScaler().fit_transform(gridsarr)
+
+    # PCA projection
+    pca = PCA(n_components=DIMS)
+    X_r = pca.fit(X).transform(X)
+
+    # Create plot axes
+    if DIMS == 3:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+    if not ax:
+        _, ax = plt.subplots()
+    
+    # Visualize 2D projection
+    for idx, animal in enumerate(X_r):
+        if DIMS == 2:
+            ax.scatter(X_r[idx, 0], X_r[idx, 1], color=f'C{idx}', alpha=.8, lw=2, label=idx)
+        elif DIMS == 3:
+            ax.scatter(X_r[idx, 0], X_r[idx, 1], ax.scatter[idx,2], color=f'C{idx}', alpha=.8, lw=2, label=idx)
+
+    plt.title("PCA")
+    plt.legend(title=id_col, loc='best', shadow=False, scatterpoints=1)
+    plt.xlabel("Principal Component 1")
+    plt.ylabel("Principal Component 2")    
+
+    return plt.gcf()
 
 def plot_collection(
     trjs: Union[pd.DataFrame, TrajaDataFrame],

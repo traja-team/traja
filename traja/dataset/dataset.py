@@ -123,14 +123,14 @@ class MultiModalDataLoader:
         batch_size: int,
         n_past: int,
         n_future: int,
-        num_workers: int,
+        num_workers: int = 1,
         train_split_ratio: float = 0.4,
         validation_split_ratio: float = 0.2,
         stride: int = None,
         split_by_id: bool = True,
         scale: bool = True,
         test: bool = True,
-        parameter_columns: list = (),
+        parameter_columns: list = [],
         weighted_sampling: bool = False,
     ):
         self.df = df

@@ -170,7 +170,7 @@ Periodic behaviors are a consequence of the circadian rhythm aswell as observing
 
 ### Autocorrelation
 Autocorrelation is the correlation of a signal with a delayed copy of itself as a function of the decay. Basically, it is similarity of observations as a function of the time lag between them.
-It is computed with autocorrelation and plotted as shown in Figure [5](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
+An example is shown in Figure [5](#fig:autocorrelation){reference-type="ref" reference="fig:autocorrelation"}.
 
 ![Autocorrelation of the y-dimension reveals daily (1440 minutes) periodic behavior[]{label="fig:autocorrelation"}](./images/autocorrelation_E1.png){#fig:autocorrelation width=80%}
 
@@ -194,16 +194,9 @@ width=80%}
 
 This requires converting the trajectory to a trip grid (see Figure 1) and performing PCA on the grid in 2D (Figure [7](#fig:pca){reference-type="ref" reference="fig:pca"}) or 3D (Figure [8](#fig:3dpca){reference-type="ref" reference="fig:3dpca"}). Structure in the data is visible if light and dark time periods are compared.
 
-### Linear Discriminant Analysis
-Linear Discriminant Analysis (LDA) is a method for identifying a manifold separating two or more labelled groups. It searches for a linear transformation of the data by maximising the between-class variance and minimising the within-class variance. It has been used to identify symmetry of heavy object lifting trajectories [@jeong_linear_2016]. It behaves similar to PCA in some cases (Figure [9](#fig:LDA){reference-type="ref" reference="fig:LDA"})
-
 ![3D PCA of Fortasyn trajectory data. Daily trajectories (day and night)
 were binned into 8x8 grids before applying
 PCA.[]{label="fig:3dpca"}](./images/pca_fortasyn-period-3d.png){#fig:3dpca
-width=80%}
-
-![LDA of Fortasyn trajectory
-data.[]{label="fig:LDA"}](./images/lda_fortasyn-period.png){#fig:LDA
 width=80%}
 
 ### Clustering
@@ -255,7 +248,7 @@ Trajectory prediction lets researchers forecast the location and trajectory of a
 
 A particularly interesting type of RNN is the Long Short Term Memory (LSTM) architecture. Their layers use stacks of units, each with two hidden variables - one that quickly discards old states and one that slowly does so - to consider relevant information from previous time steps. They can thus look at a trajectory and determine a property of the animal – whether it is sick or injured, say – something that is time-consuming and difficult to do by hand. They can also predict future time steps based on past ones, letting researchers estimate where the animal will go next. LSTMs can also classify trajectories, determining whether a trajectory comes from an animal belonging in a specific category. This lets researchers determine how a controlled or semi-controlled variable (e.g., pregnancy) changes the movement pattern of an animal.
 
-Traja implements neural networks by extending the widely used open source machine learning library PyTorch, primarily developed by Facebook AI Research Group. Traja allows framework-agnostic modeling through data loaders designed for time series. In addition, the Traja package comes with several predefined model architectures which can be configured according to the user’s requirements.
+Traja implements neural networks by extending the widely used open source machine learning library PyTorch [@pytorch], primarily developed by Facebook AI Research Group. Traja allows framework-agnostic modeling through data loaders designed for time series. In addition, the Traja package comes with several predefined model architectures which can be configured according to the user’s requirements.
 
 Because RNNs work with time series, the trajectories require special handling. The `traja.dataset.MultiModalDataLoader` efficiently groups subsequent samples and into series and splits these series into training and test data. It represents a Python iterable over the dataset and extends the PyTorch `DataLoader` class, with support for
 
