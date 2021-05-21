@@ -495,7 +495,6 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
 
         trj = traja.generate()
         trj.traja.plot_periodogram()
-        plt.show()
 
     .. note:: 
 
