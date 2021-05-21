@@ -63,7 +63,6 @@ If you use Traja in your publications, please cite:
    Turns <turns>
    Plotting Paths <plots>
    Periodicity <periodicity>
-   Clustering <clustering>
    Plotting Grid Cell Flow <grid_cell>
    Rediscretizing Trajectories <rediscretize>
    Clustering and Dimensionality Reduction <clustering>
