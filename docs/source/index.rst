@@ -31,7 +31,19 @@ However, a basic understanding of Python is useful.
 
 If you use traja in your publications, please cite:
 
-“Shenk, J. Traja. (2019). A Python Trajectory Analysis Library. https://github.com/justinshenk/traja.”
+.. code-block:: txt
+
+   @software{justin_shenk_2019_3237827,
+   author       = {Justin Shenk and
+                     Rüdiger Busche},
+   title        = {justinshenk/traja: v0.1.1},
+   month        = jun,
+   year         = 2019,
+   publisher    = {Zenodo},
+   version      = {v0.1.1},
+   doi          = {10.5281/zenodo.3237827},
+   url          = {https://doi.org/10.5281/zenodo.3237827}
+   }
 
 .. toctree::
    :maxdepth: 1
