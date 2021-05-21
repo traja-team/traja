@@ -17,7 +17,7 @@ To install via pip::
 
 To install the latest development version, clone the `GitHub` repository and use the setup script::
 
-   git clone https://github.com/justinshenk/traja.git
+   git clone https://github.com/traja-team/traja.git
    cd traja
    pip install .
 

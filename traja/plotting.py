@@ -489,6 +489,14 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
     Returns:
         Figure
 
+    .. plot::
+
+        import matplotlib.pyplot as plt
+
+        trj = traja.generate()
+        trj.traja.plot_periodogram()
+        plt.show()
+
     .. note:: 
 
         Convenience wrapper for :meth:`scipy.signal.periodogram`.
@@ -499,8 +507,10 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
     vals = trj[coord].values
     f, Pxx = signal.periodogram(vals, fs=fs, window="hanning", scaling="spectrum")
     plt.title("Power Spectrum")
+    plt.plot(f, Pxx)
     if interactive:
-        plt.plot(f, Pxx)
+        plt.show()
+
     return plt.gcf()
 
 
@@ -508,7 +518,6 @@ def plot_autocorrelation(
     trj: TrajaDataFrame,
     coord: str = "y",
     unit: str = "Days",
-    sample_rate: float = 3.0,
     xmax: int = 1000,
     interactive: bool = True,
 ):
@@ -524,9 +533,12 @@ def plot_autocorrelation(
     Returns:
         Matplotlib Figure
 
-    .. doctest::
+    .. plot::
 
-        >>> df.traja.plot_autocorrelation() #doctest: +SKIP
+        import traja
+        
+        df = traja.generate()
+        df.traja.plot_autocorrelation()
 
     .. note::
 
@@ -554,6 +566,14 @@ def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_d
     Returns:
         fig - Figure
     
+    .. plot::
+
+        # Load sample jaguar dataset with trajectories for 9 animals
+        df = traja.dataset.example.jaguar()
+
+        # Bin trajectory into a trip grid then perform PCA
+        traja.plotting.plot_pca(df, id_col="ID", bins=(8,8))   
+
     """
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import StandardScaler
@@ -563,8 +583,10 @@ def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_d
 
     # Bin trajectories to trip grids
     grids = []
-    for ID in trj[id_col].unique():
-        animal = trj[trj.ID==ID]
+    ids = trj[id_col].unique()
+
+    for id in ids:
+        animal = trj[trj[id_col]==id].copy()
         animal.drop(columns=[id_col],inplace=True)
         grid = animal.traja.trip_grid(bins = bins, hist_only=True)[0]
         grids.append(grid.flatten())
@@ -649,7 +671,7 @@ def plot_collection(
         colors = color_lookup
         labels = ids
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     lines = []
     for idx, id in enumerate(ids):
         trj = trjs[trjs[id_col] == id]
@@ -725,16 +747,21 @@ def plot_contour(
     contourplot_kws: dict = {},
     contourfplot_kws: dict = {},
     quiverplot_kws: dict = {},
+    ax: Axes = None,
     **kwargs,
 ) -> Axes:
     """Plot average flow from each grid cell to neighbor.
 
     Args:
+        trj: Traja DataFrame
         bins (int or tuple): Tuple of x,y bin counts; if `bins` is int, bin count of x,
                                 with y inferred from aspect ratio
+        filled (bool): Contours filled
+        quiver (bool): Quiver plot
         contourplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.contour`
         contourfplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.contourf`
         quiverplot_kws: Additional keyword arguments for :meth:`~matplotlib.axes.Axes.quiver`
+        ax (optional): Matplotlib Axes
 
     Returns:
         ax (:class:`~matplotlib.axes.Axes`): Axes of quiver plot
@@ -745,7 +772,8 @@ def plot_contour(
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
-    fig, ax = plt.subplots()
+    if not ax:        
+        _, ax = plt.subplots()
 
     if filled:
         cfp = plt.contourf(X, Y, Z, **contourfplot_kws)
@@ -789,7 +817,7 @@ def plot_surface(
     fig = plt.figure()
     ax = fig.gca(projection="3d")
     ax.plot_surface(
-        X, Y, Z, cmap=matplotlib.cm.coolwarm, linewidth=0, **surfaceplot_kws
+        X, Y, Z, cmap= cmap, linewidth=0, **surfaceplot_kws
     )
 
     ax = _label_axes(trj, ax)
