@@ -59,7 +59,7 @@ def test_aevae_jaguar():
     trainer = HybridTrainer(model=model, optimizer_type="Adam", loss_type="huber")
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=10, training_mode="forecasting", validate_every=5, test_every=10)
+    trainer.fit(data_loaders, model_save_path, epochs=1, training_mode="forecasting", validate_every=5, test_every=10)
 
     scaler = data_loaders["train_loader"].dataset.scaler
 
@@ -125,9 +125,9 @@ def test_ae_jaguar():
     trainer = HybridTrainer(model=model, optimizer_type="Adam", loss_type="huber")
 
     # Train the model
-    trainer.fit(data_loaders, model_save_path, epochs=5, training_mode="forecasting", validate_every=2, test_every=5)
-    trainer.fit(data_loaders, model_save_path, epochs=5, training_mode="forecasting", validate_every=None, test_every=5)
-    trainer.fit(data_loaders, model_save_path, epochs=5, training_mode="forecasting", validate_every=2, test_every=None)
+    trainer.fit(data_loaders, model_save_path, epochs=1, training_mode="forecasting", validate_every=2, test_every=5)
+    trainer.fit(data_loaders, model_save_path, epochs=1, training_mode="forecasting", validate_every=None, test_every=5)
+    trainer.fit(data_loaders, model_save_path, epochs=1, training_mode="forecasting", validate_every=2, test_every=None)
 
     trainer.validate(data_loaders["sequential_validation_loader"])
 

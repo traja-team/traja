@@ -4,11 +4,11 @@ channels:
   - pytorch
 dependencies:
   - ipython
-  - pytorch-cpu
   - pip:
     - fastdtw
     - tzlocal
     - seaborn
+  - pip
   - pandas
   - numpy
   - matplotlib
@@ -16,3 +16,14 @@ dependencies:
   - scipy
   - sphinx
   - pillow
+  - shapely
+  - scikit-learn
+  - plotly
+  - networkx
+  - seaborn
+  - pytorch
+  - pytest==6.2.2
+  - h5py
+  - numba>=0.50.0
+  - pyDOE2>=1.3.0
+  - statsmodels

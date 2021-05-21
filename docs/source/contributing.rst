@@ -94,12 +94,12 @@ Forking
 ~~~~~~~~
 
 You will need your own fork to work on the code. Go to the `traja project
-page <https://github.com/justinshenk/traja>`_ and hit the ``Fork`` button. You will
+page <https://github.com/traja-team/traja>`_ and hit the ``Fork`` button. You will
 want to clone your fork to your machine::
 
     git clone git@github.com:your-user-name/traja.git traja-yourname
     cd traja-yourname
-    git remote add upstream git://github.com/justinshenk/traja.git
+    git remote add upstream git://github.com/traja-team/traja.git
 
 This creates the directory `traja-yourname` and connects your repository to
 the upstream (main project) *traja* repository.
@@ -161,7 +161,7 @@ for this environment, by running::
 
 For a python 3 environment::
 
-      conda create -n traja_dev python=3.6
+      conda create -n traja_dev python=3.8
 
 This will create the new environment, and not touch any of your existing environments,
 nor any existing python installation.
@@ -196,7 +196,7 @@ To run *traja* in an development environment, you must first install
 (executed after your development environment has been activated)::
 
     conda install -c conda-forge shapely
-    pip install requirements/dev.txt
+    pip install -r requirements/dev.txt
 
 This should install all necessary dependencies.
 

@@ -35,7 +35,7 @@ setup(
     name="traja",
     version=find_version("traja", "__init__.py"),
     description="Traja is a trajectory analysis and visualization tool",
-    url="https://github.com/justinshenk/traja",
+    url="https://github.com/traja-team/traja",
     author="Justin Shenk",
     author_email="shenkjustin@gmail.com",
     long_description=long_description,

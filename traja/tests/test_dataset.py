@@ -46,30 +46,24 @@ def test_time_based_sampling_dataloaders_do_not_overlap():
 
     for data, target, ids, parameters, classes in dataloaders["train_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == -1.0
+            assert all(sample == -1.0 for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == -1.0
+            assert all(sample == -1.0 for sample in sequence[:,0])
 
     for data, target, ids, parameters, classes in dataloaders["test_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == 0
+            assert all(sample == 0 for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == 0
+            assert all(sample == 0 for sample in sequence[:,0])
 
     for data, target, ids, parameters, classes in dataloaders["validation_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == 1
+            assert all(sample == 1 for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == 1
+            assert all(sample == 1 for sample in sequence[:,0])
 
 
-def test_time_based_sampling_dataloaders_with_short_stride_do_not_overlap():
+def test_time_based_sampling_dataloaders_do_not_overlap():
     data = list()
     num_ids = 140
     sequence_length = 2000
@@ -115,28 +109,21 @@ def test_time_based_sampling_dataloaders_with_short_stride_do_not_overlap():
 
     for data, target, ids, parameters, classes in dataloaders["train_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == -1.0
+            assert all(sample == -1. for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == -1.0
+            assert all(sample == -1. for sample in sequence[:,0])
 
     for data, target, ids, parameters, classes in dataloaders["test_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == 0
+            assert all(sample == 0 for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == 0
+            assert all(sample == 0 for sample in sequence[:,0])
 
     for data, target, ids, parameters, classes in dataloaders["validation_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == 1
+            assert all(sample == 1 for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == 1
-
+            assert all(sample == 1 for sample in sequence[:,0])
 
 def test_time_based_sampling_dataloaders_with_stride_one_do_not_overlap():
     data = list()
@@ -184,27 +171,21 @@ def test_time_based_sampling_dataloaders_with_stride_one_do_not_overlap():
 
     for data, target, ids, parameters, classes in dataloaders["train_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == -1.0
+            assert all(sample == -1. for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == -1.0
+            assert all(sample == -1. for sample in sequence[:,0])
 
     for data, target, ids, parameters, classes in dataloaders["test_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == 0
+            assert all(sample == 0 for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == 0
+            assert all(sample == 0 for sample in sequence[:,0])
 
     for data, target, ids, parameters, classes in dataloaders["validation_loader"]:
         for sequence in data:
-            for sample in sequence:
-                assert sample[0] == 1
+            assert all(sample == 1 for sample in sequence[:,0])
         for sequence in target:
-            for sample in sequence:
-                assert sample[0] == 1
+            assert all(sample == 1 for sample in sequence[:,0])
 
 
 def test_time_based_weighted_sampling_dataloaders_do_not_overlap():

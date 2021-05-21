@@ -364,7 +364,7 @@ class HybridTrainer(object):
                     scheduler.step(eval_loss_regression)
 
         # Save the model at target path
-        utils.save(self.model, self.model_hyperparameters, PATH=model_save_path)
+        utils.save(self.model, self.model_hyperparameters, path=model_save_path)
 
     def validate(self, validation_loader):
         # Perform model validation

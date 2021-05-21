@@ -5,14 +5,14 @@ Examples using ``traja.TrajaDataFrame``
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="3D Plotting with traja">
+    <div class="sphx-glr-thumbcontainer" tooltip="Wrapper for pandas scipy.signal.periodogram.">
 
 .. only:: html
 
- .. figure:: /gallery/images/thumb/sphx_glr_plot_3d_thumb.png
-     :alt: 3D Plotting with traja
+ .. figure:: /gallery/images/thumb/sphx_glr_plot_periodogram_thumb.png
+     :alt: Periodogram plot with traja
 
-     :ref:`sphx_glr_gallery_plot_3d.py`
+     :ref:`sphx_glr_gallery_plot_periodogram.py`
 
 .. raw:: html
 
@@ -20,80 +20,4 @@ Examples using ``traja.TrajaDataFrame``
 
 .. only:: not html
 
- * :ref:`sphx_glr_gallery_plot_3d.py`
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Average direction for each grid cell">
-
-.. only:: html
-
- .. figure:: /gallery/images/thumb/sphx_glr_plot_average_direction_thumb.png
-     :alt: Average direction for each grid cell
-
-     :ref:`sphx_glr_gallery_plot_average_direction.py`
-
-.. raw:: html
-
-    </div>
-
-.. only:: not html
-
- * :ref:`sphx_glr_gallery_plot_average_direction.py`
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Plotting Multiple Trajectories">
-
-.. only:: html
-
- .. figure:: /gallery/images/thumb/sphx_glr_plot_collection_thumb.png
-     :alt: Plotting Multiple Trajectories
-
-     :ref:`sphx_glr_gallery_plot_collection.py`
-
-.. raw:: html
-
-    </div>
-
-.. only:: not html
-
- * :ref:`sphx_glr_gallery_plot_collection.py`
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Comparing">
-
-.. only:: html
-
- .. figure:: /gallery/images/thumb/sphx_glr_plot_comparing_thumb.png
-     :alt: Comparing
-
-     :ref:`sphx_glr_gallery_plot_comparing.py`
-
-.. raw:: html
-
-    </div>
-
-.. only:: not html
-
- * :ref:`sphx_glr_gallery_plot_comparing.py`
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Plotting trajectories on a grid">
-
-.. only:: html
-
- .. figure:: /gallery/images/thumb/sphx_glr_plot_grid_thumb.png
-     :alt: Plotting trajectories on a grid
-
-     :ref:`sphx_glr_gallery_plot_grid.py`
-
-.. raw:: html
-
-    </div>
-
-.. only:: not html
-
- * :ref:`sphx_glr_gallery_plot_grid.py`
+ * :ref:`sphx_glr_gallery_plot_periodogram.py`
