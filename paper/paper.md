@@ -28,17 +28,19 @@ bibliography: paper.bib
 ---
 
 # Summary
-There are generally four categories of trajectory data: mobility of people, mobility of transportation vehicles, mobility of animals, and mobility of natural phenomena [@zheng-trajectory-2015]. The examples in this paper focus on animal motion, however it is useful for other domains.
+There are generally four categories of trajectory data: mobility of people, mobility of transportation vehicles, mobility of animals, and mobility of natural phenomena [@zheng-trajectory-2015]. Animal tracking is important for fields as diverse as ethology, optimal foraging theory, and neuroscience. Mouse behavior, for example, is a widely studied in biomedical and brain research in models of neurological disease such as stroke[^1]. 
 
-Animal tracking is important for fields as diverse as ethology, optimal foraging theory, and neuroscience. In recent years, advances in machinelearning have led to breakthroughs in pattern recognition and data modeling [@10.3389/fnsys.2019.00020]. A tool that supports modeling in the language of state-of-the-art predictive models  [@amirian_social_2019; @liang_peeking_2019; @chandra_traphic_2019], and which provides researchers with a high-level API for feature extraction, modeling and visualization is needed.
+Several tools exist which allow analyzing mouse locomotion. Tools such as Ethovision [@spink_ethovision_2001] and DeepLabCut [@Mathisetal2018] allow converting video data to pose coordiantes, which can further be analyzed by other open source tools. DLCAnalyzer (<https://github.com/ETHZ-INS/DLCAnalyzer>) provides a collection of R scripts for analyzing positional data, in particular visualizing, classifying and plotting movement. B-SOiD (Behavioral Segmentation of Open-field in DeepLabCut) [@Hsu770271] allows unsupervised clustering of behaviors, extracted from the pose coordinate outputs of DeepLabCut. SimBA (Simple Behavioral Analysis) [@sgoldenlab_2021_4521178] provides several classifiers and tools for behavioral analysis in video streams in a Windows-based graphical user interface (GUI) application.
 
-Traja is a Python package for statistical analysis and computational modelling of trajectories. Traja extends the familiar pandas [@mckinney-proc-scipy-2010;@reback2020pandas] methods by providing a pandas accessor to the `df.traja` namespace upon import. The API for Traja was designed to provide an object-oriented and user-friendly interface to common methods in analysis and visualization of animal trajectories. Traja also interfaces well with relevant spatial analysis packages in R (e.g., trajr [@trajr], adehabitat [@adehabitat]), Shapely [@shapely], and MovingPandas [@graser_movingpandas_2019] allowing rapid prototyping and comparison of relevant methods in Python. A comprehensive source of documentation is provided on the home page
+These tools are primarily useful for video data, which is not available for the majority of animal studies. For example, video monitoring of homecage mouse data is inpractical today due to housing space constraints. Researchers using Python working with non-visual animal tracking data sources are not able to fully leverage these tools. Thus, a tool that supports modeling in the language of state-of-the-art predictive models  [@amirian_social_2019; @liang_peeking_2019; @chandra_traphic_2019], and which provides animal researchers with a high-level API for multivariate time series feature extraction, modeling and visualization is needed.
+
+Traja is a Python package for statistical analysis and computational modelling of trajectories. Traja extends the familiar pandas [@mckinney-proc-scipy-2010; @reback2020pandas] methods by providing a pandas accessor to the `df.traja` namespace upon import. The API for Traja was designed to provide an object-oriented and user-friendly interface to common methods in analysis and visualization of animal trajectories. Traja also interfaces well with relevant spatial analysis packages in R (e.g., trajr [@trajr], adehabitat [@adehabitat]), Shapely [@shapely], and MovingPandas [@graser_movingpandas_2019] allowing rapid prototyping and comparison of relevant methods in Python. A comprehensive source of documentation is provided on the home page
 ([http://traja.readthedocs.io](traja.readthedocs.io)).
 
 ## Statement of Need
 The data used in this project includes animal trajectory data provided by [http://www.tecniplast.it](Tecniplast S.p.A.), manufacturer of laboratory animal equipment based in Varese, Italy, and Radboud University, Nijmegen, Netherlands. Tecniplast provided the mouse locomotion data collected with their Digital Ventilated Cages (DVC). The extracted coordinates of the mice requires further analysis with external tools. Due to lack of access to equipment, mouse home cage data is rather difficult to collect and analyze, thus few studies have been done onhomecage data. Furthermore, researchers who are interested in developing novel algorithms must implement from scratch much of the computational and algorithmic infrastructure for analysis and visualization. By packaging a library that is particularly useful for animal locomotion analysis, future researchers can benefit from access to a high-level interface and clearly documented methods for their work.
 
-Other toolkits for animal behavioral analysis either rely on visual data [@Mathisetal2018;vivek_hari_sridhar_2017_1134016] to estimate the pose of animals or are limited to the R programming language [@mclean_trajr:_2018]. Prototyping analytical approaches and exploratory data analysis is furthered by access to a wide range of methods which existing libraries do not provide. Python is the *de facto* language for machine learning and data science programming, thus a toolkit in Python which provides methods for prototyping multivariate timeseries data analysis and deep neural network modeling is needed.
+Other toolkits for animal behavioral analysis either rely on visual data [@Mathisetal2018; @vivek_hari_sridhar_2017_1134016] to estimate the pose of animals or are limited to the R programming language [@mclean_trajr:_2018]. Prototyping analytical approaches and exploratory data analysis is furthered by access to a wide range of methods which existing libraries do not provide. Python is the *de facto* language for machine learning and data science programming, thus a toolkit in Python which provides methods for prototyping multivariate time series data analysis and deep neural network modeling is needed.
 
 ## Overview of the Library
 Traja targets Python because of its popularity with data scientists.The library leverages the powerful pandas library, while adding methods specifically for trajectory analysis.When importing Traja, the Traja namespace registers itself within the pandas dataframes namespace via df.traja.
@@ -53,7 +55,10 @@ The data samples presented here[^2] are in 2-dimensional location coordinates, r
 
 High volume data like animal trajectories has an increased tendency to be missing data due to data collection issues or noise. Filling in the missing data values, referred to as _data imputation_, is achieved with a wide variety of statistical or learning-based methods. As previously observed, data science projects typically require at least _95%_ of the time to be spent on cleaning, pre-processing and managing the data [@bosch_engineering_2021]. Therefore, several methods relevant to preprocessing animal data are demonstrated throuhghout the following sections.
 
+[^1]: The examples in this paper focus on animal motion, however it is useful for other domains. 
+
 [^2]: This dataset has been collected for other studies of our laboratory [@shenk_automated_2020].
+
 ## Spatial Trajectory
 A *spatial trajectory* is a trace generated by a moving object in geographical space. Trajectories are traditionally modelled as a sequence of spatial points like:
 
@@ -61,7 +66,7 @@ $$T_k = \{P_{k1}, P_{k2},...\}$$
 
 where $P_{ki}(i\geq 1)$ is a point in the trajectory.
 
-Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983,@mclean_trajr:_2018]. A correlated random walk (Figure [1](#fig:generated){reference-type="ref" reference="fig:generated"}) is generated with `traja.generate`.
+Generating spatial trajectory data via a random walk is possible by sampling from a distribution of angles and step sizes [@kareiva_analyzing_1983; @mclean_trajr:_2018]. A correlated random walk (Figure [1](#fig:generated){reference-type="ref" reference="fig:generated"}) is generated with `traja.generate`.
 
 ![Generation of a random walk[]{label="fig:generated"}](./images/generate.png){#fig:generated width=80%}
 
@@ -119,7 +124,7 @@ For example, Fortasyn dataset [@shenk_automated_2020] which is demonstrated in t
 Traja includes traditional as well as advanced methods for trajectory analysis.
 
 ### Distance traveled
-Distance traveled is a common metric in animal studies - it accounts for the total distance covered by the animal within a given time interval. The distance traveled is typically quantified by summing the square straight-line displacement between discretely sampled trajectories [@rowcliffe_bias_2012, @solla_eliminating_1999]. Alternative distance metrics for the case of animal tracking are discussed in [@noonan_scale-insensitive_2019].
+Distance traveled is a common metric in animal studies - it accounts for the total distance covered by the animal within a given time interval. The distance traveled is typically quantified by summing the square straight-line displacement between discretely sampled trajectories [@rowcliffe_bias_2012; @solla_eliminating_1999]. Alternative distance metrics for the case of animal tracking are discussed in [@noonan_scale-insensitive_2019].
 
 Let $p(t) = [p_x(t), p_y(t)]$ be a $2\times 1$ vector of coordinates on the ground representing the position of the animal at time t. Then, the distance traveled within the time interval $t_1$ and $t_2$ can be computed as a sum of step-wise Euclidean distances
 
@@ -156,7 +161,7 @@ An example is shown in Figure [5](#fig:autocorrelation){reference-type="ref" ref
 ![Autocorrelation of the y-dimension reveals daily (1440 minutes) periodic behavior[]{label="fig:autocorrelation"}](./images/autocorrelation_E1.png){#fig:autocorrelation width=80%}
 
 ### Power Spectrum
-Power spectrum of a time-series signal can be estimated (Figure [6](#fig:powerspectrum){reference-type="ref" reference="fig:powerspectrum"}). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
+Power spectrum of a time series signal can be estimated (Figure [6](#fig:powerspectrum){reference-type="ref" reference="fig:powerspectrum"}). This is useful for analyzing signals, for example, the influence of neuromotor noise on delays in hand movement [@van_galen_effects_1990].
 
 ![Power Spectral Density. One day of activity reveals fairly smooth power spectral density.[]{label="fig:powerspectrum"}](./images/spectrum.png){#fig:powerspectrum width=70%}
 
