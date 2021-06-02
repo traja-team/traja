@@ -793,7 +793,7 @@ def plot_contour(
 def plot_surface(
     trj: TrajaDataFrame,
     bins: Optional[Union[int, tuple]] = None,
-    cmap: str = "jet",
+    cmap: str = "viridis",
     **surfaceplot_kws: dict,
 ) -> Figure:
     """Plot surface of flow from each grid cell to neighbor in 3D.
@@ -833,7 +833,7 @@ def plot_surface(
 def plot_stream(
     trj: TrajaDataFrame,
     bins: Optional[Union[int, tuple]] = None,
-    cmap: str = "jet",
+    cmap: str = "viridis",
     contourfplot_kws: dict = {},
     contourplot_kws: dict = {},
     streamplot_kws: dict = {},
@@ -1153,7 +1153,7 @@ def _polar_bar(
     max_height = max(height)
     bars = ax.bar(angle, height, width=width, bottom=0.0, **kwargs)
     for h, bar in zip(height, bars):
-        bar.set_facecolor(plt.cm.jet(h / max_height))
+        bar.set_facecolor(plt.cm.viridis(h / max_height))
         bar.set_alpha(0.5)
     if isinstance(ax, matplotlib.axes.Axes):
         ax.set_theta_zero_location("N")
@@ -1470,7 +1470,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
 
             bars = ax2.bar(angle, height, width=width, bottom=0.0)
             for idx, (h, bar) in enumerate(zip(height, bars)):
-                bar.set_facecolor(plt.cm.jet(h / max_height))
+                bar.set_facecolor(plt.cm.viridis(h / max_height))
                 bar.set_alpha(0.8 * (idx / POLAR_STEPS))
             ax2.set_theta_zero_location("N")
             ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
