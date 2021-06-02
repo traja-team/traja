@@ -5,7 +5,7 @@ See the flow between grid cells.
 """
 import traja
 
-df = traja.generate()
+df = traja.generate(seed=0)
 
 ###############################################################################
 # Average Flow (3D)

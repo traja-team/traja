@@ -5,7 +5,7 @@ traja allows comparing trajectories using various methods.
 """
 import traja
 
-df = traja.generate()
+df = traja.generate(seed=0)
 
 ###############################################################################
 # Plot a heat map of the trajectory
