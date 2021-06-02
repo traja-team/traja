@@ -60,7 +60,7 @@ setup(
         "Documentation": "https://traja.rtfd.io/en/latest/",
         "Source Code": "https://github.com/traja-team/traja",
     },
-    packages=find_packages(),
+    packages=find_packages(exclude=["*tests.*", "*tests"]),
     include_package_data=True,
     license="MIT",
     keywords="trajectory analysis",
