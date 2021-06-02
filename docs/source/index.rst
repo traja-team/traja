@@ -26,7 +26,7 @@ including manual tracking, radio telemetry, GPS tracking, and motion tracking fr
 
 The goal of this package (and this document) is to aid biological researchers, who may not have extensive
 experience with Python, to analyse trajectories
-without being handicapped by a limited knowledge of Python or programming.
+without being restricted by a limited knowledge of Python or programming.
 However, a basic understanding of Python is useful.
 
 If you use Traja in your publications, please cite:
