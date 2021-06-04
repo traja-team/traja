@@ -1386,7 +1386,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
 
     Returns:
         anim (matplotlib.animation.FuncAnimation): animation 
-
+        
     """
     from matplotlib import animation
     from matplotlib.animation import FuncAnimation
