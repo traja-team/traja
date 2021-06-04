@@ -1,4 +1,4 @@
-Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI| [JOSS]
+Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI| |JOSS|
 ===========================================================================================================
 
 |Colab|
