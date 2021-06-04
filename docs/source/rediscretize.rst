@@ -63,7 +63,7 @@ Ramer–Douglas–Peucker algorithm
     len(xy_)
 
     Output:
-    319
+    317
 
 Plotting, we can now see the many fewer points are needed to cover a similar area.::
 
