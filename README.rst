@@ -1,5 +1,5 @@
-Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI|
-============================================================================================
+Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI| [JOSS]
+===========================================================================================================
 
 |Colab|
 
@@ -39,9 +39,11 @@ Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Bin
 .. |DOI| image:: https://zenodo.org/badge/166056696.svg
    :target: https://zenodo.org/badge/latestdoi/166056696
 
-
 .. |Colab| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/justinshenk/traja/blob/master/demo.ipynb
+   
+.. |JOSS| image:: https://joss.theoj.org/papers/0f25dc08671e0ec54714f09597d116cb/status.svg
+   :target: https://joss.theoj.org/papers/0f25dc08671e0ec54714f09597d116cb
 
 Traja is a Python library for trajectory analysis. It extends the capability of
 pandas DataFrame specific for animal trajectory analysis in 2D, and provides
