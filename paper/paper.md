@@ -23,7 +23,7 @@ affiliations:
    index: 2
  - name: Rapid Health, London, England, United Kingdom
    index: 3
-date: 19 May 2021
+date: 4 June 2021
 bibliography: paper.bib
 ---
 
@@ -109,7 +109,7 @@ Allowing computation on discrete variables rather than continuous ones has sever
 Creation of an $M * N$ grid allows mapping trajectory $T_k$ onto uniform
 grid cells. Generalizing the nomenclature of [@wang_modeling_2017] to rectangular grids, $C_{mn}(1\leq{m}\leq M; 1\leq{n}\leq{N})$ denotes the cell in row $m$ and column $n$ of the grid. Each point $P_{ki}$ is assigned to a cell $C(m,n)$. The result is a two-dimensional image $M*N$ image $I_k$, where the value of pixel $I_k(m,n)(1\leq{m,n}\leq{M})$ indicates the relative number of points assigned to cell $C_{mn}$. Partionining of spatial position into separate grid cells is typically preceded by generation of hidden Markov models [@jeung_mining_2007] (see below).
 
-![Visualization of heat map from bins generated with `df.trip_grid`. Note regularly spaced artifacts (bright yellow) in this sample due to a bias in the sensor data interpolation. This type of noise can be minimized by thresholding or using a logarithmic scale (`traja.trip_grid(trj, log=True)`, as shown above.[]{label="fig:heatmap"}](./images/tripgrid.png){#fig:heatmap width=50%}
+![Visualization of heat map from bins generated with `df.trip_grid`. Note regularly spaced artifacts (bright yellow) in this sample due to a bias in the sensor data interpolation. This type of noise can be minimized by thresholding or using a logarithmic scale, as shown above.[]{label="fig:heatmap"}](./images/tripgrid.png){#fig:heatmap width=50%}
 
 ### Smoothing
 Smoothing a trajectory can also be achieved with Traja using Savitzky-Golay filtering with `smooth_sg` [@savitzky_smoothing_1964].
