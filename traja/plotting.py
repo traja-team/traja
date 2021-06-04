@@ -1384,6 +1384,9 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
         polar (bool): include polar bar chart with turn angle
         save (bool): save video to ``trajectory.mp4``
 
+    Returns:
+        anim (matplotlib.animation.FuncAnimation): animation 
+
     """
     from matplotlib import animation
     from matplotlib.animation import FuncAnimation
@@ -1486,3 +1489,5 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
             raise Exception("FFmpeg not installed, please install it.")
     else:
         plt.show()
+    
+    return anim

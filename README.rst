@@ -123,7 +123,7 @@ Analyze Trajectory
    :widths: 30, 80
    
    "``calc_derivatives``", "Calculate derivatives of x, y values "
-   "``calc_turn_angles``", "Calculate turn angles w.r.t. x-axis "
+   "``calc_turn_angles``", "Calculate turn angles with regard to x-axis "
    "``transitions``", "Calculate first-order Markov model for transitions between grid bins"
    "``generate``", "Generate random walk"
    "``resample_time``", "Resample to consistent step_time intervals"
