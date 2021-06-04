@@ -5,14 +5,14 @@ Examples using ``traja.generate``
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="3D Plotting with traja">
+    <div class="sphx-glr-thumbcontainer" tooltip="Animate trajectories">
 
 .. only:: html
 
- .. figure:: /gallery/images/thumb/sphx_glr_plot_3d_thumb.png
-     :alt: 3D Plotting with traja
+ .. figure:: /gallery/images/thumb/sphx_glr_animate_thumb.png
+     :alt: Animate trajectories
 
-     :ref:`sphx_glr_gallery_plot_3d.py`
+     :ref:`sphx_glr_gallery_animate.py`
 
 .. raw:: html
 
@@ -20,4 +20,4 @@ Examples using ``traja.generate``
 
 .. only:: not html
 
- * :ref:`sphx_glr_gallery_plot_3d.py`
+ * :ref:`sphx_glr_gallery_animate.py`

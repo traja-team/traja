@@ -75,7 +75,6 @@ sphinx_gallery_conf = {
     # "plot_gallery": None,
     "backreferences_dir": "reference",
     "within_subsection_order": FileNameSortKey,
-    "matplotlib_animations": True,
 }
 
 # Napoleon settings
