@@ -100,7 +100,7 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
 
 
 def angles(trj: TrajaDataFrame, lag: int = 1):
-    """Returns angles w.r.t. x-axis."""
+    """Returns angles with regard to x-axis."""
     dx = trj.x.diff(lag)
     distance = calc_displacement(trj, lag=lag)
     angles = np.rad2deg(np.arccos(np.abs(dx) / distance))
@@ -444,7 +444,7 @@ def calc_laterality(
         left_turns (int)
 
     """
-    # get turn angle w.r.t. x axis
+    # get turn angle with regard to x axis
     turn_angle = calc_turn_angle(trj)
 
     distance = step_lengths(trj)
@@ -995,7 +995,7 @@ def calc_turn_angle(trj: TrajaDataFrame):
 
 
 def calc_angle(trj: TrajaDataFrame):
-    """Returns a ``Series`` with angle between steps as a function of displacement w.r.t x axis.
+    """Returns a ``Series`` with angle between steps as a function of displacement with regard to x axis.
 
     Args:
        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory

@@ -400,7 +400,7 @@ class TrajaAccessor(object):
         return displacement
 
     def calc_angle(self, assign: bool = True) -> pd.Series:
-        """Returns ``Series`` with angle between steps as a function of displacement w.r.t x axis.
+        """Returns ``Series`` with angle between steps as a function of displacement with regard to x axis.
 
         Args:
           assign (bool, optional): Assign turn angle to TrajaAccessor (Default value = True)
