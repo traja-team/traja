@@ -1,4 +1,4 @@
-Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI|
+Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI|
 ============================================================================================
 
 |Colab|
@@ -13,7 +13,7 @@ Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Co
 .. |PyPI| image:: https://badge.fury.io/py/traja.svg
     :target: https://badge.fury.io/py/traja
 
-.. |Conda Version| image:: https://img.shields.io/conda/vn/conda-forge/traja.svg
+.. |Conda| image:: https://img.shields.io/conda/vn/conda-forge/traja.svg
     :target: https://anaconda.org/conda-forge/traja
 
 .. |Gitter| image:: https://badges.gitter.im/traja-chat/community.svg
