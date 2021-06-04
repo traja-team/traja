@@ -71,12 +71,14 @@ If you use traja in your publications, please cite the repo
 
 .. code-block::
 
-    @misc{justin_shenk_2019_3237827,
+    @software{justin_shenk_2019_3237827,
       author       = {Justin Shenk and
                       the Traja development team},
-      title        = {justinshenk/traja: latest},
+      title        = {justinshenk/traja},
       month        = jun,
       year         = 2019,
+      publisher    = {Zenodo},
+      version      = {latest},
       doi          = {10.5281/zenodo.3237827},
       url          = {https://doi.org/10.5281/zenodo.3237827}
     }
