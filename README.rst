@@ -74,7 +74,7 @@ If you use traja in your publications, please cite the repo
     @misc{justin_shenk_2019_3237827,
       author       = {Justin Shenk and
                       the Traja development team},
-      title        = {justinshenk/traja: v0.1.1},
+      title        = {traja-team/traja: latest},
       month        = jun,
       year         = 2019,
       doi          = {10.5281/zenodo.3237827},
