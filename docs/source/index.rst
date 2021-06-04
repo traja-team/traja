@@ -26,7 +26,7 @@ including manual tracking, radio telemetry, GPS tracking, and motion tracking fr
 
 The goal of this package (and this document) is to aid biological researchers, who may not have extensive
 experience with Python, to analyse trajectories
-without being handicapped by a limited knowledge of Python or programming.
+without being restricted by a limited knowledge of Python or programming.
 However, a basic understanding of Python is useful.
 
 If you use Traja in your publications, please cite:
@@ -53,7 +53,7 @@ If you use Traja in your publications, please cite:
    Examples Gallery <gallery/index>
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: User Guide
 
    Reading and Writing Files <reading>
@@ -74,12 +74,13 @@ If you use Traja in your publications, please cite:
    :caption: Reference Guide
 
    Reference to All Attributes and Methods <reference>
+   Bugs and Support <support>
 
 .. toctree::
-  :maxdepth: 1
-  :caption: Developer
+   :maxdepth: 1
+   :caption: Developer
 
-  Contributing to Traja <contributing>
+   Contributing to Traja <contributing>  
 
 
 Indices and tables

@@ -60,7 +60,7 @@ videos.
 
 The goal of this package (and this document) is to aid biological
 researchers, who may not have extensive experience with Python, to
-analyze trajectories without being handicapped by a limited knowledge of
+analyze trajectories without being restricted by a limited knowledge of
 Python or programming. However, a basic understanding of Python is
 useful.
 
@@ -123,7 +123,7 @@ Analyze Trajectory
    :widths: 30, 80
    
    "``calc_derivatives``", "Calculate derivatives of x, y values "
-   "``calc_turn_angles``", "Calculate turn angles w.r.t. x-axis "
+   "``calc_turn_angles``", "Calculate turn angles with regard to x-axis "
    "``transitions``", "Calculate first-order Markov model for transitions between grid bins"
    "``generate``", "Generate random walk"
    "``resample_time``", "Resample to consistent step_time intervals"
