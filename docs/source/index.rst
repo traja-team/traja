@@ -53,7 +53,7 @@ If you use Traja in your publications, please cite:
    Examples Gallery <gallery/index>
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: User Guide
 
    Reading and Writing Files <reading>
@@ -74,12 +74,13 @@ If you use Traja in your publications, please cite:
    :caption: Reference Guide
 
    Reference to All Attributes and Methods <reference>
+   Bugs and Support <support>
 
 .. toctree::
-  :maxdepth: 1
-  :caption: Developer
+   :maxdepth: 1
+   :caption: Developer
 
-  Contributing to Traja <contributing>
+   Contributing to Traja <contributing>  
 
 
 Indices and tables

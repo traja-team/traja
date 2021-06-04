@@ -5,14 +5,14 @@ Examples using ``traja.TrajaDataFrame``
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Wrapper for pandas scipy.signal.periodogram.">
+    <div class="sphx-glr-thumbcontainer" tooltip="3D Plotting with traja">
 
 .. only:: html
 
- .. figure:: /gallery/images/thumb/sphx_glr_plot_periodogram_thumb.png
-     :alt: Periodogram plot with traja
+ .. figure:: /gallery/images/thumb/sphx_glr_plot_3d_thumb.png
+     :alt: 3D Plotting with traja
 
-     :ref:`sphx_glr_gallery_plot_periodogram.py`
+     :ref:`sphx_glr_gallery_plot_3d.py`
 
 .. raw:: html
 
@@ -20,4 +20,4 @@ Examples using ``traja.TrajaDataFrame``
 
 .. only:: not html
 
- * :ref:`sphx_glr_gallery_plot_periodogram.py`
+ * :ref:`sphx_glr_gallery_plot_3d.py`
