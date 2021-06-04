@@ -9,4 +9,4 @@ Bugs, issues and improvement requests can be logged in `Github Issues <https://g
 Community
 ---------
 
-Community support is provided via `Gitter <https://gitter.im/traja-team/community>`_. Just ask a question there.
+Community support is provided via `Gitter <https://gitter.im/traja-chat/community>`_. Just ask a question there.
