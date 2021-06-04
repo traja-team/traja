@@ -34,7 +34,7 @@ Several tools exist which allow analyzing mouse locomotion. Tools such as Ethovi
 
 These tools are primarily useful for video data, which is not available for the majority of animal studies. For example, video monitoring of homecage mouse data is inpractical today due to housing space constraints. Researchers using Python working with non-visual animal tracking data sources are not able to fully leverage these tools. Thus, a tool that supports modeling in the language of state-of-the-art predictive models  [@amirian_social_2019; @liang_peeking_2019; @chandra_traphic_2019], and which provides animal researchers with a high-level API for multivariate time series feature extraction, modeling and visualization is needed.
 
-Traja is a Python package for statistical analysis and computational modelling of trajectories. Traja extends the familiar pandas [@mckinney-proc-scipy-2010; @reback2020pandas] methods by providing a pandas accessor to the `df.traja` namespace upon import. The API for Traja was designed to provide an object-oriented and user-friendly interface to common methods in analysis and visualization of animal trajectories. Traja also interfaces well with relevant spatial analysis packages in R (e.g., trajr [@trajr], adehabitat [@adehabitat]), Shapely [@shapely], and MovingPandas [@graser_movingpandas_2019] allowing rapid prototyping and comparison of relevant methods in Python. A comprehensive source of documentation is provided on the home page
+Traja is a Python package for statistical analysis and computational modelling of trajectories. Traja extends the familiar pandas [@mckinney-proc-scipy-2010; @reback2020pandas] methods by providing a pandas accessor to the `df.traja` namespace upon import. The API for Traja was designed to provide an object-oriented and user-friendly interface to common methods in analysis and visualization of animal trajectories. Traja also interfaces well with relevant spatial analysis packages in R (e.g., trajr [@mclean_trajr:_2018], adehabitat [@adehabitat]), Shapely [@shapely], and MovingPandas [@graser_movingpandas_2019] allowing rapid prototyping and comparison of relevant methods in Python. A comprehensive source of documentation is provided on the home page
 ([http://traja.readthedocs.io](traja.readthedocs.io)).
 
 ## Statement of Need
@@ -43,12 +43,15 @@ The data used in this project includes animal trajectory data provided by [http:
 Other toolkits for animal behavioral analysis either rely on visual data [@Mathisetal2018; @vivek_hari_sridhar_2017_1134016] to estimate the pose of animals or are limited to the R programming language [@mclean_trajr:_2018]. Prototyping analytical approaches and exploratory data analysis is furthered by access to a wide range of methods which existing libraries do not provide. Python is the *de facto* language for machine learning and data science programming, thus a toolkit in Python which provides methods for prototyping multivariate time series data analysis and deep neural network modeling is needed.
 
 ## Overview of the Library
-Traja targets Python because of its popularity with data scientists.The library leverages the powerful pandas library, while adding methods specifically for trajectory analysis.When importing Traja, the Traja namespace registers itself within the pandas dataframes namespace via df.traja.
+Traja targets Python because of its popularity with data scientists. The library leverages the powerful pandas library [@mckinney-proc-scipy-2010;], while adding methods specifically for trajectory analysis. When importing Traja, the Traja namespace registers itself within the pandas dataframes namespace via `df.traja`.
 
 The software is structured into three parts. These provide functionality to transform, analyse and visualize trajectories. Full details are available at <https://traja.readthedocs.io/>.  The `trajectory` model provides analytical and preprocessing functionalities. The `models` subpackage provides both traditional and neural network-based tools to determine trajectory properties. The `plotting` module allows visualizing trajectories in various ways. 
 
 Data, e.g., x and y coordinates, are stored as one-dimensional labelled arrays as instances of the pandas native `Series` class. Further, subclassing the pandas `DataFrame` allows providing an API that mirrors the pandas API which is familiar to most data scientists, thus reducing the barrier for entry while providing methods and properties specific to trajectories for rapid prototyping.
 Traja depends on Matplotlib [@Hunter:2007] and Seaborn [@waskom2020seaborn] for plotting and NumPy [@harris2020array] for computation.
+
+### Trajectory Data Sources
+Trajectory data as time series can be extracted from a wide range of sources, including video processing tools as described above, GPS sensors for large animals or via homecage floor sensors, as described in the section below. The methods presented here are implemented for bivariate data (x and y coordinates) primarily to track animal centroids, however with some modification they could be extended to work in 3-dimensions and with body part locations as inputs. Traja is thus positioned at the end of the data scientists chain of tools with the hope of supporting prototyping novel data processing approaches. A sample dataset of jaguar movement [@morato_jaguar_2018] is provided in the `traja.dataset` subpackage.
 
 ## Mouse Locomotion Data
 The data samples presented here[^2] are in 2-dimensional location coordinates, reflecting the mouse home-cage (25x12.5 cm) dimensions. Analytical methods relevant to 2D rectilinear analysis of highly constrained spatial coordinates are thus primarily considered.
@@ -118,7 +121,7 @@ Resampling by time is performed with `resample_time`. Rediscretizing by step len
 
 ![Resampling x and y values over time by step length is performed with `rediscretize()`.[]{label="fig:step"}](./images/sample_rate.png){#fig:step width=80%}
 
-For example, Fortasyn dataset [@shenk_automated_2020] which is demonstrated in this paper was sampled at 4 Hz and converted to single-precision floating point data. Pandas dataframes store this data in 4 bytes, thus there are approximately 4,147,200[^6] bytes required to store data for x and y dimensions plus an index reference for a single day. In the case of [@shenk_automated_2020] were 24 mice observed over 35 days. This translates to 3.4 GB ($10^9$) to 29 TB ($10^{12}$) of storage capacity respectively, for the uncompressed datasets prior to feature engineering. Thus resampling can be a useful way to reduce the memory footprint for memory constrained processes that have to fit into a standard laptop with 8 GB memory space. A demonstration of how resampling can reduce precision but still be useful for trajectory data analysis is provided in Figure [3](#fig:step){reference-type="ref" reference="fig:step"}, applied to a sample from the Fortasyn experiment [@shenk_automated_2020]. For identifying broad effects such as cage crossings, for example, data can be downsampled to a lower frequency such as 0.1 Hz, reducing the memory footprint by a factor of 40 (4 Hz/0.1 Hz) and providing significant speedups for processing.
+For example, Fortasyn dataset [@shenk_automated_2020] which is demonstrated in this paper was sampled at 4 Hz and converted to single-precision floating point data. Pandas dataframes store this data in 4 bytes, thus there are approximately 4.15 MB[^6] bytes required to store data for x and y dimensions plus an index reference for a single day. In the case of [@shenk_automated_2020] were 24 mice observed over 35 days. This translates to 3.4 GB ($10^9$) to 29 TB ($10^{12}$) of storage capacity respectively, for the uncompressed datasets prior to feature engineering. Thus resampling can be a useful way to reduce the memory footprint for memory constrained processes that have to fit into a standard laptop with 8 GB memory space. A demonstration of how resampling can reduce precision but still be useful for trajectory data analysis is provided in Figure [3](#fig:step){reference-type="ref" reference="fig:step"}, applied to a sample from the Fortasyn experiment [@shenk_automated_2020]. For identifying broad effects such as cage crossings, for example, data can be downsampled to a lower frequency such as 0.1 Hz, reducing the memory footprint by a factor of 40 (4 Hz/0.1 Hz) and providing significant speedups for processing.
 
 ## Movement Analysis
 Traja includes traditional as well as advanced methods for trajectory analysis.
@@ -143,7 +146,7 @@ is the Euclidean distance between two positions in adjacent time samples.
 Speed or velocity is the first derivative of centroids with respect to time. Peak velocity in a home cage environment is perhaps less interesting than a distribution of velocity observations, as in Figure [4](#fig:velocity-hist){reference-type="ref" reference="fig:velocity-hist"}. Additionally, noise can be eliminated from velocity calculations by using a minimal distance moved threshold, as demonstrated in [@shenk_automated_2020]. This allows identifying broad-scale behaviors such as cage crossings.
 
 ### Turn Angles
-Turn angles are the angle between the movement vectors of two consecutive samples. They can be calculated with calc_turn_angles.
+Turn angles are the angle between the movement vectors of two consecutive samples. They can be calculated with `calc_turn_angles`.
 
 ### Laterality
 Laterality is the preference for left or right turning and a *laterality index* is defined as:
@@ -194,13 +197,18 @@ the model.[]{label="fig:kmeans"}](./images/kmeans_pca-fortasyn.png){#fig:kmeans
 width=80%}
 
 ### Hierarchical Agglomerative Clustering
-Clustering spatial trajectories has broad applications. For mice, hierarchical agglomerative clustering can be used to identify similarities between groups, for example periodic activity and location visit frequency.
+Clustering spatial trajectories has broad applications for behavioral research, including unsupervised phenotyping [@huang_mapping_2020]. For mice, hierarchical agglomerative clustering can also be used to identify similarities between groups, for example periodic activity and location visit frequency [@clustering_mice].
 
 ### Gaussian Processes
 Gaussian Processes is a non-parametric method which can be used to model spatial trajectories. This method is not currently implemented in Traja
 and is thus outside the scope of the current paper, however the interested reader is directed to the excellent text on Gaussian processes by Rasmussen and Williams [@rasmussen_gaussian_2006] for a complete reference and [@cox_gaussian_2012] for an application to spatial trajectories.
 
 ## Other Methods
+
+### Fractal Methods
+Fractal (i.e. multiscale) methods are useful for analyzing transitions and clustering in trajectories. For example, search trajectories such as a eye movement, hande-eye coordination, and foraging can be analyzed by quantifying the spatial distribution or nesting of temporal point processes using spatial Allen Factor analysis [@kerster_spatial_2016; @huette_drawing_2013]. 
+
+Recurrence plots and derivative recurrence factor analysis can be applied to trajectories to identify multiscale temporal processes to study transition or nonlinear parameters in a system, such as postural fluctuation  [@ross_influence_2016] and synchrony [@shockley] in humans and to movement of animals such as ants [@neves_recurrence_2017] and bees [@ayers]. These methods are not yet implemented in Traja, but are planned for a future release.
 
 ### Graph Models
 A graph is a pair $G = (V, E)$ comprising a set of vertices and a set of connecting edges. A probabilistic graphical model of a spatial occupancy grid can be used to identify probabilities of state transitions between nodes. A basic example is given with hidden Markov models below.

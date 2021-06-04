@@ -8,5 +8,5 @@ Wrapper for pandas :meth:`pandas.plotting.autocorrelation_plot`.
 """
 import traja
 
-trj = traja.generate()
+trj = traja.generate(seed=0)
 trj.traja.plot_autocorrelation('x')

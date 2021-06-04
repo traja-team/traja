@@ -793,7 +793,7 @@ def plot_contour(
 def plot_surface(
     trj: TrajaDataFrame,
     bins: Optional[Union[int, tuple]] = None,
-    cmap: str = "jet",
+    cmap: str = "viridis",
     **surfaceplot_kws: dict,
 ) -> Figure:
     """Plot surface of flow from each grid cell to neighbor in 3D.
@@ -833,7 +833,7 @@ def plot_surface(
 def plot_stream(
     trj: TrajaDataFrame,
     bins: Optional[Union[int, tuple]] = None,
-    cmap: str = "jet",
+    cmap: str = "viridis",
     contourfplot_kws: dict = {},
     contourplot_kws: dict = {},
     streamplot_kws: dict = {},
@@ -1153,7 +1153,7 @@ def _polar_bar(
     max_height = max(height)
     bars = ax.bar(angle, height, width=width, bottom=0.0, **kwargs)
     for h, bar in zip(height, bars):
-        bar.set_facecolor(plt.cm.jet(h / max_height))
+        bar.set_facecolor(plt.cm.viridis(h / max_height))
         bar.set_alpha(0.5)
     if isinstance(ax, matplotlib.axes.Axes):
         ax.set_theta_zero_location("N")
@@ -1365,7 +1365,7 @@ def plot_transition_matrix(
     """
     if isinstance(data, np.ndarray):
         if data.shape[0] != data.shape[1]:
-            raise ValueException(
+            raise ValueError(
                 f"Ndarray input must be square transition matrix, shape is {data.shape}"
             )
         transition_matrix = data
@@ -1384,6 +1384,9 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
         polar (bool): include polar bar chart with turn angle
         save (bool): save video to ``trajectory.mp4``
 
+    Returns:
+        anim (matplotlib.animation.FuncAnimation): animation 
+        
     """
     from matplotlib import animation
     from matplotlib.animation import FuncAnimation
@@ -1401,7 +1404,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     fig = plt.figure(figsize=(8, 6))
     ax1 = plt.subplot(211)
 
-    fig.add_subplot(ax1)
+    fig.add_subplot(ax1)    
     if polar:
         ax2 = plt.subplot(212, polar="projection")
         ax2.set_theta_zero_location("N")
@@ -1429,54 +1432,56 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     )
 
     def update(frame_number):
-        ind = frame_number % len(xy)
-        if ind < XY_STEPS:
-            scat.set_offsets(xy[:ind])
+        if frame_number < (XY_STEPS+2):
+            pass
         else:
-            prev_steps = max(ind - XY_STEPS, 0)
-            scat.set_offsets(xy[prev_steps:ind])
+            ind = frame_number % len(xy)
+            if ind < XY_STEPS:
+                scat.set_offsets(xy[:ind])
+            else:
+                prev_steps = max(ind - XY_STEPS, 0)
+                scat.set_offsets(xy[prev_steps:ind])
 
-        displacement_str = (
-            rf"$\bf{displacement[ind]:.2f}$"
-            if displacement[ind] >= DISPLACEMENT_THRESH
-            else f"{displacement[ind]:.2f}"
-        )
-
-        x, y = xy.iloc[ind]
-        ax1.set_title(
-            f"frame {ind} - distance (cm/0.25s): {displacement_str}\n"
-            f"x: {x:.2f}, y: {y:.2f}\n"
-            f"turn_angle: {turn_angle[ind]:.2f}"
-        )
-
-        if polar and ind > 1:
-            ax2.clear()
-            start_index = max(ind - POLAR_STEPS, 0)
-
-            theta = turn_angle[start_index:ind]
-            radii = displacement[start_index:ind]
-
-            hist, bin_edges = np.histogram(
-                theta, bins=np.arange(-180, 180 + bin_size, bin_size)
+            displacement_str = (
+                rf"$\bf{displacement[ind]:.2f}$"
+                if displacement[ind] >= DISPLACEMENT_THRESH
+                else f"{displacement[ind]:.2f}"
             )
-            centers = np.deg2rad(np.ediff1d(bin_edges) // 2 + bin_edges[:-1])
 
-            radians = np.deg2rad(theta)
+            x, y = xy.iloc[ind]
+            ax1.set_title(
+                f"frame {ind} - distance (cm/0.25s): {displacement_str}\n"
+                f"x: {x:.2f}, y: {y:.2f}\n"
+                f"turn_angle: {turn_angle[ind]:.2f}"
+            )
 
-            width = np.deg2rad(bin_size)
-            angle = radians if overlap else centers
-            height = radii if overlap else hist
-            max_height = displacement.max() if overlap else max(hist)
+            if polar and ind > 1:
+                ax2.clear()
+                start_index = max(ind - POLAR_STEPS, 0)
 
-            bars = ax2.bar(angle, height, width=width, bottom=0.0)
-            for idx, (h, bar) in enumerate(zip(height, bars)):
-                bar.set_facecolor(plt.cm.jet(h / max_height))
-                bar.set_alpha(0.8 * (idx / POLAR_STEPS))
-            ax2.set_theta_zero_location("N")
-            ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
-        plt.tight_layout()
+                theta = turn_angle[start_index:ind]
+                radii = displacement[start_index:ind]
 
-    anim = FuncAnimation(fig, update, interval=10, frames=range(len(xy)))
+                hist, bin_edges = np.histogram(
+                    theta, bins=np.arange(-180, 180 + bin_size, bin_size)
+                )
+                centers = np.deg2rad(np.ediff1d(bin_edges) // 2 + bin_edges[:-1])
+
+                radians = np.deg2rad(theta)
+
+                width = np.deg2rad(bin_size)
+                angle = radians if overlap else centers
+                height = radii if overlap else hist
+                max_height = displacement.max() if overlap else max(hist)
+
+                bars = ax2.bar(angle, height, width=width, bottom=0.0)
+                for idx, (h, bar) in enumerate(zip(height, bars)):
+                    bar.set_facecolor(plt.cm.viridis(h / max_height))
+                    bar.set_alpha(0.8 * (idx / POLAR_STEPS))
+                ax2.set_theta_zero_location("N")
+                ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
+
+    anim = FuncAnimation(fig, update, interval=10, frames=len(xy))
     if save:
         try:
             anim.save("trajectory.mp4", writer=animation.FFMpegWriter(fps=10))
@@ -1484,3 +1489,5 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
             raise Exception("FFmpeg not installed, please install it.")
     else:
         plt.show()
+    
+    return anim

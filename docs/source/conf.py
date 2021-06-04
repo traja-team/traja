@@ -45,7 +45,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.inheritance_diagram",
     "sphinx.ext.intersphinx",
-    "sphinx_gallery.gen_gallery",
+    "sphinx_gallery.gen_gallery"
 ]
 
 # continue doc build and only print warnings/errors in examples
