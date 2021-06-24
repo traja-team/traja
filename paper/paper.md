@@ -16,6 +16,9 @@ authors:
   - name: Saranraj Nambusubramaniyan
     affiliation: 1
     orcid: 0000-0002-7314-0261
+  - name: Alexander Zoeller
+    affiliation: 4
+    orcid: 0000-0002-4043-3420
 affiliations:
  - name: VisioLab, Berlin, Germany
    index: 1
@@ -23,6 +26,8 @@ affiliations:
    index: 2
  - name: Rapid Health, London, England, United Kingdom
    index: 3
+ - name: Independent researcher
+   index: 4
 date: 4 June 2021
 bibliography: paper.bib
 ---
