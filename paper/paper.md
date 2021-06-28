@@ -213,7 +213,7 @@ and is thus outside the scope of the current paper, however the interested reade
 ## Other Methods
 
 ### Fractal Methods
-Fractal (i.e. multiscale) methods are useful for analyzing transitions and clustering in trajectories. For example, search trajectories such as a eye movement, hande-eye coordination, and foraging can be analyzed by quantifying the spatial distribution or nesting of temporal point processes using spatial Allen Factor analysis [@kerster_spatial_2016; @huette_drawing_2013]. 
+Fractal (i.e. multiscale) methods are useful for analyzing transitions and clustering in trajectories. For example, search trajectories such as eye movement, hand-eye coordination, and foraging can be analyzed by quantifying the spatial distribution or nesting of temporal point processes using spatial Allen Factor analysis [@kerster_spatial_2016; @huette_drawing_2013]. 
 
 Recurrence plots and derivative recurrence factor analysis can be applied to trajectories to identify multiscale temporal processes to study transition or nonlinear parameters in a system, such as postural fluctuation  [@ross_influence_2016] and synchrony [@shockley] in humans and to movement of animals such as ants [@neves_recurrence_2017] and bees [@ayers]. These methods are not yet implemented in Traja, but are planned for a future release.
 
