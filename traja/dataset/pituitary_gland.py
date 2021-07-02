@@ -1,9 +1,16 @@
 import numpy as np
 import pandas as pd
 from numpy import exp
-from numba import jit
 from scipy.integrate import odeint
-from pyDOE2 import lhs
+
+try:
+    from numba import jit
+except ImportError:
+    raise ImportError("Please install numba with 'pip install numba'")
+try:
+    from pyDOE2 import lhs
+except ImportError:
+    raise ImportError("Please install pyDOE2 with 'pip install pyDOE2'")
 
 
 # PyTest will not compute coverage correctly for @jit-compiled code.

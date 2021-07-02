@@ -22,8 +22,4 @@ dependencies:
   - networkx
   - seaborn
   - pytorch
-  - pytest==6.2.2
-  - h5py
-  - numba>=0.50.0
-  - pyDOE2>=1.3.0
-  - statsmodels
+  - pytest ==6.2.2
