@@ -54,9 +54,13 @@ class TrajaDataFrame(pd.DataFrame):
             args[0]._copy_attrs(self)
         for name, value in traja_kwargs.items():
             self.__dict__[name] = value
+        
+        # Initialize 
+        self._convex_hull = None
+
         # Initialize metadata like 'fps','spatial_units', etc.
         self._init_metadata()
-
+    
     @property
     def _constructor(self):
         return TrajaDataFrame
@@ -135,8 +139,6 @@ class TrajaDataFrame(pd.DataFrame):
         """Set metadata."""
         self.__dict__[key] = value
 
-        self.convex_hull = None
-
     def __setattr__(self, name: str, value) -> None:
         """Override method for pandas.core.generic method __setattr__
 
@@ -164,11 +166,23 @@ class TrajaDataFrame(pd.DataFrame):
                 object.__setattr__(self, name, value)
 
     @property
+    def center(self):
+        """Return the center point of this trajectory."""
+        x = self.x
+        y = self.y
+        return float(x.mean()), float(y.mean())
+    
+    @property
     def convex_hull(self):
         """Property of TrajaDataFrame class representing
         bounds for convex area enclosing trajectory points.
 
         """
+        # Calculate if it doesn't exist
+        if self._convex_hull is None:            
+            xy_arr = self.traja.xy
+            point_arr = traja.trajectory.calc_convex_hull(xy_arr)
+            self._convex_hull = point_arr
         return self._convex_hull
 
     @convex_hull.setter
