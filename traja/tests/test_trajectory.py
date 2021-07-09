@@ -114,9 +114,9 @@ def test_smooth_sg(w):
 
 
 @pytest.mark.parametrize("lag", [1, 2])
-def test_angles(lag):
+def test_calc_angle(lag):
     df_copy = df.copy()
-    angles = traja.angles(df_copy, lag=lag)
+    angles = traja.calc_angle(df_copy, lag=lag)
     actual = angles.to_numpy()
     if lag == 1:
         expected = np.array(
@@ -186,7 +186,7 @@ def test_traj_from_coords():
 def test_distance(method):
     df_copy = df.copy()
     rotated = traja.trajectory.rotate(df_copy, 10).traja.xy[:10]
-    distance = traja.distance_between(rotated, df_copy.traja.xy, method=method)
+    _ = traja.distance_between(rotated, df_copy.traja.xy, method=method)
 
 
 @pytest.mark.parametrize("ndarray_type", [True, False])
@@ -218,16 +218,16 @@ def test_transition_matrix():
     grid_indices = traja.grid_coordinates(df_copy)
     assert grid_indices.shape[1] == 2
     grid_indices1D = traja._grid_coords1D(grid_indices)
-    transitions_matrix = traja.transition_matrix(grid_indices1D)
+    _ = traja.transition_matrix(grid_indices1D)
 
 
 def test_calc_laterality():
     df_copy = df.copy()
-    right_turns, left_turns = traja.calc_laterality(df, dist_thresh=1)
+    right_turns, left_turns = traja.calc_laterality(df_copy, dist_thresh=1)
     assert left_turns == 4
     assert right_turns == 0
-    
-    
+
+
 def test_calc_flow_angles():
     df_copy = df.copy()
     grid_indices = traja.grid_coordinates(df_copy)
@@ -351,10 +351,6 @@ def test_calc_turn_angle():
         ),
         rtol=1e-1,
     )
-
-
-def test_calc_angle():
-    ...
 
 
 def test_calc_displacement():
@@ -649,20 +645,24 @@ def test_from_xy():
 
 def test_calc_convex_hull():
     df_copy = df.copy()
-    expected = np.array([[ -4.86747278, -10.14421693],
-                         [  1.8618368 ,   2.72724373],
-                         [  1.86039336,   4.85796696],
-                         [ -0.09648629,   5.80245677],
-                         [ -4.1892174 ,   4.95182617],
-                         [ -9.41528913,   2.74372589],
-                         [-11.38346284,   1.54102389],
-                         [-13.249669  ,   0.20718649],
-                         [-13.69906214,  -1.7734609 ],
-                         [-13.37369615,  -3.8234334 ],
-                         [-12.97911277,  -5.60264725],
-                         [-12.29572211,  -7.05360631],
-                         [-11.19458371,  -8.63916811],
-                         [ -7.07832674,  -9.78109529],
-                         [ -4.86747278, -10.14421693]])
-    actual = df.convex_hull
+    expected = np.array(
+        [
+            [-4.86747278, -10.14421693],
+            [1.8618368, 2.72724373],
+            [1.86039336, 4.85796696],
+            [-0.09648629, 5.80245677],
+            [-4.1892174, 4.95182617],
+            [-9.41528913, 2.74372589],
+            [-11.38346284, 1.54102389],
+            [-13.249669, 0.20718649],
+            [-13.69906214, -1.7734609],
+            [-13.37369615, -3.8234334],
+            [-12.97911277, -5.60264725],
+            [-12.29572211, -7.05360631],
+            [-11.19458371, -8.63916811],
+            [-7.07832674, -9.78109529],
+            [-4.86747278, -10.14421693],
+        ]
+    )
+    actual = df_copy.convex_hull
     npt.assert_allclose(expected, actual)

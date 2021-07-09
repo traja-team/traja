@@ -24,7 +24,6 @@ __all__ = [
     "_has_cols",
     "_rediscretize_points",
     "_resample_time",
-    "angles",
     "calc_angle",
     "calc_convex_hull",
     "calc_derivatives",
@@ -97,17 +96,6 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
     _trj.y = signal.savgol_filter(_trj.y, window_length=w, polyorder=p, axis=0)
     _trj = fill_in_traj(_trj)
     return _trj
-
-
-def angles(trj: TrajaDataFrame, lag: int = 1):
-    """Returns angles with regard to x-axis."""
-    dx = trj.x.diff(lag)
-    distance = calc_displacement(trj, lag=lag)
-    angles = np.rad2deg(np.arccos(np.abs(dx) / distance))
-    # Correction for 360-degree angle range
-    angles[angles >= 180] -= 360
-    angles[angles < -180] += 360
-    return angles
 
 
 def apply_all(trj: TrajaDataFrame, method: Callable, id_col: str, **kwargs):
@@ -211,8 +199,8 @@ def expected_sq_displacement(
 
     """
     sl = traja.step_lengths(trj)
-    ta = traja.angles(trj)
-    l = np.mean(sl)
+    ta = traja.calc_angle(trj)
+    l1 = np.mean(sl)
     l2 = np.mean(sl ** 2)
     c = np.mean(np.cos(ta))
     s = np.mean(np.sin(ta))
@@ -226,9 +214,9 @@ def expected_sq_displacement(
         ) * np.sin((n + 1) * alpha)
         esd = (
             n * l2
-            + 2 * l ** 2 * ((c - c ** 2 - s2) * n - c) / ((1 - c) ** 2 + s2)
+            + 2 * l1 ** 2 * ((c - c ** 2 - s2) * n - c) / ((1 - c) ** 2 + s2)
             + 2
-            * l ** 2
+            * l1 ** 2
             * ((2 * s2 + (c + s2) ** ((n + 1) / 2)) / ((1 - c) ** 2 + s2) ** 2)
             * gamma
         )
@@ -236,7 +224,7 @@ def expected_sq_displacement(
     else:
         logger.info("This method is experimental and requires testing.")
         # Eqn 2
-        esd = n * l2 + 2 * l ** 2 * c / (1 - c) * (n - (1 - c ** n) / (1 - c))
+        esd = n * l2 + 2 * l1 ** 2 * c / (1 - c) * (n - (1 - c ** n) / (1 - c))
         return esd
 
 
@@ -436,8 +424,8 @@ def calc_laterality(
 
     Args:
         trj: Trajectory
-        angle_thresh: angle threshold (from angle to 90 degrees)
         dist_thresh: distance for a step to count as a turn
+        angle_thresh: angle threshold (from angle to 90 degrees)
 
     Returns:
         right_turns (int)
@@ -445,7 +433,10 @@ def calc_laterality(
 
     """
     # get turn angle with regard to x axis
-    turn_angle = calc_turn_angle(trj)
+    if "turn_angle" not in trj.columns:
+        turn_angle = calc_turn_angle(trj)
+    else:
+        turn_angle = trj.turn_agle
 
     distance = step_lengths(trj)
     distance_mask = distance > dist_thresh
@@ -705,9 +696,9 @@ def generate(
     # Update metavars
     metavars = dict(angular_error_sd=angular_error_sd, linear_error_sd=linear_error_sd)
     df.__dict__.update(metavars)
-    #Attribute convex hull to dataframe
+    # Attribute convex hull to dataframe
     if convex_hull:
-        df.convex_hull = df[['x','y']].values
+        df.convex_hull = df[["x", "y"]].values
     else:
         del df.convex_hull
     return df
@@ -994,22 +985,32 @@ def calc_turn_angle(trj: TrajaDataFrame):
     return turn_angle
 
 
-def calc_angle(trj: TrajaDataFrame):
+def calc_angle(trj: TrajaDataFrame, unit: str = "degrees", lag: int = 1):
     """Returns a ``Series`` with angle between steps as a function of displacement with regard to x axis.
 
     Args:
        trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+       unit (str): return angle in radians or degrees (Default value: 'degrees')
+       lag (int) : time steps between angle calculation (Default value: 1)
 
     Returns:
       angle (:class:`pandas.Series`): Angle series.
 
     """
-    if not _has_cols(trj, ["dx", "displacement"]):
-        displacement = calc_displacement(trj)
+    if not _has_cols(trj, ["displacement"]) or (lag != 1):
+        displacement = calc_displacement(trj, lag)
     else:
         displacement = trj.displacement
 
-    angle = np.rad2deg(np.arccos(np.abs(trj.x.diff()) / displacement))
+    if unit == "degrees":
+        angle = np.rad2deg(np.arccos(np.abs(trj.x.diff(lag)) / displacement))
+    elif unit == "radians":
+        angle = np.arccos(np.abs(trj.x.diff()) / displacement)
+    else:
+        raise ValueError(f"The unit {unit} is not valid.")
+
+    angle.unit = unit
+    angle.name = "angle"
     return angle
 
 
@@ -1064,7 +1065,7 @@ def calc_derivatives(trj: TrajaDataFrame):
     if time_col is None:
         raise Exception("Missing time information in trajectory.")
 
-    if not "displacement" in trj:
+    if "displacement" not in trj:
         displacement = calc_displacement(trj)
     else:
         displacement = trj.displacement
@@ -1113,6 +1114,9 @@ def calc_heading(trj: TrajaDataFrame):
         angle = calc_angle(trj)
     else:
         angle = trj.angle
+        if hasattr(angle, "unit"):
+            if angle.unit == "radians":
+                angle = np.rad2deg(angle)
 
     dx = trj.x.diff()
     dy = trj.y.diff()
@@ -1317,7 +1321,7 @@ def return_angle_to_point(p1: np.ndarray, p0: np.ndarray):
 
     """
 
-    r = math.degrees(math.atan2((p0[1]-p1[1]), (p0[0]-p1[0])))
+    r = math.degrees(math.atan2((p0[1] - p1[1]), (p0[0] - p1[0])))
     return r
 
 
@@ -1335,16 +1339,25 @@ def determine_colinearity(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray):
 
     """
 
-    cross_product = (p1[0] - p0[0])*(p2[1] - p0[1])-(p1[1] - p0[1])*(p2[0] - p0[0])
+    cross_product = (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (
+        p2[0] - p0[0]
+    )
 
-    if cross_product < 0:  #Right turn
+    if cross_product < 0:  # Right turn
         return False
-    else:  #Points are colinear (if == 0) or left turn (if < 0)
+    else:  # Points are colinear (if == 0) or left turn (if < 0)
         return True
 
 
-def inside(pt: np.ndarray, bounds_xs: list, bounds_ys: list,
-           minx: float, maxx: float, miny: float, maxy: float):
+def inside(
+    pt: np.ndarray,
+    bounds_xs: list,
+    bounds_ys: list,
+    minx: float,
+    maxx: float,
+    miny: float,
+    maxy: float,
+):
     """Determine whether point lies inside or outside of polygon formed
     by "extrema" points - minx, maxx, miny, maxy.  Optimized to be run
     as broadcast function in numpy along axis.
@@ -1369,11 +1382,11 @@ def inside(pt: np.ndarray, bounds_xs: list, bounds_ys: list,
     Boolean return "True" for OUTSIDE polygon, meaning it is within
     subset of possible convex hull coordinates.
     """
-    #Only theoretically possible, extrema polygon is actually a straight line
+    # Only theoretically possible, extrema polygon is actually a straight line
     if maxx == maxy and minx == miny:
-        return True  #No polygon to be within (considered outside)
+        return True  # No polygon to be within (considered outside)
     if pt[0] in [minx, maxx] or pt[1] in [miny, maxy]:
-        return True  #Extrema points are by definition part of convex hull
+        return True  # Extrema points are by definition part of convex hull
     poly_pts = len(bounds_xs)
     ct = 0
     for i in range(poly_pts):
@@ -1381,14 +1394,23 @@ def inside(pt: np.ndarray, bounds_xs: list, bounds_ys: list,
             j = poly_pts - 1
         else:
             j = i - 1
-        #Test if horizontal trace from the point to infinity intersects the given polygon line segment
-        if (((bounds_ys[i]>pt[1]) != (bounds_ys[j]>pt[1])) & \
-            (pt[0] < ((bounds_xs[j]-bounds_xs[i])*(pt[1]-bounds_ys[i])/(bounds_ys[j]-bounds_ys[i])+bounds_xs[i]))):
+        # Test if horizontal trace from the point to infinity intersects the given polygon line segment
+        if ((bounds_ys[i] > pt[1]) != (bounds_ys[j] > pt[1])) & (
+            pt[0]
+            < (
+                (bounds_xs[j] - bounds_xs[i])
+                * (pt[1] - bounds_ys[i])
+                / (bounds_ys[j] - bounds_ys[i])
+                + bounds_xs[i]
+            )
+        ):
             ct += 1
-    if ct % 2 == 0:  #Number of intersections between point, polygon edge(s) and infinity point are odd:
-        return True  #Outside polygon
+    if (
+        ct % 2 == 0
+    ):  # Number of intersections between point, polygon edge(s) and infinity point are odd:
+        return True  # Outside polygon
     else:
-        return False  #Inside polygon
+        return False  # Inside polygon
 
 
 def calc_convex_hull(point_arr: np.array):
@@ -1397,7 +1419,7 @@ def calc_convex_hull(point_arr: np.array):
     `(minx, maxx, miny, maxy)` - convex hull points MUST all be outside such a polygon.
     Returns an array with all points in the convex hull.
 
-    Implementation of Graham Scan `technique <https://en.wikipedia.org/wiki/Graham_scan>_`. 
+    Implementation of Graham Scan `technique <https://en.wikipedia.org/wiki/Graham_scan>_`.
 
     Returns:
         point_arr (:class:`~numpy.ndarray`)
@@ -1420,73 +1442,86 @@ def calc_convex_hull(point_arr: np.array):
         Performative loss beyond ~100,000-200,000 points, algorithm has O(nlogn) complexity.
 
     """
-    #Find "extrema" points to form polygon (convex hull must be outside this polygon)
-    minx = point_arr[:,0].min()
-    maxx = point_arr[:,0].max()
-    miny = point_arr[:,1].min()
-    maxy = point_arr[:,1].max()
-    min_x_pt = point_arr[np.where(point_arr[:,0]==point_arr[:,0].min())].tolist()[0]
-    min_y_pt = point_arr[np.where(point_arr[:,1]==point_arr[:,1].min())].tolist()[0]
-    max_x_pt = point_arr[np.where(point_arr[:,0]==point_arr[:,0].max())].tolist()[0]
-    max_y_pt = point_arr[np.where(point_arr[:,1]==point_arr[:,1].max())].tolist()[0]
+    # Find "extrema" points to form polygon (convex hull must be outside this polygon)
+    minx = point_arr[:, 0].min()
+    maxx = point_arr[:, 0].max()
+    miny = point_arr[:, 1].min()
+    maxy = point_arr[:, 1].max()
+    min_x_pt = point_arr[np.where(point_arr[:, 0] == point_arr[:, 0].min())].tolist()[0]
+    min_y_pt = point_arr[np.where(point_arr[:, 1] == point_arr[:, 1].min())].tolist()[0]
+    max_x_pt = point_arr[np.where(point_arr[:, 0] == point_arr[:, 0].max())].tolist()[0]
+    max_y_pt = point_arr[np.where(point_arr[:, 1] == point_arr[:, 1].max())].tolist()[0]
     extrema_pts = [min_x_pt, min_y_pt, max_x_pt, max_y_pt]
     extrema_xys = [*zip(*extrema_pts)]
     bounds_x, bounds_y = extrema_xys[0], extrema_xys[1]
 
-    #Filter trajectory points to only include points "outside" of this extrema polygon
-    convex_mask = np.apply_along_axis(inside, 1, point_arr,
-                                      bounds_x, bounds_y,
-                                      minx, maxx, miny, maxy)
+    # Filter trajectory points to only include points "outside" of this extrema polygon
+    convex_mask = np.apply_along_axis(
+        inside, 1, point_arr, bounds_x, bounds_y, minx, maxx, miny, maxy
+    )
     point_arr = point_arr[convex_mask]
 
-    #Find principal point (lowest y, lower x) from which to start
-    p0 = point_arr[point_arr[:,1]==point_arr[:,1].min()].min(axis=0)
-    point_arr = np.delete(point_arr, np.where((point_arr[:,0]==p0[0])&(point_arr[:,1]==p0[1])), 0)
-    #Sort remaining points
-    point_arr = point_arr[np.lexsort((point_arr[:,0], point_arr[:,1]))]
-    #Populate array with direction of each point in the trajectory to the principal (lowest, then leftmost) point
+    # Find principal point (lowest y, lower x) from which to start
+    p0 = point_arr[point_arr[:, 1] == point_arr[:, 1].min()].min(axis=0)
+    point_arr = np.delete(
+        point_arr, np.where((point_arr[:, 0] == p0[0]) & (point_arr[:, 1] == p0[1])), 0
+    )
+    # Sort remaining points
+    point_arr = point_arr[np.lexsort((point_arr[:, 0], point_arr[:, 1]))]
+    # Populate array with direction of each point in the trajectory to the principal (lowest, then leftmost) point
     point_arr_r_p0 = np.apply_along_axis(return_angle_to_point, 1, point_arr, p0)
-    #Sort point array by radius
+    # Sort point array by radius
     sorted_ind = point_arr_r_p0.argsort()
     point_arr_r_p0 = point_arr_r_p0[sorted_ind]
     point_arr = point_arr[sorted_ind]
 
-    #Check for points with duplicate angles from principal point, only keep furthest point
+    # Check for points with duplicate angles from principal point, only keep furthest point
     unique_r = np.unique(point_arr_r_p0, return_index=True)[1]
-    if unique_r.shape == point_arr_r_p0.shape:  #There are no two points at same angle from x axis
+    if (
+        unique_r.shape == point_arr_r_p0.shape
+    ):  # There are no two points at same angle from x axis
         pass
     else:
-        dist_p0 = lambda x: np.linalg.norm(p0-x)
-        point_arr_d_p0 = np.apply_along_axis(dist_p0, 1, point_arr)
-        #Identify duplicate angles
+        point_arr_d_p0 = np.apply_along_axis(
+            lambda x, p0=p0: np.linalg.norm(p0 - x), 1, point_arr
+        )
+        # Identify duplicate angles
         unique, counts = np.unique(point_arr_r_p0, axis=0, return_counts=True)
-        rep_angles = unique[counts>1]
+        rep_angles = unique[counts > 1]
         duplicates = point_arr_r_p0[np.where(np.in1d(point_arr_r_p0, rep_angles))]
         duplicates = point_arr[np.where(np.in1d(point_arr_r_p0, rep_angles))]
-        #Get indices of only the furthest point from origin at each unique angle
+        # Get indices of only the furthest point from origin at each unique angle
         dropped_pts = []
         for dup_pt in duplicates:
-            pt_idx = np.where((point_arr[:,0]==dup_pt[0])&(point_arr[:,1]==dup_pt[1]))[0][0]
+            pt_idx = np.where(
+                (point_arr[:, 0] == dup_pt[0]) & (point_arr[:, 1] == dup_pt[1])
+            )[0][0]
             r_val = point_arr_r_p0[pt_idx]
-            ind_furthest = np.where(point_arr_d_p0==point_arr_d_p0[np.where(point_arr_r_p0==r_val)].max())[0][0]
-            if not pt_idx == ind_furthest:  #This is a "closer" point to origin, not in convex hull
+            ind_furthest = np.where(
+                point_arr_d_p0
+                == point_arr_d_p0[np.where(point_arr_r_p0 == r_val)].max()
+            )[0][0]
+            if (
+                not pt_idx == ind_furthest
+            ):  # This is a "closer" point to origin, not in convex hull
                 dropped_pts.append(pt_idx)
         point_arr = np.delete(point_arr, dropped_pts, axis=0)
 
-    #Iterate through points. If a "right turn" is made, remove preceding point.
+    # Iterate through points. If a "right turn" is made, remove preceding point.
     point_arr = np.insert(point_arr, 0, p0, axis=0)
     for pt in point_arr:
-        idx = np.where((point_arr[:,0]==pt[0])&(point_arr[:,1]==pt[1]))[0][0]
+        idx = np.where((point_arr[:, 0] == pt[0]) & (point_arr[:, 1] == pt[1]))[0][0]
         while True:
-            #Skip/stop at first two points (3 points form line), after working backwards
+            # Skip/stop at first two points (3 points form line), after working backwards
             if idx <= 1:
                 break
-            #Continue working backwards until a left turn is made, or we reach the origin
-            elif determine_colinearity(point_arr[idx-2], point_arr[idx-1],
-                                       point_arr[idx]):
+            # Continue working backwards until a left turn is made, or we reach the origin
+            elif determine_colinearity(
+                point_arr[idx - 2], point_arr[idx - 1], point_arr[idx]
+            ):
                 break
-            else:  #This is a right turn
-                point_arr = np.delete(point_arr, idx-1, 0)
+            else:  # This is a right turn
+                point_arr = np.delete(point_arr, idx - 1, 0)
                 idx -= 1
     point_arr = np.insert(point_arr, point_arr.shape[0], p0, axis=0)
     return point_arr
