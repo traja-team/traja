@@ -8,7 +8,6 @@ sphinx
 sphinx-gallery
 sphinx_rtd_theme
 fastdtw
-plotly
 networkx
 seaborn
 torch
