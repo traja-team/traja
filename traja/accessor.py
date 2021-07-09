@@ -145,7 +145,7 @@ class TrajaAccessor(object):
 
     def rediscretize_points(self, R, **kwargs):
         """Rediscretize points"""
-        return traja.trajectory.rediscretize_points(self, _obj, R=R, **kwargs)
+        return traja.trajectory.rediscretize_points(self._obj, R=R, **kwargs)
 
     def trip_grid(
         self,
