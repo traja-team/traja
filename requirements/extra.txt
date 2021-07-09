@@ -1,6 +1,5 @@
 # extended list of package dependencies to reach full functionality
 
-plotly
 pytest
 h5py
 ipython
