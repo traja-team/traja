@@ -39,7 +39,7 @@ class TrajaDataFrame(pd.DataFrame):
         "fps",
         "time_units",
         "time_col",
-        "id"
+        "id",
     ]
 
     def __init__(self, *args, **kwargs):
@@ -66,7 +66,7 @@ class TrajaDataFrame(pd.DataFrame):
             df.__dict__[attr] = getattr(self, attr, None)
 
     def __finalize__(self, other, method=None, **kwargs):
-        """propagate metadata from other to self """
+        """propagate metadata from other to self"""
         # merge operation: using metadata of the left object
         if method == "merge":
             for name in self._metadata:
@@ -178,9 +178,11 @@ class TrajaDataFrame(pd.DataFrame):
         Returns:
             np.array, calculated coordinates of convex hull boundary
         """
-        if not values is None and not values.shape[1]==2:
-            raise Exception('XY coordinates must be in separate columns '\
-                            'for convex hull calculation.')
+        if values is not None and not values.shape[1] == 2:
+            raise Exception(
+                "XY coordinates must be in separate columns "
+                "for convex hull calculation."
+            )
         elif values is None:
             self._convex_hull = np.array([])
         else:
@@ -190,7 +192,6 @@ class TrajaDataFrame(pd.DataFrame):
     @convex_hull.deleter
     def convex_hull(self):
         self._convex_hull = None
-
 
 
 def tocontainer(func):
@@ -290,7 +291,7 @@ class TrajaCollection(TrajaDataFrame):
 
             >>> trjs = {ind: traja.generate(seed=ind) for ind in range(3)} # doctest: +SKIP
             >>> coll = traja.TrajaCollection(trjs) # doctest: +SKIP
-            >>> angles = coll.apply_all(traja.calc_angles) # doctest: +SKIP
+            >>> angles = coll.apply_all(traja.calc_angle) # doctest: +SKIP
 
         """
         return self.groupby(by=self._id_col).apply(method)
