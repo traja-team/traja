@@ -1413,7 +1413,7 @@ def inside(
         return False  # Inside polygon
 
 
-def calc_convex_hull(point_arr: np.array):
+def calc_convex_hull(point_arr: np.array) -> np.array:
     """Identify containing polygonal convex hull for full Trajectory
     Interior points filtered with :meth:`traja.trajectory.inside` method, takes quadrilateral using extrema points
     `(minx, maxx, miny, maxy)` - convex hull points MUST all be outside such a polygon.
@@ -1422,7 +1422,7 @@ def calc_convex_hull(point_arr: np.array):
     Implementation of Graham Scan `technique <https://en.wikipedia.org/wiki/Graham_scan>_`.
 
     Returns:
-        point_arr (:class:`~numpy.ndarray`)
+        point_arr (:class:`~numpy.ndarray`): n x 2 (x,y) array
 
     .. doctest::
 
@@ -1442,6 +1442,7 @@ def calc_convex_hull(point_arr: np.array):
         Performative loss beyond ~100,000-200,000 points, algorithm has O(nlogn) complexity.
 
     """
+    assert point_arr.shape[1] == 2, f"expected (n, 2) shape only, got {point_arr.shape}"
     # Find "extrema" points to form polygon (convex hull must be outside this polygon)
     minx = point_arr[:, 0].min()
     maxx = point_arr[:, 0].max()
