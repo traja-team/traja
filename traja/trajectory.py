@@ -436,7 +436,7 @@ def calc_laterality(
     if "turn_angle" not in trj.columns:
         turn_angle = calc_turn_angle(trj)
     else:
-        turn_angle = trj.turn_agle
+        turn_angle = trj.turn_angle
 
     distance = step_lengths(trj)
     distance_mask = distance > dist_thresh
