@@ -3,7 +3,7 @@ numpy==1.18.5
 matplotlib
 shapely
 scipy
-sklearn
+scikit-learn
 sphinx
 sphinx-gallery
 sphinx_rtd_theme
