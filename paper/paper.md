@@ -241,7 +241,7 @@ The convex hull of a subtrajectory is the set $X$ of points in the Euclidean pla
 ### Recurrent Neural Networks
 In recent years, deep learning has transformed the field of machine learning. For example, the current state of the art models for a wide range of tasks, including computer vision, speech to text, and pedestrian trajectory prediction, are achieved with deep neural networks. Neural networks are essentially sequences of matrix operations and elementwise function application based on a collection of computing units known as nodes or neurons. These units perform operations, such as matrix multiplication on input features of a dataset, followed by backpropagation of errors, to identify parameters useful for approximating a function.
 
-![Neural network architectures available in Traja](./images/dnns.jpg){width=80%}
+![Neural network architectures available in Traja](./images/dnns.jpg){width=100%}
 
 Recurrent Neural Networks (RNNs) are a special type of Neural Networks that use
 a state $S(t_{i-1})$ from the previous timestep $t_{i-1}$ alongside X($t_i$) as input. They output a prediction $Y(t_i)$ and a new state $S(t_i)$ at every step. Utilising previous states makes RNNs particularly good at analyzing time series like trajectories, since they can process arbitrarily long inputs. They remember information from previous time steps $X(t_{i-k}), ..., X(t_{i-1})$ when processing the current time step $X(t_i)$.
