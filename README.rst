@@ -36,8 +36,8 @@ Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Bin
 .. |Codecov| image:: https://codecov.io/gh/traja-team/traja/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/traja-team/traja
 
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5055698.svg
-   :target: https://doi.org/10.5281/zenodo.5055698
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5069231.svg
+   :target: https://doi.org/10.5281/zenodo.5069231
 
 .. |Colab| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/justinshenk/traja/blob/master/demo.ipynb
