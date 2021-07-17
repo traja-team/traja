@@ -107,7 +107,7 @@ with angle $\theta$ where $\theta \in R : \theta \in [-180,180]$.
 One strategy for compressing the representation of trajectories is binning the coordinates to produce an image as shown in Figure [2](#fig:tripgridalgo){reference-type="ref" reference="fig:tripgridalgo"}.
 
 ![Trip grid image generation from mouse
-trajectory.](./images/trip_grid_algo.png){#fig:tripgridalgo width=80%}
+trajectory.](./images/trip_grid_algo.png){#fig:tripgridalgo width=100%}
 
 Allowing computation on discrete variables rather than continuous ones has several advantages stemming from the ability to store trajectories in a more memory efficient form.[^4] The advantage is that computation is generally faster, more data can fit in memory in the case of complex models, and item noise can be reduced.
 
