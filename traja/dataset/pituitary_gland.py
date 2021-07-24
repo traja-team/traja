@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 from numpy import exp
@@ -5,6 +7,7 @@ from numba import jit
 from scipy.integrate import odeint
 from pyDOE2 import lhs
 import peakutils
+from collections import OrderedDict
 
 
 # PyTest will not compute coverage correctly for @jit-compiled code.
@@ -174,15 +177,14 @@ def pituitary_ode(w, t, p):  # pragma: no cover
 
     Arguments:
         w :  vector of the state variables:
-                  w = [v, n, f, c]
+                  w = [v, n, m, b, h, h_T, h_Na, c]
         t :  time
-        p :  vector of the parameters:
-                  p = [gk, gcal, gsk, gbk, gl, kc]
+        p :  vector of the parameters
     """
     V, n, m, b, h, h_T, h_Na, c = w
 
     (g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak,
-    tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c) = p
+     tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c) = p
 
     E_Ca = 60
     E_K = -75
@@ -243,207 +245,114 @@ def pituitary_ode(w, t, p):  # pragma: no cover
     return dv, dn, dm, db, dh, dh_T, dh_Na, dc
 
 
-def pituitary_ori_ode_parameters():
-    # Maximal conductance
-    g_CaL = np.random.uniform(0, 4)
-    g_CaT = 0
-    g_K = np.random.uniform(0., 10.)
-    g_SK = 0
-    g_Kir = 0
-    g_BK = 0
-    g_NaV = 0
-    g_A = 0
-    g_leak = np.random.uniform(0.05, 0.4)
+#  OrderedDict remembers the key order. Required for python<3.9
+default_ode_parameters = OrderedDict([
+    ('g_CaL', 0),
+    ('g_CaT', 0),
+    ('g_K', 0),
+    ('g_SK', 0),
+    ('g_Kir', 0),
+    ('g_BK', 0),
+    ('g_NaV', 0),
+    ('g_A', 0),
+    ('g_leak', 0),
+    ('C_m', 10),
+    ('E_leak', -50),
+    ('tau_m', 1),
+    ('tau_ht', 1),
+    ('tau_n', 1),
+    ('tau_BK', 1),
+    ('tau_h', 1),
+    ('tau_hNa', 1),
+    ('k_c', 0.15)]
+)
 
-    # Other structural parameters
-    C_m = 1
-    E_leak = 1
+
+def pituitary_ori_ode_parameters():
+    parameters = dict()
+
+    # Maximal conductance
+    parameters['g_CaL'] = np.random.uniform(0, 4)
+    parameters['g_K'] = np.random.uniform(0., 10.)
+    parameters['g_leak'] = np.random.uniform(0.05, 0.4)
 
     # Kinetic variables
-    tau_m = 1
-    tau_ht = 1
-    tau_n = 1
-    tau_BK = 1
-    tau_h = 1
-    tau_hNa = 1
-    k_c = np.random.uniform(0.03, 0.21)
+    parameters['k_c'] = np.random.uniform(0.03, 0.21)
 
-    return g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak, \
-        tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c
+    return parameters
 
 
 def pituitary_ori_ode_parameters_Isk():
+    parameters = pituitary_ori_ode_parameters()
+
     # Maximal conductance
-    g_CaL = np.random.uniform(0, 4)
-    g_CaT = 0
-    g_K = np.random.uniform(0., 10.)
-    g_SK = np.random.uniform(.5, 3.5)
-    g_Kir = 0
-    g_BK = 0
-    g_NaV = 0
-    g_A = 0
-    g_leak = np.random.uniform(0.05, 0.4)
+    parameters['g_SK'] = np.random.uniform(.5, 3.5)
 
     # Other structural parameters
-    C_m = np.random.uniform(4, 12)
-    E_leak = 1
+    parameters['C_m'] = np.random.uniform(4, 12)
 
-    # Kinetic variables
-    tau_m = 1
-    tau_ht = 1
-    tau_n = 1
-    tau_BK = 1
-    tau_h = 1
-    tau_hNa = 1
-    k_c = np.random.uniform(0.03, 0.21)
-
-    return g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak, \
-        tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c
+    return parameters
 
 
 def pituitary_ori_ode_parameters_Isk_Ibk():
-    # Maximal conductance
-    g_CaL = np.random.uniform(0, 4)
-    g_CaT = 0
-    g_K = np.random.uniform(0., 10.)
-    g_SK = np.random.uniform(.5, 3.5)
-    g_Kir = 0
-    g_BK = np.random.uniform(0, 4)
-    g_NaV = 0
-    g_A = 0
-    g_leak = np.random.uniform(0.05, 0.4)
+    parameters = pituitary_ori_ode_parameters_Isk()
 
-    # Other structural parameters
-    C_m = np.random.uniform(4, 12)
-    E_leak = 1
+    # Maximal conductance
+    parameters['g_BK'] = np.random.uniform(0, 4)
 
     # Kinetic variables
-    tau_m = np.random.uniform(.7, 1.3)
-    tau_ht = 1
-    tau_n = np.random.uniform(20, 40)
-    tau_BK = np.random.uniform(2, 10)
-    tau_h = 1
-    tau_hNa = 1
-    k_c = np.random.uniform(0.03, 0.21)
+    parameters['tau_m'] = np.random.uniform(.7, 1.3)
+    parameters['tau_n'] = np.random.uniform(20, 40)
+    parameters['tau_BK'] = np.random.uniform(2, 10)
 
-    return g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak, \
-        tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c
+    return parameters
 
 
 def pituitary_ori_ode_parameters_Isk_Ibk_Ikir():
+    parameters = pituitary_ori_ode_parameters_Isk_Ibk()
+
     # Maximal conductance
-    g_CaL = np.random.uniform(0, 4)
-    g_CaT = 0
-    g_K = np.random.uniform(0., 10.)
-    g_SK = np.random.uniform(.5, 3.5)
-    g_Kir = np.random.uniform(0, 2)
-    g_BK = np.random.uniform(0, 4)
-    g_NaV = 0
-    g_A = 0
-    g_leak = np.random.uniform(0.05, 0.4)
+    parameters['g_Kir'] = np.random.uniform(0, 2)
 
     # Other structural parameters
-    C_m = np.random.uniform(4, 12)
-    E_leak = np.random.uniform(-75, -10)
+    parameters['E_leak'] = np.random.uniform(-75, -10)
 
-    # Kinetic variables
-    tau_m = np.random.uniform(.7, 1.3)
-    tau_ht = 1
-    tau_n = np.random.uniform(20, 40)
-    tau_BK = np.random.uniform(2, 10)
-    tau_h = 1
-    tau_hNa = 1
-    k_c = np.random.uniform(0.03, 0.21)
-
-    return g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak, \
-        tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c
+    return parameters
 
 
 def pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat():
-    # Maximal conductance
-    g_CaL = np.random.uniform(0, 4)
-    g_CaT = np.random.uniform(0, 4)
-    g_K = np.random.uniform(0., 10.)
-    g_SK = np.random.uniform(.5, 3.5)
-    g_Kir = np.random.uniform(0, 2)
-    g_BK = np.random.uniform(0, 4)
-    g_NaV = 0
-    g_A = 0
-    g_leak = np.random.uniform(0.05, 0.4)
+    parameters = pituitary_ori_ode_parameters_Isk_Ibk_Ikir()
 
-    # Other structural parameters
-    C_m = np.random.uniform(4, 12)
-    E_leak = np.random.uniform(-75, -10)
+    # Maximal conductance
+    parameters['g_CaT'] = np.random.uniform(0, 4)
 
     # Kinetic variables
-    tau_m = np.random.uniform(.7, 1.3)
-    tau_ht = np.random.uniform(.7, 1.3)
-    tau_n = np.random.uniform(20, 40)
-    tau_BK = np.random.uniform(2, 10)
-    tau_h = 1
-    tau_hNa = 1
-    k_c = np.random.uniform(0.03, 0.21)
+    parameters['tau_ht'] = np.random.uniform(.7, 1.3)
 
-    return g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak, \
-        tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c
+    return parameters
 
 
 def pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia():
+    parameters = pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat()
+
     # Maximal conductance
-    g_CaL = np.random.uniform(0, 4)
-    g_CaT = np.random.uniform(0, 4)
-    g_K = np.random.uniform(0., 10.)
-    g_SK = np.random.uniform(.5, 3.5)
-    g_Kir = np.random.uniform(0, 2)
-    g_BK = np.random.uniform(0, 4)
-    g_NaV = 0
-    g_A = np.random.uniform(0, 100)
-    g_leak = np.random.uniform(0.05, 0.4)
+    parameters['g_A'] = np.random.uniform(0, 100)
 
-    # Other structural parameters
-    C_m = np.random.uniform(4, 12)
-    E_leak = np.random.uniform(-75, -10)
+    parameters['tau_h'] = np.random.uniform(10, 30)
 
-    # Kinetic variables
-    tau_m = np.random.uniform(.7, 1.3)
-    tau_ht = np.random.uniform(.7, 1.3)
-    tau_n = np.random.uniform(20, 40)
-    tau_BK = np.random.uniform(2, 10)
-    tau_h = np.random.uniform(10, 30)
-    tau_hNa = 1
-    k_c = np.random.uniform(0.03, 0.21)
-
-    return g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak, \
-        tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c
+    return parameters
 
 
 def pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia_Inav():
-    # Maximal conductance
-    g_CaL = np.random.uniform(0, 4)
-    g_CaT = np.random.uniform(0, 4)
-    g_K = np.random.uniform(0., 10.)
-    g_SK = np.random.uniform(.5, 3.5)
-    g_Kir = np.random.uniform(0, 2)
-    g_BK = np.random.uniform(0, 4)
-    g_NaV = np.random.uniform(6, 10, 16)
-    g_A = np.random.uniform(0, 100)
-    g_leak = np.random.uniform(0.05, 0.4)
+    parameters = pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia()
 
-    # Other structural parameters
-    C_m = np.random.uniform(4, 12)
-    E_leak = np.random.uniform(-75, -10)
+    # Maximal conductance
+    parameters['g_NaV'] = np.random.uniform(6, 10, 16)
 
     # Kinetic variables
-    tau_m = np.random.uniform(.7, 1.3)
-    tau_ht = np.random.uniform(.7, 1.3)
-    tau_n = np.random.uniform(20, 40)
-    tau_BK = np.random.uniform(2, 10)
-    tau_h = np.random.uniform(10, 30)
-    tau_hNa = np.random.uniform(1.4, 2.6)
-    k_c = np.random.uniform(0.03, 0.21)
+    parameters['tau_hNa'] = np.random.uniform(1.4, 2.6)
 
-    return g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak, \
-        tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c
+    return parameters
 
 
 def generate_pituitary(parameter_function):
@@ -465,9 +374,17 @@ def generate_pituitary(parameter_function):
     dt = 0.5
     t = np.arange(0, 50000, dt)
 
-    wsol = odeint(pituitary_ode, w0, t, args=parameter_function(), atol=abserr, rtol=relerr)
+    parameters = parameter_function()
+    for key in default_ode_parameters.keys():
+        if key not in parameters:
+            parameters[key] = default_ode_parameters[key]
 
-    return wsol, p
+    # Note - the key order in default_ode_parameters is correct.
+    # Disregard the key order in parameters
+    ode_params = tuple([parameters[key] for key in default_ode_parameters.keys()])
+    wsol = odeint(pituitary_ode, w0, t, args=ode_params, atol=abserr, rtol=relerr)
+
+    return wsol, parameters
 
 
 def find_pituitary_activation_event(wsol_trimmed, V_threshold, dV_max_threshold, dV_min_threshold, dVs):
@@ -496,7 +413,7 @@ def find_pituitary_activation_event(wsol_trimmed, V_threshold, dV_max_threshold,
     return event_start_index, event_end_index
 
 
-def classify_pituitary_ode(wsol, recognise_one_burst_spiking=True):
+def classify_pituitary_ode(wsol, recognise_one_burst_spiking=False):
     """
     Classifies the pituitary ODE as either spiking, bursting,
     depolarised, hyperpolarised or one-spike bursting.
@@ -571,3 +488,71 @@ def classify_pituitary_ode(wsol, recognise_one_burst_spiking=True):
             return 1, (20000, 21000)
         else:
             return 0, (20000, 21000)
+
+
+def generate_pitutary_dataframe(parameter_function, sample_id: int, trim_start: int, downsample_rate: int,
+                                classify: bool, recognise_one_burst_spiking: bool):
+    pituitary_simulation, parameters = generate_pituitary(parameter_function)
+    df = pd.DataFrame(pituitary_simulation, columns=['V', 'n', 'm', 'b', 'h', 'h_T', 'h_Na', 'c'])
+    if classify:
+        df['class'] = classify_pituitary_ode(pituitary_simulation,
+                                             recognise_one_burst_spiking=recognise_one_burst_spiking)
+    df = df[trim_start:]
+    df['ID'] = sample_id
+    for key, value in parameters.items():
+        df[key] = value
+
+    df = df.iloc[::downsample_rate, :]
+
+    return df
+
+
+def generate_pituitary_dataset(parameter_function, num_samples, trim_start: int = 20000, downsample_rate: int = 20,
+                               classify: bool = False, recognise_one_burst_spiking: bool = False):
+    """
+    Computes a dataset of Traja dataframes representing
+    pituitary gland simulations. The parameters are taken
+    from Fletcher et al (2016) and slightly modified.
+
+    To run this function, provide one of the parameter
+    generating functions to create a dictionary of
+    parameters. The full list is provided by the
+    default_ode_parameters ordered dictionary.
+
+    The parameter functions are of the format:
+     * pituitary_ori_ode_parameters
+    to
+     * pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia_Inav
+    with one ion channel (Ixx) being added in each step.
+
+    Arguments:
+        parameter_function :  Function generating a parameter
+            dictionary
+        num_samples        :  The number of samples to generate
+        trim_start         :  How many samples to trim at the start
+            of the sequence. Default is 20,000
+        downsample_rate    :  The downsampling factor applied to each
+            time series. Default is 20, meaning that there are
+            100,000/20 = 5,000 steps in each sample.
+        classify           :  Whether to classify the sequence as
+            spiking, bursting, one-spike bursting (see next option),
+            nonexcitable or depolarised. This operation is expensive
+            and therefore disabled by default.
+        recognise_one_burst_spiking : Whether to recognise one-spike
+            bursting as a separate class or consider it a type
+            of bursting. Disabling reduces the number of classes
+            from 5 to 4. Usually one-spike bursting is less interesting
+            when there are more ion channels.
+    """
+    if recognise_one_burst_spiking and not classify:
+        warnings.warn("Classification not requested but a classification option is set." +
+                      "This is likely a mistake - please check the training options")
+
+    dataframes = list()
+    for sample_id in range(num_samples):
+        df = generate_pitutary_dataframe(parameter_function, sample_id=sample_id, trim_start=trim_start,
+                                         downsample_rate=downsample_rate, classify=classify,
+                                         recognise_one_burst_spiking=recognise_one_burst_spiking)
+        dataframes.append(df)
+
+    return pd.concat(dataframes)
