@@ -39,7 +39,7 @@ class TrajaDataFrame(pd.DataFrame):
         "fps",
         "time_units",
         "time_col",
-        "id"
+        "id",
     ]
 
     def __init__(self, *args, **kwargs):
@@ -54,9 +54,13 @@ class TrajaDataFrame(pd.DataFrame):
             args[0]._copy_attrs(self)
         for name, value in traja_kwargs.items():
             self.__dict__[name] = value
+        
+        # Initialize 
+        self._convex_hull = None
+
         # Initialize metadata like 'fps','spatial_units', etc.
         self._init_metadata()
-
+    
     @property
     def _constructor(self):
         return TrajaDataFrame
@@ -66,7 +70,7 @@ class TrajaDataFrame(pd.DataFrame):
             df.__dict__[attr] = getattr(self, attr, None)
 
     def __finalize__(self, other, method=None, **kwargs):
-        """propagate metadata from other to self """
+        """propagate metadata from other to self"""
         # merge operation: using metadata of the left object
         if method == "merge":
             for name in self._metadata:
@@ -135,8 +139,6 @@ class TrajaDataFrame(pd.DataFrame):
         """Set metadata."""
         self.__dict__[key] = value
 
-        self.convex_hull = None
-
     def __setattr__(self, name: str, value) -> None:
         """Override method for pandas.core.generic method __setattr__
 
@@ -164,11 +166,23 @@ class TrajaDataFrame(pd.DataFrame):
                 object.__setattr__(self, name, value)
 
     @property
+    def center(self):
+        """Return the center point of this trajectory."""
+        x = self.x
+        y = self.y
+        return float(x.mean()), float(y.mean())
+    
+    @property
     def convex_hull(self):
         """Property of TrajaDataFrame class representing
         bounds for convex area enclosing trajectory points.
 
         """
+        # Calculate if it doesn't exist
+        if self._convex_hull is None:            
+            xy_arr = self.traja.xy
+            point_arr = traja.trajectory.calc_convex_hull(xy_arr)
+            self._convex_hull = point_arr
         return self._convex_hull
 
     @convex_hull.setter
@@ -178,9 +192,11 @@ class TrajaDataFrame(pd.DataFrame):
         Returns:
             np.array, calculated coordinates of convex hull boundary
         """
-        if not values is None and not values.shape[1]==2:
-            raise Exception('XY coordinates must be in separate columns '\
-                            'for convex hull calculation.')
+        if values is not None and not values.shape[1] == 2:
+            raise Exception(
+                "XY coordinates must be in separate columns "
+                "for convex hull calculation."
+            )
         elif values is None:
             self._convex_hull = np.array([])
         else:
@@ -190,7 +206,6 @@ class TrajaDataFrame(pd.DataFrame):
     @convex_hull.deleter
     def convex_hull(self):
         self._convex_hull = None
-
 
 
 def tocontainer(func):
@@ -290,7 +305,7 @@ class TrajaCollection(TrajaDataFrame):
 
             >>> trjs = {ind: traja.generate(seed=ind) for ind in range(3)} # doctest: +SKIP
             >>> coll = traja.TrajaCollection(trjs) # doctest: +SKIP
-            >>> angles = coll.apply_all(traja.calc_angles) # doctest: +SKIP
+            >>> angles = coll.apply_all(traja.calc_angle) # doctest: +SKIP
 
         """
         return self.groupby(by=self._id_col).apply(method)

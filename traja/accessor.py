@@ -145,7 +145,7 @@ class TrajaAccessor(object):
 
     def rediscretize_points(self, R, **kwargs):
         """Rediscretize points"""
-        return traja.trajectory.rediscretize_points(self, _obj, R=R, **kwargs)
+        return traja.trajectory.rediscretize_points(self._obj, R=R, **kwargs)
 
     def trip_grid(
         self,
@@ -400,7 +400,7 @@ class TrajaAccessor(object):
         return displacement
 
     def calc_angle(self, assign: bool = True) -> pd.Series:
-        """Returns ``Series`` with angle between steps as a function of displacement w.r.t x axis.
+        """Returns ``Series`` with angle between steps as a function of displacement with regard to x axis.
 
         Args:
           assign (bool, optional): Assign turn angle to TrajaAccessor (Default value = True)

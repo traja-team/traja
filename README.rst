@@ -1,5 +1,5 @@
-Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI|
-============================================================================================
+Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Binder| |Codecov| |DOI| |JOSS|
+===========================================================================================================
 
 |Colab|
 
@@ -7,11 +7,14 @@ Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Co
     :target: https://www.python.org/downloads/release/python-360/
     :alt: Python 3.6+
 
-.. |Travis| image:: https://travis-ci.org/travis-team/traja.svg?branch=master
-    :target: https://travis-ci.org/travis-team/traja
+.. |Travis| image:: https://travis-ci.org/traja-team/traja.svg?branch=master
+    :target: https://travis-ci.org/traja-team/traja
 
 .. |PyPI| image:: https://badge.fury.io/py/traja.svg
     :target: https://badge.fury.io/py/traja
+
+.. |Conda| image:: https://img.shields.io/conda/vn/conda-forge/traja.svg
+    :target: https://anaconda.org/conda-forge/traja
 
 .. |Gitter| image:: https://badges.gitter.im/traja-chat/community.svg
     :target: https://gitter.im/traja-chat/community
@@ -33,12 +36,14 @@ Traja |Python-ver| |Travis| |PyPI| |RTD| |Gitter| |Black| |License| |Binder| |Co
 .. |Codecov| image:: https://codecov.io/gh/traja-team/traja/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/traja-team/traja
 
-.. |DOI| image:: https://zenodo.org/badge/166056696.svg
-   :target: https://zenodo.org/badge/latestdoi/166056696
-
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5069231.svg
+   :target: https://doi.org/10.5281/zenodo.5069231
 
 .. |Colab| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/justinshenk/traja/blob/master/demo.ipynb
+   
+.. |JOSS| image:: https://joss.theoj.org/papers/0f25dc08671e0ec54714f09597d116cb/status.svg
+   :target: https://joss.theoj.org/papers/0f25dc08671e0ec54714f09597d116cb
 
 Traja is a Python library for trajectory analysis. It extends the capability of
 pandas DataFrame specific for animal trajectory analysis in 2D, and provides
@@ -60,7 +65,7 @@ videos.
 
 The goal of this package (and this document) is to aid biological
 researchers, who may not have extensive experience with Python, to
-analyze trajectories without being handicapped by a limited knowledge of
+analyze trajectories without being restricted by a limited knowledge of
 Python or programming. However, a basic understanding of Python is
 useful.
 
@@ -68,12 +73,14 @@ If you use traja in your publications, please cite the repo
 
 .. code-block::
 
-    @misc{justin_shenk_2019_3237827,
+    @software{justin_shenk_2019_3237827,
       author       = {Justin Shenk and
-                      Rüdiger Busche},
-      title        = {justinshenk/traja: v0.1.1},
+                      the Traja development team},
+      title        = {justinshenk/traja},
       month        = jun,
       year         = 2019,
+      publisher    = {Zenodo},
+      version      = {latest},
       doi          = {10.5281/zenodo.3237827},
       url          = {https://doi.org/10.5281/zenodo.3237827}
     }
@@ -123,7 +130,7 @@ Analyze Trajectory
    :widths: 30, 80
    
    "``calc_derivatives``", "Calculate derivatives of x, y values "
-   "``calc_turn_angles``", "Calculate turn angles w.r.t. x-axis "
+   "``calc_turn_angles``", "Calculate turn angles with regard to x-axis "
    "``transitions``", "Calculate first-order Markov model for transitions between grid bins"
    "``generate``", "Generate random walk"
    "``resample_time``", "Resample to consistent step_time intervals"
