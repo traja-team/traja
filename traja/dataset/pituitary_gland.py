@@ -170,7 +170,9 @@ def s_inf(c, k_s):
 
 
 @jit
-def pituitary_ode(w, t, p):  # pragma: no cover
+def pituitary_ode(w, t, g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV,
+                  g_A, g_leak, C_m, E_leak, tau_m, tau_ht, tau_n,
+                  tau_BK, tau_h, tau_hNa, k_c):  # pragma: no cover
     """
     Defines the differential equations for the pituirary gland system.
     To be used with scipy.integrate.odeint (this is the rhs equation).
@@ -183,12 +185,12 @@ def pituitary_ode(w, t, p):  # pragma: no cover
     """
     V, n, m, b, h, h_T, h_Na, c = w
 
-    (g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak,
-     tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c) = p
+    # (g_CaL, g_CaT, g_K, g_SK, g_Kir, g_BK, g_NaV, g_A, g_leak, C_m, E_leak,
+    # tau_m, tau_ht, tau_n, tau_BK, tau_h, tau_hNa, k_c) = p
 
     E_Ca = 60
     E_K = -75
-    E_leak = -50 * E_leak_scale  # (-75 - -10)
+    # E_leak = -50 * E_leak_scale  # (-75 - -10)
     E_Na = 75
 
     V_m = -20
@@ -202,7 +204,7 @@ def pituitary_ode(w, t, p):  # pragma: no cover
     V_mNa = -15
     V_hNa = -60
 
-    C_m = 10 * C_m_scale
+    # C_m = 10 * C_m_scale
 
     s_m = 12
     s_mt = 6
@@ -347,7 +349,7 @@ def pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia_Inav():
     parameters = pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia()
 
     # Maximal conductance
-    parameters['g_NaV'] = np.random.uniform(6, 10, 16)
+    parameters['g_NaV'] = np.random.uniform(6, 16)
 
     # Kinetic variables
     parameters['tau_hNa'] = np.random.uniform(1.4, 2.6)
@@ -355,7 +357,7 @@ def pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia_Inav():
     return parameters
 
 
-def generate_pituitary(parameter_function):
+def generate_pituitary(parameter_function, dt):
     # Initial conditions
     V = -60.
     n = 0.1
@@ -371,7 +373,6 @@ def generate_pituitary(parameter_function):
     abserr = 1.0e-8
     relerr = 1.0e-6
 
-    dt = 0.5
     t = np.arange(0, 50000, dt)
 
     parameters = parameter_function()
@@ -413,7 +414,7 @@ def find_pituitary_activation_event(wsol_trimmed, V_threshold, dV_max_threshold,
     return event_start_index, event_end_index
 
 
-def classify_pituitary_ode(wsol, recognise_one_burst_spiking=False):
+def classify_pituitary_ode(wsol, dt, recognise_one_burst_spiking=False):
     """
     Classifies the pituitary ODE as either spiking, bursting,
     depolarised, hyperpolarised or one-spike bursting.
@@ -492,11 +493,14 @@ def classify_pituitary_ode(wsol, recognise_one_burst_spiking=False):
 
 def generate_pitutary_dataframe(parameter_function, sample_id: int, trim_start: int, downsample_rate: int,
                                 classify: bool, recognise_one_burst_spiking: bool):
-    pituitary_simulation, parameters = generate_pituitary(parameter_function)
+    dt = 0.5
+    pituitary_simulation, parameters = generate_pituitary(parameter_function, dt)
     df = pd.DataFrame(pituitary_simulation, columns=['V', 'n', 'm', 'b', 'h', 'h_T', 'h_Na', 'c'])
     if classify:
-        df['class'] = classify_pituitary_ode(pituitary_simulation,
-                                             recognise_one_burst_spiking=recognise_one_burst_spiking)
+        voltage_simulation = pituitary_simulation[:, 0]
+        simulation_class, (_, _) = classify_pituitary_ode(voltage_simulation, dt,
+                                                          recognise_one_burst_spiking=recognise_one_burst_spiking)
+        df['class'] = simulation_class
     df = df[trim_start:]
     df['ID'] = sample_id
     for key, value in parameters.items():
