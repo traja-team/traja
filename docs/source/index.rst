@@ -33,16 +33,17 @@ If you use Traja in your publications, please cite:
 
 .. code-block:: txt
 
-   @software{justin_shenk_2019_3237827,
-   author       = {Justin Shenk and
-                     the Traja development team},
-   title        = {justinshenk/traja},
-   month        = jun,
-   year         = 2019,
-   publisher    = {Zenodo},
-   version      = {latest},
-   doi          = {10.5281/zenodo.3237827},
-   url          = {https://doi.org/10.5281/zenodo.3237827}
+   @article{Shenk2021,
+   doi = {10.21105/joss.03202},
+   url = {https://doi.org/10.21105/joss.03202},
+   year = {2021},
+   publisher = {The Open Journal},
+   volume = {6},
+   number = {63},
+   pages = {3202},
+   author = {Justin Shenk and Wolf Byttner and Saranraj Nambusubramaniyan and Alexander Zoeller},
+   title = {Traja: A Python toolbox for animal trajectory analysis},
+   journal = {Journal of Open Source Software}
    }
 
 .. toctree::
