@@ -376,13 +376,17 @@ def generate_pituitary(parameter_function, dt):
     t = np.arange(0, 50000, dt)
 
     parameters = parameter_function()
+
+    # We need to add default parameters to the simulation so
+    # our ODE function executes correctly
+    simulation_parameters = parameters.copy()
     for key in default_ode_parameters.keys():
-        if key not in parameters:
-            parameters[key] = default_ode_parameters[key]
+        if key not in simulation_parameters:
+            simulation_parameters[key] = default_ode_parameters[key]
 
     # Note - the key order in default_ode_parameters is correct.
     # Disregard the key order in parameters
-    ode_params = tuple([parameters[key] for key in default_ode_parameters.keys()])
+    ode_params = tuple([simulation_parameters[key] for key in default_ode_parameters.keys()])
     wsol = odeint(pituitary_ode, w0, t, args=ode_params, atol=abserr, rtol=relerr)
 
     return wsol, parameters
@@ -492,27 +496,43 @@ def classify_pituitary_ode(wsol, dt, recognise_one_burst_spiking=False):
 
 
 def generate_pitutary_dataframe(parameter_function, sample_id: int, trim_start: int, downsample_rate: int,
-                                classify: bool, recognise_one_burst_spiking: bool):
+                                classify: bool, recognise_one_burst_spiking: bool, retain_trajectories: bool):
+    if not classify and not retain_trajectories:
+        raise ValueError("Error! Generated samples will have no class and no trajectory!")
+
     dt = 0.5
     pituitary_simulation, parameters = generate_pituitary(parameter_function, dt)
-    df = pd.DataFrame(pituitary_simulation, columns=['V', 'n', 'm', 'b', 'h', 'h_T', 'h_Na', 'c'])
+    if retain_trajectories:
+        df = pd.DataFrame(pituitary_simulation, columns=['V', 'n', 'm', 'b', 'h', 'h_T', 'h_Na', 'c'])
+    else:
+        df = pd.DataFrame()
     if classify:
         voltage_simulation = pituitary_simulation[:, 0]
         simulation_class, (_, _) = classify_pituitary_ode(voltage_simulation, dt,
                                                           recognise_one_burst_spiking=recognise_one_burst_spiking)
         df['class'] = simulation_class
-    df = df[trim_start:]
-    df['ID'] = sample_id
-    for key, value in parameters.items():
-        df[key] = value
+        if retain_trajectories:
+            df['class'] = simulation_class
+        else:
+            df['class'] = [simulation_class]
+    if retain_trajectories:
+        df = df[trim_start:]
+        df['ID'] = sample_id
+        for key, value in parameters.items():
+            df[key] = value
 
-    df = df.iloc[::downsample_rate, :]
+        df = df.iloc[::downsample_rate, :]
+    else:
+        df['ID'] = [sample_id]
+        for key, value in parameters.items():
+            df[key] = [value]
 
     return df
 
 
 def generate_pituitary_dataset(parameter_function, num_samples, trim_start: int = 20000, downsample_rate: int = 20,
-                               classify: bool = False, recognise_one_burst_spiking: bool = False):
+                               classify: bool = False, recognise_one_burst_spiking: bool = False,
+                               retain_trajectories: bool = True):
     """
     Computes a dataset of Traja dataframes representing
     pituitary gland simulations. The parameters are taken
@@ -547,6 +567,9 @@ def generate_pituitary_dataset(parameter_function, num_samples, trim_start: int 
             of bursting. Disabling reduces the number of classes
             from 5 to 4. Usually one-spike bursting is less interesting
             when there are more ion channels.
+        retain_trajectories : Whether to retain the trajectories in the
+            dataframe. The dataframe will be significantly larger.
+            Defaults to true.
     """
     if recognise_one_burst_spiking and not classify:
         warnings.warn("Classification not requested but a classification option is set." +
@@ -556,7 +579,8 @@ def generate_pituitary_dataset(parameter_function, num_samples, trim_start: int 
     for sample_id in range(num_samples):
         df = generate_pitutary_dataframe(parameter_function, sample_id=sample_id, trim_start=trim_start,
                                          downsample_rate=downsample_rate, classify=classify,
-                                         recognise_one_burst_spiking=recognise_one_burst_spiking)
+                                         recognise_one_burst_spiking=recognise_one_burst_spiking,
+                                         retain_trajectories=retain_trajectories)
         dataframes.append(df)
 
     return pd.concat(dataframes)

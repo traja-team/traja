@@ -654,5 +654,5 @@ def test_pituitary_gland_latin_hypercube_generator_gives_correct_number_of_sampl
 
 
 def test_pituitary_gland_random_sampler_generates_valid_dataframes():
-    num_samples = 4
+    num_samples = 60
     df = generate_pituitary_dataset(pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia_Inav, num_samples, classify=True)
