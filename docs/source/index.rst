@@ -29,7 +29,8 @@ experience with Python, to analyse trajectories
 without being restricted by a limited knowledge of Python or programming.
 However, a basic understanding of Python is useful.
 
-If you use Traja in your publications, please cite:
+If you use Traja in your publications, please cite our paper_ in Journal of Open Source
+Software:
 
 .. code-block:: txt
 
@@ -45,6 +46,8 @@ If you use Traja in your publications, please cite:
    title = {Traja: A Python toolbox for animal trajectory analysis},
    journal = {Journal of Open Source Software}
    }
+
+.. _paper: https://joss.theoj.org/papers/10.21105/joss.03202
 
 .. toctree::
    :maxdepth: 1
@@ -81,7 +84,7 @@ If you use Traja in your publications, please cite:
    :maxdepth: 1
    :caption: Developer
 
-   Contributing to Traja <contributing>  
+   Contributing to Traja <contributing>
 
 
 Indices and tables
