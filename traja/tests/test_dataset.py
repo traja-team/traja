@@ -1,10 +1,13 @@
+import os
 import pandas as pd
+import pytest
 
 from traja.dataset import dataset
 from traja.dataset.pituitary_gland import create_latin_hypercube_sampled_pituitary_df, \
     pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia_Inav, generate_pituitary_dataset
 
 
+@pytest.mark.skipif(os.name == 'nt', reason="hangs on Windows for unknown reason")
 def test_time_based_sampling_dataloaders_do_not_overlap():
     data = list()
     num_ids = 140

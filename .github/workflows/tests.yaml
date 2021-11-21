@@ -42,7 +42,7 @@ jobs:
             pip install scipy --force-reinstall # for https://github.com/conda/conda/issues/6396
             pip install .
             conda install pytest
-            py.test . --cov-report=xml --cov=traja
+            py.test . --cov-report=xml --cov=traja -vvv
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

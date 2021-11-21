@@ -27,8 +27,7 @@ requirements = ["matplotlib", "pandas", "numpy", "shapely", "scipy", "tzlocal"]
 
 extras_requirements = {"all": ["torch", "tzlocal", "fastdtw"]}
 
-this_dir = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(this_dir, "README.rst"), encoding="utf-8") as f:
+with open(os.path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
