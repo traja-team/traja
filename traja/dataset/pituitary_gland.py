@@ -476,7 +476,12 @@ def classify_pituitary_ode(wsol, dt, recognise_one_burst_spiking=False):
         if min_dist < min_distance:
             min_dist = min_distance
 
-        nearby_peaks = peakutils.indexes(wsol_trimmed[event_start:event_end], thres=0.3, min_dist=min_dist)
+        try:
+            nearby_peaks = peakutils.indexes(wsol_trimmed[event_start:event_end], thres=0.3, min_dist=min_dist)
+        except ValueError:
+            # A small number of sequences generate ValueErrors.
+            # Since there are only a few, we will suppress it.
+            nearby_peaks = []
 
         if len(nearby_peaks) > 1:
             return 3, (event_start, event_end)
