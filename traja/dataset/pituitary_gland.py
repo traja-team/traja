@@ -455,7 +455,12 @@ def classify_pituitary_ode(wsol, dt, recognise_one_burst_spiking=False):
         dV_max_threshold = highest_dV * .25
         dV_min_threshold = lowest_dV * .25
 
-        top_peaks = peakutils.indexes(wsol_trimmed, thres=0.8)
+        try:
+            top_peaks = peakutils.indexes(wsol_trimmed, thres=0.8)
+        except ValueError:
+            # A small number of sequences generate ValueErrors.
+            # Since there are only a few, we will suppress it.
+            top_peaks = []
         if len(top_peaks) > 1:
             stride = max(round((top_peaks[1] - top_peaks[0]) / 50), 1)
         else:
