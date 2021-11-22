@@ -471,6 +471,8 @@ def classify_pituitary_ode(wsol, dt, recognise_one_burst_spiking=False):
         # Error handling
         if event_end >= 80000:
             return 0, (20000, 21000)
+        elif event_start == event_end:
+            return 0, (20000, 22000)
 
         min_dist = round((event_end - event_start) * 0.05)
         if min_dist < min_distance:
