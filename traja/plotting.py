@@ -966,10 +966,13 @@ def trip_grid(
     ymin, ymax = ylim
 
     x, y = zip(*df.values)
-    # FIXME: Remove redundant histogram calculation
+
     hist, x_edges, y_edges = np.histogram2d(
         x, y, bins, range=((xmin, xmax), (ymin, ymax)), normed=normalize
     )
+
+    # rotate to keep y as first dimension
+    hist = np.rot90(hist)
 
     if log:
         hist = np.log(hist + np.e)
