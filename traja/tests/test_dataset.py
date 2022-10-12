@@ -3,7 +3,8 @@ import pandas as pd
 import pytest
 
 from traja.dataset import dataset
-from traja.dataset.pituitary_gland import create_latin_hypercube_sampled_pituitary_df
+from traja.dataset.pituitary_gland import create_latin_hypercube_sampled_pituitary_df, \
+    pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia_Inav, generate_pituitary_dataset
 
 
 @pytest.mark.skipif(os.name == 'nt', reason="hangs on Windows for unknown reason")
@@ -653,3 +654,8 @@ def test_pituitary_gland_latin_hypercube_generator_gives_correct_number_of_sampl
     _, num_samples_out = create_latin_hypercube_sampled_pituitary_df(samples=num_samples)
 
     assert num_samples == num_samples_out, "Hypercube sampler returned the wrong number of samples!"
+
+
+def test_pituitary_gland_random_sampler_generates_valid_dataframes():
+    num_samples = 60
+    df = generate_pituitary_dataset(pituitary_ori_ode_parameters_Isk_Ibk_Ikir_Icat_Ia_Inav, num_samples, classify=True)
