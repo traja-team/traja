@@ -668,7 +668,7 @@ def generate(
 
     if random:
         # Accumulate angular errors
-        coords = np.zeros(n, dtype=np.complex)
+        coords = np.zeros(n, dtype=complex)
         angle = 0
         for i in range(n - 1):
             angle += angular_errors[i]
