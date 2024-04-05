@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from pandas.util.testing import assert_series_equal
+from pandas.testing import assert_series_equal
 
 import traja
 
