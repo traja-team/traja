@@ -1,6 +1,6 @@
 # extended list of package dependencies to reach full functionality
 
-pytest>=6.2.2
+pytest>=8.1.1
 h5py>=2.10.0
 ipython>=7.19.0
 pre-commit>=2.9.3
