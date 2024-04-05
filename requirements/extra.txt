@@ -1,9 +1,9 @@
 # extended list of package dependencies to reach full functionality
 
 pytest>=8.1.1
-h5py>=2.10.0
-ipython>=7.19.0
-pre-commit>=2.9.3
-h5py>=2.10.0
+h5py
+ipython
+pre-commit
+h5py
 numba>=0.50.1
 pyDOE2>=1.3.0
