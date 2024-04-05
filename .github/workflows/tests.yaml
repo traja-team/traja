@@ -25,7 +25,6 @@ jobs:
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
           auto-activate-base: false
-          cache-dependencies: true
       - shell: bash -l {0}
         run: |
           conda info
