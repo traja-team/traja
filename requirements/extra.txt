@@ -6,3 +6,5 @@ ipython
 pre-commit
 h5py
 numba>=0.50.1
+black
+isort
