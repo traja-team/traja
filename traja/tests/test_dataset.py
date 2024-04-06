@@ -618,6 +618,10 @@ def test_sequential_data_loader_indices_are_sequential():
 
 
 # Load the pedestrian datasets
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="GitHub actions images don't have wget installed.",
+)
 def test_ped_datasets():
     dfs = load_ped_data()
     assert len(dfs) == 3
