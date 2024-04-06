@@ -814,7 +814,7 @@ def plot_surface(
     Z = np.sqrt(U * U + V * V)
 
     fig = plt.figure()
-    ax = fig.gca(projection="3d")
+    ax = fig.add_subplot(projection='3d')
     ax.plot_surface(
         X, Y, Z, cmap= cmap, linewidth=0, **surfaceplot_kws
     )
