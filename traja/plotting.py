@@ -967,7 +967,7 @@ def trip_grid(
     x, y = zip(*df.values)
 
     hist, x_edges, y_edges = np.histogram2d(
-        x, y, bins, range=((xmin, xmax), (ymin, ymax)), normed=normalize
+        x, y, bins, range=((xmin, xmax), (ymin, ymax)), density=normalize
     )
 
     # rotate to keep y as first dimension
