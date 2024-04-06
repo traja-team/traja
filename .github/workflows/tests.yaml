@@ -9,7 +9,7 @@ on:
 
 jobs:
   miniconda:
-    name: Miniconda ${{ matrix.os }}
+    name: Miniconda ${{ matrix.os }} - Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
         matrix:
@@ -17,7 +17,7 @@ jobs:
             python-version: [ "3.8", "3.12" ]
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Miniconda ${{ matrix.python-version }}
+      - name: Set up Miniconda (Python ${{ matrix.python-version }})
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: test
