@@ -1,6 +1,6 @@
 import logging
-from typing import Optional, Union, Tuple
 import warnings
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd

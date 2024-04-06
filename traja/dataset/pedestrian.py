@@ -1,11 +1,12 @@
-import subprocess
 import glob
 import os
+import subprocess
 from typing import List
-import pandas as pd
-from traja.dataset import dataset
-import traja
 
+import pandas as pd
+
+import traja
+from traja.dataset import dataset
 
 """Convenience module for downloading pedestrian-related datasets."""
 

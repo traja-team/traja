@@ -1,27 +1,24 @@
 import logging
+import os
 from collections import OrderedDict
 from datetime import timedelta
-import os
-from typing import Union, Optional, Tuple, List
+from typing import List, Optional, Tuple, Union
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-
 from matplotlib import dates as md
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
-from pandas.core.dtypes.common import (
-    is_datetime64_any_dtype,
-    is_timedelta64_dtype,
-)
+from pandas.core.dtypes.common import (is_datetime64_any_dtype,
+                                       is_timedelta64_dtype)
 
 import traja
-from traja.frame import TrajaDataFrame
 from traja.core import is_datetime_or_timedelta_dtype
+from traja.frame import TrajaDataFrame
 from traja.trajectory import coords_to_flow
 
 __all__ = [
@@ -1320,9 +1317,9 @@ def plot_transition_graph(
 
     """
     try:
+        import graphviz
         import networkx as nx
         import pydot
-        import graphviz
     except ImportError as e:
         raise ImportError(f"{e} - please install it with pip")
 
