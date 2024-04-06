@@ -14,15 +14,14 @@ from matplotlib import dates as md
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
-from mpl_toolkits.mplot3d import Axes3D
 from pandas.core.dtypes.common import (
-    is_datetime_or_timedelta_dtype,
     is_datetime64_any_dtype,
     is_timedelta64_dtype,
 )
 
 import traja
 from traja.frame import TrajaDataFrame
+from traja.core import is_datetime_or_timedelta_dtype
 from traja.trajectory import coords_to_flow
 
 __all__ = [
