@@ -134,6 +134,7 @@ class Generator:
         elif self.model_type == "vaegan" or "custom":
             return NotImplementedError
 
+
 class Predictor:
     def __init__(
         self,

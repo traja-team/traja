@@ -1,10 +1,11 @@
 from traja.stats.brownian import Brownian
 import numpy as np
 
+
 def test_brownian_walk_generates_correct_number_of_samples():
     length = 1000000
     brownian = Brownian(length=length)
-    assert(len(brownian) == length)
+    assert len(brownian) == length
 
 
 def test_brownian_motion_with_drift_approximately_sums_to_the_drift():
@@ -58,8 +59,12 @@ def test_brownians_with_different_time_steps_walk_approximately_equally():
     drift1 = 0
     drift2 = 0
 
-    brownian1 = Brownian(length=length1, mean_value=mean_drift, variance=variance, dt=dt1)
-    brownian2 = Brownian(length=length2, mean_value=mean_drift, variance=variance, dt=dt2)
+    brownian1 = Brownian(
+        length=length1, mean_value=mean_drift, variance=variance, dt=dt1
+    )
+    brownian2 = Brownian(
+        length=length2, mean_value=mean_drift, variance=variance, dt=dt2
+    )
 
     for i in range(length1):
         drift1 = brownian1()

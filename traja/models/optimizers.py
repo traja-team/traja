@@ -4,7 +4,6 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 class Optimizer:
     def __init__(self, model_type, model, optimizer_type, classify=False):
-
         """
         Wrapper for setting the model optimizer and learning rate schedulers using ReduceLROnPlateau;
         If the model type is 'ae' or 'vae' - var optimizers is a dict with separate optimizers for encoder, decoder,
@@ -94,7 +93,6 @@ class Optimizer:
         return forecasting_optimizers, classification_optimizers, regression_optimizers
 
     def get_lrschedulers(self, factor: float, patience: int):
-
         """Learning rate scheduler for each network in the model
         NOTE: Scheduler metric should be test set loss
 
