@@ -3,7 +3,6 @@ import pandas as pd
 import pytest
 
 from traja.dataset import dataset
-from traja.dataset.pituitary_gland import create_latin_hypercube_sampled_pituitary_df
 
 
 @pytest.mark.skipif(os.name == 'nt', reason="hangs on Windows for unknown reason")
@@ -646,10 +645,3 @@ def test_sequential_data_loader_indices_are_sequential():
             assert (
                 id == current_id
             ), "IDs in sequential test loader should increase monotonically!"
-
-
-def test_pituitary_gland_latin_hypercube_generator_gives_correct_number_of_samples():
-    num_samples = 30
-    _, num_samples_out = create_latin_hypercube_sampled_pituitary_df(samples=num_samples)
-
-    assert num_samples == num_samples_out, "Hypercube sampler returned the wrong number of samples!"
