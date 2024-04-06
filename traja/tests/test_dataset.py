@@ -3,7 +3,7 @@ import sys
 import pandas as pd
 import pytest
 
-from traja.dataset import dataset
+from traja.dataset import dataset, load_ped_data
 
 
 @pytest.mark.skipif(
@@ -615,3 +615,9 @@ def test_sequential_data_loader_indices_are_sequential():
             assert (
                 id == current_id
             ), "IDs in sequential test loader should increase monotonically!"
+
+
+# Load the pedestrian datasets
+def test_ped_datasets():
+    dfs = load_ped_data()
+    assert len(dfs) == 3
