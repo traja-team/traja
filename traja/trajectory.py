@@ -6,7 +6,6 @@ from typing import Callable, Optional, Union, Tuple
 import numpy as np
 import pandas as pd
 from pandas.core.dtypes.common import (
-    is_datetime_or_timedelta_dtype,
     is_datetime64_any_dtype,
     is_timedelta64_dtype,
 )
@@ -15,6 +14,7 @@ from scipy.spatial.distance import directed_hausdorff, euclidean
 
 import traja
 from traja import TrajaDataFrame
+from traja.core import is_datetime_or_timedelta_dtype
 
 __all__ = [
     "_bins_to_tuple",
