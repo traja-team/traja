@@ -131,7 +131,13 @@ class HybridTrainer(object):
         return f"Training model type {self.model_type}"
 
     def fit(
-            self, dataloaders, model_save_path=None, training_mode="forecasting", epochs=50, test_every=10, validate_every=None
+        self,
+        dataloaders,
+        model_save_path=None,
+        training_mode="forecasting",
+        epochs=50,
+        test_every=10,
+        validate_every=None,
     ):
         """
         This method implements the batch- wise training and testing protocol for both time series forecasting and
@@ -161,8 +167,8 @@ class HybridTrainer(object):
 
         train_loader = dataloaders["train_loader"]
         test_loader = dataloaders["test_loader"]
-        if 'validation_loader' in dataloaders:
-            validation_loader = dataloaders['validation_loader']
+        if "validation_loader" in dataloaders:
+            validation_loader = dataloaders["validation_loader"]
         else:
             validate_every = None
 
@@ -273,7 +279,7 @@ class HybridTrainer(object):
                         correct = 0.0
                     self.model.eval()
                     for idx, (data, target, ids, parameters, classes) in enumerate(
-                            data_loader_to_evaluate
+                        data_loader_to_evaluate
                     ):
                         if type(ids) == list:
                             ids = ids[0]

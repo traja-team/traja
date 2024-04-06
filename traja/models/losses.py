@@ -2,6 +2,7 @@ import torch
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+
 class Criterion:
     """Implements the loss functions of Autoencoders, Variational Autoencoders and LSTM models
     Huber loss is set as default for reconstruction loss, alternative is to use rmse,
@@ -30,7 +31,7 @@ class Criterion:
         """
 
         if mu is not None and logvar is not None:
-            kld = -0.5 * torch.sum(1 + logvar - mu ** 2 - logvar.exp())
+            kld = -0.5 * torch.sum(1 + logvar - mu**2 - logvar.exp())
         else:
             kld = 0
 
