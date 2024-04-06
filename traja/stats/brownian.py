@@ -1,5 +1,5 @@
-from scipy.stats import norm
 import numpy as np
+from scipy.stats import norm
 
 
 class Brownian:

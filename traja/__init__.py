@@ -1,10 +1,10 @@
 import logging
 
-from traja import dataset
-from traja import models
+from traja import dataset, models
+
 from .accessor import TrajaAccessor
-from .frame import TrajaDataFrame, TrajaCollection
-from .parsers import read_file, from_df
+from .frame import TrajaCollection, TrajaDataFrame
+from .parsers import from_df, read_file
 from .plotting import *
 from .trajectory import *
 

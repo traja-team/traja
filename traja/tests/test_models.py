@@ -1,15 +1,14 @@
+import sys
+
 import numpy as np
 import pandas as pd
+import pytest
 
 import traja
 from traja.dataset import dataset
 from traja.dataset.example import jaguar
-from traja.models import LSTM
-from traja.models import MultiModelAE
-from traja.models import MultiModelVAE
+from traja.models import LSTM, MultiModelAE, MultiModelVAE
 from traja.models.train import HybridTrainer
-import sys
-import pytest
 
 
 @pytest.mark.skipif(

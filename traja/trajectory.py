@@ -1,14 +1,12 @@
 import logging
 import math
 from collections import OrderedDict
-from typing import Callable, Optional, Union, Tuple
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pandas.core.dtypes.common import (
-    is_datetime64_any_dtype,
-    is_timedelta64_dtype,
-)
+from pandas.core.dtypes.common import (is_datetime64_any_dtype,
+                                       is_timedelta64_dtype)
 from scipy import signal
 from scipy.spatial.distance import directed_hausdorff, euclidean
 

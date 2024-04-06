@@ -1,5 +1,6 @@
-from traja.stats.brownian import Brownian
 import numpy as np
+
+from traja.stats.brownian import Brownian
 
 
 def test_brownian_walk_generates_correct_number_of_samples():
