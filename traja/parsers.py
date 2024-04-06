@@ -102,7 +102,7 @@ def read_file(
     converters = {**stripped_cols, **kwargs.pop("converters", {})}
 
     # Downcast to float32 # TODO: Benchmark float32 vs float64 for very big dataset
-    float_cols = df_test.select_dtypes(include=[np.float]).columns
+    float_cols = df_test.select_dtypes(include=[float]).columns
     float32_cols = {c: np.float32 for c in float_cols}
 
     # Convert string columns to sequence_ids
