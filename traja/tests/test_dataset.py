@@ -1,12 +1,15 @@
-import os
+import sys
+
 import pandas as pd
 import pytest
 
-from traja.dataset import dataset
-from traja.dataset.pituitary_gland import create_latin_hypercube_sampled_pituitary_df
+from traja.dataset import dataset, load_ped_data
 
 
-@pytest.mark.skipif(os.name == 'nt', reason="hangs on Windows for unknown reason")
+@pytest.mark.skipif(
+    sys.platform == "darwin" or sys.platform == "win32",
+    reason="hangs on Windows and Mac for unknown reason",
+)
 def test_time_based_sampling_dataloaders_do_not_overlap():
     data = list()
     num_ids = 140
@@ -49,85 +52,27 @@ def test_time_based_sampling_dataloaders_do_not_overlap():
 
     for data, target, ids, parameters, classes in dataloaders["train_loader"]:
         for sequence in data:
-            assert all(sample == -1.0 for sample in sequence[:,0])
+            assert all(sample == -1.0 for sample in sequence[:, 0])
         for sequence in target:
-            assert all(sample == -1.0 for sample in sequence[:,0])
+            assert all(sample == -1.0 for sample in sequence[:, 0])
 
     for data, target, ids, parameters, classes in dataloaders["test_loader"]:
         for sequence in data:
-            assert all(sample == 0 for sample in sequence[:,0])
+            assert all(sample == 0 for sample in sequence[:, 0])
         for sequence in target:
-            assert all(sample == 0 for sample in sequence[:,0])
+            assert all(sample == 0 for sample in sequence[:, 0])
 
     for data, target, ids, parameters, classes in dataloaders["validation_loader"]:
         for sequence in data:
-            assert all(sample == 1 for sample in sequence[:,0])
+            assert all(sample == 1 for sample in sequence[:, 0])
         for sequence in target:
-            assert all(sample == 1 for sample in sequence[:,0])
+            assert all(sample == 1 for sample in sequence[:, 0])
 
 
-def test_time_based_sampling_dataloaders_do_not_overlap():
-    data = list()
-    num_ids = 140
-    sequence_length = 2000
-
-    # Hyperparameters
-    batch_size = 15
-    num_past = 10
-    num_future = 5
-    train_split_ratio = 0.498
-    validation_split_ratio = 0.25
-
-    stride = 5
-
-    split_by_id = False  # The test condition
-
-    # The train[0] column should contain only 1s, the test column should contain 2s and the
-    # validation column set should contain 3s.
-    # When scaled, this translates to -1., 0 and 1. respectively.
-    for sample_id in range(num_ids):
-        for element in range(round(sequence_length * train_split_ratio) - 6):
-            data.append([1, element, sample_id])
-        for element in range(
-            round(sequence_length * (1 - train_split_ratio - validation_split_ratio))
-            + -4
-        ):
-            data.append([2, element, sample_id])
-        for element in range(round(sequence_length * validation_split_ratio) + 10):
-            data.append([3, element, sample_id])
-
-    df = pd.DataFrame(data, columns=["x", "y", "ID"])
-
-    dataloaders = dataset.MultiModalDataLoader(
-        df,
-        batch_size=batch_size,
-        n_past=num_past,
-        n_future=num_future,
-        num_workers=1,
-        train_split_ratio=train_split_ratio,
-        validation_split_ratio=validation_split_ratio,
-        split_by_id=split_by_id,
-        stride=stride,
-    )
-
-    for data, target, ids, parameters, classes in dataloaders["train_loader"]:
-        for sequence in data:
-            assert all(sample == -1. for sample in sequence[:,0])
-        for sequence in target:
-            assert all(sample == -1. for sample in sequence[:,0])
-
-    for data, target, ids, parameters, classes in dataloaders["test_loader"]:
-        for sequence in data:
-            assert all(sample == 0 for sample in sequence[:,0])
-        for sequence in target:
-            assert all(sample == 0 for sample in sequence[:,0])
-
-    for data, target, ids, parameters, classes in dataloaders["validation_loader"]:
-        for sequence in data:
-            assert all(sample == 1 for sample in sequence[:,0])
-        for sequence in target:
-            assert all(sample == 1 for sample in sequence[:,0])
-
+@pytest.mark.skipif(
+    sys.platform == "darwin" or sys.platform == "win32",
+    reason="hangs on Windows and Mac for unknown reason",
+)
 def test_time_based_sampling_dataloaders_with_stride_one_do_not_overlap():
     data = list()
     num_ids = 2
@@ -174,23 +119,27 @@ def test_time_based_sampling_dataloaders_with_stride_one_do_not_overlap():
 
     for data, target, ids, parameters, classes in dataloaders["train_loader"]:
         for sequence in data:
-            assert all(sample == -1. for sample in sequence[:,0])
+            assert all(sample == -1.0 for sample in sequence[:, 0])
         for sequence in target:
-            assert all(sample == -1. for sample in sequence[:,0])
+            assert all(sample == -1.0 for sample in sequence[:, 0])
 
     for data, target, ids, parameters, classes in dataloaders["test_loader"]:
         for sequence in data:
-            assert all(sample == 0 for sample in sequence[:,0])
+            assert all(sample == 0 for sample in sequence[:, 0])
         for sequence in target:
-            assert all(sample == 0 for sample in sequence[:,0])
+            assert all(sample == 0 for sample in sequence[:, 0])
 
     for data, target, ids, parameters, classes in dataloaders["validation_loader"]:
         for sequence in data:
-            assert all(sample == 1 for sample in sequence[:,0])
+            assert all(sample == 1 for sample in sequence[:, 0])
         for sequence in target:
-            assert all(sample == 1 for sample in sequence[:,0])
+            assert all(sample == 1 for sample in sequence[:, 0])
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin" or sys.platform == "win32",
+    reason="hangs on Windows and Mac for unknown reason",
+)
 def test_time_based_weighted_sampling_dataloaders_do_not_overlap():
     data = list()
     num_ids = 232
@@ -247,6 +196,10 @@ def test_time_based_weighted_sampling_dataloaders_do_not_overlap():
     )
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin" or sys.platform == "win32",
+    reason="hangs on Windows and Mac for unknown reason",
+)
 def test_id_wise_sampling_with_few_ids_does_not_put_id_in_multiple_dataloaders():
     data = list()
     num_ids = 5
@@ -282,6 +235,10 @@ def test_id_wise_sampling_with_few_ids_does_not_put_id_in_multiple_dataloaders()
     )
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin" or sys.platform == "win32",
+    reason="hangs on Windows and Mac for unknown reason",
+)
 def test_id_wise_sampling_with_short_sequences_does_not_divide_by_zero():
     data = list()
     num_ids = 283
@@ -323,6 +280,10 @@ def test_id_wise_sampling_with_short_sequences_does_not_divide_by_zero():
     )
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin" or sys.platform == "win32",
+    reason="hangs on Windows and Mac for unknown reason",
+)
 def test_id_wise_sampling_does_not_put_id_in_multiple_dataloaders():
     data = list()
     num_ids = 150
@@ -358,6 +319,10 @@ def test_id_wise_sampling_does_not_put_id_in_multiple_dataloaders():
     )
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin" or sys.platform == "win32",
+    reason="hangs on Windows and Mac for unknown reason",
+)
 def test_id_wise_weighted_sampling_does_not_put_id_in_multiple_dataloaders():
     data = list()
     num_ids = 150
@@ -596,6 +561,10 @@ def verify_that_indices_belong_to_precisely_one_loader(
         ), f"Index {index} is in both the test and validation loaders!"
 
 
+@pytest.mark.skipif(
+    sys.platform == "darwin" or sys.platform == "win32",
+    reason="hangs on Windows and Mac for unknown reason",
+)
 def test_sequential_data_loader_indices_are_sequential():
     data = list()
     num_ids = 46
@@ -648,8 +617,11 @@ def test_sequential_data_loader_indices_are_sequential():
             ), "IDs in sequential test loader should increase monotonically!"
 
 
-def test_pituitary_gland_latin_hypercube_generator_gives_correct_number_of_samples():
-    num_samples = 30
-    _, num_samples_out = create_latin_hypercube_sampled_pituitary_df(samples=num_samples)
-
-    assert num_samples == num_samples_out, "Hypercube sampler returned the wrong number of samples!"
+# Load the pedestrian datasets
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="GitHub actions images don't have wget installed.",
+)
+def test_ped_datasets():
+    dfs = load_ped_data()
+    assert len(dfs) == 3

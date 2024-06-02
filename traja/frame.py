@@ -1,6 +1,6 @@
 import logging
-from typing import Optional, Union, Tuple
 import warnings
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -54,13 +54,13 @@ class TrajaDataFrame(pd.DataFrame):
             args[0]._copy_attrs(self)
         for name, value in traja_kwargs.items():
             self.__dict__[name] = value
-        
-        # Initialize 
+
+        # Initialize
         self._convex_hull = None
 
         # Initialize metadata like 'fps','spatial_units', etc.
         self._init_metadata()
-    
+
     @property
     def _constructor(self):
         return TrajaDataFrame
@@ -171,7 +171,7 @@ class TrajaDataFrame(pd.DataFrame):
         x = self.x
         y = self.y
         return float(x.mean()), float(y.mean())
-    
+
     @property
     def convex_hull(self):
         """Property of TrajaDataFrame class representing
@@ -179,7 +179,7 @@ class TrajaDataFrame(pd.DataFrame):
 
         """
         # Calculate if it doesn't exist
-        if self._convex_hull is None:            
+        if self._convex_hull is None:
             xy_arr = self.traja.xy
             point_arr = traja.trajectory.calc_convex_hull(xy_arr)
             self._convex_hull = point_arr

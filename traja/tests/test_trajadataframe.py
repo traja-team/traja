@@ -6,7 +6,7 @@ import pandas as pd
 from pandas import DataFrame
 
 import traja
-from traja import TrajaDataFrame, read_file, TrajaCollection
+from traja import TrajaCollection, TrajaDataFrame, read_file
 
 
 class TestDataFrame:

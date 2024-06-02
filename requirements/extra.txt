@@ -4,13 +4,7 @@ pytest
 h5py
 ipython
 pre-commit
-shapely
-scipy>=1.4.1
-scikit-learn
-fastdtw
-networkx
-seaborn
-torch
 h5py
-numba>=0.50.0
-pyDOE2>=1.3.0
+numba>=0.50.1
+black
+isort
