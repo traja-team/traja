@@ -127,3 +127,5 @@ docs/source/reference
 
 # Model parameter files
 *.pt
+.python-version
+datasets/

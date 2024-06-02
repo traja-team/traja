@@ -9,19 +9,21 @@ on:
 
 jobs:
   miniconda:
-    name: Miniconda ${{ matrix.os }}
+    name: Miniconda ${{ matrix.os }} - Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
         matrix:
             os: ["ubuntu-latest", "windows-latest"]
+            python-version: [ "3.8", "3.12" ]
     steps:
       - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Miniconda (Python ${{ matrix.python-version }})
+        uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: test
           channels: conda-forge,defaults
           environment-file: environment.yml
-          python-version: 3.8
+          python-version: ${{ matrix.python-version }}
           auto-activate-base: false
       - shell: bash -l {0}
         run: |
@@ -44,6 +46,7 @@ jobs:
             conda install pytest
             py.test . --cov-report=xml --cov=traja -vvv
       - name: Upload coverage to Codecov
+        if: ${{ matrix.python-version }} == '3.8'
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

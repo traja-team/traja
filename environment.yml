@@ -21,7 +21,6 @@ dependencies:
   - networkx
   - seaborn
   - pytorch
-  - pytest==6.2.2
+  - pytest>=8.0.0
   - numba>=0.50.0
-  - pyDOE2>=1.3.0
   - statsmodels

@@ -5,7 +5,7 @@ import torch
 
 
 class TimeDistributed(torch.nn.Module):
-    """ Time distributed wrapper compatible with linear/dense pytorch layer modules"""
+    """Time distributed wrapper compatible with linear/dense pytorch layer modules"""
 
     def __init__(self, module, batch_first=True):
         super(TimeDistributed, self).__init__()
@@ -37,7 +37,7 @@ class TimeDistributed(torch.nn.Module):
         return out
 
 
-def save(model, hyperparameters, path:str=""):
+def save(model, hyperparameters, path: str = ""):
     """Save the trained model(.pth) along with its hyperparameters as a json (hyper.json) at the user defined Path
     Parameters:
     -----------
@@ -55,7 +55,7 @@ def save(model, hyperparameters, path:str=""):
     if path == "":
         path = os.path.join(os.getcwd(), "model.pt")
     torch.save(model.state_dict(), path)
-    
+
     hyperdir, _ = os.path.split(path)
     if hyperparameters is not None:
         with open(os.path.join(hyperdir, "hypers.json"), "w") as fp:
@@ -65,7 +65,7 @@ def save(model, hyperparameters, path:str=""):
     print(f"Model and hyperparameters saved at {os.path.abspath(hyperdir)}")
 
 
-def load(model, path: str=""):
+def load(model, path: str = ""):
     """Load trained model from path using the model_hyperparameters saved in the
     Parameters:
     -----------

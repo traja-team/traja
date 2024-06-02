@@ -1,20 +1,18 @@
 import logging
 import math
 from collections import OrderedDict
-from typing import Callable, Optional, Union, Tuple
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pandas.core.dtypes.common import (
-    is_datetime_or_timedelta_dtype,
-    is_datetime64_any_dtype,
-    is_timedelta64_dtype,
-)
+from pandas.core.dtypes.common import (is_datetime64_any_dtype,
+                                       is_timedelta64_dtype)
 from scipy import signal
 from scipy.spatial.distance import directed_hausdorff, euclidean
 
 import traja
 from traja import TrajaDataFrame
+from traja.core import is_datetime_or_timedelta_dtype
 
 __all__ = [
     "_bins_to_tuple",
@@ -201,10 +199,10 @@ def expected_sq_displacement(
     sl = traja.step_lengths(trj)
     ta = traja.calc_angle(trj)
     l1 = np.mean(sl)
-    l2 = np.mean(sl ** 2)
+    l2 = np.mean(sl**2)
     c = np.mean(np.cos(ta))
     s = np.mean(np.sin(ta))
-    s2 = s ** 2
+    s2 = s**2
 
     if eqn1:
         # Eqn 1
@@ -214,9 +212,9 @@ def expected_sq_displacement(
         ) * np.sin((n + 1) * alpha)
         esd = (
             n * l2
-            + 2 * l1 ** 2 * ((c - c ** 2 - s2) * n - c) / ((1 - c) ** 2 + s2)
+            + 2 * l1**2 * ((c - c**2 - s2) * n - c) / ((1 - c) ** 2 + s2)
             + 2
-            * l1 ** 2
+            * l1**2
             * ((2 * s2 + (c + s2) ** ((n + 1) / 2)) / ((1 - c) ** 2 + s2) ** 2)
             * gamma
         )
@@ -224,7 +222,7 @@ def expected_sq_displacement(
     else:
         logger.info("This method is experimental and requires testing.")
         # Eqn 2
-        esd = n * l2 + 2 * l1 ** 2 * c / (1 - c) * (n - (1 - c ** n) / (1 - c))
+        esd = n * l2 + 2 * l1**2 * c / (1 - c) * (n - (1 - c**n) / (1 - c))
         return esd
 
 
@@ -373,7 +371,7 @@ def transition_matrix(grid_indices1D: np.ndarray):
 
     M = [[0] * n for _ in range(n)]
 
-    for (i, j) in zip(grid_indices1D, grid_indices1D[1:]):
+    for i, j in zip(grid_indices1D, grid_indices1D[1:]):
         M[i][j] += 1
 
     # Convert to probabilities
@@ -458,7 +456,7 @@ def calc_flow_angles(grid_indices: np.ndarray):
 
     M = np.empty((bins[1], bins[0]), dtype=np.ndarray)
 
-    for (i, j) in zip(grid_indices, grid_indices[1:]):
+    for i, j in zip(grid_indices, grid_indices[1:]):
         # Account for fact that grid indices uses 1-base indexing
         ix = i[0] - 1
         iy = i[1] - 1
@@ -668,7 +666,7 @@ def generate(
 
     if random:
         # Accumulate angular errors
-        coords = np.zeros(n, dtype=np.complex)
+        coords = np.zeros(n, dtype=complex)
         angle = 0
         for i in range(n - 1):
             angle += angular_errors[i]
@@ -930,7 +928,7 @@ def _rediscretize_points(
         V = (curr_result_y - prev_y) * cos_l - (curr_result_x - prev_x) * sin_l
 
         # Compute distance H between (X_{i+1}, Y_{i+1}) and (x_{k-1}, y_{k-1})
-        H = U + np.sqrt(abs(R ** 2 - V ** 2))
+        H = U + np.sqrt(abs(R**2 - V**2))
         XIp1 = H * cos_l + prev_x
         YIp1 = H * sin_l + prev_y
 
@@ -1073,7 +1071,7 @@ def calc_derivatives(trj: TrajaDataFrame):
     # get cumulative seconds
     if is_datetime64_any_dtype(trj[time_col]):
         displacement_time = (
-            trj[time_col].astype(int).div(10 ** 9).diff().fillna(0).cumsum()
+            trj[time_col].astype(int).div(10**9).diff().fillna(0).cumsum()
         )
     else:
         try:

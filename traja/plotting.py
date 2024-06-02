@@ -1,27 +1,23 @@
 import logging
+import os
 from collections import OrderedDict
 from datetime import timedelta
-import os
-from typing import Union, Optional, Tuple, List
+from typing import List, Optional, Tuple, Union
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-
 from matplotlib import dates as md
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
 from matplotlib.figure import Figure
-from mpl_toolkits.mplot3d import Axes3D
-from pandas.core.dtypes.common import (
-    is_datetime_or_timedelta_dtype,
-    is_datetime64_any_dtype,
-    is_timedelta64_dtype,
-)
+from pandas.core.dtypes.common import (is_datetime64_any_dtype,
+                                       is_timedelta64_dtype)
 
 import traja
+from traja.core import is_datetime_or_timedelta_dtype
 from traja.frame import TrajaDataFrame
 from traja.trajectory import coords_to_flow
 
@@ -44,8 +40,8 @@ __all__ = [
     "plot_clustermap",
     "plot_flow",
     "plot_pca",
-    "plot_periodogram",    
-    "plot_quiver",  
+    "plot_periodogram",
+    "plot_quiver",
     "plot_stream",
     "plot_surface",
     "plot_transition_graph",
@@ -497,7 +493,7 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
         trj = traja.generate()
         trj.traja.plot_periodogram()
 
-    .. note:: 
+    .. note::
 
         Convenience wrapper for :meth:`scipy.signal.periodogram`.
 
@@ -536,7 +532,7 @@ def plot_autocorrelation(
     .. plot::
 
         import traja
-        
+
         df = traja.generate()
         df.traja.plot_autocorrelation()
 
@@ -553,9 +549,15 @@ def plot_autocorrelation(
     return plt.gcf()
 
 
-def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_dims: bool = False, ax = None):
+def plot_pca(
+    trj: TrajaDataFrame,
+    id_col: str = "id",
+    bins: tuple = (8, 8),
+    three_dims: bool = False,
+    ax=None,
+):
     """Plot PCA comparing animals ids by trip grids.
-    
+
     Args:
         trj - Trajectory
         id_col - column representing animal IDs
@@ -565,19 +567,18 @@ def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_d
 
     Returns:
         fig - Figure
-    
+
     .. plot::
 
         # Load sample jaguar dataset with trajectories for 9 animals
         df = traja.dataset.example.jaguar()
 
         # Bin trajectory into a trip grid then perform PCA
-        traja.plotting.plot_pca(df, id_col="ID", bins=(8,8))   
+        traja.plotting.plot_pca(df, id_col="ID", bins=(8,8))
 
     """
     from sklearn.decomposition import PCA
     from sklearn.preprocessing import StandardScaler
-
 
     DIMS = 3 if three_dims else 2
 
@@ -586,9 +587,9 @@ def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_d
     ids = trj[id_col].unique()
 
     for id in ids:
-        animal = trj[trj[id_col]==id].copy()
-        animal.drop(columns=[id_col],inplace=True)
-        grid = animal.traja.trip_grid(bins = bins, hist_only=True)[0]
+        animal = trj[trj[id_col] == id].copy()
+        animal.drop(columns=[id_col], inplace=True)
+        grid = animal.traja.trip_grid(bins=bins, hist_only=True)[0]
         grids.append(grid.flatten())
 
     # Standardize the data
@@ -602,23 +603,34 @@ def plot_pca(trj: TrajaDataFrame, id_col: str="id", bins: tuple = (8,8), three_d
     # Create plot axes
     if DIMS == 3:
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
     if not ax:
         _, ax = plt.subplots()
-    
+
     # Visualize 2D projection
     for idx, animal in enumerate(X_r):
         if DIMS == 2:
-            ax.scatter(X_r[idx, 0], X_r[idx, 1], color=f'C{idx}', alpha=.8, lw=2, label=idx)
+            ax.scatter(
+                X_r[idx, 0], X_r[idx, 1], color=f"C{idx}", alpha=0.8, lw=2, label=idx
+            )
         elif DIMS == 3:
-            ax.scatter(X_r[idx, 0], X_r[idx, 1], ax.scatter[idx,2], color=f'C{idx}', alpha=.8, lw=2, label=idx)
+            ax.scatter(
+                X_r[idx, 0],
+                X_r[idx, 1],
+                ax.scatter[idx, 2],
+                color=f"C{idx}",
+                alpha=0.8,
+                lw=2,
+                label=idx,
+            )
 
     plt.title("PCA")
-    plt.legend(title=id_col, loc='best', shadow=False, scatterpoints=1)
+    plt.legend(title=id_col, loc="best", shadow=False, scatterpoints=1)
     plt.xlabel("Principal Component 1")
-    plt.ylabel("Principal Component 2")    
+    plt.ylabel("Principal Component 2")
 
     return plt.gcf()
+
 
 def plot_collection(
     trjs: Union[pd.DataFrame, TrajaDataFrame],
@@ -772,7 +784,7 @@ def plot_contour(
     X, Y, U, V = coords_to_flow(trj, bins)
     Z = np.sqrt(U * U + V * V)
 
-    if not ax:        
+    if not ax:
         _, ax = plt.subplots()
 
     if filled:
@@ -815,10 +827,8 @@ def plot_surface(
     Z = np.sqrt(U * U + V * V)
 
     fig = plt.figure()
-    ax = fig.gca(projection="3d")
-    ax.plot_surface(
-        X, Y, Z, cmap= cmap, linewidth=0, **surfaceplot_kws
-    )
+    ax = fig.add_subplot(projection="3d")
+    ax.plot_surface(X, Y, Z, cmap=cmap, linewidth=0, **surfaceplot_kws)
 
     ax = _label_axes(trj, ax)
     try:
@@ -968,7 +978,7 @@ def trip_grid(
     x, y = zip(*df.values)
 
     hist, x_edges, y_edges = np.histogram2d(
-        x, y, bins, range=((xmin, xmax), (ymin, ymax)), normed=normalize
+        x, y, bins, range=((xmin, xmax), (ymin, ymax)), density=normalize
     )
 
     # rotate to keep y as first dimension
@@ -1307,9 +1317,9 @@ def plot_transition_graph(
 
     """
     try:
+        import graphviz
         import networkx as nx
         import pydot
-        import graphviz
     except ImportError as e:
         raise ImportError(f"{e} - please install it with pip")
 
@@ -1389,8 +1399,8 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
         save (bool): save video to ``trajectory.mp4``
 
     Returns:
-        anim (matplotlib.animation.FuncAnimation): animation 
-        
+        anim (matplotlib.animation.FuncAnimation): animation
+
     """
     from matplotlib import animation
     from matplotlib.animation import FuncAnimation
@@ -1408,7 +1418,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     fig = plt.figure(figsize=(8, 6))
     ax1 = plt.subplot(211)
 
-    fig.add_subplot(ax1)    
+    fig.add_subplot(ax1)
     if polar:
         ax2 = plt.subplot(212, polar="projection")
         ax2.set_theta_zero_location("N")
@@ -1436,7 +1446,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
     )
 
     def update(frame_number):
-        if frame_number < (XY_STEPS+2):
+        if frame_number < (XY_STEPS + 2):
             pass
         else:
             ind = frame_number % len(xy)
@@ -1483,7 +1493,9 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
                     bar.set_facecolor(plt.cm.viridis(h / max_height))
                     bar.set_alpha(0.8 * (idx / POLAR_STEPS))
                 ax2.set_theta_zero_location("N")
-                ax2.set_xticklabels(["0", "45", "90", "135", "180", "-135", "-90", "-45"])
+                ax2.set_xticklabels(
+                    ["0", "45", "90", "135", "180", "-135", "-90", "-45"]
+                )
 
     anim = FuncAnimation(fig, update, interval=10, frames=len(xy))
     if save:
@@ -1493,5 +1505,5 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
             raise Exception("FFmpeg not installed, please install it.")
     else:
         plt.show()
-    
+
     return anim
