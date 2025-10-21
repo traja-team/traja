@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.0.0] - 2025-01-21
+
 ### Changed
 
 - **BREAKING**: Updated minimum Python version from 3.6 to 3.8 to comply with EOL Python versions
