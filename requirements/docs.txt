@@ -7,11 +7,10 @@ scikit-learn
 sphinx
 sphinx-gallery
 sphinx_rtd_theme
-fastdtw
 networkx
 seaborn
-torch
-pytest
-pytest-cov
-codecov
 ipython
+tzlocal
+# Optional dependencies for examples
+plotly
+joblib
