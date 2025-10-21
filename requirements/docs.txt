@@ -11,6 +11,7 @@ networkx
 seaborn
 ipython
 tzlocal
+fastdtw
 # Optional dependencies for examples
 plotly
 joblib

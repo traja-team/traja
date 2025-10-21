@@ -518,7 +518,7 @@ def plot_periodogram(trj, coord: str = "y", fs: int = 1, interactive: bool = Tru
     from scipy import signal
 
     vals = trj[coord].values
-    f, Pxx = signal.periodogram(vals, fs=fs, window="hanning", scaling="spectrum")
+    f, Pxx = signal.periodogram(vals, fs=fs, window="hann", scaling="spectrum")
     plt.title("Power Spectrum")
     plt.plot(f, Pxx)
     if interactive:
