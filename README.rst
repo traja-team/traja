@@ -3,9 +3,9 @@ Traja |Python-ver| |Travis| |PyPI| |Conda| |RTD| |Gitter| |Black| |License| |Bin
 
 |Colab|
 
-.. |Python-ver| image:: https://img.shields.io/badge/python-3.6+-blue.svg
-    :target: https://www.python.org/downloads/release/python-360/
-    :alt: Python 3.6+
+.. |Python-ver| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+    :target: https://www.python.org/downloads/release/python-380/
+    :alt: Python 3.8+
 
 .. |Travis| image:: https://travis-ci.org/traja-team/traja.svg?branch=master
     :target: https://travis-ci.org/traja-team/traja
@@ -137,6 +137,95 @@ Analyze Trajectory
    "``rediscretize_points``", "Rediscretize points to given step length"
    
 For up-to-date documentation, see `https://traja.readthedocs.io <https://traja.readthedocs.io>`_.
+
+Deep Learning Integration
+--------------------------
+
+Traja provides production-ready features for training neural networks on trajectory data:
+
+**Data Augmentation** - Create training variations for robust models:
+
+.. code-block:: python
+
+    # Rotation, noise, scaling, reversal, subsampling
+    rotated = df.traja.augment_rotate(angle=45)
+    noisy = df.traja.augment_noise(sigma=0.1)
+    scaled = df.traja.augment_scale(factor=1.5)
+
+**Sequence Processing** - Standardize trajectory lengths for batching:
+
+.. code-block:: python
+
+    # Pad or truncate to fixed length
+    padded = df.traja.pad_trajectory(target_length=200, mode='edge')
+    truncated = df.traja.truncate_trajectory(target_length=100, mode='random')
+    normalized = df.traja.normalize_trajectory()
+
+**Feature Extraction** - Generate ML-ready features:
+
+.. code-block:: python
+
+    # Extract displacement, speed, turn_angle, heading, acceleration
+    features = df.traja.extract_features()
+
+**PyTorch Integration** - Seamless tensor conversion:
+
+.. code-block:: python
+
+    tensor = df.traja.to_tensor()  # Convert to PyTorch tensor
+
+**Dataset Utilities** - Train/val/test splitting:
+
+.. code-block:: python
+
+    trajectories = [traja.generate(n=100) for _ in range(50)]
+    train, val, test = traja.trajectory.train_test_split(
+        trajectories, train_size=0.7, val_size=0.15, test_size=0.15
+    )
+
+**3D Support** - All features work with x, y, z coordinates:
+
+.. code-block:: python
+
+    df_3d = traja.TrajaDataFrame({'x': x, 'y': y, 'z': z})
+    tensor_3d = df_3d.traja.to_tensor()  # Shape: (n_points, 3)
+
+**GPS/Lat-Long Support** - Work with GPS coordinates:
+
+.. code-block:: python
+
+    traj = traja.from_latlon(lat, lon)  # Convert GPS to local x,y
+
+**Visualization Enhancements** - Better trajectory analysis and exploration:
+
+.. code-block:: python
+
+    # Interactive plots with plotly
+    fig = df.traja.plot_interactive()  # Zoom, pan, rotate
+
+    # Heatmap showing time spent in locations
+    df.traja.plot_heatmap(bins=50)
+
+    # Speed and acceleration profiles
+    df.traja.plot_speed()
+    df.traja.plot_acceleration()
+
+    # Comprehensive 4-panel analysis
+    df.traja.plot_trajectory_components()
+
+**Performance Optimization** - Fast parallel processing:
+
+.. code-block:: python
+
+    # Process 100 trajectories in parallel
+    trajectories = [traja.generate(n=1000) for _ in range(100)]
+    results = traja.trajectory.batch_process(
+        trajectories,
+        lambda t: t.traja.normalize_trajectory(),
+        n_jobs=-1  # Use all CPUs
+    )
+
+See the `Deep Learning documentation <https://traja.readthedocs.io/en/latest/deep_learning.html>`_ and ``examples/deep_learning_demo.ipynb`` for complete examples.
 
 Random walk
 -----------

@@ -8,7 +8,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
 from matplotlib import dates as md
 from matplotlib.axes import Axes
 from matplotlib.collections import PathCollection
@@ -80,6 +83,8 @@ def _rolling(df, window, step):
 
 
 def plot_prediction(model, dataloader, index, scaler=None):
+    if torch is None:
+        raise ImportError("torch is required for plot_prediction. Install with: pip install torch")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     fig, ax = plt.subplots(2, 1, figsize=(10, 10))
     model = model.to(device)
@@ -264,6 +269,9 @@ def plot_rolling_hull_3d(trj: TrajaDataFrame, window=100, step=20, **kwargs):
 def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollection:
     """Plot 3D trajectory for single identity over period.
 
+    If trajectory has 'z' column, plots x, y, z spatial coordinates.
+    Otherwise, plots x, y with time as the third dimension.
+
     Args:
       trj (:class:`traja.TrajaDataFrame`): trajectory
       n_coords (int, optional): Number of coordinates to plot
@@ -283,17 +291,26 @@ def plot_3d(trj: TrajaDataFrame, **kwargs) -> matplotlib.collections.PathCollect
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
     ax.set_xlabel("x", fontsize=15)
-    ax.set_zlabel("time", fontsize=15)
     ax.set_ylabel("y", fontsize=15)
+
+    # Use z coordinate if available, otherwise use time
+    has_z = "z" in trj.columns
+    if has_z:
+        z_data = trj.z
+        ax.set_zlabel("z", fontsize=15)
+    else:
+        z_data = trj.index
+        ax.set_zlabel("time", fontsize=15)
+
     title = kwargs.pop("title", "Trajectory")
     ax.set_title(f"{title}", fontsize=20)
-    ax.plot(trj.x, trj.y, trj.index)
+    ax.plot(trj.x, trj.y, z_data)
     cmap = kwargs.pop("cmap", "winter")
     cm = plt.get_cmap(cmap)
     NPOINTS = len(trj)
     ax.set_prop_cycle(color=[cm(1.0 * i / (NPOINTS - 1)) for i in range(NPOINTS - 1)])
     for i in range(NPOINTS - 1):
-        ax.plot(trj.x[i : i + 2], trj.y[i : i + 2], trj.index[i : i + 2])
+        ax.plot(trj.x[i : i + 2], trj.y[i : i + 2], z_data[i : i + 2])
 
     dist = kwargs.pop("dist", None)
     if dist:
@@ -676,7 +693,7 @@ def plot_collection(
                     labels[ind] = substring
                     break
             else:
-                raise Exception(f"No substring matching {id} in {colors}.")
+                raise ValueError(f"No substring matching {id} in {colors}.")
         colors = color_lookup
     elif isinstance(colors, dict):
         color_lookup = [colors.get(id) for id in ids]
@@ -1074,7 +1091,7 @@ def find_runs(x: pd.Series) -> (np.ndarray, np.ndarray, np.ndarray):
         run_values = x[loc_run_start]
 
         # find run lengths
-        run_lengths = np.diff(np.append(run_starts, n))
+        run_lengths = np.diff(np.concatenate((run_starts, [n])))
 
         return run_values, run_starts, run_lengths
 
@@ -1502,7 +1519,7 @@ def animate(trj: TrajaDataFrame, polar: bool = True, save: bool = False):
         try:
             anim.save("trajectory.mp4", writer=animation.FFMpegWriter(fps=10))
         except FileNotFoundError:
-            raise Exception("FFmpeg not installed, please install it.")
+            raise FileNotFoundError("FFmpeg not installed, please install it.")
     else:
         plt.show()
 

@@ -72,6 +72,7 @@ Software:
    Clustering and Dimensionality Reduction <clustering>
    Collections / Scenes <collections>
    Predicting Trajectories <predictions>
+   Deep Learning Integration <deep_learning>
 
 .. toctree::
    :maxdepth: 1

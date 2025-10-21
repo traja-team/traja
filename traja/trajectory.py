@@ -39,13 +39,17 @@ __all__ = [
     "expected_sq_displacement",
     "fill_in_traj",
     "from_xy",
+    "from_latlon",
     "inside",
     "generate",
     "get_derivatives",
     "grid_coordinates",
+    "latlon_to_xy",
     "length",
     "polar_to_z",
     "rediscretize_points",
+    "batch_process",
+    "train_test_split",
     "resample_time",
     "return_angle_to_point",
     "rotate",
@@ -61,7 +65,7 @@ __all__ = [
 logger = logging.getLogger("traja")
 
 
-def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
+def smooth_sg(trj: TrajaDataFrame, w: Optional[int] = None, p: int = 3) -> TrajaDataFrame:
     """Returns ``DataFrame`` of trajectory after Savitzky-Golay filtering.
 
     Args:
@@ -88,7 +92,7 @@ def smooth_sg(trj: TrajaDataFrame, w: int = None, p: int = 3):
         w = p + 3 - p % 2
 
     if w % 2 != 1:
-        raise Exception(f"Invalid smoothing parameter w ({w}): n must be odd")
+        raise ValueError(f"Invalid smoothing parameter w ({w}): n must be odd")
     _trj = trj.copy()
     _trj.x = signal.savgol_filter(_trj.x, window_length=w, polyorder=p, axis=0)
     _trj.y = signal.savgol_filter(_trj.y, window_length=w, polyorder=p, axis=0)
@@ -101,11 +105,14 @@ def apply_all(trj: TrajaDataFrame, method: Callable, id_col: str, **kwargs):
     return trj.groupby(by=id_col).apply(method, **kwargs)
 
 
-def step_lengths(trj: TrajaDataFrame):
+def step_lengths(trj: TrajaDataFrame) -> pd.Series:
     """Length of the steps of ``trj``.
 
     Args:
       trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
+
+    Returns:
+      pd.Series: Step lengths
 
     """
     displacement = traja.trajectory.calc_displacement(trj)
@@ -126,7 +133,7 @@ def polar_to_z(r: float, theta: float) -> complex:
     return r * np.exp(1j * theta)
 
 
-def cartesian_to_polar(xy: np.ndarray) -> (float, float):
+def cartesian_to_polar(xy: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """Convert :class:`numpy.ndarray` ``xy`` to polar coordinates ``r`` and ``theta``.
 
     Args:
@@ -146,7 +153,7 @@ def cartesian_to_polar(xy: np.ndarray) -> (float, float):
 
 def distance(trj: TrajaDataFrame) -> float:
     """Calculates the distance from start to end of trajectory, also called net distance, displacement, or bee-line
-    from start to finish.
+    from start to finish. Supports both 2D and 3D trajectories.
 
     Args:
         trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
@@ -161,8 +168,13 @@ def distance(trj: TrajaDataFrame) -> float:
         117.01507823153617
 
     """
-    start = trj.iloc[0][["x", "y"]].values
-    end = trj.iloc[-1][["x", "y"]].values
+    # Support 3D trajectories if z column exists
+    if "z" in trj.columns:
+        start = trj.iloc[0][["x", "y", "z"]].values
+        end = trj.iloc[-1][["x", "y", "z"]].values
+    else:
+        start = trj.iloc[0][["x", "y"]].values
+        end = trj.iloc[-1][["x", "y"]].values
     return np.linalg.norm(end - start)
 
 
@@ -184,6 +196,88 @@ def length(trj: TrajaDataFrame) -> float:
     """
     displacement = trj.traja.calc_displacement()
     return displacement.sum()
+
+
+def latlon_to_xy(lat: np.ndarray, lon: np.ndarray, origin: Optional[Tuple[float, float]] = None) -> Tuple[np.ndarray, np.ndarray]:
+    """Convert latitude/longitude coordinates to local x, y coordinates in meters.
+
+    Uses Haversine formula for small distances. For more accurate projection over
+    larger distances, consider using a proper map projection library like pyproj.
+
+    Args:
+        lat: Array of latitudes in decimal degrees
+        lon: Array of longitudes in decimal degrees
+        origin: (lat, lon) tuple for origin point. If None, uses first point.
+
+    Returns:
+        (x, y): Tuple of numpy arrays in meters
+
+    .. note::
+        Assumes Earth radius = 6371000 meters. Accuracy decreases for large distances (>100km).
+
+    .. doctest::
+
+        >>> import numpy as np
+        >>> lat = np.array([40.7128, 40.7138, 40.7148])
+        >>> lon = np.array([-74.0060, -74.0050, -74.0040])
+        >>> x, y = traja.latlon_to_xy(lat, lon)
+        >>> len(x) == len(lat)
+        True
+
+    """
+    EARTH_RADIUS = 6371000  # meters
+
+    lat = np.asarray(lat)
+    lon = np.asarray(lon)
+
+    if origin is None:
+        origin = (lat[0], lon[0])
+
+    lat0, lon0 = origin
+
+    # Convert to radians
+    lat_rad = np.radians(lat)
+    lon_rad = np.radians(lon)
+    lat0_rad = np.radians(lat0)
+    lon0_rad = np.radians(lon0)
+
+    # Calculate x, y in meters
+    x = EARTH_RADIUS * (lon_rad - lon0_rad) * np.cos(lat0_rad)
+    y = EARTH_RADIUS * (lat_rad - lat0_rad)
+
+    return x, y
+
+
+def from_latlon(lat: Union[list, np.ndarray], lon: Union[list, np.ndarray],
+                origin: Optional[Tuple[float, float]] = None, **kwargs) -> TrajaDataFrame:
+    """Create TrajaDataFrame from GPS latitude/longitude coordinates.
+
+    Args:
+        lat: Latitude coordinates in decimal degrees
+        lon: Longitude coordinates in decimal degrees
+        origin: (lat, lon) tuple for origin point. If None, uses first point.
+        **kwargs: Additional arguments passed to TrajaDataFrame constructor
+
+    Returns:
+        TrajaDataFrame with x, y coordinates in meters
+
+    .. doctest::
+
+        >>> import numpy as np
+        >>> lat = [40.7128, 40.7138, 40.7148]
+        >>> lon = [-74.0060, -74.0050, -74.0040]
+        >>> df = traja.from_latlon(lat, lon)
+        >>> 'x' in df.columns and 'y' in df.columns
+        True
+        >>> len(df) == 3
+        True
+
+    """
+    x, y = latlon_to_xy(np.array(lat), np.array(lon), origin)
+
+    df = TrajaDataFrame({'x': x, 'y': y, 'lat': lat, 'lon': lon}, **kwargs)
+
+    return df
 
 
 def expected_sq_displacement(
@@ -268,11 +362,11 @@ def traj_from_coords(
 
     def rename(col, name, trj):
         if isinstance(col, int):
-            trj.rename(columns={col: name})
+            trj.rename(columns={col: name}, inplace=True)
         else:
             if col not in trj:
-                raise Exception(f"Missing column {col}")
-            trj.rename(columns={col: name})
+                raise KeyError(f"Missing column {col}")
+            trj.rename(columns={col: name}, inplace=True)
         return trj
 
     # Ensure column names are as expected
@@ -284,7 +378,7 @@ def traj_from_coords(
     # Allocate times if they aren't already known
     if "time" not in trj:
         if fps is None:
-            raise Exception(
+            raise ValueError(
                 (
                     "Cannot create a trajectory without times: either fps or a time column must be specified"
                 )
@@ -454,7 +548,8 @@ def calc_flow_angles(grid_indices: np.ndarray):
 
     bins = (grid_indices[:, 0].max(), grid_indices[:, 1].max())
 
-    M = np.empty((bins[1], bins[0]), dtype=np.ndarray)
+    # Initialize with empty lists instead of np.ndarray for better append performance
+    M = [[[] for _ in range(bins[0])] for _ in range(bins[1])]
 
     for i, j in zip(grid_indices, grid_indices[1:]):
         # Account for fact that grid indices uses 1-base indexing
@@ -482,7 +577,10 @@ def calc_flow_angles(grid_indices: np.ndarray):
         elif ix < jx and iy > jy:  # move towards y origin (top right)
             angle = np.pi / 4
         if angle is not None:
-            M[iy, ix] = np.append(M[iy, ix], angle)
+            M[iy][ix].append(angle)
+
+    # Convert lists to numpy arrays
+    M = np.array([[np.array(cell) if cell else None for cell in row] for row in M], dtype=object)
 
     U = np.ones_like(M)  # x component of arrow
     V = np.empty_like(M)  # y component of arrow
@@ -673,7 +771,7 @@ def generate(
             length = step_length + linear_errors[i]
             coords[i + 1] = coords[i] + polar_to_z(r=length, theta=angle)
     else:
-        coords = np.append(complex(0), np.cumsum(steps))
+        coords = np.concatenate(([complex(0)], np.cumsum(steps)))
 
     x = coords.real
     y = coords.imag
@@ -681,7 +779,7 @@ def generate(
     df = traja.TrajaDataFrame(data={"x": x, "y": y})
 
     if fps in (0, None):
-        raise Exception("fps must be greater than 0")
+        raise ValueError("fps must be greater than 0")
 
     df.fps = fps
     time = df.index / fps
@@ -706,7 +804,7 @@ def _resample_time(
     trj: TrajaDataFrame, step_time: Union[float, int, str], errors="coerce"
 ):
     if not is_datetime_or_timedelta_dtype(trj.index):
-        raise Exception(f"{trj.index.dtype} is not datetime or timedelta.")
+        raise TypeError(f"{trj.index.dtype} is not datetime or timedelta.")
     try:
         df = trj.resample(step_time).interpolate(method="spline", order=2)
     except ValueError as e:
@@ -1014,6 +1112,7 @@ def calc_angle(trj: TrajaDataFrame, unit: str = "degrees", lag: int = 1):
 
 def calc_displacement(trj: TrajaDataFrame, lag=1):
     """Returns a ``Series`` of ``float`` displacement between consecutive indices.
+    Supports both 2D and 3D trajectories.
 
     Args:
         trj (:class:`~traja.frame.TrajaDataFrame`): Trajectory
@@ -1032,9 +1131,17 @@ def calc_displacement(trj: TrajaDataFrame, lag=1):
         Name: displacement, dtype: float64
 
     """
-    displacement = np.sqrt(
-        np.power(trj.x.shift(lag) - trj.x, 2) + np.power(trj.y.shift(lag) - trj.y, 2)
-    )
+    # Support 3D trajectories if z column exists
+    if "z" in trj.columns:
+        displacement = np.sqrt(
+            np.power(trj.x.shift(lag) - trj.x, 2)
+            + np.power(trj.y.shift(lag) - trj.y, 2)
+            + np.power(trj.z.shift(lag) - trj.z, 2)
+        )
+    else:
+        displacement = np.sqrt(
+            np.power(trj.x.shift(lag) - trj.x, 2) + np.power(trj.y.shift(lag) - trj.y, 2)
+        )
     displacement.name = "displacement"
     return displacement
 
@@ -1061,7 +1168,7 @@ def calc_derivatives(trj: TrajaDataFrame):
 
     time_col = _get_time_col(trj)
     if time_col is None:
-        raise Exception("Missing time information in trajectory.")
+        raise ValueError("Missing time information in trajectory.")
 
     if "displacement" not in trj:
         displacement = calc_displacement(trj)
@@ -1077,7 +1184,7 @@ def calc_derivatives(trj: TrajaDataFrame):
         try:
             displacement_time = trj[time_col].diff().fillna(0).cumsum()
         except TypeError:
-            raise Exception(
+            raise TypeError(
                 f"Format (example {trj[time_col][0]}) not recognized as datetime"
             )
 
@@ -1164,7 +1271,7 @@ def speed_intervals(
     derivs = get_derivatives(trj)
 
     if faster_than is None and slower_than is None:
-        raise Exception(
+        raise ValueError(
             "Parameters faster_than and slower_than are both None, at least one must be provided."
         )
 
@@ -1189,13 +1296,13 @@ def speed_intervals(
         if len(stop_frames) > 0 and (
             len(start_frames) == 0 or stop_frames[0] < start_frames[0]
         ):
-            start_frames = np.append(1, start_frames)
+            start_frames = np.concatenate(([1], start_frames))
         # Similarly, assume that interval can't extend past end of trajectory
         if (
             len(stop_frames) == 0
             or start_frames[len(start_frames) - 1] > stop_frames[len(stop_frames) - 1]
         ):
-            stop_frames = np.append(stop_frames, len(speed) - 1)
+            stop_frames = np.concatenate((stop_frames, [len(speed) - 1]))
 
     stop_times = times[stop_frames]
     start_times = times[start_frames]
@@ -1246,17 +1353,18 @@ def get_derivatives(trj: TrajaDataFrame):
         # TODO: Add support for other time units
         t = t.dt.total_seconds()
     v = d[1 : len(d)] / t.diff()
-    v.rename("speed")
+    v = v.rename("speed")
     vt = t[1 : len(t)].rename("speed_times")
     # Calculate linear acceleration
-    a = v.diff() / vt.diff().rename("acceleration")
+    a = v.diff() / vt.diff()
+    a = a.rename("acceleration")
     at = vt[1 : len(vt)].rename("accleration_times")
 
     data = dict(speed=v, speed_times=vt, acceleration=a, acceleration_times=at)
     derivs = derivs.merge(pd.DataFrame(data), left_index=True, right_index=True)
 
     # Replace infinite values
-    derivs.replace([np.inf, -np.inf], np.nan)
+    derivs = derivs.replace([np.inf, -np.inf], np.nan)
     return derivs
 
 
@@ -1577,6 +1685,129 @@ def _get_time_col(trj: TrajaDataFrame):
     else:
         # No time column found
         return None
+
+
+def batch_process(
+    trajectories: list,
+    func: Callable,
+    n_jobs: int = -1,
+    **kwargs
+) -> list:
+    """Apply function to trajectories in parallel for performance.
+
+    Args:
+        trajectories (list): List of TrajaDataFrame trajectories
+        func (Callable): Function to apply to each trajectory
+        n_jobs (int): Number of parallel jobs. -1 means use all CPUs. Default -1.
+        **kwargs: Additional arguments passed to func
+
+    Returns:
+        list: Results from applying func to each trajectory
+
+    Example:
+        >>> import traja
+        >>> trajs = [traja.generate(n=100) for _ in range(100)]
+        >>> # Normalize all trajectories in parallel
+        >>> normalized = traja.trajectory.batch_process(
+        ...     trajs,
+        ...     lambda t: t.traja.normalize_trajectory()
+        ... )
+
+    .. note::
+        Requires joblib for parallel processing: pip install joblib
+        Falls back to sequential processing if joblib not available.
+
+    """
+    try:
+        from joblib import Parallel, delayed
+
+        if n_jobs == -1:
+            import multiprocessing
+            n_jobs = multiprocessing.cpu_count()
+
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(func)(traj, **kwargs) for traj in trajectories
+        )
+    except ImportError:
+        import warnings
+        warnings.warn(
+            "joblib not installed. Processing sequentially. "
+            "Install joblib for parallel processing: pip install joblib"
+        )
+        results = [func(traj, **kwargs) for traj in trajectories]
+
+    return results
+
+
+def train_test_split(
+    trajectories: list,
+    train_size: float = 0.7,
+    val_size: float = 0.15,
+    test_size: float = 0.15,
+    shuffle: bool = True,
+    random_state: Optional[int] = None,
+) -> Tuple[list, list, list]:
+    """Split trajectories into train, validation, and test sets for deep learning.
+
+    Args:
+        trajectories (list): List of TrajaDataFrame trajectories
+        train_size (float): Proportion for training set. Default 0.7.
+        val_size (float): Proportion for validation set. Default 0.15.
+        test_size (float): Proportion for test set. Default 0.15.
+        shuffle (bool): Whether to shuffle before splitting. Default True.
+        random_state (int, optional): Random seed for reproducibility.
+
+    Returns:
+        tuple: (train_trajectories, val_trajectories, test_trajectories)
+
+    Raises:
+        ValueError: If sizes don't sum to 1.0
+
+    Example:
+        >>> import traja
+        >>> # Create sample trajectories
+        >>> trajs = [traja.generate(n=100) for _ in range(50)]
+        >>> train, val, test = traja.trajectory.train_test_split(trajs)
+        >>> len(train), len(val), len(test)
+        (35, 7, 8)
+
+    .. note::
+        Essential for training and evaluating deep learning models on trajectory data.
+
+    """
+    if not abs(train_size + val_size + test_size - 1.0) < 1e-6:
+        raise ValueError(
+            f"train_size ({train_size}) + val_size ({val_size}) + "
+            f"test_size ({test_size}) must sum to 1.0"
+        )
+
+    if not isinstance(trajectories, list):
+        raise TypeError("trajectories must be a list of TrajaDataFrame objects")
+
+    n = len(trajectories)
+
+    if shuffle:
+        if random_state is not None:
+            np.random.seed(random_state)
+        indices = np.random.permutation(n)
+    else:
+        indices = np.arange(n)
+
+    # Calculate split points
+    train_end = int(n * train_size)
+    val_end = train_end + int(n * val_size)
+
+    # Split indices
+    train_indices = indices[:train_end]
+    val_indices = indices[train_end:val_end]
+    test_indices = indices[val_end:]
+
+    # Create splits
+    train_trajs = [trajectories[i] for i in train_indices]
+    val_trajs = [trajectories[i] for i in val_indices]
+    test_trajs = [trajectories[i] for i in test_indices]
+
+    return train_trajs, val_trajs, test_trajs
 
 
 if __name__ == "__main__":

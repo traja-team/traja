@@ -19,11 +19,19 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import sklearn
-import torch
+try:
+    import torch
+    from torch.utils.data import Dataset
+    from torch.utils.data.sampler import SubsetRandomSampler, WeightedRandomSampler
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    Dataset = object  # Fallback base class
+    SubsetRandomSampler = None
+    WeightedRandomSampler = None
+    TORCH_AVAILABLE = False
 from sklearn.base import TransformerMixin
 from sklearn.preprocessing import MinMaxScaler
-from torch.utils.data import Dataset
-from torch.utils.data.sampler import SubsetRandomSampler, WeightedRandomSampler
 
 from traja.dataset import generator
 from traja.dataset.generator import get_indices_from_sequence_ids

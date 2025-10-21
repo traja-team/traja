@@ -65,7 +65,7 @@ class TrajaDataFrame(pd.DataFrame):
     def _constructor(self):
         return TrajaDataFrame
 
-    def _copy_attrs(self, df):
+    def _copy_attrs(self, df: "TrajaDataFrame") -> None:
         for attr in self._metadata:
             df.__dict__[attr] = getattr(self, attr, None)
 
@@ -96,7 +96,7 @@ class TrajaDataFrame(pd.DataFrame):
     #         result.__class__ = DataFrame
     #     return result
 
-    def _init_metadata(self):
+    def _init_metadata(self) -> None:
         defaults = dict(fps=None, spatial_units="m", time_units="s")
         for name, value in defaults.items():
             if name not in self.__dict__:
@@ -193,7 +193,7 @@ class TrajaDataFrame(pd.DataFrame):
             np.array, calculated coordinates of convex hull boundary
         """
         if values is not None and not values.shape[1] == 2:
-            raise Exception(
+            raise ValueError(
                 "XY coordinates must be in separate columns "
                 "for convex hull calculation."
             )

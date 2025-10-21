@@ -23,9 +23,12 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-requirements = ["matplotlib", "pandas", "numpy", "shapely", "scipy", "tzlocal"]
+requirements = ["matplotlib", "pandas", "numpy", "shapely", "scipy", "tzlocal", "scikit-learn", "seaborn"]
 
-extras_requirements = {"all": ["torch", "tzlocal", "fastdtw"]}
+extras_requirements = {
+    "all": ["torch", "tzlocal", "fastdtw", "plotly", "joblib"],
+    "dl": ["torch", "plotly", "joblib"],  # Deep learning extras
+}
 
 with open(os.path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
@@ -48,12 +51,16 @@ setup(
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Scientific/Engineering :: Mathematics",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: Libraries",
     ],
-    python_requires=">= 3.6",
+    python_requires=">= 3.8",
     project_urls={
         "Bug Tracker": "https://github.com/traja-team/traja/issues",
         "Documentation": "https://traja.rtfd.io/en/latest/",

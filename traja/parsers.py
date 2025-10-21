@@ -95,7 +95,7 @@ def read_file(
 
     if xcol is not None or ycol is not None:
         if not xcol in df_test or ycol not in df_test:
-            raise Exception(f"{xcol} or {ycol} not found as headers.")
+            raise ValueError(f"{xcol} or {ycol} not found as headers.")
 
     # Strip whitespace
     whitespace_cols = [c for c in df_test if " " in df_test[c].name]
@@ -123,7 +123,7 @@ def read_file(
             "%Y-%m-%d %H:%M:%S",
         ]
         for format_str in format_strs:
-            date_parser = lambda x: pd.datetime.strptime(x, format_str)
+            date_parser = lambda x, fmt=format_str: pd.to_datetime(x, format=fmt)
             try:
                 df_test = pd.read_csv(
                     filepath, date_parser=date_parser, nrows=10, parse_dates=[time_col]
@@ -138,7 +138,7 @@ def read_file(
                 # No datetime or timestamp column found
                 date_parser = None
 
-    if "csv" in filepath:
+    if filepath.endswith('.csv'):
         trj = pd.read_csv(
             filepath,
             date_parser=date_parser,
@@ -147,21 +147,38 @@ def read_file(
             dtype=dtype,
             **kwargs,
         )
-
-        # TODO: Replace default column renaming with user option if needed
-        if time_col:
-            trj.rename(columns={time_col: "time"})
-        elif fps is not None:
-            time = np.array([x for x in trj.index], dtype=int) / fps
-            trj["time"] = time
+    elif filepath.endswith(('.h5', '.hdf5', '.hdf')):
+        # Read HDF5 file
+        trj = pd.read_hdf(filepath, **kwargs)
+    elif filepath.endswith('.npy'):
+        # Read numpy array file
+        data = np.load(filepath)
+        if data.ndim == 2:
+            # Assume columns are x, y, and optionally time/z
+            if data.shape[1] == 2:
+                trj = pd.DataFrame(data, columns=['x', 'y'])
+            elif data.shape[1] == 3:
+                # Could be x,y,time or x,y,z - use xcol/ycol hints
+                trj = pd.DataFrame(data, columns=['x', 'y', 'time'])
+            elif data.shape[1] == 4:
+                trj = pd.DataFrame(data, columns=['x', 'y', 'z', 'time'])
+            else:
+                raise ValueError(f"Expected 2-4 columns in .npy file, got {data.shape[1]}")
         else:
-            # leave index as int frames
-            pass
-        if xcol and ycol:
-            trj.rename(columns={xcol: "x", ycol: "y"})
+            raise ValueError(f"Expected 2D array in .npy file, got shape {data.shape}")
     else:
-        # TODO: Implement for HDF5 and .npy files.
-        raise NotImplementedError("Non-csv's not yet implemented")
+        raise NotImplementedError(f"File format not supported: {filepath}. Supported formats: .csv, .h5, .hdf5, .hdf, .npy")
+
+    # Rename columns if needed
+    if time_col and time_col in trj.columns:
+        trj.rename(columns={time_col: "time"}, inplace=True)
+    elif fps is not None and "time" not in trj.columns:
+        time = np.array([x for x in trj.index], dtype=int) / fps
+        trj["time"] = time
+
+    if xcol and ycol:
+        if xcol in trj.columns and ycol in trj.columns:
+            trj.rename(columns={xcol: "x", ycol: "y"}, inplace=True)
 
     trj = TrajaDataFrame(trj)
 

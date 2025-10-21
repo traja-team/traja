@@ -42,7 +42,7 @@ class Criterion:
         elif loss_type == "mse":
             loss = self.mse_loss(predicted, target) + kld
         else:
-            raise Exception("Loss type '{}' is unknown!".format(loss_type))
+            raise ValueError("Loss type '{}' is unknown!".format(loss_type))
         return loss
 
     def classifier_criterion(self, predicted, target):

@@ -4,7 +4,7 @@ Installation
 Installing traja
 ----------------
 
-traja requires Python 3.6+ to be installed. For installing on Windows,
+traja requires Python 3.8+ to be installed. For installing on Windows,
 it is recommend to download and install via conda_.
 
 To install via conda::

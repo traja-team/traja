@@ -34,7 +34,11 @@ In particular, when submitting a pull request:
   line of a docstring should be a standalone summary.  Parameters and
   return values should be ducumented explicitly.
 
-- traja supports python 3 (3.6+).  Use modern python idioms when possible.
+- traja supports Python 3 (3.8+).  Use modern python idioms when possible.
+
+- Follow type hints best practices. Add type annotations to new functions.
+
+- Use pre-commit hooks to ensure code quality before committing.
 
 - Follow PEP 8 when possible.
 
@@ -159,7 +163,7 @@ for this environment, by running::
 
       conda create -n traja_dev
 
-For a python 3 environment::
+For a Python 3 environment (Python 3.8 or higher required)::
 
       conda create -n traja_dev python=3.8
 
@@ -203,6 +207,8 @@ This should install all necessary dependencies.
 Next activate pre-commit hooks by running::
 
     pre-commit install
+
+This will automatically run code quality checks (black, isort, flake8, mypy) before each commit.
 
 4) Making a development build
 -----------------------------

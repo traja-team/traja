@@ -50,7 +50,7 @@ def save(model, hyperparameters, path: str = ""):
     """
 
     if hyperparameters is not None and not isinstance(hyperparameters, dict):
-        raise Exception("Invalid argument, hyperparameters must be dict")
+        raise TypeError("Invalid argument, hyperparameters must be dict")
     # Save
     if path == "":
         path = os.path.join(os.getcwd(), "model.pt")
@@ -80,7 +80,7 @@ def load(model, path: str = ""):
         path = os.path.join(os.getcwd(), "/model.pt")
         print(f"Model loaded from {path}")
     else:
-        raise Exception(f"Model state dict not found at {path}")
+        raise FileNotFoundError(f"Model state dict not found at {path}")
 
     # Load state of the model
     model.load_state_dict(torch.load(path))

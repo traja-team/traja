@@ -1,21 +1,145 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traja"
+dynamic = ["version"]
+description = "Traja is a trajectory analysis and visualization tool"
+readme = "README.rst"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Justin Shenk", email = "shenkjustin@gmail.com"}
+]
+keywords = ["trajectory", "analysis", "animal tracking", "movement ecology"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "matplotlib>=3.3.0",
+    "pandas>=1.2.0",
+    "numpy>=1.22.0",
+    "shapely>=1.7.0",
+    "scipy>=1.4.1",
+    "tzlocal>=2.0.0",
+]
+
+[project.optional-dependencies]
+all = [
+    "torch>=1.7.0",
+    "fastdtw>=0.3.0",
+]
+dev = [
+    "pytest>=6.0.0",
+    "pytest-cov>=2.10.0",
+    "flake8>=3.8.0",
+    "black>=22.0.0",
+    "isort>=5.0.0",
+    "mypy>=0.950",
+    "pre-commit>=2.15.0",
+]
+docs = [
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=0.5.0",
+    "numpydoc>=1.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/traja-team/traja"
+Documentation = "https://traja.rtfd.io/en/latest/"
+"Bug Tracker" = "https://github.com/traja-team/traja/issues"
+"Source Code" = "https://github.com/traja-team/traja"
+
+[tool.setuptools]
+packages = ["traja"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "traja.__version__"}
+
 [tool.black]
 line-length = 88
-py36 = true
+target-version = ["py38", "py39", "py310", "py311", "py312"]
 include = '\.pyi?$'
 exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-)
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
 '''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip_gitignore = true
+known_first_party = ["traja"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "scipy.*",
+    "matplotlib.*",
+    "shapely.*",
+    "fastdtw.*",
+    "torch.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["traja/tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "-v --cov=traja --cov-report=term-missing --cov-report=xml"
+
+[tool.coverage.run]
+source = ["traja"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstract",
+]

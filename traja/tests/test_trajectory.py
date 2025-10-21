@@ -666,3 +666,168 @@ def test_calc_convex_hull():
     )
     actual = df_copy.convex_hull
     npt.assert_allclose(expected, actual)
+
+
+# ============================================================================
+# Deep Learning Features Tests
+# ============================================================================
+
+
+def test_train_test_split():
+    """Test train/val/test split for deep learning."""
+    # Create multiple trajectories
+    trajectories = [traja.generate(n=50) for _ in range(30)]
+
+    train, val, test = traja.trajectory.train_test_split(
+        trajectories,
+        train_size=0.7,
+        val_size=0.15,
+        test_size=0.15,
+        shuffle=True,
+        random_state=42
+    )
+
+    assert len(train) == 21  # 70% of 30
+    assert len(val) == 4  # 15% of 30
+    assert len(test) == 5  # 15% of 30 (rounded)
+    assert len(train) + len(val) + len(test) == 30
+
+
+def test_train_test_split_no_shuffle():
+    """Test split without shuffling."""
+    trajectories = [traja.generate(n=50) for _ in range(20)]
+
+    train, val, test = traja.trajectory.train_test_split(
+        trajectories,
+        train_size=0.7,
+        val_size=0.15,
+        test_size=0.15,
+        shuffle=False
+    )
+
+    assert len(train) == 14
+    assert len(val) == 3
+    assert len(test) == 3
+
+
+def test_train_test_split_invalid_sizes():
+    """Test that invalid sizes raise ValueError."""
+    trajectories = [traja.generate(n=50) for _ in range(10)]
+
+    with pytest.raises(ValueError):
+        traja.trajectory.train_test_split(
+            trajectories,
+            train_size=0.5,
+            val_size=0.3,
+            test_size=0.3  # Sum > 1.0
+        )
+
+
+def test_train_test_split_invalid_input():
+    """Test that non-list input raises TypeError."""
+    with pytest.raises(TypeError):
+        traja.trajectory.train_test_split(
+            df,  # Not a list
+            train_size=0.7,
+            val_size=0.15,
+            test_size=0.15
+        )
+
+
+def test_latlon_to_xy():
+    """Test GPS to local coordinate conversion."""
+    # NYC area coordinates
+    lat = np.array([40.7128, 40.7228, 40.7328])
+    lon = np.array([-74.0060, -74.0000, -73.9940])
+
+    x, y = traja.trajectory.latlon_to_xy(lat, lon)
+
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert len(x) == len(lat)
+    assert len(y) == len(lon)
+
+    # First point should be origin (0, 0)
+    assert abs(x[0]) < 1.0
+    assert abs(y[0]) < 1.0
+
+    # Y should increase (moving north)
+    assert y[1] > y[0]
+    assert y[2] > y[1]
+
+    # X should increase (moving east)
+    assert x[1] > x[0]
+    assert x[2] > x[1]
+
+
+def test_latlon_to_xy_custom_origin():
+    """Test GPS conversion with custom origin."""
+    lat = np.array([40.7128, 40.7228, 40.7328])
+    lon = np.array([-74.0060, -74.0000, -73.9940])
+
+    origin = (40.7200, -74.0030)
+    x, y = traja.trajectory.latlon_to_xy(lat, lon, origin=origin)
+
+    assert isinstance(x, np.ndarray)
+    assert isinstance(y, np.ndarray)
+    assert len(x) == len(lat)
+
+
+def test_from_latlon():
+    """Test creating TrajaDataFrame from GPS coordinates."""
+    lat = np.array([40.7128, 40.7228, 40.7328, 40.7428])
+    lon = np.array([-74.0060, -74.0000, -73.9940, -73.9880])
+
+    traj = traja.from_latlon(lat, lon)
+
+    assert isinstance(traj, traja.TrajaDataFrame)
+    assert len(traj) == len(lat)
+    assert 'x' in traj.columns
+    assert 'y' in traj.columns
+    assert 'lat' in traj.columns
+    assert 'lon' in traj.columns
+
+    # Check that original GPS coordinates are preserved
+    npt.assert_allclose(traj['lat'].values, lat)
+    npt.assert_allclose(traj['lon'].values, lon)
+
+
+def test_batch_process():
+    """Test parallel batch processing."""
+    trajectories = [traja.generate(n=50) for _ in range(10)]
+
+    # Define a simple function to apply
+    def normalize_func(traj):
+        return traj.traja.normalize_trajectory()
+
+    # Process with batch_process
+    results = traja.trajectory.batch_process(
+        trajectories,
+        normalize_func,
+        n_jobs=2
+    )
+
+    assert len(results) == len(trajectories)
+    assert all(isinstance(r, traja.TrajaDataFrame) for r in results)
+
+    # Check that normalization worked
+    for result in results:
+        assert abs(result.x.mean()) < 1e-10
+        assert abs(result.y.mean()) < 1e-10
+
+
+def test_batch_process_with_kwargs():
+    """Test batch processing with keyword arguments."""
+    trajectories = [traja.generate(n=100) for _ in range(5)]
+
+    def truncate_func(traj, target_length=50):
+        return traj.traja.truncate_trajectory(target_length, mode='end')
+
+    results = traja.trajectory.batch_process(
+        trajectories,
+        truncate_func,
+        n_jobs=1,
+        target_length=50
+    )
+
+    assert all(len(r) == 50 for r in results)
