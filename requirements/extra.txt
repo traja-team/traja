@@ -1,6 +1,7 @@
 # extended list of package dependencies to reach full functionality
 
 pytest
+pytest-cov
 h5py
 ipython
 pre-commit
