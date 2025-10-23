@@ -9,7 +9,7 @@ from .plotting import *
 from .trajectory import *
 
 __author__ = "justinshenk"
-__version__ = "25.0.0"
+__version__ = "25.0.1"
 
 logging.basicConfig(level=logging.INFO)
 
