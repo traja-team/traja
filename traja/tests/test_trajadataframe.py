@@ -57,7 +57,7 @@ class TestDataFrame:
         assert df2.title == "Serious title"
 
         assert df._get_time_col() == None
-        assert self.df._get_time_col() == "Time"
+        assert self.df._get_time_col() == "time"  # Time column is renamed to lowercase 'time'
 
         # Modify metavar
         df.set("title", "New title")

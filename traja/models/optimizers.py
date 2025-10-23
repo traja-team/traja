@@ -124,7 +124,6 @@ class Optimizer:
                 mode="max",
                 factor=factor,
                 patience=patience,
-                verbose=True,
             )
         for network in classification_keys:
             self.classification_schedulers[network] = ReduceLROnPlateau(
@@ -132,7 +131,6 @@ class Optimizer:
                 mode="max",
                 factor=factor,
                 patience=patience,
-                verbose=True,
             )
 
         for network in regression_keys:
@@ -141,7 +139,6 @@ class Optimizer:
                 mode="max",
                 factor=factor,
                 patience=patience,
-                verbose=True,
             )
 
         return (

@@ -147,8 +147,8 @@ def test_augment_reverse():
     assert len(reversed_df) == len(df)
     # First point should be last point of original
     import numpy as np
-    assert np.allclose(reversed_df.iloc[0][['x', 'y']].values,
-                      df.iloc[-1][['x', 'y']].values)
+    assert np.allclose(reversed_df.iloc[0][['x', 'y']].values.astype(float),
+                      df.iloc[-1][['x', 'y']].values.astype(float))
 
 
 def test_augment_scale():
@@ -175,8 +175,8 @@ def test_augment_subsample():
     assert len(subsampled) == len(df) // 2
     # Check indices match every 2nd point
     import numpy as np
-    assert np.allclose(subsampled.iloc[0][['x', 'y']].values,
-                      df.iloc[0][['x', 'y']].values)
+    assert np.allclose(subsampled.iloc[0][['x', 'y']].values.astype(float),
+                      df.iloc[0][['x', 'y']].values.astype(float))
 
 
 # Sequence Processing Tests
@@ -190,8 +190,8 @@ def test_pad_trajectory_edge():
     assert len(padded) == 20
     # Last padded values should match last original value
     import numpy as np
-    assert np.allclose(padded.iloc[-1][['x', 'y']].values,
-                      df_short.iloc[-1][['x', 'y']].values)
+    assert np.allclose(padded.iloc[-1][['x', 'y']].values.astype(float),
+                      df_short.iloc[-1][['x', 'y']].values.astype(float))
 
 
 def test_pad_trajectory_constant():
@@ -224,8 +224,8 @@ def test_truncate_trajectory_end():
     assert len(truncated) == 10
     # Should keep first 10 points
     import numpy as np
-    assert np.allclose(truncated.iloc[0][['x', 'y']].values,
-                      df.iloc[0][['x', 'y']].values)
+    assert np.allclose(truncated.iloc[0][['x', 'y']].values.astype(float),
+                      df.iloc[0][['x', 'y']].values.astype(float))
 
 
 def test_truncate_trajectory_start():
@@ -235,8 +235,8 @@ def test_truncate_trajectory_start():
     assert len(truncated) == 10
     # Should keep last 10 points
     import numpy as np
-    assert np.allclose(truncated.iloc[0][['x', 'y']].values,
-                      df.iloc[-10][['x', 'y']].values)
+    assert np.allclose(truncated.iloc[0][['x', 'y']].values.astype(float),
+                      df.iloc[-10][['x', 'y']].values.astype(float))
 
 
 def test_truncate_trajectory_random():

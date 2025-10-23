@@ -582,13 +582,13 @@ def calc_flow_angles(grid_indices: np.ndarray):
     # Convert lists to numpy arrays
     M = np.array([[np.array(cell) if cell else None for cell in row] for row in M], dtype=object)
 
-    U = np.ones_like(M)  # x component of arrow
-    V = np.empty_like(M)  # y component of arrow
+    U = np.zeros((len(M), len(M[0])), dtype=float)  # x component of arrow
+    V = np.zeros((len(M), len(M[0])), dtype=float)  # y component of arrow
     for i, row in enumerate(M):
         for j, angles in enumerate(row):
             x = y = 0
             # average_angle = None
-            if angles is not None and len(angles) > 1:
+            if angles is not None and len(angles) >= 1:
                 for angle in angles:
                     if angle is None:
                         continue
@@ -992,7 +992,7 @@ def _rediscretize_points(
 
     while candidate_start <= n_points:
         # Find the first point `curr_ind` for which |points[curr_ind] - p_0| >= R
-        curr_ind = np.NaN
+        curr_ind = np.nan
         for i in range(
             candidate_start, n_points
         ):  # range of search space for next point

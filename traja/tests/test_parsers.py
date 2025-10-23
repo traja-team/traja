@@ -20,7 +20,7 @@ def test_read_file():
     trj = traja.parsers.read_file(datapath)
     assert isinstance(trj, traja.TrajaDataFrame)
     assert "Frame" in trj
-    assert "Time" in trj
+    assert "time" in trj  # Time column is renamed to lowercase 'time'
     assert "TrackId" in trj
     assert "x" in trj
     assert "y" in trj
